@@ -253,7 +253,7 @@
 
         observer.observe({ entryTypes: ['paint'] });
       } catch (e) {
-        // Paint metrics not available
+        console.log('BME Performance: Paint metrics not available');
       }
     }
 
@@ -274,10 +274,14 @@
             nonce: window.bme_nonce,
           })
           .catch((error) => {
-            // Failed to send metrics silently
+            console.log('BME Performance: Failed to send metrics', error);
           });
       }
 
+      // Console logging for development
+      if (window.console && console.table) {
+        console.table(report);
+      }
     }
   }
 

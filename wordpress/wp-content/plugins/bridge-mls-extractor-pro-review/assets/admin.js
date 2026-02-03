@@ -7,6 +7,10 @@
 (function ($) {
   'use strict';
 
+  // Production: Disable debug logging
+  const originalLog = console.log;
+  console.log = function() {};
+
   const BME = {
     liveProgressInterval: null,
     currentExtractionId: null,
@@ -53,8 +57,10 @@
       );
 
       // Property details modal
+      console.log('BME: Attaching property details event handlers');
       $(document).on('click', '.bme-view-details', this.handleViewDetails.bind(this));
       $(document).on('click', '.bme-modal-close, .bme-modal-backdrop', this.closePropertyModal);
+      console.log('BME: Property details handlers attached successfully');
 
       // Export modal
       $(document).on('click', '.bme-export-filtered-btn', this.openExportModal.bind(this));
@@ -749,12 +755,21 @@
       // Check if Chart.js is available, with retry mechanism
       const checkChartJs = function (attempts) {
         if (typeof Chart !== 'undefined') {
-          BME.renderPerformanceCharts();
+          // Ensure chart data is available before rendering
+          if (typeof bmeChartData !== 'undefined' || typeof window.bmeChartData !== 'undefined') {
+            console.log('BME: Chart.js and chart data both available');
+            BME.renderPerformanceCharts();
+          } else {
+            console.log('BME: Chart.js loaded but chart data not available yet');
+            // Try to render with empty/fallback data
+            BME.renderPerformanceCharts();
+          }
         } else if (attempts > 0) {
           setTimeout(function () {
             checkChartJs(attempts - 1);
           }, 200);
         } else {
+          console.warn('BME: Chart.js failed to load after multiple attempts');
           BME.showChartError();
         }
       };
@@ -778,9 +793,11 @@
 
       if (performanceCtx && performanceCtx.parentElement) {
         performanceCtx.parentElement.innerHTML = errorMessage;
+        console.error('BME: Replaced performance chart canvas with error message');
       }
       if (apiCtx && apiCtx.parentElement) {
         apiCtx.parentElement.innerHTML = errorMessage;
+        console.error('BME: Replaced API usage chart canvas with error message');
       }
     },
 
@@ -796,6 +813,7 @@
       try {
         // Prevent duplicate initialization
         if (this.chartsInitialized) {
+          console.log('BME: Charts already initialized, skipping');
           return;
         }
 
@@ -803,9 +821,12 @@
         let chartData = null;
         if (typeof bmeChartData !== 'undefined') {
           chartData = bmeChartData;
+          console.log('BME: Chart data found via bmeChartData:', chartData);
         } else if (typeof window.bmeChartData !== 'undefined') {
           chartData = window.bmeChartData;
+          console.log('BME: Chart data found via window.bmeChartData:', chartData);
         } else {
+          console.log('BME: Chart data not available, using fallback empty data');
           // Create fallback empty data structure
           chartData = {
             performance: {
@@ -884,10 +905,13 @@
                 },
               },
             });
+            console.log('BME: Performance chart created successfully');
           } catch (error) {
             console.error('BME: Error creating performance chart:', error);
             this.showChartError();
           }
+        } else {
+          console.log('BME: Performance chart not created - missing canvas or data');
         }
 
         // Initialize API usage chart
@@ -940,14 +964,18 @@
                 },
               },
             });
+            console.log('BME: API usage chart created successfully');
           } catch (error) {
             console.error('BME: Error creating API usage chart:', error);
             this.showChartError();
           }
+        } else {
+          console.log('BME: API usage chart not created - missing canvas or data');
         }
 
         // Mark charts as initialized
         this.chartsInitialized = true;
+        console.log('BME: Charts successfully initialized');
       } catch (error) {
         console.error('BME: Error rendering performance charts:', error);
         BME.showChartError();
@@ -961,13 +989,16 @@
       try {
         if (this.chartInstances.performance) {
           this.chartInstances.performance.destroy();
+          console.log('BME: Destroyed existing performance chart');
         }
         if (this.chartInstances.apiUsage) {
           this.chartInstances.apiUsage.destroy();
+          console.log('BME: Destroyed existing API usage chart');
         }
         this.chartInstances = {};
         this.chartsInitialized = false;
       } catch (error) {
+        console.warn('BME: Error destroying existing charts:', error);
         this.chartInstances = {};
         this.chartsInitialized = false;
       }
@@ -1298,14 +1329,18 @@
         !document.getElementById('priceTrendsChart') ||
         typeof window.bmeMarketData === 'undefined'
       ) {
+        console.log('BME Market Analytics: Chart elements or data not available');
         return;
       }
+
+      console.log('BME Market Analytics: Initializing charts with data:', window.bmeMarketData);
 
       try {
         this.initPriceTrendsChart();
         this.initDOMDistributionChart();
         this.initInventoryStatusChart();
         this.initAbsorptionRateChart();
+        console.log('BME Market Analytics: All charts initialized successfully');
       } catch (error) {
         console.error('BME Market Analytics: Error initializing charts:', error);
       }
@@ -1552,9 +1587,11 @@
      * Handle view details button click
      */
     handleViewDetails(e) {
+      console.log('BME: handleViewDetails called', e);
       e.preventDefault();
       e.stopPropagation();
       const listingId = $(e.currentTarget).data('listing-id');
+      console.log('BME: Listing ID:', listingId);
       this.loadPropertyDetails(listingId);
     },
 
@@ -1562,10 +1599,19 @@
      * Load property details via AJAX
      */
     loadPropertyDetails(listingId) {
+      console.log('BME: loadPropertyDetails called with ID:', listingId);
       const self = this;
 
       // Show loading state
+      console.log('BME: Showing loading modal');
       this.showPropertyModal('<div class="bme-property-loading"><div class="spinner is-active"></div><p>Loading property details...</p></div>');
+
+      console.log('BME: Making AJAX request to:', bmeAdmin.ajaxUrl);
+      console.log('BME: AJAX data:', {
+        action: 'bme_get_listing_details',
+        nonce: bmeAdmin.nonce,
+        listing_id: listingId
+      });
 
       $.ajax({
         url: bmeAdmin.ajaxUrl,
@@ -1576,9 +1622,12 @@
           listing_id: listingId
         },
         success(response) {
+          console.log('BME: AJAX success response:', response);
           if (response.success && response.data) {
+            console.log('BME: Rendering property details');
             self.renderPropertyDetails(response.data);
           } else {
+            console.log('BME: AJAX returned error:', response);
             self.showPropertyModal('<div class="bme-property-error"><p>Error loading property details: ' + (response.data?.message || 'Unknown error') + '</p></div>');
           }
         },
@@ -1629,11 +1678,14 @@
      * Open export modal and populate with current filters
      */
     openExportModal(e) {
+      console.log('BME Export: openExportModal called');
       e.preventDefault();
 
       const $modal = $('#bme-export-modal');
       const $filterSummary = $('#bme-export-filter-summary');
       const $hiddenFilters = $('#bme-export-hidden-filters');
+
+      console.log('BME Export: Modal element found:', $modal.length > 0);
 
       // Clear previous content
       $filterSummary.empty();
@@ -1665,6 +1717,8 @@
           }
         }
 
+        console.log('BME Export: Found filter', name, '=', value, '(display:', displayValue + ')');
+
         filters.push({ name: displayName, value: displayValue });
 
         // Add hidden input to export form
@@ -1676,6 +1730,8 @@
           })
         );
       });
+
+      console.log('BME Export: Total filters found:', filters.length);
 
       // Display filter summary
       if (filters.length === 0) {

@@ -91,7 +91,7 @@ class Container {
             return new $concrete();
         }
 
-        throw new Exception("Unable to resolve concrete: " . var_export($concrete, true));
+        throw new Exception("Unable to resolve concrete: " . print_r($concrete, true));
     }
 
     /**

@@ -408,77 +408,8 @@ class BME_Data_Processor {
     }
 
     private function process_single_listing($extraction_id, $listing, $related_data) {
-        global $wpdb;
         $is_archived = $this->is_archived_status($listing['StandardStatus']);
         $table_suffix = $is_archived ? '_archive' : '';
-        $listing_key = $listing['ListingKey'] ?? '';
-
-        // v4.0.37: Check if listing exists in OPPOSITE table (prevents duplicates when status changes)
-        // Bug fixed: When status changes (e.g., Active → Closed), old record in wrong table must be deleted
-        // v4.0.37 improvement: Handle case where listing exists in BOTH tables (just delete from wrong table)
-        if (!empty($listing_key)) {
-            $opposite_suffix = $is_archived ? '' : '_archive';
-            $opposite_table = $this->db_manager->get_table('listings' . $opposite_suffix);
-            $target_table = $this->db_manager->get_table('listings' . $table_suffix);
-
-            $existing_in_opposite = $wpdb->get_row($wpdb->prepare(
-                "SELECT id, listing_id FROM {$opposite_table} WHERE listing_key = %s",
-                $listing_key
-            ));
-
-            if ($existing_in_opposite) {
-                // Check if listing ALSO exists in target table (duplicate scenario)
-                $existing_in_target = $wpdb->get_var($wpdb->prepare(
-                    "SELECT id FROM {$target_table} WHERE listing_key = %s",
-                    $listing_key
-                ));
-
-                if ($existing_in_target) {
-                    // v4.0.37: Listing exists in BOTH tables - just delete from wrong table
-                    // The target table already has the correct record, so we'll update it via normal processing
-                    error_log("BME v4.0.37: Listing {$listing_key} exists in BOTH tables. Deleting from opposite table (status: {$listing['StandardStatus']})");
-
-                    // Delete from opposite main table
-                    $wpdb->delete($opposite_table, ['id' => $existing_in_opposite->id]);
-
-                    // Also delete related data from opposite tables
-                    $opposite_tables = [
-                        'listing_details' . $opposite_suffix,
-                        'listing_location' . $opposite_suffix,
-                        'listing_financial' . $opposite_suffix,
-                        'listing_features' . $opposite_suffix,
-                    ];
-                    foreach ($opposite_tables as $rel_table) {
-                        $full_table = $this->db_manager->get_table($rel_table);
-                        $wpdb->delete($full_table, ['listing_id' => $existing_in_opposite->id]);
-                    }
-
-                    // Delete from opposite summary table (uses MLS listing_id, not internal id)
-                    $opposite_summary = $wpdb->prefix . 'bme_listing_summary' . $opposite_suffix;
-                    $wpdb->delete($opposite_summary, ['listing_id' => $existing_in_opposite->listing_id]);
-
-                    // Continue with normal processing to update the target table record
-                } else {
-                    // Listing only exists in opposite table - use proper move functions
-                    try {
-                        if ($is_archived) {
-                            // Moving from active to archive (status changed to Closed/Expired/etc)
-                            $this->move_listing_to_archive($existing_in_opposite->id, $listing, $extraction_id);
-                            error_log("BME v4.0.37: Moved listing {$listing_key} from active to archive (status: {$listing['StandardStatus']})");
-                        } else {
-                            // Moving from archive to active (reactivation)
-                            $this->move_listing_to_active($existing_in_opposite->id, $listing, $extraction_id);
-                            error_log("BME v4.0.37: Moved listing {$listing_key} from archive to active (status: {$listing['StandardStatus']})");
-                        }
-                        // Move functions handle all table updates, so we're done
-                        return $existing_in_opposite->listing_id;
-                    } catch (Exception $e) {
-                        error_log("BME v4.0.37: Failed to move listing {$listing_key}: " . $e->getMessage());
-                        // Fall through to normal processing if move fails
-                    }
-                }
-            }
-        }
 
         $listing_id = $this->process_core_listing($extraction_id, $listing, $table_suffix);
 
@@ -820,11 +751,6 @@ class BME_Data_Processor {
         if (empty($data['listing_id']) || empty($data['listing_key'])) {
             return;
         }
-
-        // v4.0.36: Delete from opposite table if exists (defensive measure to prevent duplicates)
-        // This handles edge cases where the cross-table check in process_single_listing() might not catch
-        $opposite_table = $wpdb->prefix . 'bme_listing_summary' . ($table_suffix === '_archive' ? '' : '_archive');
-        $wpdb->delete($opposite_table, ['listing_id' => $data['listing_id']]);
 
         // Use REPLACE to insert or update
         $result = $wpdb->replace($summary_table, $data);

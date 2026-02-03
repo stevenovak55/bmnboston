@@ -66,7 +66,7 @@ class BME_Query_Tracker {
      */
     public function process_queries() {
         if (!$this->enabled || empty($this->wpdb->queries)) {
-            error_log('BME Query Tracker: Skipping - enabled=' . ($this->enabled ? 'yes' : 'no') . ', queries=' . (empty($this->wpdb->queries) ? 'empty' : count($this->wpdb->queries)));
+            // error_log("BME Query Tracker: Skipping - enabled=' . ($this->enabled ? 'yes' : 'no') . ', queries=' . (empty($this->wpdb->queries) ? 'empty' : count($this->wpdb->queries)));
             return;
         }
 
@@ -85,7 +85,7 @@ class BME_Query_Tracker {
             }
         }
 
-        error_log("BME Query Tracker: Processed {$tracked_count} BME queries, skipped {$skipped_count} non-BME queries");
+        // error_log("BME Query Tracker: Processed {$tracked_count} BME queries, skipped {$skipped_count} non-BME queries");
     }
 
     /**
