@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 // MARK: - CMA Response
 
@@ -16,6 +17,8 @@ struct CMAResponse: Codable {
     let estimatedValue: Int?
     let valueRange: CMAValueRange
     let confidenceScore: Int?
+    let rangeQuality: String?        // "tight", "moderate", "wide"
+    let filterTierUsed: String?      // "tight", "moderate", "relaxed"
     let comparables: [CMAComparable]
     let comparablesCount: Int
 
@@ -24,6 +27,8 @@ struct CMAResponse: Codable {
         case estimatedValue = "estimated_value"
         case valueRange = "value_range"
         case confidenceScore = "confidence_score"
+        case rangeQuality = "range_quality"
+        case filterTierUsed = "filter_tier_used"
         case comparables
         case comparablesCount = "comparables_count"
     }
@@ -47,6 +52,16 @@ struct CMAResponse: Codable {
         case 80...: return "green"
         case 60..<80: return "orange"
         default: return "red"
+        }
+    }
+
+    /// Human-readable range quality description
+    var rangeQualityDescription: String {
+        switch rangeQuality {
+        case "tight": return "High precision estimate"
+        case "moderate": return "Good estimate"
+        case "wide": return "Approximate estimate"
+        default: return "Limited data"
         }
     }
 }
@@ -149,6 +164,8 @@ struct CMAComparable: Codable, Identifiable {
     let distanceMiles: Double
     let pricePerSqft: Int?
     let photoUrl: String?
+    let comparabilityScore: Double?
+    let comparabilityGrade: String?
 
     var id: String { listingId }
 
@@ -165,6 +182,8 @@ struct CMAComparable: Codable, Identifiable {
         case distanceMiles = "distance_miles"
         case pricePerSqft = "price_per_sqft"
         case photoUrl = "photo_url"
+        case comparabilityScore = "comparability_score"
+        case comparabilityGrade = "comparability_grade"
     }
 
     // Custom decoder to handle Int-to-Double conversion for baths and distanceMiles
@@ -201,6 +220,17 @@ struct CMAComparable: Codable, Identifiable {
         } else {
             distanceMiles = 0
         }
+
+        // Handle comparability score - try Double first, fall back to Int
+        if let scoreDouble = try? container.decode(Double.self, forKey: .comparabilityScore) {
+            comparabilityScore = scoreDouble
+        } else if let scoreInt = try? container.decode(Int.self, forKey: .comparabilityScore) {
+            comparabilityScore = Double(scoreInt)
+        } else {
+            comparabilityScore = nil
+        }
+
+        comparabilityGrade = try container.decodeIfPresent(String.self, forKey: .comparabilityGrade)
     }
 
     /// Formatted distance string
@@ -247,6 +277,15 @@ struct CMAComparable: Codable, Identifiable {
 
         // Return original string if parsing fails
         return dateString
+    }
+
+    /// Grade color for UI
+    var gradeColor: Color {
+        switch comparabilityGrade {
+        case "A": return .green
+        case "B": return .blue
+        default: return .gray
+        }
     }
 }
 

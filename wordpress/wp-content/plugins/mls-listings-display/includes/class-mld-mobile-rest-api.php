@@ -6543,7 +6543,100 @@ class MLD_Mobile_REST_API {
     }
 
     /**
+     * Calculate comparability score for iOS CMA (0-100)
+     * Balances distance and recency equally per requirements
+     *
+     * @param object $comp Comparable property object
+     * @param object $subject Subject property object
+     * @return array Array with 'score' (0-100) and 'grade' (A-F)
+     */
+    private static function calculate_mobile_comparability_score($comp, $subject) {
+        $score = 100;
+
+        // Distance penalty (max 20 pts) - closer is better
+        $distance = floatval($comp->distance_miles);
+        $score -= min($distance * 4, 20);
+
+        // Recency penalty (max 20 pts) - recent is better
+        $close_date = strtotime($comp->close_date);
+        $days_ago = (current_time('timestamp') - $close_date) / 86400;
+        if ($days_ago <= 90) {
+            $score += 5; // Bonus for very recent
+        } elseif ($days_ago <= 180) {
+            $score -= 5;
+        } elseif ($days_ago <= 270) {
+            $score -= 10;
+        } else {
+            $score -= min(($days_ago - 270) / 10, 15);
+        }
+
+        // Size penalty (max 15 pts)
+        $subject_sqft = intval($subject->building_area_total);
+        $comp_sqft = intval($comp->building_area_total);
+        if ($subject_sqft > 0 && $comp_sqft > 0) {
+            $size_diff_pct = abs($comp_sqft - $subject_sqft) / $subject_sqft * 100;
+            $score -= min($size_diff_pct / 2, 15);
+        }
+
+        // Bedroom match (5 pt bonus for exact, penalty otherwise)
+        $bed_diff = abs(intval($comp->bedrooms_total) - intval($subject->bedrooms_total));
+        if ($bed_diff == 0) {
+            $score += 5;
+        } else {
+            $score -= $bed_diff * 5;
+        }
+
+        // Clamp and grade
+        $score = max(0, min(100, round($score, 1)));
+
+        if ($score >= 85) {
+            $grade = 'A';
+        } elseif ($score >= 70) {
+            $grade = 'B';
+        } elseif ($score >= 55) {
+            $grade = 'C';
+        } elseif ($score >= 40) {
+            $grade = 'D';
+        } else {
+            $grade = 'F';
+        }
+
+        return array('score' => $score, 'grade' => $grade);
+    }
+
+    /**
+     * Calculate range quality based on spread relative to midpoint
+     *
+     * @param int $low Low end of range
+     * @param int $high High end of range
+     * @return string "tight", "moderate", "wide", or "unknown"
+     */
+    private static function calculate_range_quality($low, $high) {
+        if ($low <= 0 || $high <= 0) {
+            return 'unknown';
+        }
+
+        $mid = ($low + $high) / 2;
+        $spread_pct = (($high - $low) / $mid) * 100;
+
+        if ($spread_pct < 15) {
+            return 'tight';
+        }
+        if ($spread_pct <= 30) {
+            return 'moderate';
+        }
+        return 'wide';
+    }
+
+    /**
      * Handle get property CMA
+     *
+     * Implements tiered filtering with A/B grade requirement:
+     * - Tier 1 (tight): ±10% price, ±15% sqft, exact beds
+     * - Tier 2 (moderate): ±12% price, ±18% sqft, exact beds
+     * - Tier 3 (relaxed): ±15% price, ±20% sqft, ±1 bed
+     *
+     * Returns max 5 comparables with A or B grades only.
      */
     public static function handle_get_property_cma($request) {
         global $wpdb;
@@ -6575,39 +6668,98 @@ class MLD_Mobile_REST_API {
             ), 404);
         }
 
-        // Find comparable sales from the ARCHIVE table (where closed listings reside)
-        // Use close_date for filtering (when sale actually closed), not modification_timestamp
-        // Match property_type to compare sales with sales and leases with leases
-        $comparables = $wpdb->get_results($wpdb->prepare(
-            "SELECT *,
-                (6371 * acos(cos(radians(%f)) * cos(radians(latitude)) *
-                cos(radians(longitude) - radians(%f)) +
-                sin(radians(%f)) * sin(radians(latitude)))) AS distance_miles
-             FROM {$archive_table}
-             WHERE listing_key != %s
-               AND standard_status = 'Closed'
-               AND property_type = %s
-               AND city = %s
-               AND bedrooms_total BETWEEN %d AND %d
-               AND building_area_total BETWEEN %d AND %d
-               AND close_date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
-             ORDER BY distance_miles ASC
-             LIMIT 10",
-            $subject->latitude,
-            $subject->longitude,
-            $subject->latitude,
-            $listing_id,
-            $subject->property_type,
-            $subject->city,
-            max(1, $subject->bedrooms_total - 1),
-            $subject->bedrooms_total + 1,
-            max(500, $subject->building_area_total * 0.75),
-            $subject->building_area_total * 1.25
-        ));
+        // Define filter tiers: tight, moderate, relaxed
+        $filter_tiers = array(
+            'tight' => array(
+                'sqft_pct' => 0.15,   // ±15% sqft
+                'bed_diff' => 0,       // exact beds
+            ),
+            'moderate' => array(
+                'sqft_pct' => 0.18,   // ±18% sqft
+                'bed_diff' => 0,       // exact beds
+            ),
+            'relaxed' => array(
+                'sqft_pct' => 0.20,   // ±20% sqft
+                'bed_diff' => 1,       // ±1 bed
+            ),
+        );
 
-        // Calculate estimated value from comparables (use close_price if available)
+        $min_ab_comps = 3;      // Minimum A/B grade comparables needed
+        $max_comps = 5;         // Maximum comparables to return
+        $filter_tier_used = null;
+        $ab_comparables = array();
+
+        // Try each tier until we get enough A/B grade comparables
+        foreach ($filter_tiers as $tier_name => $tier) {
+            $sqft_low = max(500, intval($subject->building_area_total * (1 - $tier['sqft_pct'])));
+            $sqft_high = intval($subject->building_area_total * (1 + $tier['sqft_pct']));
+            $bed_low = max(1, intval($subject->bedrooms_total) - $tier['bed_diff']);
+            $bed_high = intval($subject->bedrooms_total) + $tier['bed_diff'];
+
+            // Query up to 20 comparables for this tier
+            $comparables = $wpdb->get_results($wpdb->prepare(
+                "SELECT *,
+                    (6371 * acos(cos(radians(%f)) * cos(radians(latitude)) *
+                    cos(radians(longitude) - radians(%f)) +
+                    sin(radians(%f)) * sin(radians(latitude)))) AS distance_miles
+                 FROM {$archive_table}
+                 WHERE listing_key != %s
+                   AND standard_status = 'Closed'
+                   AND property_type = %s
+                   AND city = %s
+                   AND bedrooms_total BETWEEN %d AND %d
+                   AND building_area_total BETWEEN %d AND %d
+                   AND close_date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+                 ORDER BY distance_miles ASC
+                 LIMIT 20",
+                $subject->latitude,
+                $subject->longitude,
+                $subject->latitude,
+                $listing_id,
+                $subject->property_type,
+                $subject->city,
+                $bed_low,
+                $bed_high,
+                $sqft_low,
+                $sqft_high
+            ));
+
+            // Calculate score/grade for each and filter to A/B only
+            $ab_comparables = array();
+            foreach ($comparables as $comp) {
+                $score_data = self::calculate_mobile_comparability_score($comp, $subject);
+                $comp->comparability_score = $score_data['score'];
+                $comp->comparability_grade = $score_data['grade'];
+
+                // Only keep A and B grades
+                if ($score_data['grade'] === 'A' || $score_data['grade'] === 'B') {
+                    $ab_comparables[] = $comp;
+                }
+            }
+
+            // Sort by score descending
+            usort($ab_comparables, function($a, $b) {
+                return $b->comparability_score <=> $a->comparability_score;
+            });
+
+            // If we have enough A/B comps, use this tier
+            if (count($ab_comparables) >= $min_ab_comps) {
+                $filter_tier_used = $tier_name;
+                break;
+            }
+        }
+
+        // If no tier gave us enough comps, use whatever we have from the last (most relaxed) tier
+        if ($filter_tier_used === null) {
+            $filter_tier_used = 'relaxed';
+        }
+
+        // Take top 5 by score
+        $ab_comparables = array_slice($ab_comparables, 0, $max_comps);
+
+        // Calculate estimated value from A/B comparables only
         $prices = array();
-        foreach ($comparables as $comp) {
+        foreach ($ab_comparables as $comp) {
             $price = $comp->close_price > 0 ? $comp->close_price : $comp->list_price;
             if ($price > 0) {
                 $prices[] = (int) $price;
@@ -6617,6 +6769,7 @@ class MLD_Mobile_REST_API {
         $estimated_value = null;
         $value_range = array('low' => null, 'high' => null);
         $confidence = null;
+        $range_quality = 'unknown';
 
         if (count($prices) >= 3) {
             sort($prices);
@@ -6625,9 +6778,12 @@ class MLD_Mobile_REST_API {
                 'low' => $prices[0],
                 'high' => $prices[count($prices) - 1]
             );
-            $confidence = min(95, 60 + (count($prices) * 5));
+            // Higher confidence when using only A/B grade comparables
+            $confidence = min(95, 70 + (count($prices) * 5));
+            $range_quality = self::calculate_range_quality($value_range['low'], $value_range['high']);
         }
 
+        // Format comparables for response
         $formatted_comps = array_map(function($comp) {
             $sold_price = $comp->close_price > 0 ? $comp->close_price : $comp->list_price;
             $address = trim($comp->street_number . ' ' . $comp->street_name);
@@ -6644,8 +6800,10 @@ class MLD_Mobile_REST_API {
                 'distance_miles' => round((float) $comp->distance_miles, 2),
                 'price_per_sqft' => $comp->building_area_total > 0 ? round($sold_price / $comp->building_area_total) : null,
                 'photo_url' => $comp->main_photo_url,
+                'comparability_score' => $comp->comparability_score,
+                'comparability_grade' => $comp->comparability_grade,
             );
-        }, $comparables);
+        }, $ab_comparables);
 
         // Build subject address
         $subject_address = trim($subject->street_number . ' ' . $subject->street_name);
@@ -6666,6 +6824,8 @@ class MLD_Mobile_REST_API {
                 'estimated_value' => $estimated_value,
                 'value_range' => $value_range,
                 'confidence_score' => $confidence,
+                'range_quality' => $range_quality,
+                'filter_tier_used' => $filter_tier_used,
                 'comparables' => $formatted_comps,
                 'comparables_count' => count($formatted_comps)
             )
@@ -6682,6 +6842,9 @@ class MLD_Mobile_REST_API {
         $params = $request->get_json_params();
         $listing_id = sanitize_text_field($params['listing_id'] ?? '');
         $prepared_for = sanitize_text_field($params['prepared_for'] ?? '');
+        $selected_comparables = isset($params['selected_comparables']) && is_array($params['selected_comparables'])
+            ? array_map('sanitize_text_field', $params['selected_comparables'])
+            : null;
 
         if (empty($listing_id)) {
             return new WP_REST_Response(array(
@@ -6735,33 +6898,57 @@ class MLD_Mobile_REST_API {
         }
 
         // Find comparables from archive table
-        // Use $subject->listing_key to exclude the subject property (not $listing_id which may be MLS number)
-        $comparables = $wpdb->get_results($wpdb->prepare(
-            "SELECT *,
-                (6371 * acos(cos(radians(%f)) * cos(radians(latitude)) *
-                cos(radians(longitude) - radians(%f)) +
-                sin(radians(%f)) * sin(radians(latitude)))) AS distance_miles
-             FROM {$archive_table}
-             WHERE listing_key != %s
-               AND standard_status = 'Closed'
-               AND property_type = %s
-               AND city = %s
-               AND bedrooms_total BETWEEN %d AND %d
-               AND building_area_total BETWEEN %d AND %d
-               AND close_date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
-             ORDER BY distance_miles ASC
-             LIMIT 10",
-            $subject->latitude,
-            $subject->longitude,
-            $subject->latitude,
-            $subject->listing_key,
-            $subject->property_type,
-            $subject->city,
-            max(1, $subject->bedrooms_total - 1),
-            $subject->bedrooms_total + 1,
-            max(500, $subject->building_area_total * 0.75),
-            $subject->building_area_total * 1.25
-        ));
+        // If specific comparables were selected, query them directly by listing_key
+        // Otherwise, run a general search query based on property criteria
+        if (!empty($selected_comparables)) {
+            // Query the SPECIFIC selected comparables directly by their listing_keys
+            // This ensures we get exactly what the user selected, not a different set
+            $placeholders = implode(',', array_fill(0, count($selected_comparables), '%s'));
+            $query_params = array_merge(
+                array($subject->latitude, $subject->longitude, $subject->latitude),
+                $selected_comparables
+            );
+
+            $comparables = $wpdb->get_results($wpdb->prepare(
+                "SELECT *,
+                    (6371 * acos(cos(radians(%f)) * cos(radians(latitude)) *
+                    cos(radians(longitude) - radians(%f)) +
+                    sin(radians(%f)) * sin(radians(latitude)))) AS distance_miles
+                 FROM {$archive_table}
+                 WHERE listing_key IN ({$placeholders})
+                 ORDER BY distance_miles ASC",
+                $query_params
+            ));
+        } else {
+            // No selection provided - run general comparable search
+            // Use $subject->listing_key to exclude the subject property
+            $comparables = $wpdb->get_results($wpdb->prepare(
+                "SELECT *,
+                    (6371 * acos(cos(radians(%f)) * cos(radians(latitude)) *
+                    cos(radians(longitude) - radians(%f)) +
+                    sin(radians(%f)) * sin(radians(latitude)))) AS distance_miles
+                 FROM {$archive_table}
+                 WHERE listing_key != %s
+                   AND standard_status = 'Closed'
+                   AND property_type = %s
+                   AND city = %s
+                   AND bedrooms_total BETWEEN %d AND %d
+                   AND building_area_total BETWEEN %d AND %d
+                   AND close_date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+                 ORDER BY distance_miles ASC
+                 LIMIT 10",
+                $subject->latitude,
+                $subject->longitude,
+                $subject->latitude,
+                $subject->listing_key,
+                $subject->property_type,
+                $subject->city,
+                max(1, $subject->bedrooms_total - 1),
+                $subject->bedrooms_total + 1,
+                max(500, $subject->building_area_total * 0.75),
+                $subject->building_area_total * 1.25
+            ));
+        }
 
         // Calculate statistics from comparables for PDF generator
         $prices = array();

@@ -21,6 +21,7 @@ struct CMASheet: View {
     @State private var showPDFView = false
     @State private var preparedFor: String = ""
     @State private var showPreparedForPrompt = false
+    @State private var selectedCompIds: Set<String> = []
 
     var body: some View {
         NavigationView {
@@ -195,12 +196,38 @@ struct CMASheet: View {
             .padding(.vertical, 6)
             .background(Color(.tertiarySystemBackground))
             .clipShape(Capsule())
+
+            // Range Quality Indicator
+            if let quality = cma.rangeQuality, quality != "unknown" {
+                HStack(spacing: 6) {
+                    Image(systemName: rangeQualityIcon(quality))
+                    Text(cma.rangeQualityDescription)
+                        .font(.caption)
+                }
+                .foregroundStyle(rangeQualityColor(quality))
+            }
         }
         .frame(maxWidth: .infinity)
         .padding()
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
+    }
+
+    private func rangeQualityIcon(_ quality: String) -> String {
+        switch quality {
+        case "tight": return "checkmark.seal.fill"
+        case "moderate": return "seal.fill"
+        default: return "exclamationmark.triangle.fill"
+        }
+    }
+
+    private func rangeQualityColor(_ quality: String) -> Color {
+        switch quality {
+        case "tight": return .green
+        case "moderate": return .blue
+        default: return .orange
+        }
     }
 
     private func confidenceColor(_ colorName: String) -> Color {
@@ -214,13 +241,32 @@ struct CMASheet: View {
 
     private func comparablesSection(_ comparables: [CMAComparable]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
+            // Header with selection controls
             HStack {
-                Text("Comparable Sales (\(comparables.count))")
+                Text("Comparable Sales")
                     .font(.caption)
                     .fontWeight(.semibold)
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
+
+                Text("(\(selectedCompIds.count) of \(comparables.count) selected)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
                 Spacer()
+
+                // Select All / Deselect All button
+                Button {
+                    if selectedCompIds.count == comparables.count {
+                        selectedCompIds.removeAll()
+                    } else {
+                        selectedCompIds = Set(comparables.map { $0.id })
+                    }
+                } label: {
+                    Text(selectedCompIds.count == comparables.count ? "Deselect All" : "Select All")
+                        .font(.caption)
+                        .foregroundStyle(AppColors.brandTeal)
+                }
             }
 
             if comparables.isEmpty {
@@ -232,97 +278,150 @@ struct CMASheet: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             } else {
                 ForEach(comparables) { comp in
-                    comparableRow(comp)
+                    comparableRow(comp, isSelected: selectedCompIds.contains(comp.id))
                 }
+            }
+
+            // Selection hint
+            if !comparables.isEmpty {
+                Text("Tap comparables to include/exclude from PDF report")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity)
             }
         }
     }
 
-    private func comparableRow(_ comp: CMAComparable) -> some View {
-        HStack(spacing: 12) {
-            // Photo
-            if let photoURL = comp.photoURL {
-                AsyncImage(url: photoURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color.gray.opacity(0.2)
-                }
-                .frame(width: 60, height: 45)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+    private func comparableRow(_ comp: CMAComparable, isSelected: Bool) -> some View {
+        Button {
+            if selectedCompIds.contains(comp.id) {
+                selectedCompIds.remove(comp.id)
             } else {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.gray.opacity(0.2))
+                selectedCompIds.insert(comp.id)
+            }
+        } label: {
+            HStack(spacing: 12) {
+                // Selection checkbox
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(isSelected ? AppColors.brandTeal : .gray)
+
+                // Photo
+                if let photoURL = comp.photoURL {
+                    AsyncImage(url: photoURL) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Color.gray.opacity(0.2)
+                    }
                     .frame(width: 60, height: 45)
-                    .overlay {
-                        Image(systemName: "house.fill")
-                            .font(.caption)
-                            .foregroundStyle(.gray)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                } else {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(width: 60, height: 45)
+                        .overlay {
+                            Image(systemName: "house.fill")
+                                .font(.caption)
+                                .foregroundStyle(.gray)
+                        }
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text(comp.address)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .lineLimit(1)
+
+                        if let grade = comp.comparabilityGrade {
+                            Text(grade)
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(comp.gradeColor)
+                                .clipShape(Capsule())
+                        }
                     }
-            }
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(comp.address)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .lineLimit(1)
-
-                HStack(spacing: 8) {
-                    Text(comp.formattedDistance)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    if let ppsf = comp.formattedPricePerSqft {
-                        Text("\u{2022}")
+                    HStack(spacing: 8) {
+                        Text(comp.formattedDistance)
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        Text(ppsf)
-                            .font(.caption)
+
+                        if let ppsf = comp.formattedPricePerSqft {
+                            Text("\u{2022}")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(ppsf)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("$\(comp.soldPrice.formatted())")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    if let soldDate = comp.formattedSoldDate {
+                        Text(soldDate)
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
                 }
             }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("$\(comp.soldPrice.formatted())")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                if let soldDate = comp.formattedSoldDate {
-                    Text(soldDate)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-            }
+            .padding()
+            .background(isSelected ? AppColors.brandTeal.opacity(0.08) : Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(isSelected ? AppColors.brandTeal : Color.clear, lineWidth: 2)
+            )
+            .shadow(color: .black.opacity(0.03), radius: 3, y: 1)
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .shadow(color: .black.opacity(0.03), radius: 3, y: 1)
+        .buttonStyle(.plain)
     }
 
     private var generatePDFButton: some View {
-        Button {
-            showPreparedForPrompt = true
-        } label: {
-            HStack {
-                if isGeneratingPDF {
-                    ProgressView()
-                        .tint(.white)
-                } else {
-                    Image(systemName: "doc.fill")
+        VStack(spacing: 8) {
+            Button {
+                showPreparedForPrompt = true
+            } label: {
+                HStack {
+                    if isGeneratingPDF {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Image(systemName: "doc.fill")
+                    }
+                    if isGeneratingPDF {
+                        Text("Generating...")
+                    } else if selectedCompIds.isEmpty {
+                        Text("Select Comparables to Generate PDF")
+                    } else {
+                        Text("Generate PDF with \(selectedCompIds.count) Comp\(selectedCompIds.count == 1 ? "" : "s")")
+                    }
                 }
-                Text(isGeneratingPDF ? "Generating..." : "Generate PDF Report")
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(selectedCompIds.isEmpty ? Color.gray : AppColors.brandTeal)
+                .foregroundStyle(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(AppColors.brandTeal)
-            .foregroundStyle(.white)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .disabled(isGeneratingPDF || cmaData == nil || selectedCompIds.isEmpty)
+
+            if selectedCompIds.isEmpty && cmaData != nil {
+                Text("Please select at least one comparable")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
         }
-        .disabled(isGeneratingPDF || cmaData == nil)
     }
 
     // MARK: - Data Loading
@@ -334,7 +433,10 @@ struct CMASheet: View {
         do {
             // Use the listing key (id) for the API call
             let listingId = property.id
-            cmaData = try await APIClient.shared.request(.propertyCMA(listingId: listingId))
+            let response: CMAResponse = try await APIClient.shared.request(.propertyCMA(listingId: listingId))
+            cmaData = response
+            // Initialize all comparables as selected
+            selectedCompIds = Set(response.comparables.map { $0.id })
             isLoading = false
         } catch {
             self.error = error.localizedDescription
@@ -347,8 +449,13 @@ struct CMASheet: View {
 
         do {
             let listingId = property.id
+            let selectedIds = Array(selectedCompIds)
             let response: CMAPDFResponse = try await APIClient.shared.request(
-                .generateCMAPDF(listingId: listingId, preparedFor: preparedFor.isEmpty ? nil : preparedFor)
+                .generateCMAPDF(
+                    listingId: listingId,
+                    preparedFor: preparedFor.isEmpty ? nil : preparedFor,
+                    selectedComparables: selectedIds.isEmpty ? nil : selectedIds
+                )
             )
 
             if let url = response.url {

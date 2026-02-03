@@ -718,10 +718,14 @@ extension APIEndpoint {
     /// - Parameters:
     ///   - listingId: The listing_key (hash) or MLS number of the property
     ///   - preparedFor: Optional name of the person the report is prepared for
-    static func generateCMAPDF(listingId: String, preparedFor: String? = nil) -> APIEndpoint {
+    ///   - selectedComparables: Optional array of comparable listing IDs to include in the PDF
+    static func generateCMAPDF(listingId: String, preparedFor: String? = nil, selectedComparables: [String]? = nil) -> APIEndpoint {
         var params: [String: Any] = ["listing_id": listingId]
         if let preparedFor = preparedFor {
             params["prepared_for"] = preparedFor
+        }
+        if let selectedComparables = selectedComparables {
+            params["selected_comparables"] = selectedComparables
         }
         return APIEndpoint(path: "/cma/generate-pdf", method: .post, parameters: params, requiresAuth: true)
     }
