@@ -1,0 +1,1594 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		78850C883C86D55FCDAA28AE /* OpenHouseListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863FFCAEE1B9B4BDB847EE82 /* OpenHouseListView.swift */; };
+		97A55F1B61AC0B12967C78FC /* OpenHouseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AFF6E590DB4C88604129D01 /* OpenHouseService.swift */; };
+		9F2202834CCED3DC6738DCD1 /* OfflineOpenHouseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEE979E778BC40CCA21CC093 /* OfflineOpenHouseStore.swift */; };
+		K10000010000000000000001 /* KioskSignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = K20000020000000000000001 /* KioskSignInView.swift */; };
+		K10000010000000000000002 /* KioskSignInFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = K20000020000000000000002 /* KioskSignInFormView.swift */; };
+		B10000010000000000000001 /* BMNBostonApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000001 /* BMNBostonApp.swift */; };
+		B10000010000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000002 /* ContentView.swift */; };
+		B10000010000000000000003 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000003 /* MainTabView.swift */; };
+		B10000010000000000000004 /* Environment.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000004 /* Environment.swift */; };
+		B10000010000000000000005 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000005 /* APIClient.swift */; };
+		B10000010000000000000006 /* APIEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000006 /* APIEndpoint.swift */; };
+		B10000010000000000000007 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000007 /* APIError.swift */; };
+		B10000010000000000000008 /* TokenManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000008 /* TokenManager.swift */; };
+		B10000010000000000000009 /* Property.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000009 /* Property.swift */; };
+		B10000010000000000000010 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000010 /* User.swift */; };
+		B10000010000000000000011 /* SavedSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000011 /* SavedSearch.swift */; };
+		B10000010000000000000012 /* Appointment.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000012 /* Appointment.swift */; };
+		B10000010000000000000013 /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000013 /* KeychainManager.swift */; };
+		B10000010000000000000014 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000014 /* AuthViewModel.swift */; };
+		B10000010000000000000015 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000015 /* LoginView.swift */; };
+		B10000010000000000000016 /* PropertySearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000016 /* PropertySearchView.swift */; };
+		B10000010000000000000017 /* PropertySearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000017 /* PropertySearchViewModel.swift */; };
+		B10000010000000000000018 /* PropertyDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000018 /* PropertyDetailView.swift */; };
+		B10000010000000000000019 /* PropertyCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000019 /* PropertyCard.swift */; };
+		B10000010000000000000020 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000020 /* Colors.swift */; };
+		B10000010000000000000021 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000021 /* Assets.xcassets */; };
+		B10000010000000000000022 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000022 /* Preview Assets.xcassets */; };
+		B10000010000000000000023 /* BMNBostonTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000023 /* BMNBostonTests.swift */; };
+		B10000010000000000000024 /* BMNBostonUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000024 /* BMNBostonUITests.swift */; };
+		B10000010000000000000025 /* BMNBostonUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000025 /* BMNBostonUITestsLaunchTests.swift */; };
+		B10000010000000000000027 /* PropertyMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000027 /* PropertyMapView.swift */; };
+		B10000010000000000000030 /* FilterComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000030 /* FilterComponents.swift */; };
+		B10000010000000000000031 /* AdvancedFilterModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000031 /* AdvancedFilterModal.swift */; };
+		B10000010000000000000032 /* SearchAutocompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000032 /* SearchAutocompleteView.swift */; };
+		B10000010000000000000033 /* SearchConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000033 /* SearchConstants.swift */; };
+		B10000010000000000000034 /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000034 /* AppConstants.swift */; };
+		B10000010000000000000035 /* AppearanceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000035 /* AppearanceManager.swift */; };
+		B10000010000000000000036 /* GeocodingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000036 /* GeocodingService.swift */; };
+		B10000010000000000000037 /* CityBoundaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000037 /* CityBoundaryService.swift */; };
+		B10000010000000000000038 /* SearchModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000038 /* SearchModalView.swift */; };
+		B10000010000000000000044 /* BoundaryResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000044 /* BoundaryResponse.swift */; };
+		B10000010000000000000045 /* School.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000045 /* School.swift */; };
+		B10000010000000000000046 /* SchoolService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000046 /* SchoolService.swift */; };
+		B10000010000000000000047 /* NearbySchoolsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000047 /* NearbySchoolsSection.swift */; };
+		B10000010000000000000048 /* SavedSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000048 /* SavedSearchService.swift */; };
+		B10000010000000000000049 /* SavedSearchesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000049 /* SavedSearchesView.swift */; };
+		B10000010000000000000050 /* CreateSavedSearchSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000050 /* CreateSavedSearchSheet.swift */; };
+		B10000010000000000000051 /* SavedSearchDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000051 /* SavedSearchDetailView.swift */; };
+		B10000010000000000000054 /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000054 /* PushNotificationManager.swift */; };
+		B10000010000000000000055 /* AppointmentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000055 /* AppointmentService.swift */; };
+		B10000010000000000000056 /* AppointmentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000056 /* AppointmentViewModel.swift */; };
+		B10000010000000000000057 /* AppointmentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000057 /* AppointmentsView.swift */; };
+		B10000010000000000000058 /* BookAppointmentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000058 /* BookAppointmentView.swift */; };
+		B10000010000000000000070 /* CalendarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000070 /* CalendarService.swift */; };
+		B10000010000000000000071 /* SavedPropertiesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000071 /* SavedPropertiesView.swift */; };
+		B10000010000000000000072 /* HiddenPropertiesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000072 /* HiddenPropertiesView.swift */; };
+		B10000010000000000000073 /* AgentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000073 /* AgentService.swift */; };
+		B10000010000000000000074 /* MyAgentCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000074 /* MyAgentCard.swift */; };
+		B10000010000000000000075 /* Agent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000075 /* Agent.swift */; };
+		B10000010000000000000076 /* MyClientsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000076 /* MyClientsView.swift */; };
+		B10000010000000000000077 /* SharedProperty.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000077 /* SharedProperty.swift */; };
+		B10000010000000000000078 /* ShareWithClientsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000078 /* ShareWithClientsSheet.swift */; };
+		B10000010000000000000079 /* SharedPropertiesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000079 /* SharedPropertiesView.swift */; };
+		B10000010000000000000080 /* ActivityTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000080 /* ActivityTracker.swift */; };
+		B10000010000000000000081 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000081 /* SessionManager.swift */; };
+		B10000010000000000000082 /* ClientAnalyticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000082 /* ClientAnalyticsView.swift */; };
+		B10000010000000000000083 /* PublicAnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000083 /* PublicAnalyticsService.swift */; };
+		B10000010000000000000090 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000090 /* LaunchScreen.storyboard */; };
+		B10000010000000000000091 /* NotificationItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000091 /* NotificationItem.swift */; };
+		B10000010000000000000092 /* NotificationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000092 /* NotificationStore.swift */; };
+		B10000010000000000000093 /* NotificationCenterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000093 /* NotificationCenterView.swift */; };
+		B10000010000000000000094 /* NotificationPreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000094 /* NotificationPreferencesView.swift */; };
+		B10000010000000000000095 /* PermissionsOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000095 /* PermissionsOnboardingView.swift */; };
+		B10000010000000000000096 /* DeleteAccountConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000096 /* DeleteAccountConfirmationView.swift */; };
+		B10000010000000000000097 /* AgentReferralView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000097 /* AgentReferralView.swift */; };
+		B10000010000000000000098 /* ReferralCodeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000098 /* ReferralCodeManager.swift */; };
+		B10000010000000000000099 /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000099 /* ToastManager.swift */; };
+		B10000010000000000000100 /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000100 /* ToastView.swift */; };
+		B10000010000000000000101 /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000101 /* DebugLog.swift */; };
+		B10000010000000000000102 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000102 /* NetworkMonitor.swift */; };
+		B10000010000000000000103 /* OfflineBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000103 /* OfflineBanner.swift */; };
+		B10000010000000000000104 /* ComparisonStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000104 /* ComparisonStore.swift */; };
+		B10000010000000000000105 /* PropertyComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000105 /* PropertyComparisonView.swift */; };
+		B10000010000000000000108 /* TransitStation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000108 /* TransitStation.swift */; };
+		B10000010000000000000109 /* TransitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000109 /* TransitService.swift */; };
+		B10000010000000000000110 /* SiteContactManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000110 /* SiteContactManager.swift */; };
+		B10000010000000000000111 /* ExclusiveListing.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000111 /* ExclusiveListing.swift */; };
+		B10000010000000000000112 /* ExclusiveListingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000112 /* ExclusiveListingService.swift */; };
+		B10000010000000000000113 /* ExclusiveListingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000113 /* ExclusiveListingsViewModel.swift */; };
+		B10000010000000000000114 /* ExclusiveListingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000114 /* ExclusiveListingsView.swift */; };
+		B10000010000000000000115 /* CreateExclusiveListingSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000115 /* CreateExclusiveListingSheet.swift */; };
+		B10000010000000000000116 /* ExclusiveListingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000116 /* ExclusiveListingDetailView.swift */; };
+		B10000010000000000000117 /* MapPreviewSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000117 /* MapPreviewSection.swift */; };
+		B10000010000000000000118 /* FullScreenPropertyMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000118 /* FullScreenPropertyMapView.swift */; };
+		B10000010000000000000119 /* PropertyDetailMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000119 /* PropertyDetailMapView.swift */; };
+		B10000010000000000000120 /* FloorLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000120 /* FloorLevel.swift */; };
+		B10000010000000000000121 /* FloorDiagramView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000121 /* FloorDiagramView.swift */; };
+		B10000010000000000000122 /* FloorSegmentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000122 /* FloorSegmentView.swift */; };
+		B10000010000000000000123 /* RoomDetailRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000123 /* RoomDetailRow.swift */; };
+		B10000010000000000000124 /* FloorDiagramHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000124 /* FloorDiagramHelpers.swift */; };
+		B10000010000000000000125 /* FloorDiagramTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000125 /* FloorDiagramTypes.swift */; };
+		B10000010000000000000126 /* GarageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000126 /* GarageView.swift */; };
+		B10000010000000000000127 /* CondoBuildingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000127 /* CondoBuildingView.swift */; };
+		B10000010000000000000128 /* TownhouseBuildingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000128 /* TownhouseBuildingView.swift */; };
+		B10000010000000000000129 /* AreaBreakdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000129 /* AreaBreakdownView.swift */; };
+		B10000010000000000000130 /* FloorLayoutModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000130 /* FloorLayoutModalView.swift */; };
+		B10000010000000000000131 /* InteractiveFloorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000131 /* InteractiveFloorView.swift */; };
+		B10000010000000000000132 /* RoomDetailPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000132 /* RoomDetailPopover.swift */; };
+		B10000010000000000000133 /* HVACOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000133 /* HVACOverlayView.swift */; };
+		B10000010000000000000134 /* FlooringIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000134 /* FlooringIndicatorView.swift */; };
+		B10000010000000000000135 /* OutdoorAreaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000135 /* OutdoorAreaView.swift */; };
+		B10000010000000000000136 /* LotVisualizationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000136 /* LotVisualizationView.swift */; };
+		B10000010000000000000137 /* MultiUnitStackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000137 /* MultiUnitStackView.swift */; };
+		B10000010000000000000200 /* IntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000200 /* IntegrationTests.swift */; };
+		B264EEC844A5FE71FDF8DF32 /* OpenHouse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79B19A4888573CDAF249BC42 /* OpenHouse.swift */; };
+		CMA0000010000000000000001 /* CMA.swift in Sources */ = {isa = PBXBuildFile; fileRef = CMA0000020000000000000001 /* CMA.swift */; };
+		CMA0000010000000000000002 /* CMASheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = CMA0000020000000000000002 /* CMASheet.swift */; };
+		CMA0000010000000000000003 /* CMAPDFView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CMA0000020000000000000003 /* CMAPDFView.swift */; };
+		NSE0000010000000000000001 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = NSE0000020000000000000001 /* NotificationService.swift */; };
+		NSE0000010000000000000002 /* NotificationServiceExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = NSE0000060000000000000001 /* NotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B30000030000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B40000040000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B50000050000000000000001;
+			remoteInfo = BMNBoston;
+		};
+		B30000030000000000000002 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B40000040000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B50000050000000000000001;
+			remoteInfo = BMNBoston;
+		};
+		NSE0000030000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B40000040000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = NSE0000050000000000000001;
+			remoteInfo = NotificationServiceExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		NSE00000E0000000000000001 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				NSE0000010000000000000002 /* NotificationServiceExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		49FAC9872F0F067D001D0FAF /* BMNBoston.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BMNBoston.entitlements; sourceTree = "<group>"; };
+		6AFF6E590DB4C88604129D01 /* OpenHouseService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OpenHouseService.swift; sourceTree = "<group>"; };
+		CMA0000020000000000000001 /* CMA.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CMA.swift; sourceTree = "<group>"; };
+		CMA0000020000000000000002 /* CMASheet.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CMASheet.swift; sourceTree = "<group>"; };
+		CMA0000020000000000000003 /* CMAPDFView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CMAPDFView.swift; sourceTree = "<group>"; };
+		79B19A4888573CDAF249BC42 /* OpenHouse.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OpenHouse.swift; sourceTree = "<group>"; };
+		863FFCAEE1B9B4BDB847EE82 /* OpenHouseListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OpenHouseListView.swift; sourceTree = "<group>"; };
+		AEE979E778BC40CCA21CC093 /* OfflineOpenHouseStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineOpenHouseStore.swift; sourceTree = "<group>"; };
+		K20000020000000000000001 /* KioskSignInView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KioskSignInView.swift; sourceTree = "<group>"; };
+		K20000020000000000000002 /* KioskSignInFormView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KioskSignInFormView.swift; sourceTree = "<group>"; };
+		B20000020000000000000001 /* BMNBostonApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMNBostonApp.swift; sourceTree = "<group>"; };
+		B20000020000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		B20000020000000000000003 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		B20000020000000000000004 /* Environment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Environment.swift; sourceTree = "<group>"; };
+		B20000020000000000000005 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		B20000020000000000000006 /* APIEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIEndpoint.swift; sourceTree = "<group>"; };
+		B20000020000000000000007 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
+		B20000020000000000000008 /* TokenManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenManager.swift; sourceTree = "<group>"; };
+		B20000020000000000000009 /* Property.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Property.swift; sourceTree = "<group>"; };
+		B20000020000000000000010 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		B20000020000000000000011 /* SavedSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedSearch.swift; sourceTree = "<group>"; };
+		B20000020000000000000012 /* Appointment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Appointment.swift; sourceTree = "<group>"; };
+		B20000020000000000000013 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
+		B20000020000000000000014 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
+		B20000020000000000000015 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		B20000020000000000000016 /* PropertySearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertySearchView.swift; sourceTree = "<group>"; };
+		B20000020000000000000017 /* PropertySearchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertySearchViewModel.swift; sourceTree = "<group>"; };
+		B20000020000000000000018 /* PropertyDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyDetailView.swift; sourceTree = "<group>"; };
+		B20000020000000000000019 /* PropertyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyCard.swift; sourceTree = "<group>"; };
+		B20000020000000000000020 /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
+		B20000020000000000000021 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B20000020000000000000022 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		B20000020000000000000023 /* BMNBostonTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMNBostonTests.swift; sourceTree = "<group>"; };
+		B20000020000000000000024 /* BMNBostonUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMNBostonUITests.swift; sourceTree = "<group>"; };
+		B20000020000000000000025 /* BMNBostonUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMNBostonUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		B20000020000000000000026 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B20000020000000000000027 /* PropertyMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyMapView.swift; sourceTree = "<group>"; };
+		B20000020000000000000030 /* FilterComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterComponents.swift; sourceTree = "<group>"; };
+		B20000020000000000000031 /* AdvancedFilterModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedFilterModal.swift; sourceTree = "<group>"; };
+		B20000020000000000000032 /* SearchAutocompleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchAutocompleteView.swift; sourceTree = "<group>"; };
+		B20000020000000000000033 /* SearchConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchConstants.swift; sourceTree = "<group>"; };
+		B20000020000000000000034 /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
+		B20000020000000000000035 /* AppearanceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceManager.swift; sourceTree = "<group>"; };
+		B20000020000000000000036 /* GeocodingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeocodingService.swift; sourceTree = "<group>"; };
+		B20000020000000000000037 /* CityBoundaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CityBoundaryService.swift; sourceTree = "<group>"; };
+		B20000020000000000000038 /* SearchModalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchModalView.swift; sourceTree = "<group>"; };
+		B20000020000000000000044 /* BoundaryResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoundaryResponse.swift; sourceTree = "<group>"; };
+		B20000020000000000000045 /* School.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = School.swift; sourceTree = "<group>"; };
+		B20000020000000000000046 /* SchoolService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchoolService.swift; sourceTree = "<group>"; };
+		B20000020000000000000047 /* NearbySchoolsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbySchoolsSection.swift; sourceTree = "<group>"; };
+		B20000020000000000000048 /* SavedSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedSearchService.swift; sourceTree = "<group>"; };
+		B20000020000000000000049 /* SavedSearchesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedSearchesView.swift; sourceTree = "<group>"; };
+		B20000020000000000000050 /* CreateSavedSearchSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSavedSearchSheet.swift; sourceTree = "<group>"; };
+		B20000020000000000000051 /* SavedSearchDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedSearchDetailView.swift; sourceTree = "<group>"; };
+		B20000020000000000000054 /* PushNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationManager.swift; sourceTree = "<group>"; };
+		B20000020000000000000055 /* AppointmentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppointmentService.swift; sourceTree = "<group>"; };
+		B20000020000000000000056 /* AppointmentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppointmentViewModel.swift; sourceTree = "<group>"; };
+		B20000020000000000000057 /* AppointmentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppointmentsView.swift; sourceTree = "<group>"; };
+		B20000020000000000000058 /* BookAppointmentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookAppointmentView.swift; sourceTree = "<group>"; };
+		B20000020000000000000070 /* CalendarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarService.swift; sourceTree = "<group>"; };
+		B20000020000000000000071 /* SavedPropertiesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPropertiesView.swift; sourceTree = "<group>"; };
+		B20000020000000000000072 /* HiddenPropertiesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HiddenPropertiesView.swift; sourceTree = "<group>"; };
+		B20000020000000000000073 /* AgentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentService.swift; sourceTree = "<group>"; };
+		B20000020000000000000074 /* MyAgentCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyAgentCard.swift; sourceTree = "<group>"; };
+		B20000020000000000000075 /* Agent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Agent.swift; sourceTree = "<group>"; };
+		B20000020000000000000076 /* MyClientsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyClientsView.swift; sourceTree = "<group>"; };
+		B20000020000000000000077 /* SharedProperty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedProperty.swift; sourceTree = "<group>"; };
+		B20000020000000000000078 /* ShareWithClientsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareWithClientsSheet.swift; sourceTree = "<group>"; };
+		B20000020000000000000079 /* SharedPropertiesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedPropertiesView.swift; sourceTree = "<group>"; };
+		B20000020000000000000080 /* ActivityTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityTracker.swift; sourceTree = "<group>"; };
+		B20000020000000000000081 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
+		B20000020000000000000082 /* ClientAnalyticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientAnalyticsView.swift; sourceTree = "<group>"; };
+		B20000020000000000000083 /* PublicAnalyticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicAnalyticsService.swift; sourceTree = "<group>"; };
+		B20000020000000000000090 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		B20000020000000000000091 /* NotificationItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationItem.swift; sourceTree = "<group>"; };
+		B20000020000000000000092 /* NotificationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationStore.swift; sourceTree = "<group>"; };
+		B20000020000000000000093 /* NotificationCenterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCenterView.swift; sourceTree = "<group>"; };
+		B20000020000000000000094 /* NotificationPreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPreferencesView.swift; sourceTree = "<group>"; };
+		B20000020000000000000095 /* PermissionsOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsOnboardingView.swift; sourceTree = "<group>"; };
+		B20000020000000000000096 /* DeleteAccountConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteAccountConfirmationView.swift; sourceTree = "<group>"; };
+		B20000020000000000000097 /* AgentReferralView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentReferralView.swift; sourceTree = "<group>"; };
+		B20000020000000000000098 /* ReferralCodeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferralCodeManager.swift; sourceTree = "<group>"; };
+		B20000020000000000000099 /* ToastManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
+		B20000020000000000000100 /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
+		B20000020000000000000101 /* DebugLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
+		B20000020000000000000102 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		B20000020000000000000103 /* OfflineBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineBanner.swift; sourceTree = "<group>"; };
+		B20000020000000000000104 /* ComparisonStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComparisonStore.swift; sourceTree = "<group>"; };
+		B20000020000000000000105 /* PropertyComparisonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyComparisonView.swift; sourceTree = "<group>"; };
+		B20000020000000000000108 /* TransitStation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitStation.swift; sourceTree = "<group>"; };
+		B20000020000000000000109 /* TransitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitService.swift; sourceTree = "<group>"; };
+		B20000020000000000000110 /* SiteContactManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteContactManager.swift; sourceTree = "<group>"; };
+		B20000020000000000000111 /* ExclusiveListing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExclusiveListing.swift; sourceTree = "<group>"; };
+		B20000020000000000000112 /* ExclusiveListingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExclusiveListingService.swift; sourceTree = "<group>"; };
+		B20000020000000000000113 /* ExclusiveListingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExclusiveListingsViewModel.swift; sourceTree = "<group>"; };
+		B20000020000000000000114 /* ExclusiveListingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExclusiveListingsView.swift; sourceTree = "<group>"; };
+		B20000020000000000000115 /* CreateExclusiveListingSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateExclusiveListingSheet.swift; sourceTree = "<group>"; };
+		B20000020000000000000116 /* ExclusiveListingDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExclusiveListingDetailView.swift; sourceTree = "<group>"; };
+		B20000020000000000000117 /* MapPreviewSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPreviewSection.swift; sourceTree = "<group>"; };
+		B20000020000000000000118 /* FullScreenPropertyMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullScreenPropertyMapView.swift; sourceTree = "<group>"; };
+		B20000020000000000000119 /* PropertyDetailMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyDetailMapView.swift; sourceTree = "<group>"; };
+		B20000020000000000000120 /* FloorLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloorLevel.swift; sourceTree = "<group>"; };
+		B20000020000000000000121 /* FloorDiagramView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloorDiagramView.swift; sourceTree = "<group>"; };
+		B20000020000000000000122 /* FloorSegmentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloorSegmentView.swift; sourceTree = "<group>"; };
+		B20000020000000000000123 /* RoomDetailRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomDetailRow.swift; sourceTree = "<group>"; };
+		B20000020000000000000124 /* FloorDiagramHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloorDiagramHelpers.swift; sourceTree = "<group>"; };
+		B20000020000000000000125 /* FloorDiagramTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloorDiagramTypes.swift; sourceTree = "<group>"; };
+		B20000020000000000000126 /* GarageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GarageView.swift; sourceTree = "<group>"; };
+		B20000020000000000000127 /* CondoBuildingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CondoBuildingView.swift; sourceTree = "<group>"; };
+		B20000020000000000000128 /* TownhouseBuildingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TownhouseBuildingView.swift; sourceTree = "<group>"; };
+		B20000020000000000000129 /* AreaBreakdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaBreakdownView.swift; sourceTree = "<group>"; };
+		B20000020000000000000130 /* FloorLayoutModalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloorLayoutModalView.swift; sourceTree = "<group>"; };
+		B20000020000000000000131 /* InteractiveFloorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InteractiveFloorView.swift; sourceTree = "<group>"; };
+		B20000020000000000000132 /* RoomDetailPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomDetailPopover.swift; sourceTree = "<group>"; };
+		B20000020000000000000133 /* HVACOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HVACOverlayView.swift; sourceTree = "<group>"; };
+		B20000020000000000000134 /* FlooringIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlooringIndicatorView.swift; sourceTree = "<group>"; };
+		B20000020000000000000135 /* OutdoorAreaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutdoorAreaView.swift; sourceTree = "<group>"; };
+		B20000020000000000000136 /* LotVisualizationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LotVisualizationView.swift; sourceTree = "<group>"; };
+		B20000020000000000000137 /* MultiUnitStackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiUnitStackView.swift; sourceTree = "<group>"; };
+		B20000020000000000000200 /* IntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationTests.swift; sourceTree = "<group>"; };
+		B60000060000000000000001 /* BMNBoston.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BMNBoston.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B60000060000000000000002 /* BMNBostonTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BMNBostonTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B60000060000000000000003 /* BMNBostonUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BMNBostonUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		NSE0000020000000000000001 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		NSE0000020000000000000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		NSE0000020000000000000003 /* NotificationServiceExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = NotificationServiceExtension.entitlements; sourceTree = "<group>"; };
+		NSE0000060000000000000001 /* NotificationServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B70000070000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B70000070000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B70000070000000000000003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		NSE0000070000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		6310A312F8CAB2B917C4F3C5 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				863FFCAEE1B9B4BDB847EE82 /* OpenHouseListView.swift */,
+				K20000020000000000000001 /* KioskSignInView.swift */,
+				K20000020000000000000002 /* KioskSignInFormView.swift */,
+			);
+			name = Views;
+			path = Views;
+			sourceTree = "<group>";
+		};
+		9CD1199330391DFE604EE597 /* OpenHouse */ = {
+			isa = PBXGroup;
+			children = (
+				AD0916CE8EBF8EB83EB35D89 /* Storage */,
+				6310A312F8CAB2B917C4F3C5 /* Views */,
+			);
+			name = OpenHouse;
+			path = OpenHouse;
+			sourceTree = "<group>";
+		};
+		AD0916CE8EBF8EB83EB35D89 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				AEE979E778BC40CCA21CC093 /* OfflineOpenHouseStore.swift */,
+			);
+			name = Storage;
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		CMA0000080000000000000001 /* CMA */ = {
+			isa = PBXGroup;
+			children = (
+				CMA0000080000000000000002 /* Views */,
+			);
+			path = CMA;
+			sourceTree = "<group>";
+		};
+		CMA0000080000000000000002 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				CMA0000020000000000000002 /* CMASheet.swift */,
+				CMA0000020000000000000003 /* CMAPDFView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000000 = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000001 /* BMNBoston */,
+				NSE0000080000000000000001 /* NotificationServiceExtension */,
+				B80000080000000000000050 /* BMNBostonTests */,
+				B80000080000000000000051 /* BMNBostonUITests */,
+				B80000080000000000000099 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B80000080000000000000001 /* BMNBoston */ = {
+			isa = PBXGroup;
+			children = (
+				49FAC9872F0F067D001D0FAF /* BMNBoston.entitlements */,
+				B20000020000000000000026 /* Info.plist */,
+				B80000080000000000000002 /* App */,
+				B80000080000000000000010 /* Core */,
+				B80000080000000000000020 /* Features */,
+				B80000080000000000000030 /* UI */,
+				B80000080000000000000040 /* Resources */,
+			);
+			path = BMNBoston;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000002 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000001 /* BMNBostonApp.swift */,
+				B20000020000000000000002 /* ContentView.swift */,
+				B20000020000000000000003 /* MainTabView.swift */,
+				B20000020000000000000004 /* Environment.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000010 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000011 /* Networking */,
+				B80000080000000000000012 /* Models */,
+				B80000080000000000000013 /* Storage */,
+				B80000080000000000000014 /* Constants */,
+				B80000080000000000000015 /* Services */,
+				B80000080000000000000083 /* Analytics */,
+				B80000080000000000000101 /* Utilities */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000011 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000005 /* APIClient.swift */,
+				B20000020000000000000006 /* APIEndpoint.swift */,
+				B20000020000000000000007 /* APIError.swift */,
+				B20000020000000000000008 /* TokenManager.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000012 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000009 /* Property.swift */,
+				B20000020000000000000010 /* User.swift */,
+				B20000020000000000000011 /* SavedSearch.swift */,
+				B20000020000000000000012 /* Appointment.swift */,
+				B20000020000000000000044 /* BoundaryResponse.swift */,
+				B20000020000000000000045 /* School.swift */,
+				B20000020000000000000075 /* Agent.swift */,
+				B20000020000000000000077 /* SharedProperty.swift */,
+				B20000020000000000000091 /* NotificationItem.swift */,
+				B20000020000000000000108 /* TransitStation.swift */,
+				B20000020000000000000111 /* ExclusiveListing.swift */,
+				B20000020000000000000120 /* FloorLevel.swift */,
+				79B19A4888573CDAF249BC42 /* OpenHouse.swift */,
+				CMA0000020000000000000001 /* CMA.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000013 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000013 /* KeychainManager.swift */,
+				B20000020000000000000035 /* AppearanceManager.swift */,
+				B20000020000000000000092 /* NotificationStore.swift */,
+				B20000020000000000000098 /* ReferralCodeManager.swift */,
+				B20000020000000000000099 /* ToastManager.swift */,
+				B20000020000000000000104 /* ComparisonStore.swift */,
+				B20000020000000000000110 /* SiteContactManager.swift */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000014 /* Constants */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000033 /* SearchConstants.swift */,
+				B20000020000000000000034 /* AppConstants.swift */,
+			);
+			path = Constants;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000015 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000036 /* GeocodingService.swift */,
+				B20000020000000000000037 /* CityBoundaryService.swift */,
+				B20000020000000000000046 /* SchoolService.swift */,
+				B20000020000000000000048 /* SavedSearchService.swift */,
+				B20000020000000000000054 /* PushNotificationManager.swift */,
+				B20000020000000000000055 /* AppointmentService.swift */,
+				B20000020000000000000070 /* CalendarService.swift */,
+				B20000020000000000000073 /* AgentService.swift */,
+				B20000020000000000000080 /* ActivityTracker.swift */,
+				B20000020000000000000081 /* SessionManager.swift */,
+				B20000020000000000000102 /* NetworkMonitor.swift */,
+				B20000020000000000000109 /* TransitService.swift */,
+				B20000020000000000000112 /* ExclusiveListingService.swift */,
+				6AFF6E590DB4C88604129D01 /* OpenHouseService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000020 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000021 /* Authentication */,
+				B80000080000000000000024 /* PropertySearch */,
+				B80000080000000000000052 /* SavedSearches */,
+				B80000080000000000000060 /* Appointments */,
+				B80000080000000000000073 /* SavedProperties */,
+				B80000080000000000000075 /* HiddenProperties */,
+				B80000080000000000000077 /* AgentClients */,
+				B80000080000000000000080 /* SharedProperties */,
+				B80000080000000000000094 /* Notifications */,
+				B80000080000000000000096 /* Onboarding */,
+				B80000080000000000000098 /* Profile */,
+				B80000080000000000000106 /* PropertyComparison */,
+				B80000080000000000000117 /* ExclusiveListings */,
+				9CD1199330391DFE604EE597 /* OpenHouse */,
+				CMA0000080000000000000001 /* CMA */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000021 /* Authentication */ = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000022 /* ViewModels */,
+				B80000080000000000000023 /* Views */,
+			);
+			path = Authentication;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000022 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000014 /* AuthViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000023 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000096 /* DeleteAccountConfirmationView.swift */,
+				B20000020000000000000015 /* LoginView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000024 /* PropertySearch */ = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000025 /* ViewModels */,
+				B80000080000000000000026 /* Views */,
+			);
+			path = PropertySearch;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000025 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000017 /* PropertySearchViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000026 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000016 /* PropertySearchView.swift */,
+				B20000020000000000000018 /* PropertyDetailView.swift */,
+				B20000020000000000000027 /* PropertyMapView.swift */,
+				B20000020000000000000117 /* MapPreviewSection.swift */,
+				B20000020000000000000118 /* FullScreenPropertyMapView.swift */,
+				B20000020000000000000119 /* PropertyDetailMapView.swift */,
+				B20000020000000000000031 /* AdvancedFilterModal.swift */,
+				B20000020000000000000032 /* SearchAutocompleteView.swift */,
+				B20000020000000000000038 /* SearchModalView.swift */,
+				B20000020000000000000047 /* NearbySchoolsSection.swift */,
+				B80000080000000000000120 /* FloorDiagram */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000030 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000031 /* Components */,
+				B80000080000000000000032 /* Styles */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000031 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000019 /* PropertyCard.swift */,
+				B20000020000000000000030 /* FilterComponents.swift */,
+				B20000020000000000000074 /* MyAgentCard.swift */,
+				B20000020000000000000100 /* ToastView.swift */,
+				B20000020000000000000103 /* OfflineBanner.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000032 /* Styles */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000020 /* Colors.swift */,
+			);
+			path = Styles;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000040 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000021 /* Assets.xcassets */,
+				B80000080000000000000041 /* Preview Content */,
+				B20000020000000000000090 /* LaunchScreen.storyboard */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000041 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000022 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		B80000080000000000000050 /* BMNBostonTests */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000023 /* BMNBostonTests.swift */,
+				B20000020000000000000200 /* IntegrationTests.swift */,
+			);
+			path = BMNBostonTests;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000051 /* BMNBostonUITests */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000024 /* BMNBostonUITests.swift */,
+				B20000020000000000000025 /* BMNBostonUITestsLaunchTests.swift */,
+			);
+			path = BMNBostonUITests;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000052 /* SavedSearches */ = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000053 /* Views */,
+			);
+			path = SavedSearches;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000053 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000049 /* SavedSearchesView.swift */,
+				B20000020000000000000050 /* CreateSavedSearchSheet.swift */,
+				B20000020000000000000051 /* SavedSearchDetailView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000060 /* Appointments */ = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000061 /* ViewModels */,
+				B80000080000000000000062 /* Views */,
+			);
+			path = Appointments;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000061 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000056 /* AppointmentViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000062 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000057 /* AppointmentsView.swift */,
+				B20000020000000000000058 /* BookAppointmentView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000073 /* SavedProperties */ = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000074 /* Views */,
+			);
+			path = SavedProperties;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000074 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000071 /* SavedPropertiesView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000075 /* HiddenProperties */ = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000076 /* Views */,
+			);
+			path = HiddenProperties;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000076 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000072 /* HiddenPropertiesView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000077 /* AgentClients */ = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000078 /* Views */,
+			);
+			path = AgentClients;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000078 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000076 /* MyClientsView.swift */,
+				B20000020000000000000082 /* ClientAnalyticsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000080 /* SharedProperties */ = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000081 /* Views */,
+			);
+			path = SharedProperties;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000081 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000078 /* ShareWithClientsSheet.swift */,
+				B20000020000000000000079 /* SharedPropertiesView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000083 /* Analytics */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000083 /* PublicAnalyticsService.swift */,
+			);
+			path = Analytics;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000094 /* Notifications */ = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000095 /* Views */,
+			);
+			path = Notifications;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000095 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000093 /* NotificationCenterView.swift */,
+				B20000020000000000000094 /* NotificationPreferencesView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000096 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000097 /* Views */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000097 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000095 /* PermissionsOnboardingView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000098 /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000100 /* Views */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000099 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B60000060000000000000001 /* BMNBoston.app */,
+				B60000060000000000000002 /* BMNBostonTests.xctest */,
+				B60000060000000000000003 /* BMNBostonUITests.xctest */,
+				NSE0000060000000000000001 /* NotificationServiceExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000100 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000097 /* AgentReferralView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000101 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000101 /* DebugLog.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000106 /* PropertyComparison */ = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000107 /* Views */,
+			);
+			path = PropertyComparison;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000107 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000105 /* PropertyComparisonView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000117 /* ExclusiveListings */ = {
+			isa = PBXGroup;
+			children = (
+				B80000080000000000000118 /* ViewModels */,
+				B80000080000000000000119 /* Views */,
+			);
+			path = ExclusiveListings;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000118 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000113 /* ExclusiveListingsViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000119 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000114 /* ExclusiveListingsView.swift */,
+				B20000020000000000000115 /* CreateExclusiveListingSheet.swift */,
+				B20000020000000000000116 /* ExclusiveListingDetailView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B80000080000000000000120 /* FloorDiagram */ = {
+			isa = PBXGroup;
+			children = (
+				B20000020000000000000121 /* FloorDiagramView.swift */,
+				B20000020000000000000122 /* FloorSegmentView.swift */,
+				B20000020000000000000123 /* RoomDetailRow.swift */,
+				B20000020000000000000124 /* FloorDiagramHelpers.swift */,
+				B20000020000000000000125 /* FloorDiagramTypes.swift */,
+				B20000020000000000000126 /* GarageView.swift */,
+				B20000020000000000000127 /* CondoBuildingView.swift */,
+				B20000020000000000000128 /* TownhouseBuildingView.swift */,
+				B20000020000000000000129 /* AreaBreakdownView.swift */,
+				B20000020000000000000130 /* FloorLayoutModalView.swift */,
+				B20000020000000000000131 /* InteractiveFloorView.swift */,
+				B20000020000000000000132 /* RoomDetailPopover.swift */,
+				B20000020000000000000133 /* HVACOverlayView.swift */,
+				B20000020000000000000134 /* FlooringIndicatorView.swift */,
+				B20000020000000000000135 /* OutdoorAreaView.swift */,
+				B20000020000000000000136 /* LotVisualizationView.swift */,
+				B20000020000000000000137 /* MultiUnitStackView.swift */,
+			);
+			path = FloorDiagram;
+			sourceTree = "<group>";
+		};
+		NSE0000080000000000000001 /* NotificationServiceExtension */ = {
+			isa = PBXGroup;
+			children = (
+				NSE0000020000000000000001 /* NotificationService.swift */,
+				NSE0000020000000000000002 /* Info.plist */,
+				NSE0000020000000000000003 /* NotificationServiceExtension.entitlements */,
+			);
+			path = NotificationServiceExtension;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B50000050000000000000001 /* BMNBoston */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C20000020000000000000001 /* Build configuration list for PBXNativeTarget "BMNBoston" */;
+			buildPhases = (
+				B90000090000000000000001 /* Sources */,
+				B70000070000000000000001 /* Frameworks */,
+				BA00000A0000000000000001 /* Resources */,
+				NSE00000E0000000000000001 /* Embed App Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				NSE00000B0000000000000001 /* PBXTargetDependency */,
+			);
+			name = BMNBoston;
+			productName = BMNBoston;
+			productReference = B60000060000000000000001 /* BMNBoston.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B50000050000000000000002 /* BMNBostonTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C20000020000000000000002 /* Build configuration list for PBXNativeTarget "BMNBostonTests" */;
+			buildPhases = (
+				B90000090000000000000002 /* Sources */,
+				B70000070000000000000002 /* Frameworks */,
+				BA00000A0000000000000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BB00000B0000000000000001 /* PBXTargetDependency */,
+			);
+			name = BMNBostonTests;
+			productName = BMNBostonTests;
+			productReference = B60000060000000000000002 /* BMNBostonTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		B50000050000000000000003 /* BMNBostonUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C20000020000000000000003 /* Build configuration list for PBXNativeTarget "BMNBostonUITests" */;
+			buildPhases = (
+				B90000090000000000000003 /* Sources */,
+				B70000070000000000000003 /* Frameworks */,
+				BA00000A0000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BB00000B0000000000000002 /* PBXTargetDependency */,
+			);
+			name = BMNBostonUITests;
+			productName = BMNBostonUITests;
+			productReference = B60000060000000000000003 /* BMNBostonUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		NSE0000050000000000000001 /* NotificationServiceExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = NSE00000C0000000000000001 /* Build configuration list for PBXNativeTarget "NotificationServiceExtension" */;
+			buildPhases = (
+				NSE0000090000000000000001 /* Sources */,
+				NSE0000070000000000000001 /* Frameworks */,
+				NSE00000A0000000000000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = NotificationServiceExtension;
+			productName = NotificationServiceExtension;
+			productReference = NSE0000060000000000000001 /* NotificationServiceExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B40000040000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					B50000050000000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					B50000050000000000000002 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = B50000050000000000000001;
+					};
+					B50000050000000000000003 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = B50000050000000000000001;
+					};
+					NSE0000050000000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = C20000020000000000000000 /* Build configuration list for PBXProject "BMNBoston" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = B80000080000000000000000;
+			productRefGroup = B80000080000000000000099 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B50000050000000000000001 /* BMNBoston */,
+				B50000050000000000000002 /* BMNBostonTests */,
+				B50000050000000000000003 /* BMNBostonUITests */,
+				NSE0000050000000000000001 /* NotificationServiceExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		BA00000A0000000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000010000000000000022 /* Preview Assets.xcassets in Resources */,
+				B10000010000000000000021 /* Assets.xcassets in Resources */,
+				B10000010000000000000090 /* LaunchScreen.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BA00000A0000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BA00000A0000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		NSE00000A0000000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		B90000090000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000010000000000000001 /* BMNBostonApp.swift in Sources */,
+				B10000010000000000000002 /* ContentView.swift in Sources */,
+				B10000010000000000000003 /* MainTabView.swift in Sources */,
+				B10000010000000000000004 /* Environment.swift in Sources */,
+				B10000010000000000000005 /* APIClient.swift in Sources */,
+				B10000010000000000000006 /* APIEndpoint.swift in Sources */,
+				B10000010000000000000007 /* APIError.swift in Sources */,
+				B10000010000000000000008 /* TokenManager.swift in Sources */,
+				B10000010000000000000009 /* Property.swift in Sources */,
+				B10000010000000000000010 /* User.swift in Sources */,
+				B10000010000000000000011 /* SavedSearch.swift in Sources */,
+				B10000010000000000000012 /* Appointment.swift in Sources */,
+				B10000010000000000000013 /* KeychainManager.swift in Sources */,
+				B10000010000000000000035 /* AppearanceManager.swift in Sources */,
+				B10000010000000000000014 /* AuthViewModel.swift in Sources */,
+				B10000010000000000000015 /* LoginView.swift in Sources */,
+				B10000010000000000000016 /* PropertySearchView.swift in Sources */,
+				B10000010000000000000017 /* PropertySearchViewModel.swift in Sources */,
+				B10000010000000000000018 /* PropertyDetailView.swift in Sources */,
+				B10000010000000000000027 /* PropertyMapView.swift in Sources */,
+				B10000010000000000000117 /* MapPreviewSection.swift in Sources */,
+				B10000010000000000000118 /* FullScreenPropertyMapView.swift in Sources */,
+				B10000010000000000000119 /* PropertyDetailMapView.swift in Sources */,
+				B10000010000000000000019 /* PropertyCard.swift in Sources */,
+				B10000010000000000000020 /* Colors.swift in Sources */,
+				B10000010000000000000030 /* FilterComponents.swift in Sources */,
+				B10000010000000000000031 /* AdvancedFilterModal.swift in Sources */,
+				B10000010000000000000032 /* SearchAutocompleteView.swift in Sources */,
+				B10000010000000000000033 /* SearchConstants.swift in Sources */,
+				B10000010000000000000034 /* AppConstants.swift in Sources */,
+				B10000010000000000000036 /* GeocodingService.swift in Sources */,
+				B10000010000000000000037 /* CityBoundaryService.swift in Sources */,
+				B10000010000000000000038 /* SearchModalView.swift in Sources */,
+				B10000010000000000000044 /* BoundaryResponse.swift in Sources */,
+				B10000010000000000000045 /* School.swift in Sources */,
+				B10000010000000000000046 /* SchoolService.swift in Sources */,
+				B10000010000000000000047 /* NearbySchoolsSection.swift in Sources */,
+				B10000010000000000000048 /* SavedSearchService.swift in Sources */,
+				B10000010000000000000049 /* SavedSearchesView.swift in Sources */,
+				B10000010000000000000050 /* CreateSavedSearchSheet.swift in Sources */,
+				B10000010000000000000051 /* SavedSearchDetailView.swift in Sources */,
+				B10000010000000000000054 /* PushNotificationManager.swift in Sources */,
+				B10000010000000000000055 /* AppointmentService.swift in Sources */,
+				B10000010000000000000070 /* CalendarService.swift in Sources */,
+				B10000010000000000000056 /* AppointmentViewModel.swift in Sources */,
+				B10000010000000000000057 /* AppointmentsView.swift in Sources */,
+				B10000010000000000000058 /* BookAppointmentView.swift in Sources */,
+				B10000010000000000000071 /* SavedPropertiesView.swift in Sources */,
+				B10000010000000000000072 /* HiddenPropertiesView.swift in Sources */,
+				B10000010000000000000073 /* AgentService.swift in Sources */,
+				B10000010000000000000074 /* MyAgentCard.swift in Sources */,
+				B10000010000000000000075 /* Agent.swift in Sources */,
+				B10000010000000000000076 /* MyClientsView.swift in Sources */,
+				B10000010000000000000077 /* SharedProperty.swift in Sources */,
+				B10000010000000000000078 /* ShareWithClientsSheet.swift in Sources */,
+				B10000010000000000000079 /* SharedPropertiesView.swift in Sources */,
+				B10000010000000000000080 /* ActivityTracker.swift in Sources */,
+				B10000010000000000000081 /* SessionManager.swift in Sources */,
+				B10000010000000000000082 /* ClientAnalyticsView.swift in Sources */,
+				B10000010000000000000083 /* PublicAnalyticsService.swift in Sources */,
+				B10000010000000000000091 /* NotificationItem.swift in Sources */,
+				B10000010000000000000092 /* NotificationStore.swift in Sources */,
+				B10000010000000000000093 /* NotificationCenterView.swift in Sources */,
+				B10000010000000000000094 /* NotificationPreferencesView.swift in Sources */,
+				B10000010000000000000095 /* PermissionsOnboardingView.swift in Sources */,
+				B10000010000000000000096 /* DeleteAccountConfirmationView.swift in Sources */,
+				B10000010000000000000097 /* AgentReferralView.swift in Sources */,
+				B10000010000000000000098 /* ReferralCodeManager.swift in Sources */,
+				B10000010000000000000099 /* ToastManager.swift in Sources */,
+				B10000010000000000000100 /* ToastView.swift in Sources */,
+				B10000010000000000000101 /* DebugLog.swift in Sources */,
+				B10000010000000000000102 /* NetworkMonitor.swift in Sources */,
+				B10000010000000000000103 /* OfflineBanner.swift in Sources */,
+				B10000010000000000000104 /* ComparisonStore.swift in Sources */,
+				B10000010000000000000105 /* PropertyComparisonView.swift in Sources */,
+				B10000010000000000000108 /* TransitStation.swift in Sources */,
+				B10000010000000000000109 /* TransitService.swift in Sources */,
+				B10000010000000000000110 /* SiteContactManager.swift in Sources */,
+				B10000010000000000000111 /* ExclusiveListing.swift in Sources */,
+				B10000010000000000000112 /* ExclusiveListingService.swift in Sources */,
+				B10000010000000000000113 /* ExclusiveListingsViewModel.swift in Sources */,
+				B10000010000000000000114 /* ExclusiveListingsView.swift in Sources */,
+				B10000010000000000000115 /* CreateExclusiveListingSheet.swift in Sources */,
+				B10000010000000000000116 /* ExclusiveListingDetailView.swift in Sources */,
+				B10000010000000000000120 /* FloorLevel.swift in Sources */,
+				B10000010000000000000121 /* FloorDiagramView.swift in Sources */,
+				B10000010000000000000122 /* FloorSegmentView.swift in Sources */,
+				B10000010000000000000123 /* RoomDetailRow.swift in Sources */,
+				B10000010000000000000124 /* FloorDiagramHelpers.swift in Sources */,
+				B10000010000000000000125 /* FloorDiagramTypes.swift in Sources */,
+				B10000010000000000000130 /* FloorLayoutModalView.swift in Sources */,
+				B10000010000000000000131 /* InteractiveFloorView.swift in Sources */,
+				B10000010000000000000132 /* RoomDetailPopover.swift in Sources */,
+				B10000010000000000000133 /* HVACOverlayView.swift in Sources */,
+				B10000010000000000000134 /* FlooringIndicatorView.swift in Sources */,
+				B10000010000000000000135 /* OutdoorAreaView.swift in Sources */,
+				B10000010000000000000136 /* LotVisualizationView.swift in Sources */,
+				B10000010000000000000137 /* MultiUnitStackView.swift in Sources */,
+				B10000010000000000000126 /* GarageView.swift in Sources */,
+				B10000010000000000000127 /* CondoBuildingView.swift in Sources */,
+				B10000010000000000000128 /* TownhouseBuildingView.swift in Sources */,
+				B10000010000000000000129 /* AreaBreakdownView.swift in Sources */,
+				B264EEC844A5FE71FDF8DF32 /* OpenHouse.swift in Sources */,
+				97A55F1B61AC0B12967C78FC /* OpenHouseService.swift in Sources */,
+				9F2202834CCED3DC6738DCD1 /* OfflineOpenHouseStore.swift in Sources */,
+				78850C883C86D55FCDAA28AE /* OpenHouseListView.swift in Sources */,
+				K10000010000000000000001 /* KioskSignInView.swift in Sources */,
+				K10000010000000000000002 /* KioskSignInFormView.swift in Sources */,
+				CMA0000010000000000000001 /* CMA.swift in Sources */,
+				CMA0000010000000000000002 /* CMASheet.swift in Sources */,
+				CMA0000010000000000000003 /* CMAPDFView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B90000090000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000010000000000000023 /* BMNBostonTests.swift in Sources */,
+				B10000010000000000000200 /* IntegrationTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B90000090000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000010000000000000024 /* BMNBostonUITests.swift in Sources */,
+				B10000010000000000000025 /* BMNBostonUITestsLaunchTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		NSE0000090000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				NSE0000010000000000000001 /* NotificationService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		BB00000B0000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B50000050000000000000001 /* BMNBoston */;
+			targetProxy = B30000030000000000000001 /* PBXContainerItemProxy */;
+		};
+		BB00000B0000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B50000050000000000000001 /* BMNBoston */;
+			targetProxy = B30000030000000000000002 /* PBXContainerItemProxy */;
+		};
+		NSE00000B0000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = NSE0000050000000000000001 /* NotificationServiceExtension */;
+			targetProxy = NSE0000030000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		D10000010000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		D10000010000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		D10000010000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BMNBoston/BMNBoston.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 391;
+				DEVELOPMENT_ASSET_PATHS = "\"BMNBoston/Resources/Preview Content\"";
+				DEVELOPMENT_TEAM = 938F7PURZS;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BMNBoston/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.6;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bmnboston.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		D10000010000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BMNBoston/BMNBoston.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 391;
+				DEVELOPMENT_ASSET_PATHS = "\"BMNBoston/Resources/Preview Content\"";
+				DEVELOPMENT_TEAM = 938F7PURZS;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BMNBoston/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.6;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bmnboston.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		D10000010000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 391;
+				DEVELOPMENT_TEAM = 938F7PURZS;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.6;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bmnboston.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BMNBoston.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BMNBoston";
+			};
+			name = Debug;
+		};
+		D10000010000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 391;
+				DEVELOPMENT_TEAM = 938F7PURZS;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.6;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bmnboston.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BMNBoston.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BMNBoston";
+			};
+			name = Release;
+		};
+		D10000010000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 391;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.6;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bmnboston.app.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = BMNBoston;
+			};
+			name = Debug;
+		};
+		D10000010000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 391;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.6;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bmnboston.app.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = BMNBoston;
+			};
+			name = Release;
+		};
+		NSE00000D0000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = NotificationServiceExtension/NotificationServiceExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 391;
+				DEVELOPMENT_TEAM = 938F7PURZS;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NotificationServiceExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NotificationServiceExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.6;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bmnboston.app.NotificationServiceExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		NSE00000D0000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = NotificationServiceExtension/NotificationServiceExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 391;
+				DEVELOPMENT_TEAM = 938F7PURZS;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NotificationServiceExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NotificationServiceExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.6;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bmnboston.app.NotificationServiceExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C20000020000000000000000 /* Build configuration list for PBXProject "BMNBoston" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D10000010000000000000001 /* Debug */,
+				D10000010000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C20000020000000000000001 /* Build configuration list for PBXNativeTarget "BMNBoston" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D10000010000000000000003 /* Debug */,
+				D10000010000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C20000020000000000000002 /* Build configuration list for PBXNativeTarget "BMNBostonTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D10000010000000000000005 /* Debug */,
+				D10000010000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C20000020000000000000003 /* Build configuration list for PBXNativeTarget "BMNBostonUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D10000010000000000000007 /* Debug */,
+				D10000010000000000000008 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		NSE00000C0000000000000001 /* Build configuration list for PBXNativeTarget "NotificationServiceExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				NSE00000D0000000000000001 /* Debug */,
+				NSE00000D0000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = B40000040000000000000001 /* Project object */;
+}

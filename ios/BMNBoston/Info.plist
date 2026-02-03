@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIconName</key>
+    <string>AppIcon</string>
+    <key>UILaunchStoryboardName</key>
+    <string>LaunchScreen</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.bmnboston.app</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>bmnboston</string>
+            </array>
+        </dict>
+    </array>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>BMN Boston uses your location to show nearby properties and center the map on your current position.</string>
+    <key>NSCalendarsUsageDescription</key>
+    <string>BMN Boston can add your property showing appointments to your calendar so you don't miss them.</string>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>BMN Boston can add your property showing appointments to your calendar so you don't miss them.</string>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+        <key>NSExceptionDomains</key>
+        <dict>
+            <key>localhost</key>
+            <dict>
+                <key>NSExceptionAllowsInsecureHTTPLoads</key>
+                <true/>
+                <key>NSIncludesSubdomains</key>
+                <true/>
+            </dict>
+        </dict>
+    </dict>
+</dict>
+</plist>
