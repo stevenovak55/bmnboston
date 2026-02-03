@@ -1,0 +1,909 @@
+openapi: 3.0.3
+info:
+  title: MLD Mobile REST API
+  description: |
+    REST API for the BMN Boston iOS app. Provides property search, authentication,
+    favorites, saved searches, and agent-client functionality.
+
+    **Base URL:** `https://bmnboston.com/wp-json/mld-mobile/v1`
+
+    **Authentication:** JWT Bearer tokens
+    - Access tokens expire in 30 days
+    - Include in Authorization header: `Bearer <token>`
+
+    **Rate Limiting:** 20 attempts per 15 minutes for auth endpoints
+  version: 6.64.0
+  contact:
+    name: BMN Boston
+    url: https://bmnboston.com
+
+servers:
+  - url: https://bmnboston.com/wp-json/mld-mobile/v1
+    description: Production
+
+tags:
+  - name: Authentication
+    description: User login, registration, and token management
+  - name: Properties
+    description: Property search and details
+  - name: Favorites
+    description: User favorite properties
+  - name: Hidden
+    description: User hidden properties
+  - name: Saved Searches
+    description: Saved search queries with notifications
+  - name: Agent
+    description: Agent dashboard and client management
+  - name: Notifications
+    description: Push notification management
+
+paths:
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: User login
+      description: Authenticate with email and password to receive JWT tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: demo@bmnboston.com
+                password:
+                  type: string
+                  example: demo1234
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      description: Exchange a refresh token for new access and refresh tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: Tokens refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid or expired refresh token
+
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current user
+      description: Returns the authenticated user's profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/User'
+
+  /properties:
+    get:
+      tags: [Properties]
+      summary: Search properties
+      description: |
+        Search properties with various filters. Returns paginated results.
+
+        **Performance Note:** This endpoint uses summary tables for fast queries (~200ms).
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: city
+          in: query
+          schema:
+            type: string
+          description: Filter by city name
+        - name: min_price
+          in: query
+          schema:
+            type: integer
+        - name: max_price
+          in: query
+          schema:
+            type: integer
+        - name: beds
+          in: query
+          schema:
+            type: string
+          description: "Minimum beds (e.g., '2' or '2+')"
+        - name: baths
+          in: query
+          schema:
+            type: string
+          description: "Minimum baths (e.g., '2' or '2+')"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [Active, Pending, Sold, Coming Soon]
+        - name: school_grade
+          in: query
+          schema:
+            type: string
+            enum: [A, B, C]
+          description: Minimum district school grade
+        - name: bounds
+          in: query
+          schema:
+            type: string
+          description: "Map bounds: 'sw_lat,sw_lng,ne_lat,ne_lng'"
+        - name: polygon
+          in: query
+          schema:
+            type: string
+          description: GeoJSON polygon for draw search
+        - name: price_reduced
+          in: query
+          schema:
+            type: boolean
+        - name: new_listing_days
+          in: query
+          schema:
+            type: integer
+          description: Days since listing (e.g., 7 for past week)
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [price_asc, price_desc, date_desc, sqft_desc]
+            default: date_desc
+      responses:
+        '200':
+          description: Property list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertyListResponse'
+
+  /properties/{id}:
+    get:
+      tags: [Properties]
+      summary: Get property details
+      description: Returns full property details including photos, features, and schools
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Property listing_key (MD5 hash) or listing_id (MLS number)
+      responses:
+        '200':
+          description: Property details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertyDetailResponse'
+        '404':
+          description: Property not found
+
+  /search/autocomplete:
+    get:
+      tags: [Properties]
+      summary: Search autocomplete
+      description: Returns autocomplete suggestions for cities, addresses, neighborhoods, and MLS numbers
+      parameters:
+        - name: term
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+      responses:
+        '200':
+          description: Autocomplete suggestions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AutocompleteSuggestion'
+
+  /favorites:
+    get:
+      tags: [Favorites]
+      summary: Get user favorites
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of favorite properties
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertyListResponse'
+    post:
+      tags: [Favorites]
+      summary: Add property to favorites
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [listing_id]
+              properties:
+                listing_id:
+                  type: string
+      responses:
+        '200':
+          description: Property added to favorites
+
+  /favorites/{listing_id}:
+    delete:
+      tags: [Favorites]
+      summary: Remove from favorites
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: listing_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Property removed from favorites
+
+  /hidden:
+    get:
+      tags: [Hidden]
+      summary: Get hidden properties
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of hidden properties
+    post:
+      tags: [Hidden]
+      summary: Hide a property
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [listing_id]
+              properties:
+                listing_id:
+                  type: string
+      responses:
+        '200':
+          description: Property hidden
+
+  /saved-searches:
+    get:
+      tags: [Saved Searches]
+      summary: Get saved searches
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of saved searches
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SavedSearch'
+    post:
+      tags: [Saved Searches]
+      summary: Create saved search
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavedSearchCreate'
+      responses:
+        '201':
+          description: Search saved
+
+  /saved-searches/{id}:
+    delete:
+      tags: [Saved Searches]
+      summary: Delete saved search
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Search deleted
+
+  /notifications/history:
+    get:
+      tags: [Notifications]
+      summary: Get notification history
+      description: Returns deduplicated notification history for the in-app notification center
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Notification history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      notifications:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Notification'
+                      total:
+                        type: integer
+                      unread_count:
+                        type: integer
+
+  /notifications/dismiss:
+    post:
+      tags: [Notifications]
+      summary: Dismiss notification
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [notification_id]
+              properties:
+                notification_id:
+                  type: integer
+      responses:
+        '200':
+          description: Notification dismissed
+
+  /agents:
+    get:
+      tags: [Agent]
+      summary: List all agents
+      responses:
+        '200':
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Agent'
+
+  /my-agent:
+    get:
+      tags: [Agent]
+      summary: Get client's assigned agent
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Assigned agent details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Agent'
+        '404':
+          description: No agent assigned
+
+  /agent/clients:
+    get:
+      tags: [Agent]
+      summary: Get agent's client list
+      description: Returns clients assigned to the authenticated agent
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Client list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AgentClient'
+    post:
+      tags: [Agent]
+      summary: Create new client
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, first_name, last_name]
+              properties:
+                email:
+                  type: string
+                  format: email
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+      responses:
+        '201':
+          description: Client created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      client:
+                        $ref: '#/components/schemas/AgentClient'
+                      message:
+                        type: string
+
+  /agent/metrics:
+    get:
+      tags: [Agent]
+      summary: Get agent statistics
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Agent metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      total_clients:
+                        type: integer
+                      active_clients:
+                        type: integer
+                      total_searches:
+                        type: integer
+
+  /shared-properties:
+    get:
+      tags: [Agent]
+      summary: Get properties shared with client
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Shared properties
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertyListResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token obtained from /auth/login endpoint.
+        Access tokens expire in 30 days.
+
+        **CRITICAL:** JWT takes priority over WordPress session cookies.
+        When both are present, use JWT user, not session user.
+
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            access_token:
+              type: string
+            refresh_token:
+              type: string
+            expires_in:
+              type: integer
+              description: Seconds until access token expires
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        last_name:
+          type: string
+        display_name:
+          type: string
+        user_type:
+          type: string
+          enum: [client, agent, admin]
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        data:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+    PropertyListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            listings:
+              type: array
+              items:
+                $ref: '#/components/schemas/PropertySummary'
+            total:
+              type: integer
+            page:
+              type: integer
+            per_page:
+              type: integer
+            total_pages:
+              type: integer
+
+    PropertySummary:
+      type: object
+      description: |
+        Summary property data from bme_listing_summary table.
+        Uses listing_id (MLS number) for property URLs.
+      properties:
+        id:
+          type: string
+          description: listing_key (MD5 hash) - used for API lookups
+        mls_number:
+          type: string
+          description: listing_id (MLS number) - used for property URLs
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        price:
+          type: integer
+        beds:
+          type: integer
+        baths:
+          type: number
+        sqft:
+          type: integer
+          nullable: true
+        property_type:
+          type: string
+        status:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        list_date:
+          type: string
+          format: date
+        dom:
+          type: integer
+          description: Days on market
+        photo_url:
+          type: string
+          format: uri
+        photos:
+          type: array
+          items:
+            type: string
+            format: uri
+        district_grade:
+          type: string
+          nullable: true
+        has_open_house:
+          type: boolean
+        next_open_house:
+          type: string
+          format: date-time
+          nullable: true
+
+    PropertyDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/PropertyDetail'
+
+    PropertyDetail:
+      allOf:
+        - $ref: '#/components/schemas/PropertySummary'
+        - type: object
+          properties:
+            description:
+              type: string
+            features:
+              type: array
+              items:
+                type: string
+            rooms:
+              type: array
+              items:
+                type: object
+            agent:
+              type: object
+              properties:
+                name:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+            schools:
+              type: object
+              description: Nearby schools grouped by level
+
+    AutocompleteSuggestion:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [city, address, neighborhood, mls_number]
+        value:
+          type: string
+        display:
+          type: string
+        count:
+          type: integer
+          nullable: true
+          description: Number of listings (for city suggestions)
+
+    SavedSearch:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        filters:
+          type: object
+          description: Search filter parameters
+        notifications_enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        last_notified_at:
+          type: string
+          format: date-time
+          nullable: true
+        match_count:
+          type: integer
+          description: Current number of matching properties
+
+    SavedSearchCreate:
+      type: object
+      required: [name, filters]
+      properties:
+        name:
+          type: string
+        filters:
+          type: object
+        notifications_enabled:
+          type: boolean
+          default: true
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        notification_type:
+          type: string
+          enum: [new_listing, price_change, status_change, open_house, appointment_reminder]
+        title:
+          type: string
+        body:
+          type: string
+        listing_id:
+          type: string
+          nullable: true
+        saved_search_id:
+          type: integer
+          nullable: true
+        appointment_id:
+          type: integer
+          nullable: true
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+        read:
+          type: boolean
+        dismissed:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Agent:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        photo_url:
+          type: string
+          format: uri
+          nullable: true
+        referral_code:
+          type: string
+          nullable: true
+
+    AgentClient:
+      type: object
+      description: |
+        Client record for agent dashboard.
+
+        **CRITICAL (Pitfall #9):** All Int fields that could be null in DB
+        must be present with default 0 for iOS parsing.
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        last_name:
+          type: string
+        searches_count:
+          type: integer
+          description: Required Int in iOS - use 0 if null
+        favorites_count:
+          type: integer
+          description: Required Int in iOS - use 0 if null
+        hidden_count:
+          type: integer
+          description: Required Int in iOS - use 0 if null
+        last_activity:
+          type: string
+          format: date-time
+          nullable: true
+        assigned_at:
+          type: string
+          format: date-time

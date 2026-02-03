@@ -1,0 +1,839 @@
+openapi: 3.0.3
+info:
+  title: SN Appointments REST API
+  description: |
+    REST API for the SN Appointment Booking plugin in the BMN Boston platform.
+    Handles appointment scheduling, staff management, and calendar integration.
+
+    ## Authentication
+    - Public endpoints: No authentication required
+    - Authenticated endpoints: Require JWT Bearer token in Authorization header
+    - JWT tokens are obtained from the MLD Mobile API `/auth/login` endpoint
+
+    ## Critical Pitfalls
+    - **Pitfall #1 (Dual Code Paths)**: iOS uses this REST API with JWT auth; Web uses AJAX handlers with WordPress nonces
+    - **Pitfall #6 (Google Calendar)**: Per-staff calendar sync uses staff-specific tokens, not global
+    - **Pitfall #25 (Staff Access)**: Staff can view/cancel/reschedule appointments booked WITH them (check staff_id, not just user_id)
+  version: 1.9.5
+  contact:
+    name: BMN Boston Support
+servers:
+  - url: https://bmnboston.com/wp-json/snab/v1
+    description: Production server
+
+tags:
+  - name: Public
+    description: Public endpoints (no auth required)
+  - name: Appointments
+    description: Appointment management (requires auth)
+  - name: Device Tokens
+    description: Push notification device registration
+  - name: Health
+    description: System health checks
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns plugin status and configuration
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /appointment-types:
+    get:
+      tags:
+        - Public
+      summary: Get appointment types
+      description: List active appointment types available for booking
+      operationId: getAppointmentTypes
+      parameters:
+        - name: slug
+          in: query
+          description: Filter by slug (comma-separated for multiple)
+          schema:
+            type: string
+        - name: staff_id
+          in: query
+          description: Filter to types that a specific staff member handles
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of appointment types
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentTypesResponse'
+
+  /staff:
+    get:
+      tags:
+        - Public
+      summary: Get staff members
+      description: List available staff members
+      operationId: getStaff
+      parameters:
+        - name: appointment_type_id
+          in: query
+          description: Filter to staff who handle a specific appointment type
+          schema:
+            type: integer
+        - name: active_only
+          in: query
+          description: Only return active staff (default true)
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: List of staff members
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffResponse'
+
+  /availability:
+    get:
+      tags:
+        - Public
+      summary: Get availability
+      description: Get available time slots for booking
+      operationId: getAvailability
+      parameters:
+        - name: staff_id
+          in: query
+          required: true
+          description: Staff member ID
+          schema:
+            type: integer
+        - name: appointment_type_id
+          in: query
+          required: true
+          description: Appointment type ID
+          schema:
+            type: integer
+        - name: date
+          in: query
+          description: Specific date (YYYY-MM-DD) or "week" for week view
+          schema:
+            type: string
+        - name: week_start
+          in: query
+          description: Week start date when date=week
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Available time slots
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityResponse'
+
+  /portal/policy:
+    get:
+      tags:
+        - Public
+      summary: Get portal policy
+      description: Get booking portal configuration and policies
+      operationId: getPortalPolicy
+      responses:
+        '200':
+          description: Portal policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalPolicyResponse'
+
+  /appointments:
+    get:
+      tags:
+        - Appointments
+      summary: Get user's appointments
+      description: |
+        Get appointments for the authenticated user.
+        Returns appointments where user_id matches OR staff_id matches (for staff members).
+      operationId: getUserAppointments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+            enum: [confirmed, cancelled, completed, no_show]
+        - name: upcoming
+          in: query
+          description: Only return upcoming appointments
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: User's appointments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentsListResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Appointments
+      summary: Create appointment
+      description: |
+        Book a new appointment. Can be used by authenticated users or guests.
+        For guest bookings, guest_name and guest_email are required.
+      operationId: createAppointment
+      security:
+        - bearerAuth: []
+        - {}  # Also allows unauthenticated (guest booking)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAppointmentRequest'
+      responses:
+        '201':
+          description: Appointment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Time slot no longer available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded (too many booking attempts)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /appointments/{id}:
+    get:
+      tags:
+        - Appointments
+      summary: Get appointment details
+      description: |
+        Get details for a specific appointment.
+        Access allowed if user_id matches OR staff_id matches current user.
+      operationId: getAppointment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Appointment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (not your appointment)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Appointment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Appointments
+      summary: Cancel appointment
+      description: |
+        Cancel an appointment. Staff members can cancel appointments assigned to them
+        at any time. Clients must respect the cancellation deadline policy.
+      operationId: cancelAppointment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Cancellation reason
+      responses:
+        '200':
+          description: Appointment cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Cannot cancel (past deadline for clients)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /appointments/{id}/reschedule:
+    patch:
+      tags:
+        - Appointments
+      summary: Reschedule appointment
+      description: |
+        Reschedule an appointment to a new time slot.
+        Staff members are not limited by reschedule restrictions.
+      operationId: rescheduleAppointment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RescheduleRequest'
+      responses:
+        '200':
+          description: Appointment rescheduled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+        '400':
+          description: Invalid request or slot unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /appointments/{id}/reschedule-slots:
+    get:
+      tags:
+        - Appointments
+      summary: Get reschedule time slots
+      description: Get available time slots for rescheduling a specific appointment
+      operationId: getRescheduleSlots
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: integer
+        - name: date
+          in: query
+          description: Specific date or week start
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Available reschedule slots
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /appointments/{id}/ics:
+    get:
+      tags:
+        - Appointments
+      summary: Download ICS calendar file
+      description: Download an ICS calendar file for the appointment
+      operationId: downloadIcs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Appointment ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ICS calendar file
+          content:
+            text/calendar:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /device-tokens:
+    post:
+      tags:
+        - Device Tokens
+      summary: Register device token
+      description: Register a device token for push notifications
+      operationId: registerDeviceToken
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceTokenRequest'
+      responses:
+        '200':
+          description: Token registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Device Tokens
+      summary: Unregister device token
+      description: Remove a device token (used on logout)
+      operationId: unregisterDeviceToken
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceTokenRequest'
+      responses:
+        '200':
+          description: Token unregistered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from MLD Mobile API /auth/login
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: string
+          example: not_found
+        message:
+          type: string
+          example: Appointment not found
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+
+    HealthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [healthy, degraded, error]
+            version:
+              type: string
+            plugin:
+              type: string
+
+    AppointmentType:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+          nullable: true
+        duration_minutes:
+          type: integer
+        color:
+          type: string
+          description: Hex color code
+        requires_login:
+          type: boolean
+        sort_order:
+          type: integer
+
+    Staff:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        title:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+        is_primary:
+          type: boolean
+
+    TimeSlot:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+          description: Time in HH:MM format (24-hour)
+        datetime:
+          type: string
+          format: date-time
+        available:
+          type: boolean
+
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+          nullable: true
+          description: WordPress user ID (null for guest bookings)
+        staff_id:
+          type: integer
+        appointment_type_id:
+          type: integer
+        appointment_date:
+          type: string
+          format: date
+        start_time:
+          type: string
+          description: Start time (HH:MM:SS)
+        end_time:
+          type: string
+          description: End time (HH:MM:SS)
+        status:
+          type: string
+          enum: [confirmed, cancelled, completed, no_show]
+        notes:
+          type: string
+          nullable: true
+        guest_name:
+          type: string
+          nullable: true
+        guest_email:
+          type: string
+          format: email
+          nullable: true
+        guest_phone:
+          type: string
+          nullable: true
+        cancelled_by:
+          type: string
+          enum: [client, staff]
+          nullable: true
+        cancellation_reason:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        staff:
+          $ref: '#/components/schemas/Staff'
+        appointment_type:
+          $ref: '#/components/schemas/AppointmentType'
+
+    PortalPolicy:
+      type: object
+      properties:
+        cancellation_hours:
+          type: integer
+          description: Hours before appointment that cancellation is allowed
+        max_reschedules:
+          type: integer
+          description: Maximum number of reschedules allowed (0 = unlimited)
+        booking_lead_hours:
+          type: integer
+          description: Minimum hours in advance to book
+        booking_horizon_days:
+          type: integer
+          description: Maximum days in advance to book
+
+    AppointmentTypesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppointmentType'
+
+    StaffResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Staff'
+
+    AvailabilityResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date
+            staff_id:
+              type: integer
+            appointment_type_id:
+              type: integer
+            slots:
+              type: array
+              items:
+                $ref: '#/components/schemas/TimeSlot'
+
+    PortalPolicyResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/PortalPolicy'
+
+    AppointmentsListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Appointment'
+
+    AppointmentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            appointment:
+              $ref: '#/components/schemas/Appointment'
+            message:
+              type: string
+
+    CreateAppointmentRequest:
+      type: object
+      required:
+        - staff_id
+        - appointment_type_id
+        - appointment_date
+        - start_time
+      properties:
+        staff_id:
+          type: integer
+          description: Staff member ID
+        appointment_type_id:
+          type: integer
+          description: Appointment type ID
+        appointment_date:
+          type: string
+          format: date
+          description: Appointment date (YYYY-MM-DD)
+        start_time:
+          type: string
+          description: Start time (HH:MM or HH:MM:SS)
+        notes:
+          type: string
+          description: Optional notes
+        guest_name:
+          type: string
+          description: Required for guest bookings
+        guest_email:
+          type: string
+          format: email
+          description: Required for guest bookings
+        guest_phone:
+          type: string
+          description: Optional guest phone
+
+    RescheduleRequest:
+      type: object
+      required:
+        - appointment_date
+        - start_time
+      properties:
+        appointment_date:
+          type: string
+          format: date
+          description: New appointment date
+        start_time:
+          type: string
+          description: New start time (HH:MM or HH:MM:SS)
+        reason:
+          type: string
+          description: Optional reschedule reason
+
+    DeviceTokenRequest:
+      type: object
+      required:
+        - token
+        - platform
+      properties:
+        token:
+          type: string
+          description: APNs or FCM device token
+        platform:
+          type: string
+          enum: [ios, android]
+        environment:
+          type: string
+          enum: [sandbox, production]
+          description: APNs environment (iOS only)

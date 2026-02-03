@@ -1,0 +1,1117 @@
+openapi: 3.0.3
+info:
+  title: BMN Schools REST API
+  description: |
+    REST API for Massachusetts school data in the BMN Boston real estate platform.
+    Provides school information, rankings, districts, and demographics.
+
+    All endpoints are public (no authentication required).
+  version: 0.6.38
+  contact:
+    name: BMN Boston Support
+servers:
+  - url: https://bmnboston.com/wp-json/bmn-schools/v1
+    description: Production server
+
+tags:
+  - name: Schools
+    description: School data and rankings
+  - name: Districts
+    description: School districts and boundaries
+  - name: Search
+    description: Search and autocomplete
+  - name: Stats
+    description: Statistical data by location
+  - name: Glossary
+    description: Education terminology
+  - name: Health
+    description: System health checks
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns plugin status and database table counts
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /schools:
+    get:
+      tags:
+        - Schools
+      summary: List schools
+      description: Get a paginated list of schools with optional filters
+      operationId: getSchools
+      parameters:
+        - name: city
+          in: query
+          description: Filter by city name
+          schema:
+            type: string
+        - name: district_id
+          in: query
+          description: Filter by district ID
+          schema:
+            type: integer
+        - name: level
+          in: query
+          description: Filter by school level
+          schema:
+            type: string
+            enum: [elementary, middle, high]
+        - name: type
+          in: query
+          description: Filter by school type
+          schema:
+            type: string
+            enum: [public, private, charter]
+        - name: per_page
+          in: query
+          description: Results per page (default 20, max 100)
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: List of schools
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchoolsListResponse'
+
+  /schools/{id}:
+    get:
+      tags:
+        - Schools
+      summary: Get school details
+      description: Get detailed information about a specific school including rankings, demographics, and MCAS scores
+      operationId: getSchool
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: School ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: School details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchoolDetailResponse'
+        '404':
+          description: School not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /schools/nearby:
+    get:
+      tags:
+        - Schools
+      summary: Get nearby schools
+      description: Find schools near a geographic location
+      operationId: getNearbySchools
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          description: Latitude
+          schema:
+            type: number
+            format: double
+            minimum: -90
+            maximum: 90
+        - name: lng
+          in: query
+          required: true
+          description: Longitude
+          schema:
+            type: number
+            format: double
+            minimum: -180
+            maximum: 180
+        - name: radius
+          in: query
+          description: Search radius in miles (default 5, max 25)
+          schema:
+            type: number
+            default: 5
+            maximum: 25
+        - name: level
+          in: query
+          description: Filter by school level
+          schema:
+            type: string
+            enum: [elementary, middle, high]
+      responses:
+        '200':
+          description: Nearby schools
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NearbySchoolsResponse'
+
+  /schools/map:
+    get:
+      tags:
+        - Schools
+      summary: Get schools for map display
+      description: Get minimal school data optimized for map markers (iOS app)
+      operationId: getSchoolsForMap
+      parameters:
+        - name: bounds
+          in: query
+          required: true
+          description: Map bounds as "sw_lat,sw_lng,ne_lat,ne_lng"
+          schema:
+            type: string
+        - name: level
+          in: query
+          description: Filter by school level
+          schema:
+            type: string
+            enum: [elementary, middle, high]
+      responses:
+        '200':
+          description: Schools for map
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MapSchoolsResponse'
+
+  /schools/top:
+    get:
+      tags:
+        - Schools
+      summary: Get top ranked schools
+      description: Get top schools by MCAS scores or other metrics
+      operationId: getTopSchools
+      parameters:
+        - name: city
+          in: query
+          description: Filter by city
+          schema:
+            type: string
+        - name: level
+          in: query
+          description: Filter by school level
+          schema:
+            type: string
+            enum: [elementary, middle, high]
+        - name: metric
+          in: query
+          description: Ranking metric
+          schema:
+            type: string
+            enum: [mcas, composite]
+            default: mcas
+        - name: limit
+          in: query
+          description: Number of results (max 50)
+          schema:
+            type: integer
+            default: 10
+            maximum: 50
+      responses:
+        '200':
+          description: Top schools
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopSchoolsResponse'
+
+  /schools/compare:
+    get:
+      tags:
+        - Schools
+      summary: Compare schools
+      description: Compare 2-5 schools side by side
+      operationId: compareSchools
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          description: Comma-separated school IDs (2-5 schools)
+          schema:
+            type: string
+            example: "123,456,789"
+      responses:
+        '200':
+          description: School comparison
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchoolComparisonResponse'
+        '400':
+          description: Invalid request (too few/many schools)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /schools/{id}/trends:
+    get:
+      tags:
+        - Schools
+      summary: Get school MCAS trends
+      description: Get historical MCAS score trends for a school
+      operationId: getSchoolTrends
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: School ID
+          schema:
+            type: integer
+        - name: subject
+          in: query
+          description: Filter by subject
+          schema:
+            type: string
+            enum: [all, math, ela, science]
+            default: all
+        - name: years
+          in: query
+          description: Number of years of history (1-10)
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
+            maximum: 10
+      responses:
+        '200':
+          description: MCAS trends
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchoolTrendsResponse'
+
+  /property/schools:
+    get:
+      tags:
+        - Schools
+      summary: Get schools for property detail (iOS)
+      description: |
+        Primary endpoint for iOS app property detail pages.
+        Returns schools grouped by level (elementary, middle, high) with full
+        ranking data, demographics, highlights, and benchmarks.
+      operationId: getSchoolsForProperty
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          description: Property latitude
+          schema:
+            type: number
+            format: double
+        - name: lng
+          in: query
+          required: true
+          description: Property longitude
+          schema:
+            type: number
+            format: double
+        - name: radius
+          in: query
+          description: Search radius in miles (default 2, max 10)
+          schema:
+            type: number
+            default: 2
+            maximum: 10
+        - name: city
+          in: query
+          description: City name for regional school mapping
+          schema:
+            type: string
+        - name: district_id
+          in: query
+          description: Specific district ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Schools grouped by level
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertySchoolsResponse'
+
+  /districts:
+    get:
+      tags:
+        - Districts
+      summary: List districts
+      description: Get a paginated list of school districts
+      operationId: getDistricts
+      parameters:
+        - name: city
+          in: query
+          description: Filter by city
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          description: Results per page
+          schema:
+            type: integer
+            default: 20
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: List of districts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistrictsListResponse'
+
+  /districts/{id}:
+    get:
+      tags:
+        - Districts
+      summary: Get district details
+      description: Get detailed information about a school district
+      operationId: getDistrict
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: District ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: District details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistrictDetailResponse'
+        '404':
+          description: District not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /districts/{id}/boundary:
+    get:
+      tags:
+        - Districts
+      summary: Get district boundary
+      description: Get GeoJSON boundary for a school district
+      operationId: getDistrictBoundary
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: District ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: GeoJSON boundary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistrictBoundaryResponse'
+
+  /districts/{id}/trends:
+    get:
+      tags:
+        - Districts
+      summary: Get district trends
+      description: Get historical trends for a district
+      operationId: getDistrictTrends
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: District ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: District trends
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistrictTrendsResponse'
+
+  /districts/for-point:
+    get:
+      tags:
+        - Districts
+      summary: Find district for coordinates
+      description: Find which school district contains the given coordinates
+      operationId: getDistrictForPoint
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          description: Latitude
+          schema:
+            type: number
+            format: double
+        - name: lng
+          in: query
+          required: true
+          description: Longitude
+          schema:
+            type: number
+            format: double
+      responses:
+        '200':
+          description: District containing the point
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistrictForPointResponse'
+
+  /search/autocomplete:
+    get:
+      tags:
+        - Search
+      summary: Autocomplete search
+      description: Search for schools and districts by name
+      operationId: autocomplete
+      parameters:
+        - name: term
+          in: query
+          required: true
+          description: Search term (minimum 2 characters)
+          schema:
+            type: string
+            minLength: 2
+      responses:
+        '200':
+          description: Autocomplete results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutocompleteResponse'
+
+  /stats/city/{city}:
+    get:
+      tags:
+        - Stats
+      summary: Get city statistics
+      description: Get school statistics for a city
+      operationId: getCityStats
+      parameters:
+        - name: city
+          in: path
+          required: true
+          description: City name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: City statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CityStatsResponse'
+
+  /stats/zip/{zip}:
+    get:
+      tags:
+        - Stats
+      summary: Get ZIP code statistics
+      description: Get school statistics for a ZIP code
+      operationId: getZipStats
+      parameters:
+        - name: zip
+          in: path
+          required: true
+          description: 5-digit ZIP code
+          schema:
+            type: string
+            pattern: '^\d{5}$'
+      responses:
+        '200':
+          description: ZIP code statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZipStatsResponse'
+
+  /glossary:
+    get:
+      tags:
+        - Glossary
+      summary: Get education glossary
+      description: Get definitions of education terms (MCAS, MassCore, etc.)
+      operationId: getGlossary
+      parameters:
+        - name: term
+          in: query
+          description: Specific term to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Glossary terms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlossaryResponse'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: string
+          example: not_found
+        message:
+          type: string
+          example: School not found
+
+    HealthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [healthy, degraded, error]
+            version:
+              type: string
+            tables:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  exists:
+                    type: boolean
+                  count:
+                    type: integer
+            record_counts:
+              type: object
+              additionalProperties:
+                type: integer
+
+    School:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        grades:
+          type: string
+          description: Grade range (e.g., "K-5", "6-8", "9-12")
+        school_type:
+          type: string
+          enum: [public, private, charter]
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        distance:
+          type: number
+          description: Distance in miles (when searching nearby)
+          nullable: true
+        is_regional:
+          type: boolean
+          description: Whether this is a regional school serving multiple towns
+        regional_note:
+          type: string
+          nullable: true
+          description: Note about which towns this school serves
+
+    SchoolRanking:
+      type: object
+      properties:
+        composite_score:
+          type: number
+          format: double
+          description: Composite score (0-100)
+        percentile_rank:
+          type: integer
+          description: Percentile among similar schools
+        state_rank:
+          type: integer
+          description: Rank within the state
+        category_total:
+          type: integer
+          description: Total schools in category
+        letter_grade:
+          type: string
+          enum: [A+, A, A-, B+, B, B-, C+, C, C-, D, F, N/A]
+        trend:
+          $ref: '#/components/schemas/RankingTrend'
+        data_completeness:
+          $ref: '#/components/schemas/DataCompleteness'
+        benchmarks:
+          $ref: '#/components/schemas/RankingBenchmarks'
+
+    RankingTrend:
+      type: object
+      properties:
+        direction:
+          type: string
+          enum: [up, down, stable]
+        rank_change:
+          type: integer
+        rank_change_text:
+          type: string
+          example: "Improved 5 spots from last year"
+
+    DataCompleteness:
+      type: object
+      properties:
+        components_available:
+          type: integer
+        components_total:
+          type: integer
+        confidence_level:
+          type: string
+          enum: [comprehensive, good, limited]
+        limited_data_note:
+          type: string
+          nullable: true
+
+    RankingBenchmarks:
+      type: object
+      properties:
+        state_average:
+          type: number
+        vs_state:
+          type: string
+          example: "+12.7 above state avg"
+
+    SchoolDemographics:
+      type: object
+      properties:
+        total_students:
+          type: integer
+        diversity:
+          type: string
+        pct_free_reduced_lunch:
+          type: number
+
+    SchoolHighlight:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [ratio, diversity, ap, cte, early_college, innovation, graduation, attendance, masscore, improving, resources, athletics]
+        text:
+          type: string
+        detail:
+          type: string
+          nullable: true
+        icon:
+          type: string
+          description: SF Symbol icon name
+        priority:
+          type: integer
+
+    SchoolSports:
+      type: object
+      properties:
+        sports_count:
+          type: integer
+        total_participants:
+          type: integer
+        boys_participants:
+          type: integer
+        girls_participants:
+          type: integer
+        sports:
+          type: array
+          items:
+            type: object
+            properties:
+              sport:
+                type: string
+              gender:
+                type: string
+                enum: [Boys, Girls, Coed]
+              participants:
+                type: integer
+
+    NearbySchool:
+      allOf:
+        - $ref: '#/components/schemas/School'
+        - type: object
+          properties:
+            ranking:
+              $ref: '#/components/schemas/SchoolRanking'
+            demographics:
+              $ref: '#/components/schemas/SchoolDemographics'
+            highlights:
+              type: array
+              items:
+                $ref: '#/components/schemas/SchoolHighlight'
+            sports:
+              $ref: '#/components/schemas/SchoolSports'
+
+    District:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        ranking:
+          type: object
+          nullable: true
+          properties:
+            composite_score:
+              type: number
+            percentile_rank:
+              type: integer
+            letter_grade:
+              type: string
+        discipline:
+          type: object
+          nullable: true
+          properties:
+            year:
+              type: integer
+            discipline_rate:
+              type: number
+            percentile:
+              type: integer
+            percentile_label:
+              type: string
+        college_outcomes:
+          type: object
+          nullable: true
+          properties:
+            year:
+              type: integer
+            total_postsecondary_pct:
+              type: number
+            four_year_pct:
+              type: number
+            two_year_pct:
+              type: number
+
+    GlossaryTerm:
+      type: object
+      properties:
+        term:
+          type: string
+        full_name:
+          type: string
+          nullable: true
+        category:
+          type: string
+        description:
+          type: string
+        parent_tip:
+          type: string
+          nullable: true
+
+    SchoolsListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/School'
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+
+    SchoolDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/NearbySchool'
+
+    NearbySchoolsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/NearbySchool'
+
+    MapSchoolsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              latitude:
+                type: number
+              longitude:
+                type: number
+              letter_grade:
+                type: string
+              level:
+                type: string
+
+    TopSchoolsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/NearbySchool'
+
+    SchoolComparisonResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            schools:
+              type: array
+              items:
+                $ref: '#/components/schemas/NearbySchool'
+            comparison_metrics:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    school_id:
+                      type: integer
+                    value:
+                      type: number
+                    rank:
+                      type: integer
+
+    SchoolTrendsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            school:
+              $ref: '#/components/schemas/School'
+            trends:
+              type: array
+              items:
+                type: object
+                properties:
+                  year:
+                    type: integer
+                  subject:
+                    type: string
+                  proficient_pct:
+                    type: number
+                  advanced_pct:
+                    type: number
+
+    PropertySchoolsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            district:
+              $ref: '#/components/schemas/District'
+            schools:
+              type: object
+              properties:
+                elementary:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/NearbySchool'
+                middle:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/NearbySchool'
+                high:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/NearbySchool'
+
+    DistrictsListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/District'
+
+    DistrictDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          allOf:
+            - $ref: '#/components/schemas/District'
+            - type: object
+              properties:
+                schools:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/School'
+                expenditure_per_pupil:
+                  type: number
+                  nullable: true
+
+    DistrictBoundaryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            district_id:
+              type: integer
+            name:
+              type: string
+            boundary:
+              type: object
+              description: GeoJSON geometry object
+
+    DistrictTrendsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+
+    DistrictForPointResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/District'
+
+    AutocompleteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              type:
+                type: string
+                enum: [school, district]
+              city:
+                type: string
+
+    CityStatsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            city:
+              type: string
+            total_schools:
+              type: integer
+            elementary_count:
+              type: integer
+            middle_count:
+              type: integer
+            high_count:
+              type: integer
+            avg_rating:
+              type: number
+
+    ZipStatsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            zip:
+              type: string
+            total_schools:
+              type: integer
+            schools:
+              type: array
+              items:
+                $ref: '#/components/schemas/School'
+
+    GlossaryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/GlossaryTerm'
+            - type: array
+              items:
+                $ref: '#/components/schemas/GlossaryTerm'
