@@ -1,0 +1,941 @@
+/**
+ * SN Appointment Booking - Client Portal Styles
+ *
+ * @package SN_Appointment_Booking
+ * @since 1.5.0
+ */
+
+/* ==========================================================================
+   Variables (inherited from frontend-variables.css)
+   ========================================================================== */
+
+.snab-client-portal {
+    --snab-primary-color: #2563eb;
+    --snab-primary-hover: #1d4ed8;
+    --snab-primary-light: rgba(37, 99, 235, 0.1);
+    --snab-accent-color: #10b981;
+    --snab-accent-hover: #059669;
+    --snab-text-color: #1f2937;
+    --snab-text-light: #6b7280;
+    --snab-bg-color: #ffffff;
+    --snab-bg-secondary: #f9fafb;
+    --snab-border-color: #e5e7eb;
+    --snab-error-color: #dc2626;
+    --snab-warning-color: #f59e0b;
+    --snab-success-color: #10b981;
+    --snab-radius-sm: 4px;
+    --snab-radius-md: 6px;
+    --snab-radius-lg: 8px;
+    --snab-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --snab-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --snab-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* ==========================================================================
+   Base Container
+   ========================================================================== */
+
+.snab-client-portal {
+    font-family: var(--snab-font-family);
+    color: var(--snab-text-color);
+    background: var(--snab-bg-color);
+    border-radius: var(--snab-radius-lg);
+    box-shadow: var(--snab-shadow-md);
+    padding: 1.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* ==========================================================================
+   Login Required State
+   ========================================================================== */
+
+.snab-portal-login-required {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.snab-login-icon {
+    font-size: 48px;
+    color: var(--snab-text-light);
+    margin-bottom: 1rem;
+}
+
+.snab-login-icon .dashicons {
+    font-size: inherit;
+    width: auto;
+    height: auto;
+}
+
+.snab-portal-login-required h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+    color: var(--snab-text-color);
+}
+
+.snab-portal-login-required p {
+    margin: 0 0 1.5rem;
+    color: var(--snab-text-light);
+}
+
+.snab-login-btn {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    background: var(--snab-primary-color);
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: var(--snab-radius-md);
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.snab-login-btn:hover {
+    background: var(--snab-primary-hover);
+    color: #ffffff;
+}
+
+/* ==========================================================================
+   Tabs
+   ========================================================================== */
+
+.snab-portal-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--snab-border-color);
+    padding-bottom: 0;
+}
+
+.snab-tab-btn {
+    position: relative;
+    padding: 0.75rem 1.25rem;
+    background: transparent;
+    border: none;
+    color: var(--snab-text-light);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s;
+    margin-bottom: -2px;
+}
+
+.snab-tab-btn:hover {
+    color: var(--snab-text-color);
+}
+
+.snab-tab-btn.active {
+    color: var(--snab-primary-color);
+    border-bottom: 2px solid var(--snab-primary-color);
+}
+
+.snab-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    margin-left: 6px;
+    background: var(--snab-bg-secondary);
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.snab-tab-btn.active .snab-tab-count {
+    background: var(--snab-primary-light);
+    color: var(--snab-primary-color);
+}
+
+/* ==========================================================================
+   Loading State
+   ========================================================================== */
+
+.snab-portal-loading {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--snab-text-light);
+}
+
+.snab-portal-loading .spinner {
+    float: none;
+    margin: 0 10px 0 0;
+    vertical-align: middle;
+}
+
+/* ==========================================================================
+   Empty State
+   ========================================================================== */
+
+.snab-no-appointments {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.snab-empty-icon {
+    font-size: 48px;
+    color: var(--snab-border-color);
+    margin-bottom: 1rem;
+}
+
+.snab-empty-icon .dashicons {
+    font-size: inherit;
+    width: auto;
+    height: auto;
+}
+
+.snab-empty-message {
+    margin: 0 0 1.5rem;
+    color: var(--snab-text-light);
+    font-size: 1rem;
+}
+
+.snab-book-new-btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: var(--snab-primary-color);
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: var(--snab-radius-md);
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.snab-book-new-btn:hover {
+    background: var(--snab-primary-hover);
+    color: #ffffff;
+}
+
+/* ==========================================================================
+   Appointment Cards
+   ========================================================================== */
+
+.snab-appointments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.snab-appointment-card {
+    background: var(--snab-bg-color);
+    border: 1px solid var(--snab-border-color);
+    border-radius: var(--snab-radius-lg);
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+}
+
+.snab-appointment-card:hover {
+    box-shadow: var(--snab-shadow-md);
+}
+
+.snab-appointment-card.status-cancelled {
+    opacity: 0.7;
+}
+
+/* Card Header */
+.snab-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--snab-bg-secondary);
+    border-bottom: 1px solid var(--snab-border-color);
+}
+
+.snab-type-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.snab-type-name {
+    flex: 1;
+    font-weight: 600;
+    color: var(--snab-text-color);
+}
+
+.snab-status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.snab-status-badge.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.snab-status-badge.status-confirmed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.snab-status-badge.status-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.snab-status-badge.status-completed {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.snab-status-badge.status-no_show {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+/* Card Body */
+.snab-card-body {
+    padding: 1rem;
+}
+
+.snab-card-datetime {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.snab-card-date,
+.snab-card-time,
+.snab-card-address,
+.snab-card-reschedule-count {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--snab-text-color);
+    font-size: 0.95rem;
+}
+
+.snab-card-date .dashicons,
+.snab-card-time .dashicons,
+.snab-card-address .dashicons,
+.snab-card-reschedule-count .dashicons {
+    color: var(--snab-text-light);
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.snab-card-address {
+    margin-top: 0.5rem;
+    color: var(--snab-text-light);
+}
+
+.snab-card-reschedule-count {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--snab-warning-color);
+}
+
+/* Card Actions */
+.snab-card-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-top: 1px solid var(--snab-border-color);
+    background: var(--snab-bg-secondary);
+}
+
+.snab-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 1rem;
+    background: var(--snab-bg-color);
+    border: 1px solid var(--snab-border-color);
+    border-radius: var(--snab-radius-md);
+    color: var(--snab-text-color);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.snab-action-btn:hover {
+    border-color: var(--snab-primary-color);
+    color: var(--snab-primary-color);
+}
+
+.snab-action-btn .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.snab-cancel-btn:hover {
+    border-color: var(--snab-error-color);
+    color: var(--snab-error-color);
+}
+
+/* ==========================================================================
+   Pagination
+   ========================================================================== */
+
+.snab-portal-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--snab-border-color);
+}
+
+.snab-page-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 1rem;
+    background: var(--snab-bg-color);
+    border: 1px solid var(--snab-border-color);
+    border-radius: var(--snab-radius-md);
+    color: var(--snab-text-color);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.snab-page-btn:hover:not(:disabled) {
+    border-color: var(--snab-primary-color);
+    color: var(--snab-primary-color);
+}
+
+.snab-page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.snab-page-info {
+    color: var(--snab-text-light);
+    font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   Policies
+   ========================================================================== */
+
+.snab-portal-policies {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: var(--snab-bg-secondary);
+    border-radius: var(--snab-radius-md);
+    font-size: 0.85rem;
+    color: var(--snab-text-light);
+}
+
+.snab-policy-item {
+    margin-bottom: 0.5rem;
+}
+
+.snab-policy-item:last-child {
+    margin-bottom: 0;
+}
+
+.snab-policy-item strong {
+    color: var(--snab-text-color);
+}
+
+/* ==========================================================================
+   Modals
+   ========================================================================== */
+
+.snab-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.snab-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.snab-modal-content {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: var(--snab-bg-color);
+    border-radius: var(--snab-radius-lg);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    padding: 1.5rem;
+}
+
+.snab-modal-content.snab-modal-large {
+    max-width: 640px;
+}
+
+.snab-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--snab-text-light);
+    cursor: pointer;
+    border-radius: var(--snab-radius-sm);
+    transition: all 0.2s;
+}
+
+.snab-modal-close:hover {
+    background: var(--snab-bg-secondary);
+    color: var(--snab-text-color);
+}
+
+.snab-modal-title {
+    margin: 0 0 1rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--snab-text-color);
+    padding-right: 2rem;
+}
+
+/* Modal Appointment Details */
+.snab-modal-appointment-details,
+.snab-current-appointment {
+    background: var(--snab-bg-secondary);
+    border-radius: var(--snab-radius-md);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.snab-modal-appointment-details p,
+.snab-current-appointment p {
+    margin: 0 0 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.snab-modal-appointment-details p:last-child,
+.snab-current-appointment p:last-child {
+    margin-bottom: 0;
+}
+
+.snab-modal-appointment-details .dashicons,
+.snab-current-appointment .dashicons {
+    color: var(--snab-text-light);
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Modal Form */
+.snab-modal .snab-form-row {
+    margin-bottom: 1rem;
+}
+
+.snab-modal .snab-form-row label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--snab-text-color);
+}
+
+.snab-modal .snab-form-row .required {
+    color: var(--snab-error-color);
+}
+
+.snab-modal .snab-form-row textarea,
+.snab-modal .snab-form-row input[type="text"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--snab-border-color);
+    border-radius: var(--snab-radius-md);
+    font-size: 0.95rem;
+    color: var(--snab-text-color);
+    background: var(--snab-bg-color);
+    transition: border-color 0.2s;
+}
+
+.snab-modal .snab-form-row textarea:focus,
+.snab-modal .snab-form-row input[type="text"]:focus {
+    outline: none;
+    border-color: var(--snab-primary-color);
+    box-shadow: 0 0 0 3px var(--snab-primary-light);
+}
+
+/* Modal Actions */
+.snab-modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+.snab-btn-secondary,
+.snab-btn-primary,
+.snab-btn-danger {
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--snab-radius-md);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.snab-btn-secondary {
+    background: var(--snab-bg-secondary);
+    color: var(--snab-text-color);
+    border: 1px solid var(--snab-border-color);
+}
+
+.snab-btn-secondary:hover {
+    background: var(--snab-bg-color);
+    border-color: var(--snab-text-light);
+}
+
+.snab-btn-primary {
+    background: var(--snab-primary-color);
+    color: #ffffff;
+}
+
+.snab-btn-primary:hover {
+    background: var(--snab-primary-hover);
+}
+
+.snab-btn-danger {
+    background: var(--snab-error-color);
+    color: #ffffff;
+}
+
+.snab-btn-danger:hover {
+    background: #b91c1c;
+}
+
+.snab-btn-primary:disabled,
+.snab-btn-danger:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Reschedule Calendar
+   ========================================================================== */
+
+.snab-reschedule-calendar {
+    margin: 1rem 0;
+}
+
+.snab-calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.snab-calendar-title {
+    font-weight: 600;
+    color: var(--snab-text-color);
+}
+
+.snab-calendar-nav {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--snab-bg-secondary);
+    border: 1px solid var(--snab-border-color);
+    border-radius: var(--snab-radius-sm);
+    color: var(--snab-text-color);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.snab-calendar-nav:hover:not(:disabled) {
+    border-color: var(--snab-primary-color);
+    color: var(--snab-primary-color);
+}
+
+.snab-calendar-nav:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.snab-calendar-week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+}
+
+.snab-calendar-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem 0.5rem;
+    background: var(--snab-bg-secondary);
+    border: 2px solid transparent;
+    border-radius: var(--snab-radius-md);
+    cursor: default;
+    transition: all 0.2s;
+}
+
+.snab-calendar-day.available {
+    cursor: pointer;
+    background: var(--snab-bg-color);
+    border-color: var(--snab-border-color);
+}
+
+.snab-calendar-day.available:hover {
+    border-color: var(--snab-primary-color);
+}
+
+.snab-calendar-day.selected {
+    background: var(--snab-primary-light);
+    border-color: var(--snab-primary-color);
+}
+
+.snab-calendar-day.past {
+    opacity: 0.5;
+}
+
+.snab-day-name {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--snab-text-light);
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+}
+
+.snab-day-number {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--snab-text-color);
+}
+
+.snab-calendar-day.available .snab-day-number {
+    color: var(--snab-primary-color);
+}
+
+.snab-day-indicator {
+    width: 6px;
+    height: 6px;
+    background: var(--snab-accent-color);
+    border-radius: 50%;
+    margin-top: 0.25rem;
+}
+
+.snab-calendar-loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--snab-text-light);
+}
+
+/* ==========================================================================
+   Reschedule Time Slots
+   ========================================================================== */
+
+.snab-reschedule-times {
+    margin: 1rem 0;
+}
+
+.snab-reschedule-times h4 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    color: var(--snab-text-color);
+}
+
+.snab-reschedule-times .snab-time-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.snab-time-slot {
+    padding: 0.5rem 1rem;
+    background: var(--snab-bg-color);
+    border: 1px solid var(--snab-border-color);
+    border-radius: var(--snab-radius-md);
+    color: var(--snab-text-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.snab-time-slot:hover {
+    border-color: var(--snab-primary-color);
+    color: var(--snab-primary-color);
+}
+
+.snab-time-slot.selected {
+    background: var(--snab-primary-color);
+    border-color: var(--snab-primary-color);
+    color: #ffffff;
+}
+
+/* ==========================================================================
+   Reschedule Summary
+   ========================================================================== */
+
+.snab-reschedule-summary {
+    margin-bottom: 1rem;
+}
+
+.snab-reschedule-summary-content {
+    background: var(--snab-primary-light);
+    border-radius: var(--snab-radius-md);
+    padding: 1rem;
+    border-left: 4px solid var(--snab-primary-color);
+}
+
+.snab-reschedule-summary-content p {
+    margin: 0 0 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.snab-reschedule-summary-content p:last-child {
+    margin-bottom: 0;
+}
+
+.snab-reschedule-summary-content .dashicons {
+    color: var(--snab-primary-color);
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* ==========================================================================
+   Success Notice
+   ========================================================================== */
+
+.snab-success-notice {
+    background: var(--snab-success-color);
+    color: #ffffff;
+    padding: 1rem;
+    border-radius: var(--snab-radius-md);
+    margin-bottom: 1rem;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   Error Message
+   ========================================================================== */
+
+.snab-error {
+    background: #fef2f2;
+    color: var(--snab-error-color);
+    padding: 1rem;
+    border-radius: var(--snab-radius-md);
+    text-align: center;
+}
+
+/* ==========================================================================
+   Timezone Notice
+   ========================================================================== */
+
+.snab-timezone-notice {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--snab-border-color);
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--snab-text-light);
+}
+
+/* ==========================================================================
+   Disabled State
+   ========================================================================== */
+
+.snab-portal-disabled {
+    text-align: center;
+    padding: 2rem;
+    color: var(--snab-text-light);
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+
+@media (max-width: 640px) {
+    .snab-client-portal {
+        padding: 1rem;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .snab-portal-tabs {
+        flex-wrap: wrap;
+    }
+
+    .snab-tab-btn {
+        flex: 1;
+        text-align: center;
+        min-width: 100px;
+    }
+
+    .snab-card-datetime {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .snab-card-actions {
+        flex-direction: column;
+    }
+
+    .snab-action-btn {
+        justify-content: center;
+    }
+
+    .snab-modal-content {
+        margin: 0.5rem;
+        padding: 1rem;
+    }
+
+    .snab-modal-actions {
+        flex-direction: column;
+    }
+
+    .snab-btn-secondary,
+    .snab-btn-primary,
+    .snab-btn-danger {
+        width: 100%;
+        text-align: center;
+    }
+
+    .snab-calendar-week {
+        gap: 0.25rem;
+    }
+
+    .snab-calendar-day {
+        padding: 0.5rem 0.25rem;
+    }
+
+    .snab-day-name {
+        font-size: 0.65rem;
+    }
+
+    .snab-day-number {
+        font-size: 1rem;
+    }
+
+    .snab-portal-pagination {
+        flex-wrap: wrap;
+    }
+}

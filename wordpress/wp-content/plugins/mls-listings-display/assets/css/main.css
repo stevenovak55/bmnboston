@@ -1,0 +1,3752 @@
+/**
+ * MLS Listings Display Stylesheet v7.10.0
+ * Modern sleek design with Black, Dark Gray, White + Ocean Teal & Red accents
+ * Design System: Inherits from mld-design-tokens.css
+ */
+
+/* --- Universal Box-Sizing for consistent layout --- */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* --- Prevent zoom on input focus and double-tap --- */
+input[type="text"],
+input[type="search"],
+input[type="number"],
+input[type="email"],
+input[type="tel"],
+select,
+textarea {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation; /* Prevents double-tap zoom */
+}
+
+/* Prevent double-tap zoom on all interactive elements */
+button,
+a,
+.bme-listing-card,
+.bme-filter-tag,
+.bme-view-mode-btn,
+.bme-home-type-btn {
+    touch-action: manipulation;
+}
+
+/* Prevent pinch zoom on the entire app */
+.mld-fixed-wrapper {
+    touch-action: pan-x pan-y;
+}
+
+/* --- Root Variables (mapped to Design System) --- */
+:root {
+    --card-width: 420px;
+    --card-height: 480px; /* v6.31.14 - increased from 450px to fit school badge */
+    --popup-card-width: 300px;
+    --card-border-radius: var(--ds-radius-xl, 12px);
+    --font-sans: var(--ds-font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+    --text-dark: var(--ds-black, #000);
+    --text-light: var(--ds-medium-gray, #374151);
+    --border-color: var(--ds-border, #e5e7eb);
+    --brand-color: var(--ds-teal, #0891B2);
+}
+
+/* --- Global Styles for Full-Screen Mode --- */
+body.mld-map-active {
+    overflow: hidden;
+    font-family: var(--font-sans);
+}
+
+/* Hide WordPress admin bar on map pages */
+body.mld-map-active #wpadminbar {
+    display: none !important;
+}
+body.mld-map-active {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+body.mld-map-active.admin-bar {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+html.mld-map-active {
+    margin-top: 0 !important;
+}
+.mld-fixed-wrapper {
+    position: fixed;
+    top: 0 !important;
+    left: 0;
+    width: 100%;
+    height: 100vh !important;
+    z-index: 1;
+    background: #f0f0f0;
+}
+/* Override admin bar spacing on map pages */
+body.mld-map-active.admin-bar .mld-fixed-wrapper {
+    top: 0 !important;
+    height: 100vh !important;
+}
+@media screen and (max-width: 782px) {
+    body.mld-map-active.admin-bar .mld-fixed-wrapper {
+        top: 0 !important;
+        height: 100vh !important;
+    }
+}
+
+/* --- Map & UI Wrapper --- */
+#bme-map-container {
+    width: 100%;
+    height: 100%;
+    background: #e0e0e0;
+    /* Fix for Google Maps touchstart warnings */
+    touch-action: none;
+}
+
+/* Allow panning on the map while preventing zoom */
+#bme-map-container > div {
+    touch-action: pan-x pan-y;
+}
+
+/* --- Mobile Loading Indicator (v6.24.4) --- */
+/* Shows when mobile recovery system detects empty map state */
+#mld-mobile-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    font-size: 14px;
+    color: #333;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    pointer-events: none;
+    animation: mldLoadingFade 0.3s ease-in;
+}
+
+#mld-mobile-loading span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#mld-mobile-loading span::before {
+    content: "";
+    width: 16px;
+    height: 16px;
+    border: 2px solid #e0e0e0;
+    border-top-color: #2196F3;
+    border-radius: 50%;
+    animation: mldLoadingSpin 0.8s linear infinite;
+}
+
+@keyframes mldLoadingSpin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes mldLoadingFade {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.bme-map-ui-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+/* --- Map Zoom Controls --- */
+/* Mapbox styles removed - Google Maps only for performance optimization */
+
+/* Style Google Maps zoom controls - ensure consistent positioning */
+.gm-control-active.gm-zoom-in,
+.gm-control-active.gm-zoom-out {
+    background: white !important;
+    border: 2px solid rgba(0,0,0,0.1) !important;
+    border-radius: 4px !important;
+    width: 36px !important;
+    height: 36px !important;
+    margin: 2px !important;
+}
+
+.gm-control-active.gm-zoom-in:hover,
+.gm-control-active.gm-zoom-out:hover {
+    background: #f5f5f5 !important;
+}
+
+/* Hide the Google Maps pan control (circular button with arrows) */
+.gm-control-active[aria-label="Map camera controls"],
+button[title="Map camera controls"].gm-control-active {
+    display: none !important;
+}
+
+/* Also hide the expanded pan control if it exists */
+.gmnoprint:has(button[title="Map camera controls"]) {
+    button[aria-label="Pan up"],
+    button[aria-label="Pan down"],
+    button[aria-label="Pan left"],
+    button[aria-label="Pan right"] {
+        display: none !important;
+    }
+}
+
+/* Position Google Maps zoom controls with margin from bottom */
+.gm-bundled-control-on-bottom {
+    margin-bottom: 80px !important;
+}
+
+/* --- Top Bar & Search Controls --- */
+/* v6.25.0: Adjusted gap and logo sizing to accommodate nav drawer toggle button */
+#bme-top-bar {
+    position: absolute;
+    top: 10px;
+    left: 15px;
+    right: 15px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+#bme-logo-container {
+    flex: 0 0 auto;
+    max-width: 120px;
+    padding: 5px;
+}
+#bme-logo-container a {
+    display: block;
+    text-decoration: none;
+    cursor: pointer;
+}
+#bme-logo-container img {
+    max-height: 40px;
+    height: auto;
+    width: auto;
+    max-width: 100%;
+    display: block;
+    object-fit: contain;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.3));
+    transition: opacity 0.2s ease;
+}
+#bme-logo-container a:hover img {
+    opacity: 0.8;
+}
+#bme-search-controls-container {
+    flex: 1 1 88%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+#bme-search-wrapper {
+    flex-grow: 1;
+    position: relative;
+}
+/* Search bar with glass effect */
+#bme-search-bar-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+#bme-search-input {
+    width: 100%;
+    height: 44px;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-family: var(--ds-font-sans, inherit);
+    border: 2px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-lg, 8px);
+    background: var(--ds-glass-bg, rgba(255, 255, 255, 0.95));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: var(--ds-shadow-md, 0 4px 6px rgba(0,0,0,0.1));
+    outline: none;
+    transition: all 0.2s ease;
+}
+#bme-search-input:focus {
+    border-color: var(--ds-teal, #0891B2);
+    box-shadow: var(--ds-shadow-focus, 0 0 0 3px rgba(8, 145, 178, 0.25));
+}
+
+/* --- Nearby Search Toggle (Inside Search Bar) --- */
+.bme-nearby-toggle-container {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #f8f9fa; /* Lighter gray background */
+    padding: 4px 8px;
+    border-radius: 20px;
+    border: 1px solid #e9ecef; /* Matching lighter border */
+}
+.bme-nearby-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #343a40;
+    cursor: pointer;
+    user-select: none;
+    margin: 0;
+}
+.bme-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+}
+.bme-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.bme-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ced4da; /* A neutral gray for the off state */
+    transition: .4s;
+    border-radius: 22px;
+}
+.bme-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+input:checked + .bme-slider {
+    background-color: var(--ds-teal, #0891B2);
+}
+input:checked + .bme-slider:before {
+    transform: translateX(18px);
+}
+
+/* --- Show Sold Toggle --- */
+.bme-sold-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+}
+.bme-sold-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #343a40;
+    cursor: pointer;
+    user-select: none;
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* --- Autocomplete Suggestions --- */
+#bme-autocomplete-suggestions {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    z-index: 11;
+}
+.bme-suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+.bme-suggestion-item:hover, .bme-suggestion-item.active {
+    background-color: #f0f0f0;
+}
+.bme-suggestion-type {
+    font-size: 0.8em;
+    color: #777;
+    background-color: #e9e9e9;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* --- Top Bar Buttons (Property Type & Filters) --- */
+.bme-mode-select-wrapper {
+    flex-shrink: 0;
+}
+#bme-property-type-select {
+    height: 40px;
+    padding: 0 30px 0 10px;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    cursor: pointer;
+}
+#bme-filters-button {
+    height: 40px;
+    width: 40px;
+    padding: 0;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+#bme-filters-button:hover {
+    border-color: #999;
+}
+#bme-filters-button svg {
+    color: #333;
+}
+
+/* --- Filter Tags --- */
+#bme-filter-tags-container {
+    position: absolute;
+    top: 50px;
+    left: 15px;
+    right: 15px;
+    z-index: 9;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 80px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+/* Custom scrollbar for filter container */
+#bme-filter-tags-container::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+#bme-filter-tags-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#bme-filter-tags-container::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+/* Filter tags - teal accent */
+.bme-filter-tag {
+    background-color: var(--ds-teal-pale, #CFFAFE);
+    color: var(--ds-teal-dark, #155E75);
+    padding: 4px 12px;
+    border-radius: var(--ds-radius-full, 9999px);
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: var(--ds-shadow-xs, 0 1px 2px rgba(0,0,0,0.05));
+    border: 1px solid var(--ds-teal-light, #22D3EE);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.bme-filter-tag:hover {
+    background-color: var(--ds-teal-light, #22D3EE);
+    color: var(--ds-white, #fff);
+    box-shadow: var(--ds-shadow-sm, 0 1px 3px rgba(0,0,0,0.1));
+}
+.bme-filter-tag-remove {
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 1;
+    color: var(--ds-teal-dark, #155E75);
+    border-radius: var(--ds-radius-full, 9999px);
+    padding: 2px;
+    transition: all 0.2s ease;
+}
+.bme-filter-tag-remove:hover {
+    background-color: var(--ds-red, #DC2626);
+    color: var(--ds-white, #fff);
+}
+
+/* --- Filter Tags in Modal --- */
+#bme-filter-tags-container-modal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 15px 0;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    min-height: 0;
+}
+
+#bme-filter-tags-container-modal:empty {
+    display: none;
+}
+
+#bme-filter-tags-container-modal .bme-filter-tag {
+    margin: 0;
+}
+
+/* --- Agent Filter Styles --- */
+.bme-agent-search-container {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+#bme-agent-search-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+#bme-agent-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.bme-agent-suggestion {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.bme-agent-suggestion:last-child {
+    border-bottom: none;
+}
+
+.bme-agent-suggestion:hover {
+    background-color: #f8f9fa;
+}
+
+.bme-selected-agents-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 0;
+}
+
+.bme-agent-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background-color: #007cba;
+    color: white;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.bme-agent-chip-label {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bme-agent-chip-remove {
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 2px;
+    transition: opacity 0.2s;
+}
+
+.bme-agent-chip-remove:hover {
+    opacity: 0.7;
+}
+
+/* --- Listing Count Indicator --- */
+#bme-listings-count-indicator {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 5;
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    pointer-events: none;
+    display: none; /* Hidden by default */
+}
+
+/* Mobile filter tags animations */
+@media (max-width: 782px) {
+    .bme-filter-tag {
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .bme-filter-tag-remove:active {
+        transform: scale(0.9);
+    }
+    
+    /* Ensure proper stacking on mobile */
+    #bme-filter-tags-container {
+        z-index: 15; /* Higher than map controls */
+    }
+    
+    /* Map wrapper adjustment when filters are present */
+    #bme-filter-tags-container:not(:empty) ~ #bme-map-container,
+    #bme-filter-tags-container:not(:empty) ~ .bme-map-ui-wrapper #bme-map-container {
+        margin-top: 0;
+    }
+}
+
+/* School Markers - Ensure proper styling */
+.mld-school-marker {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    border: 3px solid white !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5) !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
+    color: white !important;
+    z-index: 100 !important;
+    transition: transform 0.2s !important;
+}
+
+.mld-school-marker:hover {
+    transform: scale(1.15) !important;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.7) !important;
+    z-index: 101 !important;
+}
+
+.mld-school-marker.elementary {
+    background: #4CAF50 !important;
+}
+
+.mld-school-marker.middle {
+    background: #2196F3 !important;
+}
+
+.mld-school-marker.high {
+    background: #FF9800 !important;
+}
+
+.mld-school-marker.private {
+    background: #FF69B4 !important;
+}
+
+.mld-school-marker.preschool {
+    background: #00BCD4 !important;
+}
+
+/* Schools Toggle - Ensure it's clickable */
+#bme-schools-toggle {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    z-index: 1002 !important;
+}
+
+#bme-schools-control-wrapper {
+    pointer-events: auto !important;
+}
+
+/* Schools Types Container */
+.bme-schools-types-container {
+    position: absolute;
+    top: 56px;
+    right: 0;
+    background: rgba(255, 255, 255, 0.5) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-radius: 12px 0 0 12px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+    padding: 10px 12px;
+    margin-top: 200px; /* Position below control panel */
+    z-index: 1001;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bme-schools-types-container:hover {
+    background: rgba(255, 255, 255, 0.8) !important;
+}
+
+.bme-schools-types {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bme-school-type-item {
+    display: flex;
+    align-items: center;
+}
+
+.bme-school-type-item label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #4a5568;
+    user-select: none;
+}
+
+.bme-school-type-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.bme-school-icon {
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* --- New Map Controls Panel --- */
+.bme-map-controls-panel {
+    position: absolute;
+    top: 56px; /* Moved down 5px from 51px */
+    right: 0; /* Flush to right edge */
+    width: 200px;
+    background: rgba(255, 255, 255, 0.5) !important; /* 50% transparency */
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 12px 0 0 12px; /* No radius on right edge */
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1),
+                0 0 0 1px rgba(255,255,255,0.2) inset !important;
+    z-index: 25;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bme-map-controls-panel:hover {
+    background: rgba(255, 255, 255, 0.8) !important; /* 80% on hover */
+    box-shadow: 0 6px 24px rgba(0,0,0,0.15),
+                0 0 0 1px rgba(255,255,255,0.3) inset !important;
+}
+
+.bme-map-controls-panel.collapsed {
+    width: auto;
+}
+
+.bme-map-controls-panel.collapsed .bme-controls-content {
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+}
+
+.bme-controls-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(229, 231, 235, 0.3);
+    cursor: pointer;
+    user-select: none;
+    background: rgba(255, 255, 255, 0.2); /* Subtle header background */
+}
+
+.bme-controls-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.bme-controls-icon {
+    color: #6b7280;
+}
+
+.bme-controls-toggle {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.bme-controls-toggle:hover {
+    background: #f3f4f6;
+}
+
+.bme-chevron {
+    transition: transform 0.3s;
+    color: #6b7280;
+}
+
+.bme-map-controls-panel.collapsed .bme-chevron {
+    transform: rotate(-90deg);
+}
+
+.bme-controls-content {
+    padding: 6px;
+    max-height: 300px;
+    opacity: 1;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bme-control-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 6px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.bme-control-item:hover {
+    background: rgba(255, 255, 255, 0.4); /* Subtle hover effect with transparency */
+}
+
+.bme-control-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.bme-control-icon {
+    font-size: 14px;
+    width: 18px;
+    text-align: center;
+}
+
+/* Universal toggle switch styles */
+.bme-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+}
+
+.bme-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.bme-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    transition: 0.3s;
+    border-radius: 20px;
+}
+
+.bme-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.bme-toggle-switch input:checked + .bme-toggle-slider {
+    background-color: #3b82f6;
+}
+
+.bme-toggle-switch input:checked + .bme-toggle-slider:before {
+    transform: translateX(16px);
+}
+
+/* v6.30.9 - School filter toggle overrides - iOS-style layout */
+.bme-school-toggles {
+    display: block !important;
+}
+
+.bme-school-toggles .bme-toggle-switch {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    width: auto !important;
+    height: auto !important;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.bme-school-toggles .bme-toggle-switch:last-child {
+    margin-bottom: 0;
+}
+
+.bme-school-toggles .bme-toggle-slider {
+    position: relative;
+    width: 51px;
+    min-width: 51px;
+    height: 31px;
+    flex-shrink: 0;
+    background-color: #e5e7eb;
+    border-radius: 31px;
+}
+
+.bme-school-toggles .bme-toggle-slider:before {
+    width: 27px;
+    height: 27px;
+    left: 2px;
+    bottom: 2px;
+}
+
+.bme-school-toggles .bme-toggle-switch input:checked + .bme-toggle-slider {
+    background-color: #22c55e;
+}
+
+.bme-school-toggles .bme-toggle-switch input:checked + .bme-toggle-slider:before {
+    transform: translateX(20px);
+}
+
+.bme-school-toggles .bme-toggle-label {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.4;
+}
+
+/* Custom toggle for Draw (backwards compatibility) */
+.bme-toggle-custom {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    background-color: #cbd5e1;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.bme-toggle-custom.active {
+    background-color: #3b82f6;
+}
+
+.bme-toggle-custom-slider {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 14px;
+    height: 14px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.3s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.bme-toggle-custom.active .bme-toggle-custom-slider {
+    transform: translateX(16px);
+}
+
+/* Action buttons container */
+.bme-map-action-buttons {
+    position: absolute;
+    top: 75px; /* Adjusted for new panel position */
+    right: 210px; /* Position to left of control panel */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 24;
+}
+
+.bme-action-button {
+    background: rgba(255, 255, 255, 0.5); /* 50% transparency to match panel */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #374151;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.2s;
+}
+
+.bme-action-button:hover {
+    background: rgba(255, 255, 255, 0.8); /* 80% on hover to match panel */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.bme-action-button.bme-complete-shape {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+}
+
+.bme-action-button.bme-complete-shape:hover {
+    background: #059669;
+    border-color: #059669;
+}
+
+.bme-action-button.bme-reset-button {
+    background: #ef4444;
+    color: white;
+    border-color: #ef4444;
+}
+
+.bme-action-button.bme-reset-button:hover {
+    background: #dc2626;
+    border-color: #dc2626;
+}
+
+/* Legacy styles for backwards compatibility */
+#bme-map-controls {
+    display: none; /* Hide old container */
+}
+.bme-map-control-btn {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    transition: all 0.2s ease;
+}
+.bme-map-control-btn:hover {
+    border-color: #999;
+    background-color: #f7f7f7;
+}
+.bme-map-control-btn svg {
+    width: 20px;
+    height: 20px;
+}
+#bme-static-controls, #bme-drawing-controls {
+    display: flex;
+    gap: 10px;
+}
+#bme-map-type-popup {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 8px;
+    display: flex;
+    gap: 8px;
+}
+.bme-map-type-option {
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    overflow: hidden;
+    text-align: center;
+    transition: border-color 0.2s ease;
+}
+.bme-map-type-option:hover {
+    border-color: #aaa;
+}
+.bme-map-type-option.active {
+    border-color: var(--brand-color);
+}
+.bme-map-type-option img {
+    width: 70px;
+    height: 70px;
+    display: block;
+    object-fit: cover;
+    text-align: center;
+    transition: border-color 0.2s ease;
+}
+.bme-map-type-option:hover {
+    border-color: #aaa;
+}
+.bme-map-type-option.active {
+    border-color: var(--brand-color);
+}
+.bme-map-type-option img {
+    width: 70px;
+    height: 70px;
+    display: block;
+    object-fit: cover;
+}
+.bme-map-type-option span {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 0;
+    display: block;
+}
+
+/* --- Filters Modal --- */
+#bme-filters-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 10000; /* High z-index to ensure it's on top of map elements */
+    display: none;
+    align-items: flex-start; /* Keep content at the top */
+    justify-content: center;
+    padding-top: 5vh; /* Default padding for desktop */
+    overflow-x: hidden; /* Prevent horizontal scrolling/dragging */
+}
+#bme-filters-modal-content {
+    background: #fff;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 550px; /* Keep max-width for larger screens */
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh; /* Adjusted height here */
+    overflow-x: hidden; /* Prevent horizontal scrolling/dragging within content */
+}
+/* Adjust modal width for smaller screens to ensure no overflow */
+@media (max-width: 580px) { /* Adjust breakpoint as needed based on testing */
+    #bme-filters-modal-content {
+        width: calc(100% - 30px); /* 100% minus total horizontal padding/margin from overlay */
+        max-width: none; /* Allow it to shrink below 550px */
+    }
+}
+
+
+#bme-filters-modal-header {
+    padding: 12px 20px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-shrink: 0;
+    border-bottom: 1px solid #eee;
+}
+#bme-filters-modal-close {
+    background: #eee;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    color: #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#bme-filters-modal-body {
+    padding: 15px 15px; /* Adjusted horizontal padding */
+    overflow-y: auto;
+    flex-grow: 1;
+}
+.bme-filter-group {
+    margin-bottom: 25px;
+    border-bottom: 1px solid #e5e5e5;
+    padding-bottom: 25px;
+    max-width: 100%; /* Ensure filter groups don't overflow */
+    overflow: hidden; /* Hide any potential overflow within the group */
+}
+.bme-filter-group:last-child {
+    border-bottom: none;
+}
+.bme-filter-group > label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+.bme-filter-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: nowrap; /* Prevent wrapping unless explicitly desired for specific breakpoints */
+    min-width: 0; /* Important for flex items to shrink */
+    width: 100%; /* Ensure flex container takes full width */
+}
+.bme-filter-row input,
+.bme-filter-row select {
+    flex: 1;
+    min-width: 0; /* Allow inputs to shrink */
+    flex-shrink: 1; /* Explicitly allow inputs to shrink */
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+#bme-filters-modal-footer {
+    padding: 15px 25px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    flex-shrink: 0;
+}
+#bme-filters-modal-footer .button-secondary {
+    background: transparent;
+    border: none;
+    color: #333;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+}
+#bme-filters-modal-footer .button-primary {
+    background-color: #d9002c;
+    border-color: #d9002c;
+    color: #fff;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 15px;
+    border: none;
+    cursor: pointer;
+}
+#bme-filters-modal-footer .mld-filter-count {
+    flex-shrink: 0;
+}
+
+/* Mobile optimization for filter modal footer */
+@media (max-width: 768px) {
+    #bme-filters-modal-footer {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    #bme-filters-modal-footer .mld-filter-count {
+        order: -1;
+        width: 100%;
+        text-align: center;
+        margin-bottom: 5px;
+        font-size: 13px;
+        padding: 6px 12px;
+    }
+    #bme-filters-modal-footer .button-secondary {
+        flex: 1;
+    }
+    #bme-filters-modal-footer .button-primary {
+        flex: 1;
+    }
+}
+
+/* --- Modal Search --- */
+#bme-modal-search-group {
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    position: relative; /* Establish stacking context */
+    z-index: 10; /* Ensure it's above other filter groups */
+    overflow: visible; /* Allow suggestions to show outside this container */
+}
+#bme-search-wrapper-modal {
+    position: relative;
+}
+#bme-search-bar-wrapper-modal {
+    position: relative;
+    width: 100%;
+}
+#bme-search-input-modal {
+    width: 100%;
+    height: 40px;
+    padding: 10px 15px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+}
+#bme-search-input-modal:focus {
+    border-color: var(--brand-color);
+}
+#bme-autocomplete-suggestions-modal {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-height: 250px;
+    overflow-y: auto;
+    display: none;
+    z-index: 2001; /* Higher than modal content */
+}
+
+
+/* --- Price Filter --- */
+#bme-price-filter-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 100%; /* Ensure container doesn't overflow */
+    overflow: hidden; /* Hide any potential overflow */
+}
+#bme-price-histogram {
+    height: 60px;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 5px;
+    position: relative;
+    width: 100%; /* Ensure histogram takes full width */
+}
+.bme-histogram-bar {
+    flex-grow: 1;
+    background-color: #d1e5ff;
+    transition: background-color 0.2s ease;
+}
+.bme-histogram-bar.in-range {
+    background-color: var(--brand-color);
+}
+.bme-histogram-bar-outlier {
+    flex-grow: 0.5;
+    background-color: #a0c4ff;
+    position: relative;
+    border-left: 2px dashed #fff;
+}
+.bme-histogram-bar-label {
+    position: absolute;
+    bottom: 105%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    pointer-events: none;
+    z-index: 10;
+}
+.bme-histogram-bar-outlier:hover .bme-histogram-bar-label {
+    opacity: 1;
+    visibility: visible;
+}
+#bme-price-slider {
+    position: relative;
+    height: 24px;
+    width: calc(100% - 20px); /* Adjusted width to account for handle size */
+    margin: 0 10px; /* Center the slider track */
+    display: flex;
+    align-items: center;
+}
+#bme-price-slider-track,
+#bme-price-slider-range {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 4px;
+    border-radius: 2px;
+}
+#bme-price-slider-track {
+    background-color: #e0e0e0;
+    width: 100%;
+}
+#bme-price-slider-range {
+    background-color: var(--brand-color);
+}
+.bme-price-slider-handle {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-color: #fff;
+    border: 2px solid var(--brand-color);
+    border-radius: 50%;
+    cursor: grab;
+    top: 50%;
+    transform: translateY(-50%); /* For vertical centering */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    z-index: 2;
+}
+
+/* Adjustments for specific handles */
+#bme-price-slider-handle-min {
+    transform: translateY(-50%) translateX(0); /* No horizontal transform needed for min handle */
+}
+
+#bme-price-slider-handle-max {
+    transform: translateY(-50%) translateX(-20px); /* Translate back by its full width (20px) to align its right edge at 100% */
+}
+
+.bme-price-slider-handle:active {
+    cursor: grabbing;
+    transform: translateY(-50%) scale(1.1);
+}
+/* Re-apply correct transform for active state to avoid double transform */
+#bme-price-slider-handle-min:active {
+    transform: translateY(-50%) scale(1.1);
+}
+#bme-price-slider-handle-max:active {
+    transform: translateY(-50%) translateX(-20px) scale(1.1);
+}
+
+
+.bme-input-note {
+    font-size: 12px;
+    color: #777;
+    text-align: center;
+    margin-top: -5px;
+    padding: 0 10px;
+}
+
+/* --- Modal Input Controls --- */
+.bme-button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-width: 100%; /* Ensure button groups don't overflow */
+    overflow: hidden; /* Hide any potential overflow within the group */
+}
+.bme-button-group button {
+    flex-grow: 1;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #333;
+    text-align: center;
+    min-width: 0; /* Allow buttons to shrink */
+}
+.bme-button-group button:hover {
+    border-color: #999;
+    background-color: #f7f7f7;
+}
+.bme-button-group button.active {
+    background-color: var(--text-dark);
+    color: #fff;
+    border-color: var(--text-dark);
+}
+.bme-home-type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* Adjusted minmax for very small screens */
+    gap: 10px;
+    max-width: 100%; /* Ensure grid doesn't overflow */
+    overflow: hidden; /* Hide any potential overflow within the grid */
+}
+.bme-home-type-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 15px 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #fff;
+    font-size: 14px;
+    color: #333;
+}
+.bme-home-type-btn.active {
+    border-color: var(--brand-color);
+    background-color: #f0f7ff;
+    box-shadow: 0 0 0 2px var(--brand-color);
+}
+.bme-home-type-btn svg, .bme-home-type-btn img {
+    width: 32px;
+    height: 32px;
+    color: #333;
+}
+.bme-home-type-btn.active svg {
+    color: var(--brand-color);
+}
+.bme-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.bme-checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: normal;
+    cursor: pointer;
+    font-size: 15px;
+}
+.bme-checkbox-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--brand-color);
+    border-radius: 4px;
+}
+.bme-property-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 15px 10px;
+    align-items: center;
+    max-width: 100%; /* Ensure grid doesn't overflow */
+    overflow: hidden; /* Hide any potential overflow within the grid */
+}
+.bme-property-details-grid label {
+    font-weight: normal;
+    font-size: 15px;
+}
+.bme-property-details-grid .bme-filter-row.single-input {
+    grid-column: 1 / -1;
+}
+
+/* --- Marker Styles --- */
+.bme-marker-container {
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 30px;
+}
+.bme-marker-container .bme-dot-marker {
+    transition: opacity 0.2s ease-in-out;
+}
+.bme-marker-container .bme-marker-hover-reveal {
+    position: absolute;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+    pointer-events: none;
+}
+.bme-marker-container:hover .bme-dot-marker {
+    opacity: 0;
+}
+.bme-marker-container:hover .bme-marker-hover-reveal {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+.bme-marker-container.highlighted-active .bme-dot-marker {
+    opacity: 0;
+}
+.bme-marker-container.highlighted-active .bme-marker-hover-reveal {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+    background-color: #d9002c;
+    color: #fff;
+    border-color: #a30021;
+}
+.bme-dot-marker {
+    width: 6px;
+    height: 6px;
+    background-color: #28a745;
+    border-radius: 50%;
+    border: 1px solid white;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.2);
+}
+.bme-price-marker {
+    background-color: #4A5568;
+    color: #fff;
+    padding: 4px 7px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    border: 1px solid #2D3748;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Archived listing price markers - light gray background with dark gray text */
+.bme-price-marker-archive {
+    background-color: #D3D3D3 !important; /* Light gray background */
+    color: #4A4A4A !important; /* Dark gray text */
+    border: 1px solid #A9A9A9 !important; /* Medium gray border */
+}
+
+/* v6.65.0: Exclusive listing price markers - gold border with star banner */
+.bme-price-marker-exclusive {
+    border: 2px solid rgb(217, 166, 33) !important;
+    box-shadow: 0 2px 6px rgba(217, 166, 33, 0.4);
+    position: relative;
+    overflow: visible;
+}
+
+/* Star banner positioned above the price marker */
+.bme-exclusive-star-banner {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgb(217, 166, 33);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+
+.bme-exclusive-star-banner svg {
+    display: block;
+}
+
+/* v6.65.0: Exclusive listing badge - full styling for map page cards */
+.mld-exclusive-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgb(217, 166, 33);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 12;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    pointer-events: auto;
+}
+
+.mld-exclusive-badge svg {
+    flex-shrink: 0;
+}
+
+/* Z-index hierarchy for map markers:
+ * 1 - Archived property markers (lowest)
+ * 2 - Active property markers
+ * 3 - Hovered archived markers
+ * 4 - Hovered active markers
+ * 5 - Clicked/active markers (highest)
+ */
+
+.bme-unit-cluster-marker {
+    background-color: var(--brand-color);
+    color: white;
+    padding: 4px 7px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    border: 2px solid white;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Archived listing cluster markers - light gray background with dark gray text */
+.bme-unit-cluster-marker-archive {
+    background-color: #D3D3D3 !important; /* Light gray background */
+    color: #4A4A4A !important; /* Dark gray text */
+    border: 2px solid #A9A9A9 !important; /* Medium gray border */
+}
+.bme-unit-cluster-marker:hover {
+    transform: scale(1.1);
+    background-color: #0056b3;
+}
+.bme-price-marker.highlighted-hover, .bme-unit-cluster-marker.highlighted-hover {
+    background-color: var(--brand-color);
+    color: #fff;
+    border-color: #0056b3;
+    transform: scale(1.15);
+    z-index: 10 !important;
+}
+.bme-price-marker.highlighted-active, .bme-unit-cluster-marker.highlighted-active {
+    background-color: #d9002c;
+    color: #fff;
+    border-color: #a30021;
+    transform: scale(1.2);
+    z-index: 20 !important;
+}
+
+/* --- Half Map Layout --- */
+#bme-half-map-wrapper {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+.bme-map-ui-wrapper.bme-map-half {
+    flex: 1 1 auto;
+    min-width: 300px;
+}
+#bme-listings-list-container {
+    flex: 0 0 452px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    min-width: 280px;
+    max-width: 80%;
+}
+
+/* --- Resize Handle --- */
+.bme-resize-handle {
+    width: 6px;
+    cursor: col-resize;
+    background-color: #e2e8f0;
+    position: relative;
+    flex-shrink: 0;
+    transition: background-color 0.2s ease;
+}
+.bme-resize-handle:hover {
+    background-color: #cbd5e1;
+}
+.bme-resize-handle:active {
+    background-color: #94a3b8;
+}
+.bme-resize-handle-bar {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 40px;
+    background-color: #64748b;
+    border-radius: 1px;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+.bme-resize-handle:hover .bme-resize-handle-bar {
+    opacity: 0.8;
+}
+
+/* Resize handle tooltip */
+.bme-resize-handle-tooltip {
+    position: absolute;
+    top: 50%;
+    right: 100%;
+    transform: translateY(-50%);
+    background-color: #1e293b;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    margin-right: 8px;
+}
+.bme-resize-handle-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
+    border: 6px solid transparent;
+    border-left-color: #1e293b;
+}
+.bme-resize-handle:hover .bme-resize-handle-tooltip {
+    opacity: 1;
+}
+
+/* Initial attention animation */
+@keyframes resize-handle-pulse {
+    0%, 100% {
+        background-color: #e2e8f0;
+    }
+    50% {
+        background-color: #94a3b8;
+    }
+}
+.bme-resize-handle.first-load {
+    animation: resize-handle-pulse 1.5s ease-in-out 2;
+}
+.bme-resize-handle.first-load .bme-resize-handle-bar {
+    animation: resize-bar-grow 1.5s ease-in-out 2;
+}
+@keyframes resize-bar-grow {
+    0%, 100% {
+        height: 40px;
+        opacity: 0.5;
+    }
+    50% {
+        height: 60px;
+        opacity: 1;
+    }
+}
+
+/* --- Popup Container & Cards --- */
+#bme-popup-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    z-index: 10000; /* Higher than draw controls (9999) */
+    pointer-events: none;
+}
+.bme-popup-card-wrapper {
+    position: absolute;
+    width: 100%;
+    max-width: var(--popup-card-width);
+    pointer-events: auto;
+    transition: opacity 0.3s ease-in-out;
+    z-index: 10000; /* Higher than draw controls (9999) */
+}
+
+/* Ensure proper positioning context for close button */
+.bme-popup-card-wrapper .bme-listing-card {
+    position: relative;
+}
+
+/* Mobile-specific popup card positioning */
+@media (max-width: 768px) {
+    .bme-popup-card-wrapper {
+        /* Position from top instead of bottom on mobile */
+        bottom: auto !important;
+        top: 80px !important; /* Below the fixed top bar */
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        max-width: calc(100vw - 20px); /* Leave some margin on sides */
+        width: calc(100vw - 20px);
+    }
+    
+    /* Mobile popup cards - not draggable to avoid conflicts with scrolling */
+    .bme-popup-card-wrapper .bme-listing-card {
+        cursor: default; /* No grab cursor on mobile */
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3); /* Softer shadow on mobile */
+    }
+    
+    /* Ensure popup container doesn't block interactions on mobile */
+    #bme-popup-container {
+        pointer-events: none;
+    }
+    
+    /* But cards themselves should be interactive */
+    .bme-popup-card-wrapper {
+        pointer-events: auto;
+        z-index: 10001 !important; /* Ensure above draw controls on mobile */
+    }
+}
+.bme-popup-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    background: rgba(128, 128, 128, 0.5) !important;
+    background-color: rgba(128, 128, 128, 0.5) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 50%;
+    font-size: 20px;
+    font-weight: normal;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease;
+    line-height: 1;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+}
+.bme-popup-close::before {
+    content: '×' !important;
+    color: #fff !important;
+    font-size: 24px !important;
+    font-weight: normal !important;
+    line-height: 1 !important;
+    display: block !important;
+}
+.bme-popup-close svg {
+    display: none !important; /* Hide SVG in case of conflicts */
+}
+.bme-popup-close:hover {
+    background: rgba(128, 128, 128, 0.7) !important;
+    background-color: rgba(128, 128, 128, 0.7) !important;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.bme-popup-close:active {
+    transform: scale(0.95);
+}
+.bme-popout-btn {
+    position: absolute;
+    bottom: 12px;
+    left: 12px; /* Moved to bottom-left to avoid conflict with "View all photos" button */
+    width: 28px;
+    height: 28px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border: 2px solid white;
+    border-radius: 50%;
+    font-size: 14px;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+}
+.bme-popout-btn:hover {
+    background: #000;
+}
+.bme-popout-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Hide popout button on mobile */
+@media (max-width: 768px) {
+    .bme-popout-btn {
+        display: none !important;
+    }
+}
+
+/* --- Listing Card - Modern elevated style --- */
+.bme-listings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    justify-items: center;
+}
+/* Adjust grid columns based on container width */
+#bme-listings-list-container[data-cols="1"] .bme-listings-grid {
+    grid-template-columns: 1fr;
+}
+#bme-listings-list-container[data-cols="2"] .bme-listings-grid {
+    grid-template-columns: repeat(2, 1fr);
+}
+#bme-listings-list-container[data-cols="3"] .bme-listings-grid {
+    grid-template-columns: repeat(3, 1fr);
+}
+#bme-listings-list-container[data-cols="4"] .bme-listings-grid {
+    grid-template-columns: repeat(4, 1fr);
+}
+.bme-listing-card {
+    width: 100%;
+    max-width: var(--card-width);
+    height: var(--card-height);
+    background-color: var(--ds-white, #fff);
+    border-radius: var(--ds-radius-xl, 12px);
+    overflow: hidden;
+    border: 1px solid var(--ds-border, #e5e7eb);
+    box-shadow: var(--ds-shadow-md, 0 4px 6px rgba(0,0,0,0.1));
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
+.bme-listing-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--ds-shadow-lg, 0 10px 15px rgba(0,0,0,0.1));
+}
+.bme-popup-card-wrapper .bme-listing-card {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    cursor: grab;
+    height: auto;
+    max-width: var(--popup-card-width);
+    /* Allow touch on larger screens but prevent accidental selections */
+    -webkit-user-select: none;
+    user-select: none;
+    /* Smooth transitions for scaling */
+    transition: transform 0.1s ease-out, box-shadow 0.2s ease-in-out;
+    transform-origin: center center;
+    /* Ensure contents scale proportionally */
+    will-change: transform;
+}
+.bme-popup-card-wrapper .bme-listing-card.is-dragging {
+    cursor: grabbing;
+    touch-action: none; /* Prevent scrolling while dragging */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* Visual feedback during pinch-to-zoom */
+.bme-popup-card-wrapper .bme-listing-card.is-scaling {
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    transition: none; /* Immediate response during scaling */
+}
+
+/* Resize handle for mouse resizing */
+.bme-resize-handle-corner {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    cursor: nwse-resize;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 15;
+}
+
+/* Show resize handle on card hover */
+.bme-popup-card-wrapper:hover .bme-resize-handle-corner {
+    opacity: 1;
+}
+
+/* Resize handle visual - corner triangle */
+.bme-resize-handle-corner::before {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 0 12px 12px;
+    border-color: transparent transparent rgba(0,0,0,0.3) transparent;
+}
+
+/* Optional: Add grip dots for better visibility */
+.bme-resize-handle-corner::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 2px;
+    height: 2px;
+    background: rgba(255,255,255,0.8);
+    box-shadow: 
+        3px 0 0 rgba(255,255,255,0.8),
+        0 3px 0 rgba(255,255,255,0.8),
+        3px 3px 0 rgba(255,255,255,0.8);
+}
+
+/* Resize handle hover state */
+.bme-resize-handle-corner:hover::before {
+    border-color: transparent transparent rgba(0,0,0,0.5) transparent;
+}
+
+/* Active resizing state */
+.bme-popup-card-wrapper .bme-listing-card.is-resizing {
+    cursor: nwse-resize;
+    transition: none;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+
+/* Ensure interactive elements remain clickable */
+.bme-popup-card-wrapper button,
+.bme-popup-card-wrapper a {
+    -webkit-user-select: auto;
+    user-select: auto;
+    touch-action: manipulation;
+}
+.bme-card-image {
+    position: relative;
+    width: 100%;
+    height: 280px;
+    flex-shrink: 0;
+}
+.bme-card-image a {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+.bme-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+.bme-card-image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 12px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 100%);
+    pointer-events: none;
+}
+.bme-card-image-overlay .bme-popout-btn {
+    pointer-events: auto;
+}
+.bme-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    pointer-events: auto;
+}
+.bme-card-tag {
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+/* Property type badge - white text, 90% transparent gray background */
+.bme-property-type-badge {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(128, 128, 128, 0.1);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    z-index: 5;
+}
+.bme-card-tag.price-drop { background-color: #28a745; }
+.bme-card-tag.status { background-color: var(--text-light); }
+.bme-card-tag.status.sold { background-color: #dc3545; }
+.bme-card-tag.status.pending { background-color: #ffc107; color: #212529; }
+/* School grade badges (v6.30.1 - Phase 3) */
+.bme-card-tag.school-grade { display: inline-flex; align-items: center; gap: 4px; }
+.bme-card-tag.school-grade::before { content: '🎓'; font-size: 10px; }
+.bme-card-tag.school-grade.grade-a { background-color: #22c55e; }
+.bme-card-tag.school-grade.grade-b { background-color: #3b82f6; }
+.bme-card-tag.school-grade.grade-c { background-color: #eab308; color: #212529; }
+.bme-card-tag.school-grade.grade-d { background-color: #f97316; }
+.bme-card-tag.school-grade.grade-f { background-color: #ef4444; }
+
+/* Favorite and Hide action buttons (v6.31.10 - iOS matching style) */
+.bme-card-actions {
+    position: absolute !important;
+    top: 10px !important;
+    right: 10px !important;
+    display: flex !important;
+    gap: 8px !important;
+    pointer-events: auto !important;
+    z-index: 10 !important;
+}
+.bme-card-image-overlay .bme-card-actions {
+    position: absolute !important;
+}
+
+/* Shift action buttons left on popup cards to avoid close button overlap (v6.31.12) */
+.bme-popup-card-wrapper .bme-card-actions {
+    right: 50px !important; /* Leave room for 32px close button + 10px margin + 8px gap */
+}
+
+.bme-favorite-btn,
+.bme-hide-btn {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    border-radius: 50% !important;
+    border: none !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+.bme-favorite-btn:hover,
+.bme-hide-btn:hover {
+    transform: scale(1.1) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+/* Heart button - gray outline, red when saved */
+.bme-favorite-btn svg {
+    width: 18px !important;
+    height: 18px !important;
+    fill: #6b7280 !important;
+    transition: fill 0.15s ease !important;
+}
+.bme-favorite-btn:hover svg {
+    fill: #ef4444 !important;
+}
+.bme-favorite-btn.saved {
+    background: #fef2f2 !important;
+}
+.bme-favorite-btn.saved svg {
+    fill: #ef4444 !important;
+}
+/* X button - gray, red on hover */
+.bme-hide-btn svg {
+    width: 16px !important;
+    height: 16px !important;
+    fill: #6b7280 !important;
+    transition: fill 0.15s ease !important;
+}
+.bme-hide-btn:hover {
+    background: #fee2e2 !important;
+}
+.bme-hide-btn:hover svg {
+    fill: #dc2626 !important;
+}
+/* Loading states */
+.bme-favorite-btn.loading,
+.bme-hide-btn.loading {
+    pointer-events: none !important;
+    opacity: 0.7 !important;
+}
+.bme-favorite-btn.loading svg,
+.bme-hide-btn.loading svg {
+    animation: bme-pulse 0.5s infinite !important;
+}
+@keyframes bme-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.bme-card-details {
+    padding: 12px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+.bme-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+.bme-card-price {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text-dark);
+    line-height: 1.1;
+    flex-grow: 1;
+}
+.bme-card-specs {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 15px;
+    margin: 6px 0;
+    color: var(--text-dark);
+}
+.bme-spec-divider {
+    width: 4px;
+    height: 4px;
+    background-color: #ccc;
+    border-radius: 50%;
+}
+.bme-card-address {
+    font-size: 14px;
+    color: var(--text-light);
+    line-height: 1.4;
+}
+.bme-card-address p {
+    margin: 0;
+}
+/* School info badge in card details section (v6.31.14) */
+.bme-card-school-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    background-color: #f0f9ff;
+    color: #0369a1;
+}
+.bme-card-school-info .bme-school-icon {
+    font-size: 12px;
+}
+.bme-card-school-info.grade-a { background-color: #dcfce7; color: #166534; }
+.bme-card-school-info.grade-b { background-color: #dbeafe; color: #1e40af; }
+.bme-card-school-info.grade-c { background-color: #fef9c3; color: #854d0e; }
+.bme-card-school-info.grade-d { background-color: #ffedd5; color: #9a3412; }
+.bme-card-school-info.grade-f { background-color: #fee2e2; color: #991b1b; }
+
+/* "Recommended by [Agent]" badge for shared properties (v6.35.12 - Sprint 3 Property Sharing) */
+.mld-from-agent-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 4px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    background-color: #9333ea;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    z-index: 5;
+    max-width: calc(100% - 16px);
+    overflow: hidden;
+}
+.mld-from-agent-badge:not(:has(.mld-agent-badge-photo)) {
+    padding-left: 10px;
+}
+.mld-agent-badge-photo {
+    width: 22px !important;
+    height: 22px !important;
+    min-width: 22px !important;
+    max-width: 22px !important;
+    min-height: 22px !important;
+    max-height: 22px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 2px solid rgba(255,255,255,0.9) !important;
+    flex-shrink: 0 !important;
+}
+.mld-from-agent-badge span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mld-from-agent-badge svg {
+    flex-shrink: 0;
+}
+
+.bme-card-secondary-info {
+    margin-top: auto;
+    padding-top: 8px;
+    font-size: 12px;
+    color: var(--text-light);
+    display: flex;
+    gap: 12px;
+}
+.bme-view-details-btn {
+    display: block;
+    width: 100%;
+    background-color: var(--brand-color);
+    color: #fff;
+    text-align: center;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none;
+    margin-top: 12px;
+    transition: background-color 0.2s;
+}
+.bme-view-details-btn:hover {
+    background-color: #0056b3;
+    color: #fff;
+}
+
+/* --- Misc UI Elements --- */
+#bme-close-all-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1002;
+    padding: 10px 20px;
+    background-color: #333;
+    color: white;
+    border: 2px solid white;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+/* Focus mode styles removed - using modal instead */
+
+/* --- Responsive Adjustments --- */
+/* Medium screens - ensure logo scales properly */
+@media (min-width: 783px) and (max-width: 1200px) {
+    #bme-logo-container {
+        flex: 0 0 auto;
+        max-width: 100px;
+    }
+    #bme-logo-container img {
+        max-height: 35px;
+    }
+    #bme-search-controls-container {
+        flex: 1 1 83%;
+    }
+}
+@media (max-width: 992px) {
+    #bme-half-map-wrapper {
+        flex-direction: column;
+    }
+    .bme-map-ui-wrapper.bme-map-half {
+        flex-basis: 50%;
+        flex-grow: 1;
+        flex-shrink: 1;
+        max-width: none;
+    }
+    .bme-resize-handle {
+        display: none;
+    }
+    #bme-listings-list-container {
+        flex: 1 1 auto;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 782px) {
+    /* Modal Overlay for full-screen mobile */
+    #bme-filters-modal-overlay {
+        padding-top: 0; /* Remove top padding */
+        align-items: stretch; /* Make content stretch vertically */
+        justify-content: flex-start; /* Align content to the left (if not full width) */
+    }
+
+    /* Modal Content for full-screen mobile */
+    #bme-filters-modal-content {
+        width: 100%; /* Fill full width */
+        max-width: 100%; /* Ensure it takes full width */
+        height: 100%; /* Fill parent (overlay) height */
+        max-height: 100%; /* Ensure it doesn't exceed parent height */
+        border-radius: 0; /* No rounded corners for full-screen look */
+        position: relative; /* For positioning absolute children like close button */
+        top: 0; /* Ensure it starts from the very top */
+    }
+
+    /* Adjust for WordPress admin bar on mobile */
+    body.admin-bar #bme-filters-modal-content {
+        height: calc(100% - 46px); /* Account for mobile admin bar height (46px) */
+        max-height: calc(100% - 46px);
+        margin-top: 46px; /* Push modal content down below the admin bar */
+    }
+
+    /* Hide modal header on mobile */
+    #bme-filters-modal-header {
+        display: none;
+    }
+
+    /* Reposition close button - relative to #bme-filters-modal-content */
+    #bme-filters-modal-close {
+        position: absolute; /* Changed from fixed to absolute */
+        top: 15px; /* Position relative to the modal content's top */
+        right: 15px; /* Position relative to the modal content's right */
+        z-index: 10; /* Ensure it's above other modal content */
+        background: rgba(0,0,0,0.6); /* Make it visible against content */
+        color: white;
+        border: 2px solid white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    /* No need for admin-bar specific top adjustment on fixed position anymore */
+
+
+    /* Add padding to the bottom of the modal body to ensure footer is visible */
+    #bme-filters-modal-body {
+        /* Use a large fixed padding with safe-area-inset-bottom for robustness */
+        padding-bottom: calc(90px + env(safe-area-inset-bottom));
+        /* Fallback for browsers not supporting env() or if safe-area-inset-bottom is 0 */
+        padding-bottom: 130px; /* A safe large value if env() isn't available */
+    }
+
+    #bme-logo-container {
+        display: none;
+    }
+    #bme-top-bar {
+        flex-wrap: wrap;
+    }
+    #bme-search-controls-container {
+        flex-basis: 100%;
+        order: 2;
+    }
+
+    #bme-search-wrapper {
+        min-width: 0; /* Allow search bar to shrink properly */
+    }
+
+    /* Hide desktop property type selector and show its container in the modal */
+    #bme-property-type-desktop-container {
+        display: none;
+    }
+    #bme-property-type-mobile-container {
+        display: block; /* This will be a .bme-filter-group */
+    }
+
+    #bme-map-controls {
+        top: auto;
+        bottom: 15px;
+    }
+    #bme-filter-tags-container {
+        position: static; /* Changed to static to flow with content */
+        margin: 10px 15px 15px; /* Add vertical margin for spacing */
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        padding: 8px;
+        max-height: none;
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-wrap: nowrap;
+        scrollbar-width: thin;
+        scrollbar-height: 4px;
+        -webkit-overflow-scrolling: touch;
+        z-index: 10; /* Ensure it's above other content */
+    }
+    
+    /* Horizontal scrollbar for mobile filter tags */
+    #bme-filter-tags-container::-webkit-scrollbar {
+        height: 4px;
+        width: 4px;
+    }
+    
+    #bme-filter-tags-container::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 4px;
+    }
+    
+    #bme-filter-tags-container::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+    }
+    
+    /* Mobile filter tag adjustments */
+    .bme-filter-tag {
+        padding: 6px 12px;
+        font-size: 13px;
+        min-height: 32px;
+        touch-action: manipulation;
+    }
+    
+    .bme-filter-tag-remove {
+        font-size: 16px;
+        min-width: 20px;
+        min-height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Adjust listings container on mobile */
+    #bme-listings-list-container {
+        padding-top: 10px; /* Small padding for visual spacing */
+    }
+    
+    /* Scroll indicator for filter overflow */
+    #bme-filter-tags-container::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 20px;
+        background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.9));
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    #bme-filter-tags-container.has-overflow::after {
+        opacity: 1;
+    }
+    .bme-home-type-grid {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* Further adjusted minmax for very small screens */
+    }
+}
+@media (max-width: 600px) {
+    /* Ultra-compact filter tags for small screens */
+    #bme-filter-tags-container {
+        margin: 0 10px;
+        padding: 6px;
+        gap: 4px;
+    }
+    
+    .bme-filter-tag {
+        padding: 4px 10px;
+        font-size: 12px;
+        min-height: 28px;
+        border-radius: 14px;
+    }
+    
+    /* Mobile filter tag more button */
+    .bme-filter-tag-more {
+        background-color: #6c757d;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    
+    .bme-filter-tag-more:hover,
+    .bme-filter-tag-more:active {
+        background-color: #5a6268;
+    }
+    
+    /* Prevent horizontal scroll on mobile filter tags */
+    #bme-filter-tags-container {
+        overflow-x: hidden;
+        white-space: nowrap;
+        display: flex;
+        flex-wrap: nowrap;
+        max-width: 100%;
+    }
+    
+    /* Mobile View Mode Toggle - Hidden on desktop */
+    .bme-view-mode-toggle {
+        display: none;
+        background: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    
+    .bme-view-mode-btn {
+        flex: 1;
+        padding: 8px 12px;
+        border: none;
+        background: transparent;
+        color: #6c757d;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+    
+    .bme-view-mode-btn:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
+    
+    .bme-view-mode-btn.active {
+        background: #007bff;
+        color: white;
+    }
+    
+    .bme-view-mode-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    /* Mobile-specific styles */
+    @media (max-width: 768px) {
+        /* Make top bar fixed on mobile */
+        #bme-top-bar {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: white;
+            padding: 10px 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* Admin bar only in WP Admin, not on frontend */
+        body.mld-map-active.admin-bar #bme-top-bar {
+            top: 0;
+        }
+        
+        /* Hide filter tags on mobile */
+        #bme-filter-tags-container {
+            display: none !important;
+        }
+        
+        /* Main wrapper uses full viewport */
+        .mld-fixed-wrapper {
+            height: 100vh;
+        }
+        
+        /* Half-map wrapper takes full space */
+        #bme-half-map-wrapper {
+            height: 100%;
+            padding-top: 60px; /* Space for fixed top bar */
+        }
+        
+        /* No admin bar spacing on frontend map pages */
+        body.mld-map-active.admin-bar #bme-half-map-wrapper {
+            padding-top: 60px; /* Same as without admin bar */
+        }
+        
+        /* Map wrapper always exists but adjusts based on view mode */
+        .bme-map-ui-wrapper.bme-map-half {
+            height: 100%;
+        }
+        
+        /* Mobile View Mode Toggle - Bottom Sticky */
+        .bme-view-mode-toggle {
+            display: flex !important;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 4px;
+            gap: 4px;
+            z-index: 9998; /* Below modals but above everything else */
+            max-width: 320px;
+            width: calc(100% - 40px);
+        }
+        
+        /* Ensure proper z-index hierarchy */
+        /* Modal should be highest */
+        #bme-filters-modal-overlay {
+            z-index: 10000 !important;
+        }
+        
+        /* Autocomplete should be very high */
+        #bme-autocomplete-suggestions,
+        #bme-autocomplete-suggestions-modal {
+            z-index: 10001; /* Slightly higher than modal for autocomplete */
+        }
+        
+        /* Toggle should be below modals */
+        .bme-view-mode-toggle {
+            z-index: 9998 !important;
+        }
+        
+        /* Top bar should be below toggle */
+        #bme-top-bar {
+            z-index: 100 !important;
+        }
+        
+        .bme-view-mode-btn {
+            background: transparent;
+            border: none;
+            color: #495057;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+        }
+        
+        .bme-view-mode-btn.active {
+            background: #007bff;
+            color: white;
+        }
+        
+        /* View mode styles for mobile */
+        
+        /* LIST VIEW */
+        #bme-half-map-wrapper.view-mode-list .bme-map-ui-wrapper {
+            height: 0;
+            overflow: hidden;
+        }
+        
+        #bme-half-map-wrapper.view-mode-list #bme-resize-handle {
+            display: none !important;
+        }
+        
+        #bme-half-map-wrapper.view-mode-list #bme-listings-list-container {
+            height: 100%;
+            overflow-y: auto;
+            padding: 15px;
+            padding-bottom: 80px; /* Space for bottom toggle */
+        }
+        
+        /* MAP VIEW */
+        #bme-half-map-wrapper.view-mode-map .bme-map-ui-wrapper {
+            height: 100%;
+        }
+        
+        #bme-half-map-wrapper.view-mode-map #bme-map-container {
+            height: 100%;
+        }
+        
+        #bme-half-map-wrapper.view-mode-map #bme-listings-list-container,
+        #bme-half-map-wrapper.view-mode-map #bme-resize-handle {
+            display: none !important;
+        }
+        
+        #bme-half-map-wrapper.view-mode-map .bme-map-ui-wrapper {
+            flex: 1 1 100%;
+            height: 100%;
+        }
+        
+        /* Adjust listings count indicator for mobile */
+        #bme-listings-count-indicator {
+            bottom: 100px; /* Above the view toggle */
+        }
+    }
+    
+    .bme-filter-tag-remove {
+        font-size: 14px;
+        min-width: 18px;
+        min-height: 18px;
+    }
+    
+    /* Ensure map doesn't overlap with filters */
+    #bme-map-container {
+        margin-top: 0;
+    }
+    
+    /* Add visual indicator for scrollable filters */
+    #bme-filter-tags-container:not(:empty) {
+        position: relative;
+        padding-right: 20px;
+    }
+    
+    #bme-filter-tags-container:not(:empty)::before {
+        content: '›';
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 20px;
+        color: rgba(0, 0, 0, 0.3);
+        font-weight: bold;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    #bme-filter-tags-container.can-scroll::before {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 420px) {
+    .bme-listing-card {
+        height: auto;
+    }
+    
+    /* Even more compact filters for very small screens */
+    #bme-filter-tags-container {
+        margin: 0 8px;
+        padding: 4px 6px;
+        border-radius: 10px;
+    }
+    
+    .bme-filter-tag {
+        padding: 3px 8px;
+        font-size: 11px;
+        min-height: 26px;
+        gap: 4px;
+    }
+    
+    /* Listing count indicator adjustment */
+    #bme-listings-count-indicator {
+        bottom: 10px;
+        left: 10px;
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+}
+
+/* View Photos Button */
+.bme-view-photos-btn {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s ease;
+    z-index: 10;
+    pointer-events: auto;
+}
+
+.bme-view-photos-btn:hover {
+    background: rgba(0, 0, 0, 0.85);
+}
+
+.bme-view-photos-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* Gallery Overlay */
+.mld-gallery-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    animation: mld-gallery-fade-in 0.3s forwards;
+}
+
+@keyframes mld-gallery-fade-in {
+    to { opacity: 1; }
+}
+
+.mld-gallery-container {
+    width: 100%;
+    height: 100%;
+    max-width: 1400px;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Gallery Close Button */
+.mld-gallery-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+    z-index: 2;
+}
+
+.mld-gallery-close:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+/* Gallery Main Area */
+.mld-gallery-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.mld-gallery-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    user-select: none;
+}
+
+/* Loading Spinner */
+.mld-gallery-loading {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.mld-gallery-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: mld-gallery-spin 0.8s linear infinite;
+}
+
+@keyframes mld-gallery-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Navigation Buttons */
+.mld-gallery-prev,
+.mld-gallery-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 60px;
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease;
+    padding: 0;
+}
+
+.mld-gallery-prev svg,
+.mld-gallery-next svg {
+    width: 40px;
+    height: 40px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.mld-gallery-prev:hover,
+.mld-gallery-next:hover {
+    opacity: 0.7;
+}
+
+.mld-gallery-prev:disabled,
+.mld-gallery-next:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.mld-gallery-prev {
+    left: 20px;
+}
+
+.mld-gallery-next {
+    right: 20px;
+}
+
+/* Counter */
+.mld-gallery-counter {
+    text-align: center;
+    color: #fff;
+    font-size: 14px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 20px;
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.mld-gallery-error {
+    color: #ff6b6b;
+}
+
+/* Thumbnails */
+.mld-gallery-thumbnails {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    max-width: 90%;
+    overflow-x: auto;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.mld-gallery-thumbnails::-webkit-scrollbar {
+    height: 6px;
+}
+
+.mld-gallery-thumbnails::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.mld-gallery-thumbnails::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.mld-gallery-thumb {
+    width: 60px;
+    height: 60px;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    background-size: cover;
+    background-position: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: border-color 0.2s ease;
+}
+
+.mld-gallery-thumb.active {
+    border-color: #fff;
+}
+
+.mld-gallery-thumb:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .mld-gallery-container {
+        padding: 0;
+    }
+    
+    .mld-gallery-close {
+        top: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        font-size: 24px;
+    }
+    
+    /* Hide navigation arrows on mobile */
+    .mld-gallery-prev,
+    .mld-gallery-next {
+        display: none;
+    }
+    
+    .mld-gallery-thumbnails {
+        bottom: 10px;
+        max-width: 95%;
+        padding: 6px;
+    }
+    
+    .mld-gallery-thumb {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .mld-gallery-counter {
+        bottom: 80px;
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+}
+
+/* Safe area support for modern devices */
+@supports (padding: max(0px)) {
+    .mld-gallery-container {
+        padding-top: max(20px, env(safe-area-inset-top));
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+    }
+    
+    @media (max-width: 768px) {
+        .mld-gallery-container {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+    }
+}
+
+/* --- Drawing Feature Styles --- */
+.bme-map-controls {
+    position: absolute;
+    top: 80px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 100;
+}
+
+/* Nearby toggle in map controls (moved from search bar) */
+#bme-map-controls .bme-nearby-toggle-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    padding: 6px 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    right: auto;
+    top: auto;
+    transform: none;
+    border: none;
+}
+
+#bme-map-controls .bme-nearby-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+    margin-right: 0;
+}
+
+/* Drawing toggle switch container */
+.bme-draw-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    padding: 6px 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.bme-draw-toggle-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+}
+
+/* Toggle switch styles */
+.bme-draw-toggle {
+    position: relative;
+    width: 40px;
+    height: 24px;
+    background-color: #ccc;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.bme-draw-toggle.active {
+    background-color: #2196F3;
+}
+
+.bme-draw-toggle-slider {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.bme-draw-toggle.active .bme-draw-toggle-slider {
+    transform: translateX(16px);
+}
+
+/* Reset button */
+.bme-reset-button {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
+}
+
+.bme-reset-button:hover {
+    background-color: #c82333;
+}
+
+.bme-reset-button[style*="display: none"] {
+    display: none !important;
+}
+
+.bme-reset-button.force-hidden {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+.bme-map-control-btn {
+    background: white;
+    border: 1px solid #e1e1e1;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #222;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.bme-map-control-btn:hover {
+    background-color: #f8f8f8;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.bme-map-control-btn.active {
+    background-color: #2196F3;
+    color: white;
+    border-color: #2196F3;
+}
+
+.bme-complete-shape {
+    background-color: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+.bme-complete-shape:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+.bme-drawing-panel {
+    position: absolute;
+    top: 180px;
+    right: 10px;
+    width: 300px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    padding: 16px;
+    z-index: 100;
+    display: none;
+}
+
+.bme-drawing-panel.active {
+    display: block;
+}
+
+.bme-drawing-panel-header {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.bme-drawing-panel-header h3 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #222;
+}
+
+.bme-drawing-instructions {
+    font-size: 13px;
+    color: #666;
+    display: block;
+}
+
+.bme-polygon-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+}
+
+.bme-no-polygons {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+    margin: 0;
+    font-size: 14px;
+}
+
+.bme-polygon-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f8f8f8;
+    border-radius: 6px;
+    margin-bottom: 6px;
+}
+
+.bme-polygon-item:hover {
+    background: #f0f0f0;
+}
+
+.bme-polygon-name {
+    font-size: 14px;
+    color: #333;
+    flex: 1;
+    margin-right: 10px;
+}
+
+.bme-polygon-name-input {
+    font-size: 14px;
+    color: #333;
+    background: transparent;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 4px 8px;
+    flex: 1;
+    margin-right: 10px;
+}
+
+.bme-polygon-name-input:focus {
+    outline: none;
+    border-color: #2196F3;
+    background: white;
+}
+
+.bme-polygon-delete {
+    background: none;
+    border: none;
+    color: #dc3545;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.bme-polygon-delete:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.bme-clear-all-btn {
+    width: 100%;
+    padding: 8px 16px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.bme-clear-all-btn:hover:not(:disabled) {
+    background-color: #c82333;
+}
+
+.bme-clear-all-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* Drawing overlay message */
+/* Focus mode styles removed - using modal instead */
+
+/* Ensure map container is positioned for absolute children */
+#bme-map-container {
+    position: relative;
+}
+
+/* Hide drawing on mobile */
+@media (max-width: 768px) {
+    
+    #bme-draw-button {
+        display: none;
+    }
+    
+    .bme-drawing-panel {
+        display: none !important;
+    }
+}
+
+/* Filter Modal Split Row */
+.bme-filter-row-split {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.bme-filter-half {
+    flex: 1;
+    min-width: 0;
+}
+
+.bme-checkbox-single {
+    margin-top: 8px;
+}
+
+.bme-checkbox-single label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.bme-checkbox-single input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+#bme-open-house-count {
+    margin-left: 5px;
+    color: #666;
+    font-size: 13px;
+}
+
+/* Collapsible Filter Sections */
+.bme-filter-group.bme-collapsible {
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.bme-filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    cursor: pointer;
+    background-color: #f8f9fa;
+    transition: background-color 0.2s;
+    user-select: none;
+}
+
+.bme-filter-header:hover {
+    background-color: #e9ecef;
+}
+
+.bme-filter-header label {
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.bme-toggle-icon {
+    font-size: 20px;
+    font-weight: 300;
+    color: #666;
+    transition: transform 0.2s;
+}
+
+.bme-filter-header.expanded .bme-toggle-icon {
+    transform: rotate(45deg);
+}
+
+.bme-filter-content {
+    padding: 0 15px 15px 15px;
+    border-top: 1px solid #e5e5e5;
+}
+
+/* Ensure checkboxes in collapsible sections maintain proper spacing */
+.bme-collapsible .bme-checkbox-group {
+    margin-top: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .bme-filter-row-split {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .bme-filter-half {
+        width: 100%;
+    }
+}
+
+/* Open Now tag styling */
+.bme-card-tag.open-house.open-now {
+    background-color: #ff4444;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Custom Status Dropdown Styling */
+.bme-custom-select {
+    position: relative;
+    width: 100%;
+}
+
+/* Ensure parent containers don't hide overflow */
+#bme-status-group {
+    position: relative;
+    overflow: visible !important;
+    z-index: 100; /* Higher than siblings */
+}
+
+.bme-filter-half {
+    overflow: visible !important;
+}
+
+/* Ensure the filter group with status doesn't clip */
+.bme-filter-group {
+    position: relative;
+    overflow: visible !important;
+}
+
+.bme-select-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: var(--font-sans);
+    color: var(--text-dark);
+    transition: all 0.2s ease;
+}
+
+.bme-select-display:hover {
+    border-color: #bbb;
+}
+
+.bme-select-display.active {
+    border-color: var(--brand-color);
+    box-shadow: 0 0 0 3px rgba(0, 124, 255, 0.1);
+}
+
+.bme-select-arrow {
+    font-size: 12px;
+    color: #666;
+    transition: transform 0.2s ease;
+}
+
+.bme-select-display.active .bme-select-arrow {
+    transform: rotate(180deg);
+}
+
+.bme-select-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10002 !important; /* Higher than modal to ensure dropdown is visible */
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.bme-select-option {
+    padding: 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.bme-select-option:last-child {
+    border-bottom: none;
+}
+
+.bme-select-option label {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    cursor: pointer;
+    margin: 0;
+    transition: background-color 0.15s ease;
+}
+
+.bme-select-option label:hover {
+    background-color: #f8f8f8;
+}
+
+.bme-select-option input[type="checkbox"] {
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.bme-select-option span {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text-dark);
+}
+
+.bme-select-option .bme-filter-count {
+    margin-left: auto;
+    font-size: 12px;
+    color: #999;
+    padding-left: 8px;
+}
+
+.bme-select-option input[type="checkbox"]:disabled + span {
+    color: #999;
+}
+
+/* Remove overflow override to restore sticky footer */
+.bme-filter-group.bme-filter-row-split {
+    position: relative;
+}
+
+/* Loading states */
+.bme-loading {
+    position: relative;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.bme-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007cba;
+    border-radius: 50%;
+    animation: bme-spin 1s linear infinite;
+}
+
+@keyframes bme-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#bme-apply-filters-btn.bme-loading {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .bme-select-display,
+    .bme-select-option label {
+        font-size: 16px; /* Prevent zoom on mobile */
+    }
+}
+

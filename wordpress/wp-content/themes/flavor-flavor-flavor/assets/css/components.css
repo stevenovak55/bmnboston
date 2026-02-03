@@ -1,0 +1,1011 @@
+/**
+ * Component Styles
+ *
+ * Header, Footer, and shared component styles.
+ * Includes glass-morphism effects and touch-optimized interactions.
+ *
+ * @package flavor_flavor_flavor
+ * @version 1.3.0
+ */
+
+/* ==========================================================================
+   Header - Transparent Overlay on Homepage
+   ========================================================================== */
+
+.bne-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: transparent;
+    transition: all var(--bne-transition-normal);
+}
+
+/* All non-homepage pages - solid dark header from the start */
+body:not(.home) .bne-header {
+    background: rgba(10, 10, 15, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--bne-shadow-lg);
+}
+
+body:not(.home) .bne-header .bne-header__menu a {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+body:not(.home) .bne-header .bne-header__menu a:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+body:not(.home) .bne-header .bne-header__site-title {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+body:not(.home) .bne-header .bne-header__menu-toggle {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+body:not(.home) .bne-header .bne-header__logo img {
+    filter: brightness(0) invert(1);
+}
+
+/* Scrolled state - dark glass-morphism background */
+.bne-header.scrolled {
+    background: rgba(10, 10, 15, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--bne-shadow-lg);
+}
+
+/* On scrolled dark header, keep text light */
+.bne-header.scrolled .bne-header__menu a {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.bne-header.scrolled .bne-header__menu a:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.bne-header.scrolled .bne-header__site-title {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.bne-header.scrolled .bne-header__menu-toggle {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Scrolled underline color */
+.bne-header.scrolled .bne-header__menu a::after {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.8), var(--bne-beige));
+}
+
+.bne-header.scrolled .bne-header__site-title:hover {
+    color: #ffffff;
+}
+
+/* Logo invert on transparent header */
+.bne-header .bne-header__logo img {
+    filter: brightness(0) invert(1);
+    transition: filter var(--bne-transition-normal);
+}
+
+.bne-header.scrolled .bne-header__logo img {
+    filter: brightness(0) invert(1); /* Keep logo white on dark scrolled header */
+}
+
+.bne-header__wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--bne-space-6);
+    padding: var(--bne-space-4) 0;
+    transition: padding var(--bne-transition-normal);
+}
+
+.bne-header.scrolled .bne-header__wrapper {
+    padding: var(--bne-space-3) 0;
+}
+
+.bne-header__logo {
+    flex-shrink: 0;
+    transition: transform var(--bne-transition-fast);
+}
+
+.bne-header__logo:hover {
+    transform: scale(1.02);
+}
+
+.bne-header__logo img {
+    max-height: 50px;
+    width: auto;
+    transition: all var(--bne-transition-normal);
+}
+
+.bne-header.scrolled .bne-header__logo img {
+    max-height: 42px;
+}
+
+.bne-header__site-title {
+    font-size: var(--bne-font-size-xl);
+    font-weight: 700;
+    color: var(--bne-white);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+    transition: all var(--bne-transition-fast);
+}
+
+.bne-header__site-title:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.bne-header__nav {
+    display: flex;
+    align-items: center;
+}
+
+.bne-header__menu {
+    display: none;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: var(--bne-space-1);
+}
+
+@media (min-width: 1024px) {
+    .bne-header__menu {
+        display: flex;
+    }
+}
+
+.bne-header__menu li {
+    margin: 0;
+}
+
+.bne-header__menu a {
+    position: relative;
+    display: block;
+    font-size: var(--bne-font-size-sm);
+    font-weight: 500;
+    color: var(--bne-white);
+    text-decoration: none;
+    padding: var(--bne-space-2) var(--bne-space-4);
+    border-radius: var(--bne-radius-md);
+    transition: all var(--bne-transition-fast);
+    letter-spacing: 0.01em;
+}
+
+.bne-header__menu a::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--bne-white);
+    border-radius: 2px;
+    transition: all var(--bne-transition-fast);
+    transform: translateX(-50%);
+}
+
+.bne-header__menu a:hover {
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.bne-header__menu a:hover::after {
+    width: calc(100% - 32px);
+}
+
+.bne-header__menu .current-menu-item a {
+    color: var(--bne-white);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.bne-header__menu .current-menu-item a::after {
+    width: calc(100% - 32px);
+}
+
+/* ==========================================================================
+   Desktop Submenu Dropdown
+   ========================================================================== */
+
+/* Parent menu item with children - add position context */
+.bne-header__menu .menu-item-has-children {
+    position: relative;
+}
+
+/* Dropdown indicator arrow */
+.bne-header__menu .menu-item-has-children > a {
+    padding-right: calc(var(--bne-space-4) + 14px);
+}
+
+.bne-header__menu .menu-item-has-children > a::before {
+    content: '';
+    position: absolute;
+    right: var(--bne-space-3);
+    top: 50%;
+    transform: translateY(-50%);
+    border: 4px solid transparent;
+    border-top-color: currentColor;
+    margin-top: 2px;
+}
+
+/* Hide submenu by default */
+.bne-header__menu .sub-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 200px;
+    list-style: none;
+    margin: 0;
+    padding: var(--bne-space-2) 0;
+    background: rgba(10, 10, 15, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: var(--bne-radius-md);
+    box-shadow: var(--bne-shadow-lg);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all var(--bne-transition-fast);
+    z-index: 1001;
+}
+
+/* Show submenu on hover */
+.bne-header__menu .menu-item-has-children:hover > .sub-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* Submenu link styling */
+.bne-header__menu .sub-menu a {
+    display: block;
+    padding: var(--bne-space-3) var(--bne-space-5);
+    font-size: var(--bne-font-size-sm);
+    color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+    border-radius: 0;
+}
+
+.bne-header__menu .sub-menu a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+/* Remove underline effect on submenu items */
+.bne-header__menu .sub-menu a::after {
+    display: none;
+}
+
+/* Nested submenu (3rd level) - position to the right */
+.bne-header__menu .sub-menu .sub-menu {
+    top: 0;
+    left: 100%;
+    margin-left: var(--bne-space-1);
+}
+
+/* ==========================================================================
+   Content Area Header Offset
+   Adds top padding to account for fixed header on non-homepage pages
+   ========================================================================== */
+
+/*
+ * All non-homepage pages need padding-top to prevent content from being
+ * hidden behind the fixed header. The homepage has its own hero section
+ * that handles this via .bne-hero__wrapper padding.
+ */
+
+/* GeneratePress parent theme containers */
+body:not(.home) .site-content,
+body:not(.home) .content-area {
+    padding-top: calc(var(--bne-header-height) + var(--bne-space-4));
+}
+
+/* Child theme main container */
+body:not(.home) .bne-main {
+    padding-top: calc(var(--bne-header-height) + var(--bne-space-4));
+}
+
+/* Landing pages - hero already has padding, add header offset */
+body:not(.home) .bne-landing-hero {
+    padding-top: calc(var(--bne-header-height) + 60px);
+}
+
+/*
+ * WordPress block editor pages (Gutenberg)
+ * When using full-width templates or custom layouts
+ */
+body:not(.home) #primary,
+body:not(.home) .wp-site-blocks {
+    padding-top: calc(var(--bne-header-height) + var(--bne-space-4));
+}
+
+/* Prevent double padding on nested containers */
+body:not(.home) .site-content .bne-main,
+body:not(.home) .site-content #primary,
+body:not(.home) .content-area .bne-main,
+body:not(.home) #primary .bne-main {
+    padding-top: 0;
+}
+
+.bne-header__menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--bne-white);
+    border-radius: var(--bne-radius-md);
+    transition: all var(--bne-transition-fast);
+}
+
+.bne-header__menu-toggle svg {
+    width: 40px;
+    height: 40px;
+}
+
+.bne-header__menu-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--bne-white);
+}
+
+.bne-header.scrolled .bne-header__menu-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+
+@media (min-width: 1024px) {
+    .bne-header__menu-toggle {
+        display: none;
+    }
+}
+
+/* Mobile menu open state (legacy - drawer is now primary on mobile) */
+/* HIDDEN on mobile - use drawer instead */
+.bne-header__menu--open {
+    display: none !important; /* Hide legacy mobile menu - use drawer instead */
+}
+
+/* Only show legacy menu on desktop if somehow triggered */
+@media (min-width: 1024px) {
+    .bne-header__menu--open {
+        display: flex !important;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--bne-glass-bg-light);
+        backdrop-filter: var(--bne-glass-blur-strong);
+        -webkit-backdrop-filter: var(--bne-glass-blur-strong);
+        padding: var(--bne-space-2);
+        box-shadow: var(--bne-shadow-xl);
+        gap: 0;
+        border-top: 1px solid var(--bne-glass-border);
+        animation: slideDown var(--bne-duration-normal) var(--bne-ease-out);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.bne-header__menu--open li {
+    border-bottom: none;
+}
+
+.bne-header__menu--open a {
+    display: block;
+    padding: var(--bne-space-4);
+    border-radius: var(--bne-radius-md);
+    margin: var(--bne-space-1) 0;
+}
+
+.bne-header__menu--open a::after {
+    display: none;
+}
+
+.bne-header__menu--open a:hover {
+    background: rgba(74, 96, 161, 0.08);
+}
+
+.bne-header__phone {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .bne-header__phone {
+        display: block;
+    }
+}
+
+.bne-header__phone a {
+    display: flex;
+    align-items: center;
+    gap: var(--bne-space-2);
+    font-size: var(--bne-font-size-sm);
+    font-weight: 600;
+    color: var(--bne-white);
+    text-decoration: none;
+    background: linear-gradient(135deg, var(--bne-primary-blue) 0%, var(--bne-primary-blue-dark) 100%);
+    padding: var(--bne-space-2) var(--bne-space-5);
+    border-radius: var(--bne-radius-full);
+    transition: all var(--bne-transition-fast);
+    box-shadow: 0 2px 8px rgba(74, 96, 161, 0.3);
+}
+
+.bne-header__phone a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(74, 96, 161, 0.4);
+    background: linear-gradient(135deg, var(--bne-primary-blue-dark) 0%, var(--bne-primary-blue) 100%);
+}
+
+.bne-header__phone a:active {
+    transform: translateY(0);
+}
+
+.bne-header__phone svg {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* ==========================================================================
+   Header Profile Bubble
+   ========================================================================== */
+
+.bne-header__profile {
+    position: relative;
+    margin-left: var(--bne-space-3);
+}
+
+/* Profile toggle button - Dark theme to match header */
+.bne-profile__toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--bne-space-2);
+    padding: var(--bne-space-1) var(--bne-space-3) var(--bne-space-1) var(--bne-space-1);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--bne-radius-full);
+    cursor: pointer;
+    transition: all var(--bne-transition-fast);
+    font-family: inherit;
+}
+
+.bne-profile__toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Guest toggle styling - More prominent for visibility */
+.bne-profile__toggle--guest {
+    padding: var(--bne-space-1) var(--bne-space-3);
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.bne-profile__toggle--guest:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.bne-profile__avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Guest avatar placeholder */
+.bne-profile__avatar--guest {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    box-shadow: none;
+}
+
+.bne-profile__avatar--guest svg {
+    fill: rgba(255, 255, 255, 0.9);
+}
+
+.bne-profile__name {
+    font-size: var(--bne-font-size-sm);
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bne-profile__chevron {
+    fill: rgba(255, 255, 255, 0.7);
+    transition: transform var(--bne-transition-fast);
+}
+
+.bne-profile__toggle[aria-expanded="true"] .bne-profile__chevron {
+    transform: rotate(180deg);
+}
+
+/* Dropdown menu - Dark theme */
+.bne-profile__dropdown {
+    position: absolute;
+    top: calc(100% + var(--bne-space-2));
+    right: 0;
+    min-width: 200px;
+    background: rgba(10, 10, 15, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--bne-radius-lg);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all var(--bne-transition-fast);
+    z-index: 1000;
+    padding: var(--bne-space-2) 0;
+}
+
+.bne-profile__dropdown[aria-hidden="false"] {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.bne-profile__item {
+    display: flex;
+    align-items: center;
+    gap: var(--bne-space-3);
+    padding: var(--bne-space-3) var(--bne-space-4);
+    font-size: var(--bne-font-size-sm);
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    transition: background var(--bne-transition-fast);
+}
+
+.bne-profile__item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.bne-profile__item svg {
+    fill: rgba(255, 255, 255, 0.7);
+    flex-shrink: 0;
+}
+
+.bne-profile__item:hover svg {
+    fill: #ffffff;
+}
+
+.bne-profile__divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: var(--bne-space-2) 0;
+}
+
+.bne-profile__item--logout {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.bne-profile__item--logout:hover {
+    background: rgba(220, 38, 38, 0.2);
+    color: #fca5a5;
+}
+
+.bne-profile__item--logout:hover svg {
+    fill: #fca5a5;
+}
+
+/* Mobile: Hide name, show only avatar */
+@media (max-width: 767px) {
+    .bne-header__profile {
+        display: none;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .bne-profile__name {
+        display: none;
+    }
+
+    .bne-profile__toggle {
+        padding: var(--bne-space-1);
+    }
+
+    .bne-profile__chevron {
+        display: none;
+    }
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+.bne-footer {
+    background: var(--bne-dark-gray);
+    color: var(--bne-white);
+    padding: var(--bne-space-16) 0 var(--bne-space-8);
+}
+
+.bne-footer__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--bne-space-10);
+    margin-bottom: var(--bne-space-12);
+}
+
+@media (min-width: 768px) {
+    .bne-footer__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .bne-footer__grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.bne-footer__section {
+    /* Section styles */
+}
+
+.bne-footer__title {
+    font-size: var(--bne-font-size-lg);
+    font-weight: 600;
+    color: var(--bne-white);
+    margin-bottom: var(--bne-space-5);
+    padding-bottom: var(--bne-space-3);
+    border-bottom: 2px solid var(--bne-primary-blue);
+}
+
+.bne-footer__agent {
+    font-size: var(--bne-font-size-base);
+    font-weight: 500;
+    margin-bottom: var(--bne-space-1);
+}
+
+.bne-footer__brokerage-wrapper {
+    margin-bottom: var(--bne-space-3);
+}
+
+.bne-footer__brokerage-logo {
+    max-height: 40px;
+    width: auto;
+    margin-bottom: var(--bne-space-2);
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+}
+
+.bne-footer__brokerage-logo:hover {
+    opacity: 1;
+}
+
+.bne-footer__brokerage {
+    font-size: var(--bne-font-size-sm);
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0;
+}
+
+.bne-footer__phone a {
+    color: var(--bne-white);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.bne-footer__phone a:hover {
+    color: var(--bne-beige);
+}
+
+.bne-footer__social {
+    display: flex;
+    gap: var(--bne-space-3);
+    margin-top: var(--bne-space-5);
+}
+
+.bne-footer__social a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--bne-radius-full);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--bne-white);
+    transition: all var(--bne-transition-fast);
+}
+
+.bne-footer__social a:hover {
+    background: var(--bne-primary-blue);
+}
+
+.bne-footer__menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.bne-footer__menu li {
+    margin-bottom: var(--bne-space-2);
+}
+
+.bne-footer__menu a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: var(--bne-font-size-sm);
+    transition: color var(--bne-transition-fast);
+}
+
+.bne-footer__menu a:hover {
+    color: var(--bne-white);
+}
+
+.bne-footer__cities {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--bne-space-2);
+}
+
+.bne-footer__cities a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: var(--bne-font-size-sm);
+    transition: color var(--bne-transition-fast);
+}
+
+.bne-footer__cities a:hover {
+    color: var(--bne-white);
+}
+
+.bne-footer__section--form p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: var(--bne-font-size-sm);
+    margin-bottom: var(--bne-space-4);
+}
+
+.bne-footer__bottom {
+    padding-top: var(--bne-space-8);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+}
+
+.bne-footer__copyright {
+    font-size: var(--bne-font-size-sm);
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: var(--bne-space-2);
+}
+
+.bne-footer__disclaimer {
+    font-size: var(--bne-font-size-xs);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* ==========================================================================
+   Skip Link
+   ========================================================================== */
+
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--bne-primary-blue);
+    color: var(--bne-white);
+    padding: var(--bne-space-2) var(--bne-space-4);
+    z-index: 10000;
+    transition: top 0.3s;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* ==========================================================================
+   Screen Reader Text
+   ========================================================================== */
+
+.screen-reader-text {
+    border: 0;
+    clip: rect(1px, 1px, 1px, 1px);
+    clip-path: inset(50%);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute !important;
+    width: 1px;
+    word-wrap: normal !important;
+}
+
+.screen-reader-text:focus {
+    background-color: var(--bne-light-gray);
+    clip: auto !important;
+    clip-path: none;
+    color: var(--bne-dark-gray);
+    display: block;
+    font-size: var(--bne-font-size-sm);
+    font-weight: 700;
+    height: auto;
+    left: var(--bne-space-2);
+    line-height: normal;
+    padding: var(--bne-space-4);
+    text-decoration: none;
+    top: var(--bne-space-2);
+    width: auto;
+    z-index: 100000;
+}
+
+/* ==========================================================================
+   Glass-Morphism Utility Classes
+   ========================================================================== */
+
+.bne-glass {
+    background: var(--bne-glass-bg-light);
+    backdrop-filter: var(--bne-glass-blur);
+    -webkit-backdrop-filter: var(--bne-glass-blur);
+    border: 1px solid var(--bne-glass-border);
+    border-radius: var(--bne-radius-lg);
+}
+
+.bne-glass--strong {
+    background: var(--bne-glass-bg-light);
+    backdrop-filter: var(--bne-glass-blur-strong);
+    -webkit-backdrop-filter: var(--bne-glass-blur-strong);
+    border: 1px solid var(--bne-glass-border);
+    border-radius: var(--bne-radius-lg);
+}
+
+.bne-glass--dark {
+    background: var(--bne-glass-bg-dark);
+    backdrop-filter: var(--bne-glass-blur);
+    -webkit-backdrop-filter: var(--bne-glass-blur);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--bne-radius-lg);
+    color: var(--bne-white);
+}
+
+/* Fallback for browsers without backdrop-filter */
+@supports not (backdrop-filter: blur(16px)) {
+    .bne-glass,
+    .bne-glass--strong {
+        background: rgba(255, 255, 255, 0.96); /* Standardized fallback opacity */
+    }
+
+    .bne-glass--dark {
+        background: rgba(0, 0, 0, 0.96); /* Standardized fallback opacity */
+    }
+}
+
+/* ==========================================================================
+   Touch Device Optimizations
+   ========================================================================== */
+
+/* Disable hover effects on touch devices to prevent sticky states */
+@media (hover: none) and (pointer: coarse) {
+    /* Header menu - remove hover background on touch */
+    .bne-header__menu a:hover {
+        background: transparent;
+    }
+
+    .bne-header.scrolled .bne-header__menu a:hover {
+        background: transparent;
+    }
+
+    /* Use active state instead for touch feedback */
+    .bne-header__menu a:active {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .bne-header.scrolled .bne-header__menu a:active {
+        background: rgba(74, 96, 161, 0.1);
+    }
+
+    /* Menu toggle touch state */
+    .bne-header__menu-toggle:hover {
+        background: transparent;
+    }
+
+    .bne-header__menu-toggle:active {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .bne-header.scrolled .bne-header__menu-toggle:active {
+        background: rgba(74, 96, 161, 0.1);
+    }
+
+    /* Phone button touch state */
+    .bne-header__phone a:hover {
+        transform: none;
+        box-shadow: 0 2px 8px rgba(74, 96, 161, 0.3);
+    }
+
+    .bne-header__phone a:active {
+        transform: scale(0.98);
+        box-shadow: 0 1px 4px rgba(74, 96, 161, 0.3);
+    }
+
+    /* Footer social links */
+    .bne-footer__social a:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .bne-footer__social a:active {
+        background: var(--bne-primary-blue);
+    }
+}
+
+/* Ensure touch targets meet minimum 48px for accessibility */
+@media (max-width: 1023px) {
+    .bne-header__menu-toggle {
+        min-width: 48px;
+        min-height: 48px;
+    }
+
+    .bne-footer__social a {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .bne-footer__menu a {
+        display: block;
+        min-height: 44px;
+        padding: var(--bne-space-3) 0;
+    }
+}
+
+/* ==========================================================================
+   Reduced Motion Support
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .bne-header,
+    .bne-header__logo,
+    .bne-header__menu a,
+    .bne-header__phone a,
+    .bne-footer__social a {
+        transition: none;
+    }
+
+    .bne-header__phone svg {
+        animation: none;
+    }
+
+    @keyframes slideDown {
+        from, to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}

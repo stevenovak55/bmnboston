@@ -1,0 +1,387 @@
+/**
+ * MLD Skeleton Loaders
+ * Provides skeleton screen components for loading states
+ * Updated to use design system tokens
+ *
+ * @package MLS_Listings_Display
+ * @since 6.0.6
+ * @version 6.13.15
+ */
+
+/* ================================
+   Base Skeleton Styles
+   ================================ */
+
+.mld-skeleton {
+    background: linear-gradient(90deg, var(--ds-off-white, #f0f0f0) 25%, var(--ds-border, #e5e7eb) 50%, var(--ds-off-white, #f0f0f0) 75%);
+    background-size: 200% 100%;
+    animation: mld-skeleton-shimmer 1.5s infinite;
+    border-radius: var(--ds-radius-md, 6px);
+}
+
+@keyframes mld-skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ================================
+   Property Card Skeleton
+   ================================ */
+
+.mld-skeleton-card {
+    background: var(--ds-white, #fff);
+    border-radius: var(--ds-radius-xl, 12px);
+    padding: var(--ds-space-4, 15px);
+    box-shadow: var(--ds-shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.1));
+    margin-bottom: var(--ds-space-4, 15px);
+}
+
+.mld-skeleton-card-image {
+    width: 100%;
+    height: 200px;
+    margin-bottom: var(--ds-space-3, 12px);
+}
+
+.mld-skeleton-card-title {
+    height: 24px;
+    width: 70%;
+    margin-bottom: var(--ds-space-3, 10px);
+}
+
+.mld-skeleton-card-text {
+    height: 16px;
+    width: 100%;
+    margin-bottom: var(--ds-space-2, 8px);
+}
+
+.mld-skeleton-card-text.short {
+    width: 60%;
+}
+
+.mld-skeleton-card-footer {
+    display: flex;
+    gap: var(--ds-space-3, 10px);
+    margin-top: var(--ds-space-3, 12px);
+}
+
+.mld-skeleton-card-badge {
+    height: 20px;
+    width: 60px;
+    border-radius: var(--ds-radius-full, 9999px);
+}
+
+/* ================================
+   List Row Skeleton
+   ================================ */
+
+.mld-skeleton-list-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-3, 12px);
+    padding: var(--ds-space-3, 12px);
+    background: var(--ds-white, #fff);
+    border-bottom: 1px solid var(--ds-border-light, #f0f0f0);
+}
+
+.mld-skeleton-list-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.mld-skeleton-list-content {
+    flex: 1;
+}
+
+.mld-skeleton-list-title {
+    height: 18px;
+    width: 80%;
+    margin-bottom: var(--ds-space-2, 8px);
+}
+
+.mld-skeleton-list-subtitle {
+    height: 14px;
+    width: 60%;
+}
+
+/* ================================
+   Stats Widget Skeleton
+   ================================ */
+
+.mld-skeleton-widget {
+    background: var(--ds-white, #fff);
+    border-radius: var(--ds-radius-lg, 8px);
+    padding: var(--ds-space-5, 20px);
+    box-shadow: var(--ds-shadow-xs, 0 2px 4px rgba(0, 0, 0, 0.08));
+}
+
+.mld-skeleton-widget-header {
+    height: 20px;
+    width: 50%;
+    margin-bottom: var(--ds-space-4, 15px);
+}
+
+.mld-skeleton-widget-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-space-3, 12px);
+}
+
+.mld-skeleton-widget-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mld-skeleton-widget-label {
+    height: 16px;
+    width: 40%;
+}
+
+.mld-skeleton-widget-value {
+    height: 16px;
+    width: 25%;
+}
+
+/* ================================
+   Map Marker/Cluster Skeleton
+   ================================ */
+
+.mld-skeleton-marker {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.mld-skeleton-cluster {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.8);
+}
+
+/* ================================
+   Property Cards Grid
+   ================================ */
+
+.mld-skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--ds-space-5, 20px);
+    padding: var(--ds-space-5, 20px);
+}
+
+@media (max-width: 768px) {
+    .mld-skeleton-grid {
+        grid-template-columns: 1fr;
+        padding: var(--ds-space-3, 10px);
+    }
+}
+
+/* ================================
+   Similar Homes Carousel Skeleton
+   ================================ */
+
+.mld-skeleton-carousel {
+    display: flex;
+    gap: var(--ds-space-4, 15px);
+    overflow: hidden;
+    padding: var(--ds-space-4, 15px) 0;
+}
+
+.mld-skeleton-carousel-item {
+    flex: 0 0 280px;
+}
+
+@media (max-width: 768px) {
+    .mld-skeleton-carousel-item {
+        flex: 0 0 240px;
+    }
+}
+
+/* ================================
+   Facts & Features Section Skeleton
+   ================================ */
+
+.mld-skeleton-facts-section {
+    background: var(--ds-white, #fff);
+    border-radius: var(--ds-radius-xl, 12px);
+    padding: var(--ds-space-5, 20px);
+    margin-bottom: var(--ds-space-5, 20px);
+}
+
+.mld-skeleton-facts-header {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-3, 12px);
+    margin-bottom: var(--ds-space-5, 20px);
+}
+
+.mld-skeleton-facts-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--ds-radius-lg, 8px);
+}
+
+.mld-skeleton-facts-title {
+    height: 24px;
+    width: 150px;
+}
+
+.mld-skeleton-facts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--ds-space-4, 15px);
+}
+
+.mld-skeleton-facts-card {
+    display: flex;
+    gap: var(--ds-space-3, 12px);
+    padding: var(--ds-space-4, 15px);
+    background: var(--ds-surface-subtle, #f9fafb);
+    border-radius: var(--ds-radius-lg, 8px);
+}
+
+.mld-skeleton-facts-card-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--ds-radius-md, 6px);
+    flex-shrink: 0;
+}
+
+.mld-skeleton-facts-card-content {
+    flex: 1;
+}
+
+.mld-skeleton-facts-label {
+    height: 14px;
+    width: 80%;
+    margin-bottom: var(--ds-space-2, 8px);
+}
+
+.mld-skeleton-facts-value {
+    height: 18px;
+    width: 60%;
+}
+
+/* ================================
+   Gallery/Image Skeleton
+   ================================ */
+
+.mld-skeleton-gallery {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ds-space-3, 10px);
+}
+
+.mld-skeleton-gallery-item {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--ds-radius-lg, 8px);
+}
+
+.mld-skeleton-gallery-item.large {
+    grid-column: span 2;
+    grid-row: span 2;
+}
+
+@media (max-width: 768px) {
+    .mld-skeleton-gallery {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mld-skeleton-gallery-item.large {
+        grid-column: span 2;
+        grid-row: span 1;
+    }
+}
+
+/* ================================
+   Search Results Sidebar Skeleton
+   ================================ */
+
+.mld-skeleton-sidebar {
+    background: var(--ds-white, #fff);
+    border-right: 1px solid var(--ds-border, #e5e7eb);
+    overflow-y: auto;
+}
+
+.mld-skeleton-sidebar-header {
+    padding: var(--ds-space-5, 20px);
+    border-bottom: 1px solid var(--ds-border-light, #f0f0f0);
+}
+
+.mld-skeleton-sidebar-title {
+    height: 24px;
+    width: 60%;
+    margin-bottom: var(--ds-space-3, 10px);
+}
+
+.mld-skeleton-sidebar-subtitle {
+    height: 16px;
+    width: 40%;
+}
+
+.mld-skeleton-sidebar-list {
+    padding: var(--ds-space-3, 10px);
+}
+
+/* ================================
+   Utility Classes
+   ================================ */
+
+.mld-skeleton-pulse {
+    animation: mld-skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes mld-skeleton-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.mld-skeleton-fade-in {
+    animation: mld-skeleton-fade-in 0.3s ease-in;
+}
+
+@keyframes mld-skeleton-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hide skeleton when content loads */
+.mld-skeleton-container.loaded .mld-skeleton {
+    display: none;
+}
+
+.mld-skeleton-container.loaded .mld-content {
+    display: block;
+}
+
+.mld-skeleton-container .mld-content {
+    display: none;
+}
+
+.mld-skeleton-container.loaded .mld-content {
+    animation: mld-skeleton-fade-in 0.3s ease-in;
+}
+
+/* ================================
+   Dark Mode Support - DISABLED v6.13.15
+   Light theme enforced regardless of device settings
+   ================================ */
+/* Dark mode overrides intentionally removed */

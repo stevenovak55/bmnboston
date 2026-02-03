@@ -1,0 +1,252 @@
+/**
+ * Performance Administration Styles
+ *
+ * @package MLS_Listings_Display
+ * @since 4.3.0
+ */
+
+.mld-performance-admin {
+    max-width: 1400px;
+    margin: 20px auto;
+}
+
+.mld-performance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.mld-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    padding: 20px;
+    border-radius: 4px;
+}
+
+.mld-card.full-width {
+    grid-column: 1 / -1;
+}
+
+.mld-card h2 {
+    margin-top: 0;
+    color: #23282d;
+    font-size: 1.3em;
+    font-weight: 600;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.mld-card h3 {
+    margin-top: 15px;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+    color: #23282d;
+}
+
+.mld-card h4 {
+    margin-top: 15px;
+    margin-bottom: 8px;
+    font-size: 1em;
+    color: #555;
+}
+
+/* Metrics Display */
+.mld-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.mld-metrics .metric {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 3px;
+    border-left: 3px solid #007cba;
+}
+
+.mld-metrics .metric .label {
+    font-weight: 600;
+    color: #555;
+}
+
+.mld-metrics .metric .value {
+    color: #23282d;
+    font-weight: 500;
+}
+
+.mld-metrics .metric .value.enabled {
+    color: #46b450;
+}
+
+.mld-metrics .metric .value.disabled {
+    color: #dc3232;
+}
+
+/* Recommendations */
+.recommendations {
+    margin-top: 15px;
+}
+
+.recommendation {
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 3px;
+    border-left: 4px solid;
+}
+
+.recommendation.critical {
+    background: #fff5f5;
+    border-color: #dc3232;
+}
+
+.recommendation.warning {
+    background: #fffbf0;
+    border-color: #ffb900;
+}
+
+.recommendation.info {
+    background: #f0f8ff;
+    border-color: #007cba;
+}
+
+.recommendation h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.recommendation ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.recommendation .action {
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.recommendation .action code {
+    background: #f1f1f1;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+/* Buttons */
+.mld-card button {
+    margin-right: 10px;
+    margin-top: 10px;
+}
+
+.cache-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* Results Container */
+.results-container {
+    margin-top: 15px;
+}
+
+.results-container .notice {
+    margin: 10px 0;
+}
+
+.optimization-details,
+.analysis-details {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 3px;
+}
+
+.optimization-details ul,
+.analysis-details ul {
+    list-style: none;
+    padding: 0;
+    margin: 5px 0;
+}
+
+.optimization-details li,
+.analysis-details li {
+    padding: 5px 10px;
+    margin: 3px 0;
+    border-radius: 3px;
+}
+
+.optimization-details li.success,
+.analysis-details .success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.optimization-details li.error,
+.analysis-details .error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.optimization-details li.info,
+.analysis-details .info {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.analysis-details .warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+/* Table Selector */
+#table-selector {
+    min-width: 250px;
+    margin-right: 10px;
+}
+
+/* Slow Operations Table */
+.wp-list-table.slow-operations {
+    margin-top: 15px;
+}
+
+/* Code Block */
+.mld-card pre {
+    background: #f1f1f1;
+    padding: 15px;
+    border-radius: 3px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 15px 0;
+}
+
+/* Loading States */
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 782px) {
+    .mld-performance-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cache-actions {
+        flex-direction: column;
+    }
+
+    .cache-actions button {
+        width: 100%;
+        margin: 5px 0;
+    }
+
+    #table-selector {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}

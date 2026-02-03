@@ -1,0 +1,210 @@
+/**
+ * AI Chatbot Settings Admin Styles
+ *
+ * @package MLS_Listings_Display
+ * @since 6.6.0
+ */
+
+.mld-chatbot-settings {
+    max-width: 1200px;
+}
+
+.mld-chatbot-tab-content {
+    background: #fff;
+    padding: 20px;
+    margin-top: 20px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.mld-settings-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #dcdcde;
+}
+
+.mld-settings-section:last-child {
+    border-bottom: none;
+}
+
+.mld-settings-section h2 {
+    margin-top: 0;
+    font-size: 18px;
+}
+
+/* Toggle Switch */
+.mld-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.mld-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.mld-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.mld-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+.mld-toggle-switch input:checked + .mld-toggle-slider {
+    background-color: #2271b1;
+}
+
+.mld-toggle-switch input:checked + .mld-toggle-slider:before {
+    transform: translateX(26px);
+}
+
+/* Provider Configurations */
+.mld-provider-config {
+    margin-top: 20px;
+}
+
+/* Connection Status */
+.mld-connection-status {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.mld-connection-status.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.mld-connection-status.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Status Box */
+.mld-status-box {
+    background: #f0f0f1;
+    padding: 15px;
+    border-radius: 4px;
+    border-left: 4px solid #2271b1;
+}
+
+.mld-status-box p {
+    margin: 5px 0;
+}
+
+/* Email Preview */
+.mld-email-preview {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    max-width: 600px;
+}
+
+.mld-email-header {
+    background: #2271b1;
+    color: #fff;
+    padding: 20px;
+    border-radius: 4px 4px 0 0;
+}
+
+.mld-email-header h3 {
+    margin: 0;
+    color: #fff;
+}
+
+.mld-email-body {
+    padding: 20px;
+}
+
+.mld-email-body h4 {
+    color: #1d2327;
+    margin-top: 15px;
+}
+
+/* FAQ Table */
+.mld-faq-table .column-question {
+    width: 40%;
+}
+
+.mld-faq-table .column-category {
+    width: 15%;
+}
+
+.mld-faq-table .column-priority {
+    width: 10%;
+}
+
+.mld-faq-table .column-usage {
+    width: 15%;
+}
+
+.mld-faq-table .column-status {
+    width: 10%;
+}
+
+.mld-faq-table .column-actions {
+    width: 10%;
+}
+
+.faq-keywords {
+    color: #646970;
+    margin-top: 5px;
+}
+
+/* Loading States */
+.mld-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.mld-loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #2271b1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .mld-chatbot-tab-content {
+        padding: 10px;
+    }
+
+    .mld-settings-section {
+        margin-bottom: 20px;
+    }
+}

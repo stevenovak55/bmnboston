@@ -1,0 +1,324 @@
+/**
+ * MLD Multi-Unit Modal Styles
+ * Responsive modal for displaying multiple properties at the same location
+ * Updated to use design system tokens
+ *
+ * @package MLS_Listings_Display
+ * @version 6.13.15
+ */
+
+/* Modal Overlay */
+.mld-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--ds-space-5, 20px);
+    animation: mldFadeIn 0.3s ease-out;
+}
+
+/* Prevent body scroll when modal is open */
+body.mld-modal-open {
+    overflow: hidden;
+}
+
+/* Modal Container */
+.mld-modal-container {
+    background: var(--ds-white, #fff);
+    border-radius: var(--ds-radius-xl, 12px);
+    box-shadow: var(--ds-shadow-xl, 0 20px 40px rgba(0, 0, 0, 0.2));
+    max-width: 1200px;
+    width: 100%;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    animation: mldSlideUp 0.3s ease-out;
+}
+
+/* Modal Header */
+.mld-modal-header {
+    padding: var(--ds-space-5, 20px) var(--ds-space-6, 24px);
+    border-bottom: 1px solid var(--ds-border, #e5e7eb);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.mld-modal-title {
+    font-size: var(--ds-text-2xl, 24px);
+    font-weight: 600;
+    color: var(--ds-text-primary, #000);
+    margin: 0;
+}
+
+.mld-modal-count {
+    color: var(--ds-teal, #0891B2);
+}
+
+/* Close Button */
+.mld-modal-close {
+    background: none;
+    border: none;
+    padding: var(--ds-space-2, 8px);
+    cursor: pointer;
+    color: var(--ds-text-muted, #6b7280);
+    transition: all 0.2s;
+    border-radius: var(--ds-radius-md, 6px);
+    margin-top: 5px;
+}
+
+.mld-modal-close:hover {
+    background-color: var(--ds-surface-subtle, #f9fafb);
+    color: var(--ds-text-primary, #000);
+}
+
+.mld-modal-close:focus {
+    outline: 2px solid var(--ds-teal, #0891B2);
+    outline-offset: 2px;
+}
+
+/* Modal Body */
+.mld-modal-body {
+    padding: var(--ds-space-6, 24px);
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Property Grid */
+.mld-property-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--ds-space-5, 20px);
+}
+
+/* Override existing card styles for modal context */
+.mld-modal-body .bme-listing-card {
+    background: var(--ds-white, #fff);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-lg, 8px);
+    overflow: hidden;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-shadow: none;
+}
+
+.mld-modal-body .bme-listing-card:hover {
+    box-shadow: var(--ds-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
+    transform: translateY(-2px);
+}
+
+/* Hide popup-specific controls in modal */
+.mld-modal-body .bme-view-photos-btn,
+.mld-modal-body .bme-popout-btn {
+    display: none;
+}
+
+/* Ensure details section fills available space */
+.mld-modal-body .bme-card-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Make the view details link more prominent in modal - Teal theme */
+.mld-modal-body .bme-view-details-btn {
+    display: block;
+    margin-top: auto;
+    text-align: center;
+    padding: var(--ds-space-2, 8px) var(--ds-space-4, 16px);
+    background: linear-gradient(135deg, var(--ds-teal, #0891B2) 0%, var(--ds-teal-hover, #0E7490) 100%);
+    color: var(--ds-white, #fff);
+    text-decoration: none;
+    border-radius: var(--ds-radius-md, 6px);
+    font-size: var(--ds-text-sm, 14px);
+    font-weight: 500;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+}
+
+.mld-modal-body .bme-view-details-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.4);
+    color: var(--ds-white, #fff);
+}
+
+/* Animations */
+@keyframes mldFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes mldSlideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+    .mld-modal-overlay {
+        padding: 0;
+        align-items: flex-end;
+    }
+
+    .mld-modal-container {
+        border-radius: var(--ds-radius-2xl, 20px) var(--ds-radius-2xl, 20px) 0 0;
+        max-height: 90vh;
+        width: 100%;
+        max-width: none;
+        animation: mldSlideUpMobile 0.3s ease-out;
+    }
+
+    .mld-modal-header {
+        padding: var(--ds-space-4, 16px) var(--ds-space-5, 20px);
+        border-bottom: 1px solid var(--ds-border, #e5e7eb);
+        position: relative;
+    }
+
+    .mld-modal-header::before {
+        content: '';
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 4px;
+        background-color: var(--ds-border-strong, #d1d5db);
+        border-radius: 2px;
+    }
+
+    .mld-modal-title {
+        font-size: var(--ds-text-xl, 20px);
+        padding-top: var(--ds-space-3, 12px);
+    }
+
+    .mld-modal-body {
+        padding: var(--ds-space-4, 16px);
+    }
+
+    /* Single column on mobile */
+    .mld-property-grid {
+        grid-template-columns: 1fr;
+        gap: var(--ds-space-4, 16px);
+    }
+
+    /* Adjust card layout for mobile */
+    .mld-modal-body .bme-listing-card {
+        min-height: 120px;
+    }
+
+    /* Make image smaller on mobile */
+    .mld-modal-body .bme-card-image {
+        height: 200px;
+    }
+
+    /* Adjust text sizes for mobile */
+    .mld-modal-body .bme-card-price {
+        font-size: var(--ds-text-lg, 18px);
+    }
+
+    .mld-modal-body .bme-card-address {
+        font-size: var(--ds-text-sm, 13px);
+    }
+
+    .mld-modal-body .bme-card-specs {
+        font-size: var(--ds-text-xs, 12px);
+    }
+
+    .mld-modal-body .bme-card-secondary-info {
+        font-size: 11px;
+    }
+
+    /* Smaller button on mobile */
+    .mld-modal-body .bme-view-details-btn {
+        padding: var(--ds-space-2, 6px) var(--ds-space-3, 12px);
+        font-size: var(--ds-text-sm, 13px);
+    }
+
+    /* Touch-friendly spacing */
+    .mld-modal-close {
+        padding: var(--ds-space-3, 12px);
+        margin: -4px -8px -4px 0;
+    }
+
+    @keyframes mldSlideUpMobile {
+        from {
+            transform: translateY(100%);
+        }
+        to {
+            transform: translateY(0);
+        }
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .mld-property-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Loading state */
+.mld-loading {
+    text-align: center;
+    padding: var(--ds-space-10, 40px);
+    color: var(--ds-text-muted, #6b7280);
+}
+
+/* Empty state */
+.mld-empty {
+    text-align: center;
+    padding: var(--ds-space-10, 40px);
+    color: var(--ds-text-muted, #6b7280);
+}
+
+/* Accessibility */
+.mld-property-card:focus-within {
+    outline: 2px solid var(--ds-teal, #0891B2);
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .mld-modal-container {
+        border: 2px solid var(--ds-black, #000);
+    }
+
+    .mld-property-card {
+        border: 2px solid var(--ds-black, #000);
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .mld-modal-overlay,
+    .mld-modal-container,
+    .mld-property-card {
+        animation: none;
+        transition: none;
+    }
+}
+
+/* Dark Mode Support - DISABLED v6.13.15 */
+/* Light theme enforced regardless of device settings */

@@ -1,0 +1,1574 @@
+/**
+ * Landing Pages Stylesheet
+ *
+ * Styles for neighborhood and school district landing pages
+ * Includes GEO-optimized prose summary and freshness indicator styles
+ *
+ * @package flavor_flavor_flavor
+ * @version 1.4.0
+ */
+
+/* ==========================================================================
+   CSS Custom Properties
+   ========================================================================== */
+
+:root {
+    /* Original landing page colors - professional dark navy scheme */
+    --lp-primary: #1a365d;
+    --lp-primary-light: #2b4c7e;
+    --lp-primary-dark: #0f2544;
+    --lp-accent: #4a60a1;         /* Changed from gold to main theme blue for brand consistency */
+    --lp-accent-light: #6b80b8;
+    --lp-text: #2d3748;
+    --lp-text-light: #718096;
+    --lp-text-muted: #a0aec0;
+    --lp-bg: #ffffff;
+    --lp-bg-alt: #f7fafc;
+    --lp-bg-dark: #1a202c;
+    --lp-border: #e2e8f0;
+    --lp-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --lp-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --lp-radius: 8px;
+    --lp-radius-lg: 12px;
+    --lp-container: 1200px;
+    --lp-gap: 24px;
+    --lp-section-gap: 80px;
+}
+
+/* ==========================================================================
+   Base Layout
+   ========================================================================== */
+
+.bne-landing-page {
+    background: var(--lp-bg);
+    color: var(--lp-text);
+    line-height: 1.6;
+}
+
+.bne-landing-container {
+    max-width: var(--lp-container);
+    margin: 0 auto;
+    padding: 0 var(--lp-gap);
+}
+
+.bne-landing-section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--lp-primary);
+    margin: 0 0 0.5rem;
+    line-height: 1.3;
+}
+
+.bne-landing-section-subtitle {
+    font-size: 1.125rem;
+    color: var(--lp-text-light);
+    margin: 0 0 2rem;
+}
+
+/* ==========================================================================
+   Hero Section
+   ========================================================================== */
+
+.bne-landing-hero {
+    position: relative;
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    background: linear-gradient(135deg, var(--lp-primary) 0%, var(--lp-primary-dark) 100%);
+    background-size: cover;
+    background-position: center;
+    color: #ffffff;
+}
+
+.bne-landing-hero__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(26, 54, 93, 0.85) 0%, rgba(15, 37, 68, 0.9) 100%);
+}
+
+.bne-landing-hero__content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    text-align: center;
+}
+
+/* Breadcrumbs */
+.bne-landing-breadcrumbs {
+    margin-bottom: 1.5rem;
+}
+
+.bne-landing-breadcrumbs ol {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.bne-landing-breadcrumbs li {
+    display: flex;
+    align-items: center;
+}
+
+.bne-landing-breadcrumbs li:not(:last-child)::after {
+    content: '/';
+    margin-left: 0.5rem;
+    opacity: 0.5;
+}
+
+.bne-landing-breadcrumbs a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.bne-landing-breadcrumbs a:hover {
+    color: #ffffff;
+}
+
+.bne-landing-breadcrumbs li[aria-current="page"] {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Hero Title & Subtitle */
+.bne-landing-hero__title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 1rem;
+    line-height: 1.2;
+}
+
+.bne-landing-hero__subtitle {
+    font-size: 1.25rem;
+    margin: 0 0 2rem;
+    opacity: 0.9;
+}
+
+.bne-landing-hero__subtitle strong {
+    font-weight: 600;
+}
+
+/* Hero Search Form */
+.bne-landing-hero__search {
+    margin-top: 2rem;
+}
+
+.bne-landing-search-form__inputs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+}
+
+.bne-landing-search-form__select {
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--lp-radius);
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-size: 1rem;
+    min-width: 140px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+}
+
+.bne-landing-search-form__select option {
+    background: var(--lp-primary-dark);
+    color: #ffffff;
+}
+
+.bne-landing-search-form__button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: var(--lp-accent);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--lp-radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.bne-landing-search-form__button:hover {
+    background: var(--lp-accent-light);
+    transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Stats Section
+   ========================================================================== */
+
+.bne-landing-stats {
+    padding: var(--lp-section-gap) 0;
+    background: var(--lp-bg-alt);
+}
+
+.bne-landing-stats__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--lp-gap);
+}
+
+.bne-landing-stat-card {
+    background: var(--lp-bg);
+    padding: 1.5rem;
+    border-radius: var(--lp-radius-lg);
+    box-shadow: var(--lp-shadow);
+    text-align: center;
+}
+
+.bne-landing-stat-card__icon {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+    color: var(--lp-primary);
+}
+
+.bne-landing-stat-card__value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--lp-primary);
+    margin-bottom: 0.25rem;
+}
+
+.bne-landing-stat-card__label {
+    font-size: 0.875rem;
+    color: var(--lp-text-light);
+}
+
+/* Freshness indicator for GEO optimization */
+.bne-landing-stats__freshness {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--lp-text-muted);
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+@media (min-width: 768px) {
+    .bne-landing-stats__freshness {
+        display: inline;
+        margin-left: 0.75rem;
+        margin-top: 0;
+    }
+}
+
+/* Natural language prose summary for GEO optimization */
+.bne-landing-stats__prose-summary {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: var(--lp-text);
+    margin-bottom: 2rem;
+    max-width: 800px;
+    padding: 1.25rem 1.5rem;
+    background: var(--lp-bg);
+    border-radius: var(--lp-radius);
+    border-left: 4px solid var(--lp-accent);
+    box-shadow: var(--lp-shadow);
+}
+
+/* ==========================================================================
+   Listings Grid Section
+   ========================================================================== */
+
+.bne-landing-listings {
+    padding: var(--lp-section-gap) 0;
+}
+
+.bne-landing-listings__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.bne-landing-view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--lp-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.bne-landing-view-all:hover {
+    color: var(--lp-primary-light);
+}
+
+.bne-landing-listings__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--lp-gap);
+}
+
+.bne-landing-listings__footer {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+/* Listing Card */
+.bne-landing-listing-card {
+    background: var(--lp-bg);
+    border-radius: var(--lp-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--lp-shadow);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.bne-landing-listing-card:hover {
+    box-shadow: var(--lp-shadow-lg);
+    transform: translateY(-2px);
+}
+
+.bne-landing-listing-card__link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.bne-landing-listing-card__image {
+    position: relative;
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    background: var(--lp-bg-alt);
+}
+
+.bne-landing-listing-card__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.bne-landing-listing-card:hover .bne-landing-listing-card__image img {
+    transform: scale(1.05);
+}
+
+.bne-landing-listing-card__no-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: var(--lp-text-muted);
+}
+
+.bne-landing-listing-card__badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.bne-landing-listing-card__badge--new {
+    background: #10b981;  /* Green for "new" - more intuitive */
+    color: #ffffff;
+}
+
+.bne-landing-listing-card__content {
+    padding: 1rem;
+}
+
+.bne-landing-listing-card__price {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--lp-primary);
+    margin-bottom: 0.5rem;
+}
+
+.bne-landing-listing-card__details {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: var(--lp-text-light);
+    margin-bottom: 0.5rem;
+}
+
+.bne-landing-listing-card__address {
+    font-size: 0.875rem;
+    color: var(--lp-text);
+    font-style: normal;
+    line-height: 1.4;
+}
+
+/* ==========================================================================
+   Nearby Section
+   ========================================================================== */
+
+.bne-landing-nearby {
+    padding: var(--lp-section-gap) 0;
+    background: var(--lp-bg-alt);
+}
+
+.bne-landing-nearby__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--lp-gap);
+}
+
+.bne-landing-nearby-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    background: var(--lp-bg);
+    border-radius: var(--lp-radius);
+    text-decoration: none;
+    color: inherit;
+    box-shadow: var(--lp-shadow);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.bne-landing-nearby-card:hover {
+    box-shadow: var(--lp-shadow-lg);
+    transform: translateY(-2px);
+}
+
+.bne-landing-nearby-card__name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--lp-primary);
+    margin: 0 0 0.25rem;
+}
+
+.bne-landing-nearby-card__meta {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--lp-text-light);
+}
+
+.bne-landing-nearby-card__arrow {
+    color: var(--lp-text-muted);
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.bne-landing-nearby-card:hover .bne-landing-nearby-card__arrow {
+    color: var(--lp-primary);
+    transform: translateX(4px);
+}
+
+/* ==========================================================================
+   FAQ Section
+   ========================================================================== */
+
+.bne-landing-faq {
+    padding: var(--lp-section-gap) 0;
+}
+
+.bne-landing-faq__list {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.bne-landing-faq__item {
+    border-bottom: 1px solid var(--lp-border);
+}
+
+.bne-landing-faq__question {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--lp-primary);
+    cursor: pointer;
+    list-style: none;
+}
+
+.bne-landing-faq__question::-webkit-details-marker {
+    display: none;
+}
+
+.bne-landing-faq__icon {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.bne-landing-faq__item[open] .bne-landing-faq__icon {
+    transform: rotate(180deg);
+}
+
+.bne-landing-faq__answer {
+    padding: 0 0 1.25rem;
+    color: var(--lp-text);
+}
+
+.bne-landing-faq__answer p {
+    margin: 0;
+}
+
+/* ==========================================================================
+   Schools Section
+   ========================================================================== */
+
+.bne-landing-schools {
+    padding: var(--lp-section-gap) 0;
+}
+
+.bne-landing-schools__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--lp-gap);
+}
+
+.bne-landing-schools__disclaimer {
+    margin-top: 1.5rem;
+    font-size: 0.875rem;
+    color: var(--lp-text-light);
+    text-align: center;
+}
+
+.bne-landing-school-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: var(--lp-bg-alt);
+    border-radius: var(--lp-radius);
+}
+
+.bne-landing-school-card__rating {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.bne-landing-school-card__rating--high {
+    background: #38a169;
+}
+
+.bne-landing-school-card__rating--average {
+    background: #d69e2e;
+}
+
+.bne-landing-school-card__rating--low {
+    background: #e53e3e;
+}
+
+.bne-landing-school-card__content {
+    flex: 1;
+    min-width: 0;
+}
+
+.bne-landing-school-card__name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--lp-primary);
+    margin: 0 0 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bne-landing-school-card__meta {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--lp-text-light);
+}
+
+.bne-landing-school-card__icon {
+    flex-shrink: 0;
+    color: var(--lp-text-muted);
+}
+
+/* ==========================================================================
+   CTA Section
+   ========================================================================== */
+
+.bne-landing-cta {
+    padding: var(--lp-section-gap) 0;
+    background: linear-gradient(135deg, var(--lp-primary) 0%, var(--lp-primary-dark) 100%);
+    color: #ffffff;
+}
+
+.bne-landing-cta__content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 3rem;
+}
+
+.bne-landing-cta__text {
+    flex: 1;
+}
+
+.bne-landing-cta__title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 1rem;
+    color: #ffffff;
+}
+
+.bne-landing-cta__description {
+    font-size: 1.125rem;
+    opacity: 0.9;
+    margin: 0 0 1.5rem;
+    max-width: 600px;
+}
+
+.bne-landing-cta__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.bne-landing-cta__agent {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.bne-landing-cta__agent-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.bne-landing-cta__agent-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.bne-landing-cta__agent-name {
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+.bne-landing-cta__agent-title {
+    font-size: 0.875rem;
+    opacity: 0.8;
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.bne-landing-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: var(--lp-radius);
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.bne-landing-button--primary {
+    background: var(--lp-accent);
+    color: #ffffff;
+}
+
+.bne-landing-button--primary:hover {
+    background: var(--lp-accent-light);
+    transform: translateY(-1px);
+}
+
+.bne-landing-button--secondary {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.bne-landing-button--secondary:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+    .bne-landing-stats__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bne-landing-listings__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bne-landing-nearby__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bne-landing-schools__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bne-landing-cta__content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .bne-landing-cta__buttons {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --lp-section-gap: 60px;
+    }
+
+    .bne-landing-hero {
+        min-height: 360px;
+        padding: 40px 16px;
+    }
+
+    .bne-landing-hero__title {
+        font-size: 1.75rem;
+    }
+
+    .bne-landing-hero__subtitle {
+        font-size: 1rem;
+    }
+
+    .bne-landing-search-form__inputs {
+        flex-direction: column;
+    }
+
+    .bne-landing-search-form__select {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .bne-landing-section-title {
+        font-size: 1.5rem;
+    }
+
+    .bne-landing-listings__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bne-landing-nearby__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bne-landing-schools__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bne-landing-stat-card__value {
+        font-size: 1.25rem;
+    }
+
+    .bne-landing-cta__title {
+        font-size: 1.5rem;
+    }
+
+    .bne-landing-cta__description {
+        font-size: 1rem;
+    }
+
+    .bne-landing-cta__buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .bne-landing-button {
+        width: 100%;
+        max-width: 280px;
+    }
+}
+
+@media (max-width: 480px) {
+    .bne-landing-stats__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bne-landing-breadcrumbs {
+        font-size: 0.75rem;
+    }
+
+    .bne-landing-hero__title {
+        font-size: 1.5rem;
+    }
+}
+
+/* ==========================================================================
+   Filters Section (v1.3.2)
+   ========================================================================== */
+
+.bne-landing-filters {
+    padding: 1.5rem 0;
+    background: var(--lp-bg);
+    border-bottom: 1px solid var(--lp-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.bne-landing-filters__form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.bne-landing-filters__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1rem;
+}
+
+.bne-landing-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.bne-landing-filter-group--type {
+    margin-right: auto;
+}
+
+.bne-landing-filter-group--submit {
+    margin-left: auto;
+}
+
+.bne-landing-filter-group--price {
+    min-width: 180px;
+}
+
+.bne-landing-filter-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--lp-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.bne-landing-filter-select {
+    padding: 0.625rem 2rem 0.625rem 0.75rem;
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius);
+    background: var(--lp-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0.75rem center;
+    font-size: 0.875rem;
+    color: var(--lp-text);
+    cursor: pointer;
+    min-width: 120px;
+    appearance: none;
+}
+
+.bne-landing-filter-select:focus {
+    outline: none;
+    border-color: var(--lp-primary);
+    box-shadow: 0 0 0 3px rgba(26, 54, 93, 0.1);
+}
+
+.bne-landing-filter-select--half {
+    min-width: 80px;
+    flex: 1;
+}
+
+/* Toggle Group (For Sale / For Rent) */
+.bne-landing-toggle-group {
+    display: flex;
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius);
+    overflow: hidden;
+}
+
+.bne-landing-toggle {
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--lp-text-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--lp-bg);
+}
+
+.bne-landing-toggle input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.bne-landing-toggle--active,
+.bne-landing-toggle:has(input:checked) {
+    background: var(--lp-primary);
+    color: #ffffff;
+}
+
+.bne-landing-toggle:hover:not(.bne-landing-toggle--active) {
+    background: var(--lp-bg-alt);
+}
+
+/* Price Inputs */
+.bne-landing-price-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.bne-landing-price-separator {
+    color: var(--lp-text-muted);
+}
+
+/* Submit Button */
+.bne-landing-filters__submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    background: var(--lp-primary);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--lp-radius);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.bne-landing-filters__submit:hover {
+    background: var(--lp-primary-light);
+}
+
+/* Advanced Filters */
+.bne-landing-filters__advanced {
+    border-top: 1px solid var(--lp-border);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+}
+
+.bne-landing-filters__toggle-advanced {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    background: none;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--lp-primary);
+    cursor: pointer;
+}
+
+.bne-landing-filters__toggle-advanced svg {
+    transition: transform 0.2s ease;
+}
+
+.bne-landing-filters__toggle-advanced[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+}
+
+.bne-landing-filters__advanced-panel {
+    padding-top: 1rem;
+}
+
+.bne-landing-filters__features {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Checkbox */
+.bne-landing-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.bne-landing-checkbox input {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--lp-border);
+    border-radius: 4px;
+    cursor: pointer;
+    accent-color: var(--lp-primary);
+}
+
+.bne-landing-checkbox__label {
+    font-size: 0.875rem;
+    color: var(--lp-text);
+}
+
+.bne-landing-checkbox__count {
+    color: var(--lp-text-muted);
+    font-size: 0.75rem;
+}
+
+/* Summary & Sort */
+.bne-landing-filters__summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--lp-border);
+}
+
+.bne-landing-filters__count {
+    font-size: 0.875rem;
+    color: var(--lp-text);
+}
+
+.bne-landing-filters__count strong {
+    color: var(--lp-primary);
+    font-weight: 700;
+}
+
+.bne-landing-filters__sort {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.bne-landing-filters__sort label {
+    color: var(--lp-text-light);
+}
+
+.bne-landing-sort-select {
+    padding: 0.375rem 1.5rem 0.375rem 0.5rem;
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius);
+    background: var(--lp-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0.5rem center;
+    font-size: 0.875rem;
+    appearance: none;
+}
+
+/* Active Filter Tags */
+.bne-landing-filters__active {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.bne-landing-filters__active-label {
+    font-size: 0.75rem;
+    color: var(--lp-text-muted);
+    text-transform: uppercase;
+}
+
+.bne-landing-filter-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: var(--lp-bg-alt);
+    border: 1px solid var(--lp-border);
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    color: var(--lp-text);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.bne-landing-filter-tag:hover {
+    background: var(--lp-primary);
+    border-color: var(--lp-primary);
+    color: #ffffff;
+}
+
+.bne-landing-filter-clear {
+    font-size: 0.75rem;
+    color: var(--lp-primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.bne-landing-filter-clear:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   Enhanced Stats Section (v1.3.2)
+   ========================================================================== */
+
+.bne-landing-stats__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--lp-gap);
+}
+
+.bne-landing-stat-card__value small {
+    font-size: 0.6em;
+    font-weight: 400;
+    opacity: 0.7;
+}
+
+.bne-landing-stat-card__value--small {
+    font-size: 1.125rem;
+}
+
+.bne-landing-stat-card__icon--blue { color: #3182ce; }
+.bne-landing-stat-card__icon--green { color: #38a169; }
+.bne-landing-stat-card__icon--orange { color: #dd6b20; }
+.bne-landing-stat-card__icon--purple { color: #805ad5; }
+.bne-landing-stat-card__icon--teal { color: #319795; }
+.bne-landing-stat-card__icon--pink { color: #d53f8c; }
+
+/* Property Type Breakdown */
+.bne-landing-stats__breakdown {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--lp-border);
+}
+
+.bne-landing-stats__breakdown-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--lp-primary);
+    margin: 0 0 1rem;
+}
+
+.bne-landing-stats__breakdown-bars {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.bne-landing-stats__bar-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.bne-landing-stats__bar-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem;
+}
+
+.bne-landing-stats__bar-label {
+    color: var(--lp-text);
+}
+
+.bne-landing-stats__bar-count {
+    color: var(--lp-text-muted);
+}
+
+.bne-landing-stats__bar-track {
+    height: 8px;
+    background: var(--lp-bg-alt);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.bne-landing-stats__bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--lp-primary) 0%, var(--lp-primary-light) 100%);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+/* ==========================================================================
+   Enhanced Listing Cards (v1.3.2)
+   ========================================================================== */
+
+.bne-landing-listing-card__badges {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.bne-landing-listing-card__badge--recent {
+    background: #3182ce;
+    color: #ffffff;
+}
+
+.bne-landing-listing-card__badge--reduced {
+    background: #e53e3e;
+    color: #ffffff;
+}
+
+.bne-landing-listing-card__photo-count {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #ffffff;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.bne-landing-listing-card__price-period {
+    font-size: 0.75em;
+    font-weight: 400;
+    opacity: 0.7;
+}
+
+.bne-landing-listing-card__original-price {
+    font-size: 0.75em;
+    font-weight: 400;
+    color: var(--lp-text-muted);
+    text-decoration: line-through;
+    margin-left: 0.5rem;
+}
+
+.bne-landing-listing-card__detail {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+}
+
+.bne-landing-listing-card__detail strong {
+    font-weight: 600;
+}
+
+.bne-landing-listing-card__street {
+    display: block;
+    font-weight: 500;
+}
+
+.bne-landing-listing-card__city {
+    display: block;
+    font-size: 0.8125rem;
+    color: var(--lp-text-light);
+}
+
+.bne-landing-listing-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--lp-text-muted);
+}
+
+.bne-landing-listing-card__type,
+.bne-landing-listing-card__year {
+    padding: 2px 6px;
+    background: var(--lp-bg-alt);
+    border-radius: 4px;
+}
+
+.bne-landing-listing-card__features {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--lp-border);
+}
+
+.bne-landing-listing-card__feature {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: var(--lp-text-muted);
+}
+
+/* Empty State */
+.bne-landing-listings__empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--lp-text-light);
+}
+
+.bne-landing-listings__empty svg {
+    color: var(--lp-text-muted);
+    margin-bottom: 1rem;
+}
+
+.bne-landing-listings__empty h3 {
+    font-size: 1.25rem;
+    color: var(--lp-text);
+    margin: 0 0 0.5rem;
+}
+
+.bne-landing-listings__empty p {
+    margin: 0;
+}
+
+.bne-landing-listings__empty a {
+    color: var(--lp-primary);
+}
+
+/* ==========================================================================
+   Pagination (v1.3.2)
+   ========================================================================== */
+
+.bne-landing-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--lp-border);
+}
+
+.bne-landing-pagination__link {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--lp-primary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.bne-landing-pagination__link:hover {
+    background: var(--lp-bg-alt);
+}
+
+.bne-landing-pagination__pages {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.bne-landing-pagination__page {
+    min-width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--lp-radius);
+    font-size: 0.875rem;
+    color: var(--lp-text);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.bne-landing-pagination__page:hover {
+    background: var(--lp-bg-alt);
+}
+
+.bne-landing-pagination__page--active {
+    background: var(--lp-primary);
+    color: #ffffff;
+}
+
+.bne-landing-pagination__ellipsis {
+    padding: 0 0.5rem;
+    color: var(--lp-text-muted);
+}
+
+/* ==========================================================================
+   Responsive Styles
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    /* Filters - not sticky on mobile, stack vertically */
+    .bne-landing-filters {
+        position: relative;
+    }
+
+    .bne-landing-filters__row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .bne-landing-filter-group {
+        width: 100%;
+    }
+
+    .bne-landing-filter-group--type {
+        margin-right: 0;
+    }
+
+    .bne-landing-filter-group--submit {
+        margin-left: 0;
+        margin-top: 0.5rem;
+    }
+
+    .bne-landing-filter-select {
+        width: 100%;
+    }
+
+    .bne-landing-toggle-group {
+        width: 100%;
+    }
+
+    .bne-landing-toggle {
+        flex: 1;
+        text-align: center;
+    }
+
+    .bne-landing-filters__submit {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .bne-landing-filters__summary {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .bne-landing-pagination {
+        flex-wrap: wrap;
+    }
+
+    .bne-landing-pagination__link {
+        order: 2;
+    }
+
+    .bne-landing-pagination__pages {
+        order: 1;
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* ==========================================================================
+   Mobile Collapsible Filters (v1.3.3)
+   ========================================================================== */
+
+/* Mobile toggle button - hidden on desktop */
+.bne-landing-filters__mobile-toggle {
+    display: none;
+}
+
+/* Mobile toggle group - hidden on desktop */
+.bne-landing-filter-group--type-mobile {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    /* Make filter section less dominant on mobile */
+    .bne-landing-filters {
+        padding: 0.75rem 0 1rem;
+    }
+
+    /* Mobile header with toggle and type selector */
+    .bne-landing-filters__mobile-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    /* Show mobile toggle button */
+    .bne-landing-filters__mobile-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--lp-bg-alt);
+        border: 1px solid var(--lp-border);
+        border-radius: var(--lp-radius);
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--lp-text);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .bne-landing-filters__mobile-toggle:hover {
+        background: var(--lp-border);
+    }
+
+    .bne-landing-filters__mobile-toggle svg {
+        transition: transform 0.2s ease;
+    }
+
+    .bne-landing-filters__mobile-toggle[aria-expanded="true"] svg {
+        transform: rotate(180deg);
+    }
+
+    /* Show mobile toggle group (For Sale / For Rent) */
+    .bne-landing-filter-group--type-mobile {
+        display: block;
+        flex: 1;
+    }
+
+    .bne-landing-filter-group--type-mobile .bne-landing-toggle-group {
+        width: 100%;
+    }
+
+    .bne-landing-filter-group--type-mobile .bne-landing-toggle {
+        flex: 1;
+        text-align: center;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8125rem;
+    }
+
+    /* Hide desktop toggle group inside the collapsible row */
+    .bne-landing-filters__row .bne-landing-filter-group--type {
+        display: none;
+    }
+
+    /* Hide filters row by default on mobile */
+    .bne-landing-filters__row {
+        display: none;
+    }
+
+    /* Show filters row when open */
+    .bne-landing-filters__row.is-open {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        padding-top: 1rem;
+        margin-top: 0.75rem;
+        border-top: 1px solid var(--lp-border);
+        animation: slideDown 0.2s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
+
+/* Desktop - ensure filters row is always visible */
+@media (min-width: 769px) {
+    .bne-landing-filters__mobile-header {
+        display: none;
+    }
+
+    .bne-landing-filters__row {
+        display: flex !important;
+    }
+}

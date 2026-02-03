@@ -1,0 +1,177 @@
+{
+    "version": "1.5.3",
+    "db_version": "1.0.0",
+    "last_updated": "2026-01-27T18:30:00Z",
+    "deployed": "2026-01-27T18:30:00Z",
+    "production_status": {
+        "verified": true,
+        "exclusive_count": 2,
+        "test_listings": [
+            {"id": 22, "address": "150 Grove Street", "city": "Reading", "price": 1625000},
+            {"id": 23, "address": "2 Nautilus Lane", "city": "Nantucket", "price": 4995000}
+        ]
+    },
+    "changelog": {
+        "1.5.3": {
+            "date": "2026-01-27",
+            "changes": [
+                "Added city/zip fallback geocoding when full address fails (prevents Boston default for misspelled addresses)",
+                "Added delete_attachment hook to clean up BME media records when images deleted from Media Library",
+                "Added cleanup_orphaned_media_records() utility to detect and remove orphaned media records",
+                "Increased max photos per listing from 50 to 100"
+            ]
+        },
+        "1.5.2": {
+            "date": "2026-01-17",
+            "changes": [
+                "iOS: ExclusiveListingDetailView lot size shows both formats (e.g., '21,780 Sq Ft (0.50 Acres)')",
+                "iOS: PropertyDetailView lot size now correctly displays acres (was showing sq ft with Acres label)",
+                "Web: Lot size sq ft field auto-populates from acres on page load",
+                "API: Now returns lot_size_square_feet field for iOS compatibility"
+            ]
+        },
+        "1.5.1": {
+            "date": "2026-01-17",
+            "changes": [
+                "iOS: Fixed bathrooms total to support decimal input (e.g., 2.5)",
+                "iOS: Added lot size sq ft field with auto-conversion to/from acres",
+                "iOS: Moved parking fields together in Property Details section",
+                "iOS: Added clear labels for Garage vs Other parking spaces",
+                "Web: Combined parking fields with clear Garage/Other labels",
+                "Both platforms now have identical field order and behavior"
+            ]
+        },
+        "1.5.0": {
+            "date": "2026-01-17",
+            "changes": [
+                "Fixed iOS badge override bug: exclusiveTag now properly loaded during edit",
+                "Added bathroom full/half breakdown fields to web admin form",
+                "Added lot size dual input (Sq Ft / Acres) with auto-conversion",
+                "Added backend normalization for bathroom and lot size fields",
+                "API now returns lot_size in sq ft for MLS parity"
+            ]
+        },
+        "1.4.10": {
+            "date": "2026-01-17",
+            "changes": [
+                "Added missing 'count' field to photo reorder response",
+                "iOS ExclusiveListingPhotosResponse now receives all required fields"
+            ]
+        },
+        "1.4.9": {
+            "date": "2026-01-17",
+            "changes": [
+                "Fixed photo reorder endpoint returning raw database format instead of iOS-compatible format",
+                "Photos are now properly formatted with id, url, sort_order, is_primary fields",
+                "format_photos_array_for_ios now handles both media_order and order_index field names"
+            ]
+        },
+        "1.4.8": {
+            "date": "2026-01-17",
+            "changes": [
+                "Fixed PHP 8+ undefined array key warnings in format_listing_response()",
+                "Added null coalescing for subdivision_name, unparsed_address, and other optional fields",
+                "Fixed media_order undefined key warning in format_photos_array_for_ios()",
+                "Fixed admin list table unparsed_address undefined key warning"
+            ]
+        },
+        "1.4.7": {
+            "date": "2026-01-16",
+            "changes": [
+                "Fixed PHP 8+ compatibility issue causing internal server error on listing creation",
+                "EL_Notifications now handles both stdClass and array formats from get_agent_clients()",
+                "Added defensive null check in handle_create() for listing retrieval failures"
+            ]
+        },
+        "1.4.6": {
+            "date": "2026-01-16",
+            "changes": [
+                "Fixed OG image tags not appearing for exclusive listing share links",
+                "Added 'Resync to BME' bulk action for admin to fix listings with sync issues",
+                "Enhanced cache clearing to include MLD_Query_Cache for listing details",
+                "Photos now properly sync from WordPress media library to bme_media table"
+            ]
+        },
+        "1.4.5": {
+            "date": "2026-01-16",
+            "changes": [
+                "Fixed photo reorder labels showing incorrect numbers",
+                "Improved photo upload progress UX in iOS app"
+            ]
+        },
+        "1.4.1": {
+            "date": "2026-01-16",
+            "changes": [
+                "Added property detail cache clearing when exclusive listings are saved",
+                "Cache invalidation now clears both mobile API and web page caches"
+            ]
+        },
+        "1.4.0": {
+            "date": "2026-01-16",
+            "changes": [
+                "Added Tier 1 property description fields (public_remarks, private_remarks, showing_instructions)",
+                "Added financial fields (original_list_price, hoa_fee, tax_amount)",
+                "Syncs additional fields to bme_listings and bme_listing_financial tables",
+                "iOS API returns full description data for edit forms"
+            ]
+        },
+        "1.3.0": {
+            "date": "2026-01-15",
+            "changes": [
+                "Added push notification system for exclusive listings",
+                "Agents' clients receive notifications when new exclusive listings are created",
+                "Notifications include property address, price, and photo for rich notifications",
+                "Deep linking support for iOS app navigation to listing detail"
+            ]
+        },
+        "1.2.2": {
+            "date": "2026-01-15",
+            "changes": [
+                "Fixed iOS API options endpoint: property_sub_types now returns dictionary grouped by property type",
+                "iOS app can now properly filter sub-types based on selected property type in create/edit form",
+                "Deployed and verified in production"
+            ]
+        },
+        "1.2.1": {
+            "date": "2026-01-15",
+            "changes": [
+                "Added bulk operations: Archive, Set to Active, Delete Permanently",
+                "Select all checkbox in list table header and footer",
+                "Confirmation dialogs for bulk archive and delete actions",
+                "Admin-only restriction for permanent delete"
+            ]
+        },
+        "1.2.0": {
+            "date": "2026-01-15",
+            "changes": [
+                "Added WordPress Admin interface for managing exclusive listings",
+                "Admin menu with listing table, search, and status filters",
+                "Add/Edit listing forms with all property fields",
+                "Photo upload, delete, and drag-to-reorder in admin",
+                "AJAX-based photo management with real-time feedback"
+            ]
+        },
+        "1.1.0": {
+            "date": "2026-01-15",
+            "changes": [
+                "Added data layer for BME table synchronization",
+                "Added geocoding service for address-to-coordinates conversion",
+                "Added image upload and management system",
+                "Added mobile REST API endpoints for iOS app integration",
+                "Added input validation service",
+                "Listings now appear in property search alongside MLS listings"
+            ]
+        },
+        "1.0.0": {
+            "date": "2026-01-14",
+            "changes": [
+                "Initial release",
+                "Plugin skeleton and foundation",
+                "Sequential ID generation system (1, 2, 3, ...)",
+                "Database schema for exclusive listings",
+                "Health check REST endpoint",
+                "Read-only diagnostic mode"
+            ]
+        }
+    }
+}

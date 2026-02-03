@@ -1,0 +1,289 @@
+/**
+ * BMN Schools Frontend Styles
+ *
+ * @package BMN_Schools
+ * @since 0.5.0
+ */
+
+/* Schools List */
+.bmn-schools-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.bmn-school-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: box-shadow 0.2s ease;
+}
+
+.bmn-school-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Level-based accent colors */
+.bmn-school-level-elementary {
+    border-left: 4px solid #4CAF50;
+}
+
+.bmn-school-level-middle {
+    border-left: 4px solid #2196F3;
+}
+
+.bmn-school-level-high {
+    border-left: 4px solid #9C27B0;
+}
+
+.bmn-school-level-combined {
+    border-left: 4px solid #FF9800;
+}
+
+.bmn-school-name {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.bmn-school-meta {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.bmn-school-meta span {
+    display: inline-flex;
+    align-items: center;
+}
+
+.bmn-school-level {
+    background: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: capitalize;
+}
+
+.bmn-school-details {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.bmn-school-distance {
+    color: #2196F3;
+    font-weight: 500;
+}
+
+.bmn-school-mcas {
+    color: #4CAF50;
+}
+
+.bmn-school-address {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+/* School Detail */
+.bmn-school-detail {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.bmn-school-detail .bmn-school-name {
+    margin: 0 0 1rem;
+    font-size: 1.5rem;
+}
+
+.bmn-school-detail .bmn-school-meta {
+    margin-bottom: 1rem;
+}
+
+.bmn-school-type {
+    background: #e3f2fd;
+    color: #1976D2;
+    padding: 4px 12px;
+    border-radius: 4px;
+}
+
+/* MCAS Table */
+.bmn-school-mcas {
+    margin-top: 1.5rem;
+}
+
+.bmn-school-mcas h4 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    color: #333;
+}
+
+.bmn-mcas-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.bmn-mcas-table th,
+.bmn-mcas-table td {
+    padding: 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.bmn-mcas-table th {
+    background: #f5f5f5;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.bmn-mcas-table td:last-child {
+    text-align: right;
+    font-weight: 500;
+}
+
+/* District Detail */
+.bmn-district-detail {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.bmn-district-name {
+    margin: 0 0 0.75rem;
+    font-size: 1.3rem;
+    color: #333;
+}
+
+.bmn-district-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+
+.bmn-district-type {
+    background: #e8f5e9;
+    color: #388E3C;
+    padding: 4px 12px;
+    border-radius: 4px;
+}
+
+.bmn-district-schools {
+    color: #666;
+}
+
+/* Top Schools Ranking */
+.bmn-top-schools {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.bmn-schools-ranking {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: ranking;
+}
+
+.bmn-school-rank-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
+    counter-increment: ranking;
+}
+
+.bmn-school-rank-item:last-child {
+    border-bottom: none;
+}
+
+.bmn-school-rank-item::before {
+    content: counter(ranking);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.bmn-school-rank-item:nth-child(1)::before {
+    background: #FFD700;
+    color: #333;
+}
+
+.bmn-school-rank-item:nth-child(2)::before {
+    background: #C0C0C0;
+    color: #333;
+}
+
+.bmn-school-rank-item:nth-child(3)::before {
+    background: #CD7F32;
+    color: #fff;
+}
+
+.bmn-school-rank-item .bmn-school-name {
+    flex: 1;
+    font-weight: 500;
+    margin: 0;
+    font-size: 1rem;
+}
+
+.bmn-school-rank-item .bmn-school-city {
+    color: #888;
+    font-size: 0.85rem;
+    margin-right: 1rem;
+}
+
+.bmn-school-rank-item .bmn-school-score {
+    font-weight: 600;
+    color: #4CAF50;
+}
+
+/* Error/Empty States */
+.bmn-schools-error,
+.bmn-schools-empty {
+    padding: 1rem;
+    text-align: center;
+    color: #666;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.bmn-schools-error {
+    color: #d32f2f;
+    background: #ffebee;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .bmn-school-meta,
+    .bmn-school-details {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .bmn-school-rank-item {
+        flex-wrap: wrap;
+    }
+
+    .bmn-school-rank-item .bmn-school-name {
+        width: calc(100% - 44px);
+    }
+
+    .bmn-school-rank-item .bmn-school-city,
+    .bmn-school-rank-item .bmn-school-score {
+        margin-left: 44px;
+    }
+}

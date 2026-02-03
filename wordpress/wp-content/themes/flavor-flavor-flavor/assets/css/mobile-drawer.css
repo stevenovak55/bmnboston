@@ -1,0 +1,548 @@
+/**
+ * Mobile Drawer Styles
+ *
+ * Slide-in drawer menu for mobile navigation with glass-morphism effect.
+ * v1.3.0: Transparent gray glass header with inverted logo.
+ * v1.4.0: Added user menu section with avatar, account links, and logout.
+ *
+ * @package flavor_flavor_flavor
+ * @version 1.4.0
+ */
+
+/* ==========================================================================
+   Drawer Overlay
+   ========================================================================== */
+
+.bne-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--bne-duration-normal) ease,
+                visibility var(--bne-duration-normal) ease;
+    z-index: var(--bne-z-overlay);
+}
+
+.bne-drawer-overlay.is-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ==========================================================================
+   Drawer Container
+   ========================================================================== */
+
+.bne-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 100vw;
+    max-width: 100%;
+    background: rgba(10, 10, 15, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+    transform: translateX(-100%);
+    transition: transform var(--bne-duration-normal) var(--bne-ease-out);
+    z-index: var(--bne-z-drawer);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    /* Safe area for notch devices */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+}
+
+.bne-drawer.is-open {
+    transform: translateX(0);
+}
+
+/* Fallback for browsers without backdrop-filter */
+@supports not (backdrop-filter: blur(16px)) {
+    .bne-drawer {
+        background: rgba(10, 10, 15, 0.98);
+    }
+}
+
+/* ==========================================================================
+   Drawer Header
+   ========================================================================== */
+
+.bne-drawer__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--bne-space-4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+    /* Dark transparent gray with glass effect */
+    background: rgba(30, 30, 35, 0.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.bne-drawer__logo {
+    max-height: 40px;
+    width: auto;
+    flex-shrink: 0;
+    max-width: 180px; /* Prevent logo from being too wide */
+    filter: brightness(0) invert(1); /* Make logo white for dark header */
+}
+
+/* Constrain the actual logo image inside the wrapper */
+.bne-drawer__logo img,
+.bne-drawer__logo .custom-logo {
+    max-height: 40px !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: 100% !important;
+    object-fit: contain;
+}
+
+/* WordPress custom logo link wrapper */
+.bne-drawer__logo .custom-logo-link {
+    display: block;
+    max-height: 40px;
+}
+
+.bne-drawer__close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: transparent;
+    border: none;
+    border-radius: var(--bne-radius-md);
+    color: rgba(255, 255, 255, 0.9); /* Light color for dark header */
+    cursor: pointer;
+    transition: background var(--bne-transition-fast), color var(--bne-transition-fast);
+}
+
+.bne-drawer__close:hover,
+.bne-drawer__close:focus {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+
+.bne-drawer__close:focus-visible {
+    outline: 2px solid var(--bne-primary-blue);
+    outline-offset: 2px;
+}
+
+.bne-drawer__close svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* ==========================================================================
+   Drawer Navigation
+   ========================================================================== */
+
+.bne-drawer__nav {
+    padding: var(--bne-space-4);
+    overflow-y: auto;
+}
+
+.bne-drawer__menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.bne-drawer__menu li {
+    margin: 0;
+}
+
+.bne-drawer__menu a {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: var(--bne-space-3) var(--bne-space-4);
+    font-size: var(--bne-font-size-lg);
+    font-weight: var(--bne-font-medium);
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    border-radius: var(--bne-radius-md);
+    transition: background var(--bne-transition-fast), color var(--bne-transition-fast);
+}
+
+.bne-drawer__menu a:hover,
+.bne-drawer__menu a:focus {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.bne-drawer__menu .current-menu-item a {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    font-weight: var(--bne-font-semibold);
+}
+
+/* Sub-menu items */
+.bne-drawer__menu .sub-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 var(--bne-space-4);
+}
+
+.bne-drawer__menu .sub-menu a {
+    font-size: var(--bne-font-size-base);
+    min-height: 44px;
+    padding-left: var(--bne-space-6);
+}
+
+/* ==========================================================================
+   Drawer Footer
+   ========================================================================== */
+
+.bne-drawer__footer {
+    padding: var(--bne-space-4);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    flex-shrink: 0;
+}
+
+.bne-drawer__phone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--bne-space-2);
+    min-height: 48px;
+    padding: var(--bne-space-3) var(--bne-space-4);
+    background: var(--bne-gradient-primary);
+    color: var(--bne-white);
+    font-weight: var(--bne-font-semibold);
+    text-decoration: none;
+    border-radius: var(--bne-radius-md);
+    box-shadow: var(--bne-shadow-primary);
+    transition: transform var(--bne-transition-fast), box-shadow var(--bne-transition-fast);
+}
+
+.bne-drawer__phone:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--bne-shadow-primary-lg);
+    color: var(--bne-white);
+}
+
+.bne-drawer__phone svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* ==========================================================================
+   Drawer User Menu (Collapsible v1.5.0)
+   v1.5.0: Added collapsible user menu with toggle button
+   ========================================================================== */
+
+.bne-drawer__user {
+    padding: 16px;
+    padding: var(--bne-space-4, 16px);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    flex-shrink: 0;
+    background: rgba(20, 20, 25, 0.5);
+}
+
+/* User Toggle Button (Collapsible Header) */
+.bne-drawer__user-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    gap: var(--bne-space-3, 12px);
+    width: 100%;
+    padding: 12px;
+    padding: var(--bne-space-3, 12px);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    border-radius: var(--bne-radius-md, 8px);
+    color: rgba(255, 255, 255, 0.95);
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    text-align: left;
+}
+
+.bne-drawer__user-toggle:hover,
+.bne-drawer__user-toggle:focus {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.bne-drawer__user-toggle:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline: 2px solid var(--bne-primary-blue, #3b82f6);
+    outline-offset: 2px;
+}
+
+/* User Toggle Info */
+.bne-drawer__user-toggle .bne-drawer__user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.bne-drawer__user-toggle .bne-drawer__user-name {
+    font-size: 16px;
+    font-size: var(--bne-font-size-base, 16px);
+    font-weight: 600;
+    font-weight: var(--bne-font-semibold, 600);
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* User Toggle Chevron */
+.bne-drawer__user-chevron {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+    opacity: 0.7;
+    transition: transform 0.25s ease;
+}
+
+.bne-drawer__user-toggle[aria-expanded="true"] .bne-drawer__user-chevron {
+    transform: rotate(180deg);
+}
+
+/* Guest Toggle Styling */
+.bne-drawer__user-toggle--guest {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.2) 100%);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.bne-drawer__user-toggle--guest:hover,
+.bne-drawer__user-toggle--guest:focus {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.3) 100%);
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+/* Collapsible User Nav */
+.bne-drawer__user-nav--collapsed {
+    display: none;
+    max-height: 0;
+    overflow: hidden;
+}
+
+.bne-drawer__user-nav--expanded {
+    display: flex;
+    max-height: 400px;
+    margin-top: 12px;
+    margin-top: var(--bne-space-3, 12px);
+    padding-top: 12px;
+    padding-top: var(--bne-space-3, 12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    animation: bne-drawer-user-expand 0.25s ease-out;
+}
+
+@keyframes bne-drawer-user-expand {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Legacy User Header (for backwards compatibility) */
+.bne-drawer__user-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    gap: var(--bne-space-3, 12px);
+    padding-bottom: 12px;
+    padding-bottom: var(--bne-space-3, 12px);
+    margin-bottom: 12px;
+    margin-bottom: var(--bne-space-3, 12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bne-drawer__user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.bne-drawer__user-avatar--guest {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.bne-drawer__user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.bne-drawer__user-name {
+    font-size: 16px; /* fallback for --bne-font-size-base */
+    font-size: var(--bne-font-size-base, 16px);
+    font-weight: 600; /* fallback for --bne-font-semibold */
+    font-weight: var(--bne-font-semibold, 600);
+    color: rgba(255, 255, 255, 0.95);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+}
+
+.bne-drawer__user-email {
+    font-size: 14px; /* fallback for --bne-font-size-sm */
+    font-size: var(--bne-font-size-sm, 14px);
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+}
+
+/* User Navigation Items */
+.bne-drawer__user-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px; /* fallback for --bne-space-1 */
+    gap: var(--bne-space-1, 4px);
+}
+
+.bne-drawer__user-item {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* fallback for --bne-space-3 */
+    gap: var(--bne-space-3, 12px);
+    min-height: 44px;
+    padding: 8px 12px; /* fallback for --bne-space-2 and --bne-space-3 */
+    padding: var(--bne-space-2, 8px) var(--bne-space-3, 12px);
+    font-size: 16px; /* fallback for --bne-font-size-base */
+    font-size: var(--bne-font-size-base, 16px);
+    font-weight: 500; /* fallback for --bne-font-medium */
+    font-weight: var(--bne-font-medium, 500);
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    border-radius: 8px; /* fallback for --bne-radius-md */
+    border-radius: var(--bne-radius-md, 8px);
+    transition: background 0.15s ease, color 0.15s ease;
+    transition: background var(--bne-transition-fast, 0.15s ease), color var(--bne-transition-fast, 0.15s ease);
+}
+
+.bne-drawer__user-item:hover,
+.bne-drawer__user-item:focus {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.bne-drawer__user-item:focus-visible {
+    outline: 2px solid #3b82f6; /* fallback for --bne-primary-blue */
+    outline: 2px solid var(--bne-primary-blue, #3b82f6);
+    outline-offset: 2px;
+}
+
+.bne-drawer__user-item svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    opacity: 0.8;
+}
+
+.bne-drawer__user-item:hover svg,
+.bne-drawer__user-item:focus svg {
+    opacity: 1;
+}
+
+/* Primary action (Log In button for guests) */
+.bne-drawer__user-item--primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); /* fallback for --bne-gradient-primary */
+    background: var(--bne-gradient-primary, linear-gradient(135deg, #3b82f6 0%, #2563eb 100%));
+    color: #ffffff; /* fallback for --bne-white */
+    color: var(--bne-white, #ffffff);
+    font-weight: 600; /* fallback for --bne-font-semibold */
+    font-weight: var(--bne-font-semibold, 600);
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); /* fallback for --bne-shadow-primary */
+    box-shadow: var(--bne-shadow-primary, 0 4px 14px rgba(59, 130, 246, 0.4));
+}
+
+.bne-drawer__user-item--primary:hover,
+.bne-drawer__user-item--primary:focus {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    background: var(--bne-gradient-primary, linear-gradient(135deg, #3b82f6 0%, #2563eb 100%));
+    color: #ffffff;
+    color: var(--bne-white, #ffffff);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5); /* fallback for --bne-shadow-primary-lg */
+    box-shadow: var(--bne-shadow-primary-lg, 0 6px 20px rgba(59, 130, 246, 0.5));
+}
+
+.bne-drawer__user-item--primary svg {
+    opacity: 1;
+}
+
+/* Logout button styling */
+.bne-drawer__user-item--logout {
+    margin-top: 8px; /* fallback for --bne-space-2 */
+    margin-top: var(--bne-space-2, 8px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 12px; /* fallback for --bne-space-3 */
+    padding-top: var(--bne-space-3, 12px);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.bne-drawer__user-item--logout:hover,
+.bne-drawer__user-item--logout:focus {
+    background: rgba(220, 38, 38, 0.15);
+    color: #f87171;
+}
+
+.bne-drawer__user-item--logout:hover svg,
+.bne-drawer__user-item--logout:focus svg {
+    color: #f87171;
+}
+
+/* Guest header styling */
+.bne-drawer__user-header--guest {
+    padding-bottom: 16px; /* fallback for --bne-space-4 */
+    padding-bottom: var(--bne-space-4, 16px);
+}
+
+/* ==========================================================================
+   Body Scroll Lock
+   ========================================================================== */
+
+body.drawer-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}
+
+/* ==========================================================================
+   Desktop - Hide Drawer
+   ========================================================================== */
+
+@media (min-width: 1024px) {
+    .bne-drawer,
+    .bne-drawer-overlay {
+        display: none !important;
+    }
+}
+
+/* ==========================================================================
+   Reduced Motion Support
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .bne-drawer,
+    .bne-drawer-overlay {
+        transition: none;
+    }
+}

@@ -1,0 +1,4809 @@
+/**
+ * MLS Listings Display - Mobile V3 Single Property CSS
+ * Modern sleek design with Black, Dark Gray, White + Ocean Teal & Red accents
+ * Version: 4.4.0 - Updated to use design system tokens
+ * Facts & Features V2 styles are now loaded separately
+ *
+ * Design System: Inherits from mld-design-tokens.css
+ */
+
+/* ========================================
+   CSS Variables & Design System (V3 Theme)
+   ======================================== */
+:root {
+  /* V3 Colors - Using Design System palette */
+  --v3-primary: var(--ds-teal, #0891B2);
+  --v3-primary-dark: var(--ds-teal-hover, #0E7490);
+  --v3-primary-light: var(--ds-teal-light, #22D3EE);
+  --v3-secondary: var(--ds-dark-gray, #1f2937);
+  --v3-success: var(--ds-success, #10B981);
+  --v3-danger: var(--ds-red, #DC2626);
+  --v3-warning: var(--ds-warning, #F59E0B);
+
+  --v3-admin-bg: #fff8dc;
+  --v3-admin-border: #ffd700;
+  --v3-admin-text: #333;
+
+  --v3-background: var(--ds-white, #ffffff);
+  --v3-surface: var(--ds-off-white, #f9fafb);
+  --v3-surface-elevated: var(--ds-white, #ffffff);
+  --v3-border: var(--ds-border, #E5E7EB);
+  --v3-text-primary: var(--ds-black, #000000);
+  --v3-text-secondary: var(--ds-dark-gray, #1f2937);
+  --v3-text-tertiary: var(--ds-light-gray, #6b7280);
+
+  /* Shadows - Using Design System */
+  --v3-shadow-sm: var(--ds-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+  --v3-shadow-md: var(--ds-shadow-md, 0 4px 6px rgba(0, 0, 0, 0.1));
+  --v3-shadow-lg: var(--ds-shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.1));
+
+  /* Spacing (8px grid) */
+  --v3-spacing-xs: 4px;
+  --v3-spacing-sm: 8px;
+  --v3-spacing-md: 16px;
+  --v3-spacing-lg: 24px;
+  --v3-spacing-xl: 32px;
+  --v3-spacing-xxl: 48px;
+
+  /* Border Radius - Using Design System */
+  --v3-radius-sm: var(--ds-radius-sm, 4px);
+  --v3-radius-md: var(--ds-radius-lg, 8px);
+  --v3-radius-lg: var(--ds-radius-xl, 12px);
+  --v3-radius-xl: var(--ds-radius-2xl, 16px);
+  --v3-radius-full: var(--ds-radius-full, 9999px);
+
+  /* Bottom Sheet Specific (from V2) */
+  --bottom-sheet-min-height: 10vh;
+  --bottom-sheet-max-height: 80vh;
+  --bottom-sheet-default-height: 50vh;
+  --bottom-sheet-handle-height: 28px; /* v6.25.21: Reduced from 48px for compact header */
+  --bottom-sheet-handle-width: 36px;
+  --bottom-sheet-border-radius: var(--v3-radius-xl);
+
+  /* Safe Area Insets */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* Mobile specific */
+  --mobile-tab-height: 48px;
+  --mobile-header-height: 56px;
+
+  /* Glass Effects */
+  --v3-glass-bg: var(--ds-glass-bg, rgba(255, 255, 255, 0.85));
+  --v3-glass-border: var(--ds-glass-border, rgba(255, 255, 255, 0.2));
+  --v3-glass-blur: var(--ds-glass-blur, 10px);
+}
+
+/* ========================================
+   Base Styles & Resets
+   ======================================== */
+body.mld-property-mobile-v3 {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--v3-text-primary);
+  background: var(--v3-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+.mld-mobile-container {
+  position: relative;
+  width: 100%;
+  /* v6.25.17: Use explicit viewport units for reliable height on mobile */
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for iOS Safari */
+  overflow: hidden;
+}
+
+/* ========================================
+   Photo Gallery with Map/Street View
+   ======================================== */
+.mld-gallery-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  /* Enhanced scroll performance */
+  scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
+  background: #000;
+  /* GPU acceleration for smooth scrolling */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: scroll-position;
+}
+
+.mld-gallery-scroll {
+  display: flex;
+  flex-direction: column;
+  padding-top: 0; /* Start images at the very top */
+  padding-bottom: 50vh; /* Space for bottom sheet */
+  /* Improved scroll behavior */
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+.mld-photo-item {
+  position: relative;
+  width: 100%;
+  flex-shrink: 0;
+  /* Removed scroll-snap-align for smooth scrolling */
+  background: #000;
+  line-height: 0; /* Remove spacing between images */
+  /* v6.25.14: Use aspect-ratio with min-height fallback for flex contexts */
+  aspect-ratio: 4/3;
+  min-height: 75vw; /* Fallback: 100vw width * 0.75 = 4:3 ratio */
+  overflow: hidden;
+}
+
+/* Enhanced image loading states */
+.mld-photo-item .mld-image-placeholder {
+  /* v6.25.16: Absolute position to fill container, contains lazy images */
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mld-photo-item.image-error {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mld-photo-item.image-error::after {
+  content: "⚠ Image unavailable";
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  padding: 20px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 8px;
+}
+
+.mld-image-spinner {
+  display: none;
+}
+
+/* Spinner animation */
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.mld-photo {
+  /* v6.25.16: Use absolute positioning to fill aspect-ratio container */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+  background: #f5f5f5;
+}
+
+/* Lazy loading states */
+.mld-photo.lazy-image {
+  opacity: 0.3;
+  filter: blur(2px);
+}
+
+.mld-photo:not(.lazy-image) {
+  opacity: 1;
+  filter: none;
+}
+
+/* Image aspect ratio optimization */
+.mld-photo-item img {
+  aspect-ratio: 4/3;
+  object-fit: cover;
+}
+
+/* Map, Street View, and Tour Slides */
+.mld-map-slide,
+.mld-streetview-slide,
+.mld-tour-slide {
+  background: var(--v3-surface);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mld-embedded-map,
+.mld-embedded-streetview,
+.mld-embedded-tour {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+}
+
+.mld-map-placeholder,
+.mld-streetview-placeholder,
+.mld-tour-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--v3-text-secondary);
+  font-size: 14px;
+}
+
+/* Gallery Controls - Sticky to sheet */
+.mld-gallery-controls {
+  position: fixed;
+  bottom: 50%; /* Will be overridden by JS with exact pixel value */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  background: rgba(32, 33, 36, 0.9);
+  border-radius: 24px;
+  padding: 4px;
+  z-index: 100;
+  transition: bottom 0.3s ease-out;
+  -webkit-transform: translateX(-50%); /* iOS Safari */
+  -webkit-transition: bottom 0.3s ease-out; /* iOS Safari */
+}
+
+.mld-gallery-controls::-webkit-scrollbar {
+  display: none;
+}
+
+.mld-gallery-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 20px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mld-gallery-control svg {
+  width: 16px;
+  height: 16px;
+}
+
+.mld-gallery-control.active {
+  background: var(--v3-primary);
+}
+
+.mld-gallery-control:not(.active):hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* v6.25.23: Inline Gallery Controls (inside sheet) */
+.mld-gallery-controls-inline {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(32, 33, 36, 0.95);
+  border-radius: 20px;
+  padding: 3px;
+  margin: 8px 16px 12px;
+}
+
+.mld-gallery-controls-inline .mld-gallery-control {
+  padding: 6px 12px; /* Slightly smaller for inline */
+  font-size: 12px;
+}
+
+.mld-gallery-controls-inline .mld-gallery-control svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Virtual Tour Overlays */
+.mld-tour-overlays {
+  position: absolute;
+  bottom: 120px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  z-index: 10;
+}
+
+.mld-virtual-tour-overlay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(26, 115, 232, 0.95);
+  border: none;
+  border-radius: 24px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mld-virtual-tour-overlay:hover {
+  background: var(--v3-primary);
+  transform: translateY(-2px);
+}
+
+/* Photo Counter - Hidden on mobile */
+.mld-photo-counter {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Back Button - Top left */
+.mld-back-button {
+  position: fixed;
+  top: calc(var(--safe-top) + 16px);
+  left: calc(var(--safe-left) + 16px);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(64, 64, 64, 0.5) !important; /* Dark grey with 50% transparency */
+  color: #ffffff !important; /* White arrow */
+  border: none !important;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: transform 0.2s, opacity 0.2s;
+  outline: none !important;
+  padding: 0;
+  margin: 0;
+}
+
+.mld-back-button:hover {
+  opacity: 0.9;
+}
+
+.mld-back-button:active {
+  transform: scale(0.95);
+}
+
+.mld-back-button svg {
+  width: 20px;
+  height: 20px;
+  stroke: #ffffff !important; /* White arrow */
+  stroke-width: 2.5;
+  fill: none;
+}
+
+/* Status Badge - Moved to top right */
+.mld-status-badge {
+  position: fixed;
+  top: calc(var(--safe-top) + 16px);
+  right: calc(var(--safe-right, 16px) + 16px);
+  padding: 8px 14px;
+  background: var(--v3-success);
+  color: #fff;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  z-index: 9999; /* High z-index to ensure overlay on image */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.mld-status-badge.closed {
+  background: var(--v3-danger);
+}
+
+.mld-status-badge.pending {
+  background: var(--v3-warning);
+}
+
+/* ========================================
+   Bottom Sheet (V2 Mechanics with V3 Styling)
+   ======================================== */
+.mld-bottom-sheet {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--v3-surface-elevated);
+  border-radius: var(--bottom-sheet-border-radius) var(--bottom-sheet-border-radius) 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(50%); /* Default to 50% visible */
+  transition: transform 0.3s ease-out;
+  height: 100vh;
+  max-height: 100vh;
+  display: flex !important; /* Force display */
+  flex-direction: column;
+  z-index: 20;
+  visibility: visible !important; /* Force visibility */
+}
+
+/* Sheet Handle */
+.mld-sheet-handle {
+  position: relative;
+  height: var(--bottom-sheet-handle-height);
+  flex-shrink: 0;
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.mld-sheet-handle:active {
+  cursor: grabbing;
+}
+
+.mld-handle-bar {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--bottom-sheet-handle-width);
+  height: 4px;
+  background: var(--v3-border);
+  border-radius: var(--v3-radius-full);
+  transition: all 0.15s ease-out;
+}
+
+.mld-sheet-handle:active .mld-handle-bar {
+  background: var(--v3-text-secondary);
+  width: 48px;
+  height: 6px;
+}
+
+
+/* Sheet Content */
+.mld-sheet-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: calc(20vh + var(--safe-bottom));
+  min-height: 0;
+  max-height: calc(100vh - var(--bottom-sheet-handle-height) - 60px);
+}
+
+.mld-sheet-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* ========================================
+   V3 Mobile Unified Content Structure
+   ======================================== */
+.mld-v3-main-mobile {
+  padding: 0;
+  min-height: 100%;
+}
+
+/* Section Structure */
+.mld-v3-section-mobile {
+  margin-bottom: 0;
+  border-bottom: 8px solid var(--v3-surface);
+  padding-bottom: var(--v3-spacing-lg);
+}
+
+.mld-v3-section-mobile:last-child {
+  border-bottom: none;
+  padding-bottom: calc(var(--v3-spacing-xl) + 100px);
+}
+
+/* Sticky Section Headers */
+.mld-v3-section-header {
+  position: sticky;
+  top: 0;
+  background: var(--v3-surface-elevated);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--v3-border);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 -16px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.mld-v3-section-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--v3-text-primary);
+  margin: 0;
+}
+
+/* Section Toggle Button */
+.mld-v3-section-toggle {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: var(--v3-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s;
+}
+
+.mld-v3-section-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mld-v3-section-mobile.collapsed .mld-v3-section-toggle {
+  transform: rotate(-90deg);
+}
+
+/* Collapsible Section Content */
+.mld-v3-section-content {
+  padding: var(--v3-spacing-md) 0;
+  max-height: none;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.mld-v3-section-mobile.collapsed .mld-v3-section-content {
+  max-height: 0;
+  padding: 0;
+}
+
+/* ========================================
+   V3 Mobile Content Styling
+   ======================================== */
+.mld-v3-main-mobile > section {
+  padding-left: var(--v3-spacing-md);
+  padding-right: var(--v3-spacing-md);
+}
+
+/* Overview Section - No header needed */
+#overview.mld-v3-section-mobile {
+  padding-top: 0;
+}
+
+#overview .mld-v3-section-header {
+  display: none;
+}
+
+/* v6.25.22: Compact breadcrumbs for mobile */
+.mld-breadcrumbs {
+  padding: 6px 16px !important; /* Reduced from 12px 20px */
+  font-size: 12px !important; /* Reduced from 14px */
+  margin-bottom: 0 !important; /* Reduced from 20px */
+}
+
+.mld-breadcrumbs .separator {
+  margin: 0 4px !important; /* Reduced from 8px */
+}
+
+/* Header Section - v6.25.21: Compacted for minimal screen usage */
+.mld-sheet-header {
+  padding: 10px 16px 8px; /* Reduced from 16px all around */
+  border-bottom: 1px solid var(--v3-border);
+}
+
+/* Status and Listing Info - v6.25.21: Compacted */
+.mld-status-listing-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px; /* Reduced from 8px */
+  margin: 4px 0; /* Reduced from 8px 0 */
+  font-size: 12px; /* Reduced from 13px */
+}
+
+.mld-status-badge-inline {
+  display: inline-block;
+  padding: 2px 6px; /* Reduced from 4px 8px */
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 10px; /* Reduced from 11px */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mld-status-badge-inline.active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.mld-status-badge-inline.pending {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.mld-status-badge-inline.closed {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.mld-listing-details {
+  color: var(--v3-text-tertiary);
+  font-size: 11px; /* v6.25.21: Reduced from 12px */
+}
+
+/* MLS Number Click to Copy - Mobile */
+.mld-v3-mls-number-mobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  position: relative;
+  color: inherit;
+}
+
+.mld-v3-mls-number-mobile:active {
+  background: #e8f0fe;
+  color: #1a73e8;
+}
+
+.mld-v3-mls-number-mobile .mld-v3-copy-icon {
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.mld-v3-mls-number-mobile:active .mld-v3-copy-icon {
+  opacity: 1;
+}
+
+.mld-v3-mls-number-mobile .mld-v3-copy-feedback {
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2e7d32;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+
+.mld-v3-mls-number-mobile.copied .mld-v3-copy-feedback {
+  opacity: 1;
+}
+
+.mld-v3-mls-number-mobile.copied {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+/* v6.25.21: Compacted price/address section */
+.mld-price-status {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 4px; /* Reduced from 8px */
+}
+
+.mld-price {
+  font-size: 24px; /* Reduced from 28px */
+  font-weight: 600;
+  color: var(--v3-text-primary);
+  margin: 0;
+}
+
+.mld-dom {
+  font-size: 13px; /* Reduced from 14px */
+  color: var(--v3-text-secondary);
+}
+
+.mld-address {
+  font-size: 17px; /* Reduced from 20px */
+  font-weight: 500;
+  color: var(--v3-text-primary);
+  margin: 0 0 2px; /* Reduced from 4px */
+}
+
+.mld-location-info {
+  font-size: 13px; /* Reduced from 14px */
+  color: var(--v3-text-secondary);
+  margin-bottom: 4px; /* Reduced from 8px */
+}
+
+/* v6.25.21: Compacted key stats */
+.mld-key-stats {
+  display: flex;
+  gap: 12px; /* Reduced from 16px */
+  flex-wrap: wrap;
+  font-size: 13px; /* Reduced from 14px */
+  color: var(--v3-text-secondary);
+}
+
+.mld-stat strong {
+  color: var(--v3-text-primary);
+  font-weight: 600;
+}
+
+/* Property Highlights Chips (v6.57.0 - iOS alignment) */
+.mld-detail-highlights {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--v3-border-light, #e5e7eb);
+}
+
+.mld-detail-highlight-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: color-mix(in srgb, var(--highlight-color) 12%, white);
+  border: 1px solid color-mix(in srgb, var(--highlight-color) 25%, white);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--highlight-color);
+  white-space: nowrap;
+}
+
+.mld-detail-highlight-chip .mld-highlight-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Highlight Icons (shared with listing cards) */
+.mld-icon-pool::before { content: "🏊"; }
+.mld-icon-waterfront::before { content: "🌊"; }
+.mld-icon-view::before { content: "🏔️"; }
+.mld-icon-garage::before { content: "🚗"; }
+.mld-icon-fireplace::before { content: "🔥"; }
+
+/* V3 Tags */
+.mld-v3-tags {
+  display: flex;
+  gap: var(--v3-spacing-sm);
+  flex-wrap: wrap;
+  margin-top: var(--v3-spacing-sm);
+}
+
+.mld-v3-tag {
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.mld-v3-tag.price-drop {
+  background: #fce8e6;
+  color: #d93025;
+}
+
+.mld-v3-tag.new-listing {
+  background: #e6f4ea;
+  color: #1e8e3e;
+}
+
+.mld-v3-tag.open-house {
+  background: #fef7e0;
+  color: #f9ab00;
+}
+
+/* Primary Actions */
+.mld-primary-actions {
+  display: flex;
+  gap: var(--v3-spacing-sm);
+  padding: var(--v3-spacing-md);
+}
+
+.mld-cta-primary,
+.mld-cta-secondary {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: var(--v3-radius-md);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mld-cta-primary {
+  background: var(--v3-primary);
+  color: #fff;
+}
+
+.mld-cta-primary:hover {
+  background: var(--v3-primary-dark);
+}
+
+.mld-cta-secondary {
+  background: var(--v3-surface);
+  color: var(--v3-primary);
+  border: 1px solid var(--v3-border);
+}
+
+.mld-cta-secondary:hover {
+  background: #e8f0fe;
+}
+
+.mld-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Admin Section - Mobile Compact */
+.mld-v3-admin-section {
+  margin: var(--v3-spacing-md) 0;
+  background: var(--v3-admin-bg);
+  border: 2px solid var(--v3-admin-border);
+  border-radius: var(--v3-radius-md);
+  position: relative;
+}
+
+.mld-v3-admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(255, 215, 0, 0.1);
+  border-bottom: 1px solid var(--v3-admin-border);
+  min-height: 48px;
+  touch-action: manipulation;
+}
+
+.mld-v3-admin-notice {
+  padding: 12px 16px;
+  color: var(--v3-admin-text);
+  font-size: 12px;
+  line-height: 1.4;
+  background: rgba(255, 215, 0, 0.05);
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.mld-v3-admin-notice svg {
+  width: 16px;
+  height: 16px;
+  color: #f9ab00;
+}
+
+.mld-v3-admin-toggle {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--v3-admin-text);
+}
+
+.mld-v3-admin-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mld-v3-admin-content {
+  padding: var(--v3-spacing-md);
+}
+
+/* Admin section minimized state */
+.mld-v3-admin-section.minimized .mld-v3-admin-content {
+  display: none;
+}
+
+.mld-v3-admin-section.minimized .mld-v3-admin-notice {
+  display: none;
+}
+
+.mld-v3-admin-grid {
+  display: grid;
+  gap: var(--v3-spacing-sm);
+}
+
+/* Facts & Features Card-Based Design */
+.mld-v3-facts-category-mobile {
+  margin-bottom: var(--v3-spacing-xl);
+}
+
+.mld-v3-facts-category-header-mobile {
+  display: flex;
+  align-items: center;
+  gap: var(--v3-spacing-sm);
+  margin-bottom: var(--v3-spacing-md);
+  padding-bottom: var(--v3-spacing-sm);
+  border-bottom: 2px solid var(--v3-border);
+}
+
+.mld-v3-facts-icon-mobile {
+  width: 24px;
+  height: 24px;
+  color: var(--v3-primary);
+  flex-shrink: 0;
+}
+
+.mld-v3-facts-icon-mobile svg {
+  width: 100%;
+  height: 100%;
+}
+
+.mld-v3-facts-category-header-mobile h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--v3-text-primary);
+  margin: 0;
+}
+
+.mld-v3-facts-card-grid-mobile {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--v3-spacing-sm);
+}
+
+.mld-v3-facts-card-mobile {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--v3-spacing-sm);
+  padding: var(--v3-spacing-sm) var(--v3-spacing-md);
+  background: var(--v3-surface);
+  border: 1px solid var(--v3-border);
+  border-radius: var(--v3-radius-md);
+  transition: all 0.2s ease;
+}
+
+.mld-v3-facts-card-mobile.mld-v3-fact-item-full {
+  grid-column: 1 / -1;
+}
+
+.mld-v3-facts-card-icon-mobile {
+  width: 20px;
+  height: 20px;
+  color: var(--v3-text-secondary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.mld-v3-facts-card-icon-mobile svg {
+  width: 100%;
+  height: 100%;
+}
+
+.mld-v3-facts-card-content-mobile {
+  flex: 1;
+  min-width: 0;
+}
+
+.mld-v3-facts-card-content-mobile .mld-v3-fact-label {
+  font-size: 13px;
+  color: var(--v3-text-secondary);
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.mld-v3-facts-card-content-mobile .mld-v3-fact-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--v3-text-primary);
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+/* Legacy styles for compatibility */
+.mld-v3-facts-group {
+  margin-bottom: var(--v3-spacing-lg);
+}
+
+.mld-v3-facts-group h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--v3-text-primary);
+  margin: 0 0 var(--v3-spacing-md);
+}
+
+.mld-v3-facts-grid-mobile {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.mld-v3-fact-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 44px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--v3-border);
+  touch-action: manipulation;
+}
+
+.mld-v3-fact-item:last-child {
+  border-bottom: none;
+}
+
+.mld-v3-fact-label {
+  font-size: 14px;
+  color: var(--v3-text-secondary);
+  flex: 1;
+  padding-right: 12px;
+}
+
+.mld-v3-fact-value {
+  font-size: 14px;
+  color: var(--v3-text-primary);
+  font-weight: 500;
+  text-align: right;
+  flex-shrink: 0;
+  max-width: 60%;
+  word-break: break-word;
+}
+
+.mld-v3-fact-item-full {
+  flex-direction: column;
+  gap: var(--v3-spacing-xs);
+}
+
+.mld-v3-fact-item-full .mld-v3-fact-value {
+  text-align: left;
+}
+
+.mld-v3-text-block {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Map Container - Optimized for Mobile */
+.mld-v3-map-container {
+  height: 400px;
+  margin: 0 -16px var(--v3-spacing-lg);
+  border-radius: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.mld-v3-map {
+  width: 100%;
+  height: 100%;
+}
+
+/* Schools */
+.mld-v3-schools-list {
+  display: grid;
+  gap: var(--v3-spacing-sm);
+}
+
+.mld-v3-school-item {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--v3-spacing-sm) 0;
+  border-bottom: 1px solid var(--v3-border);
+}
+
+.mld-v3-school-level {
+  font-size: 14px;
+  color: var(--v3-text-secondary);
+}
+
+.mld-v3-school-name {
+  font-size: 14px;
+  color: var(--v3-text-primary);
+  font-weight: 500;
+}
+
+/* Calculator - Mobile Optimized */
+.mld-v3-calculator {
+  background: var(--v3-surface);
+  padding: var(--v3-spacing-md);
+  border-radius: var(--v3-radius-md);
+  margin: 0 -8px;
+}
+
+.mld-v3-calc-inputs {
+  display: grid;
+  gap: var(--v3-spacing-md);
+  margin-bottom: var(--v3-spacing-lg);
+}
+
+.mld-v3-calc-field label {
+  display: block;
+  font-size: 14px;
+  color: var(--v3-text-secondary);
+  margin-bottom: var(--v3-spacing-xs);
+}
+
+.mld-v3-calc-field input,
+.mld-v3-calc-field select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--v3-border);
+  border-radius: var(--v3-radius-sm);
+  font-size: 16px;
+  background: var(--v3-background);
+  height: auto;
+  line-height: 1.4;
+  touch-action: manipulation;
+  -webkit-appearance: none;
+}
+
+.mld-v3-calc-split {
+  display: flex;
+  align-items: center;
+  gap: var(--v3-spacing-sm);
+}
+
+.mld-v3-calc-split input {
+  flex: 1;
+}
+
+.mld-v3-calc-split span {
+  font-size: 14px;
+  color: var(--v3-text-secondary);
+}
+
+.mld-v3-calc-result {
+  background: var(--v3-background);
+  padding: var(--v3-spacing-md);
+  border-radius: var(--v3-radius-md);
+}
+
+.mld-v3-calc-monthly {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--v3-spacing-md);
+  padding-bottom: var(--v3-spacing-md);
+  border-bottom: 1px solid var(--v3-border);
+}
+
+.mld-v3-calc-monthly span {
+  font-size: 14px;
+  color: var(--v3-text-secondary);
+}
+
+.mld-v3-calc-monthly strong {
+  font-size: 24px;
+  color: var(--v3-text-primary);
+}
+
+.mld-v3-calc-breakdown {
+  display: grid;
+  gap: var(--v3-spacing-sm);
+}
+
+.mld-v3-calc-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.mld-v3-calc-item span:first-child {
+  color: var(--v3-text-secondary);
+}
+
+.mld-v3-calc-item span:last-child {
+  color: var(--v3-text-primary);
+  font-weight: 500;
+}
+
+/* Open Houses - Mobile Compact */
+.mld-v3-open-house-list {
+  display: grid;
+  gap: var(--v3-spacing-sm);
+}
+
+.mld-v3-open-house-item {
+  display: flex;
+  gap: var(--v3-spacing-sm);
+  padding: var(--v3-spacing-sm);
+  background: var(--v3-surface);
+  border-radius: var(--v3-radius-md);
+  align-items: center;
+}
+
+.mld-v3-oh-date {
+  flex-shrink: 0;
+  width: 48px;
+  text-align: center;
+  padding: var(--v3-spacing-sm);
+  background: var(--v3-primary);
+  color: #fff;
+  border-radius: var(--v3-radius-sm);
+}
+
+.mld-v3-oh-day {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.mld-v3-oh-month {
+  font-size: 12px;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.mld-v3-oh-details {
+  flex: 1;
+}
+
+.mld-v3-oh-dayname {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--v3-text-primary);
+  margin-bottom: 4px;
+}
+
+.mld-v3-oh-time {
+  font-size: 14px;
+  color: var(--v3-text-secondary);
+}
+
+/* Sold Stats - Mobile Cards */
+.mld-v3-stats-grid {
+  display: grid;
+  gap: var(--v3-spacing-sm);
+}
+
+.mld-v3-stat-card {
+  background: var(--v3-surface);
+  padding: var(--v3-spacing-md);
+  border-radius: var(--v3-radius-md);
+  margin-bottom: 0;
+}
+
+.mld-v3-stat-header {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--v3-text-primary);
+  margin-bottom: var(--v3-spacing-md);
+}
+
+.mld-v3-stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--v3-spacing-sm) 0;
+  border-bottom: 1px solid var(--v3-border);
+}
+
+.mld-v3-stat-row:last-child {
+  border-bottom: none;
+}
+
+.mld-v3-stat-row.positive .mld-v3-stat-value {
+  color: var(--v3-success);
+}
+
+.mld-v3-stat-row.negative .mld-v3-stat-value {
+  color: var(--v3-danger);
+}
+
+.mld-v3-stat-row.highlight {
+  font-weight: 600;
+}
+
+/* Modals */
+.mld-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+}
+
+.mld-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+
+.mld-modal-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--v3-background);
+  border-radius: var(--v3-radius-xl) var(--v3-radius-xl) 0 0;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding-bottom: var(--safe-bottom);
+  z-index: 10;
+}
+
+/* Fullscreen modals */
+.mld-fullscreen-content {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important; /* Dynamic viewport height for mobile */
+  max-height: none !important;
+  border-radius: 0;
+  background: #000;
+  z-index: 10;
+}
+
+/* Ensure modal content is always above backdrop */
+.mld-modal.mld-map-modal .mld-modal-content,
+.mld-modal.mld-streetview-modal .mld-modal-content,
+.mld-modal .mld-fullscreen-content {
+  z-index: 10 !important;
+}
+
+.mld-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--v3-spacing-md);
+  border-bottom: 1px solid var(--v3-border);
+  background: var(--v3-background);
+  position: relative;
+  z-index: 10;
+}
+
+.mld-fullscreen-content .mld-modal-header {
+  background: rgba(0, 0, 0, 0.8);
+  border-bottom: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.mld-modal-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--v3-text-primary);
+}
+
+.mld-fullscreen-content .mld-modal-header h3 {
+  color: white;
+}
+
+.mld-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--v3-text-secondary);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mld-fullscreen-content .mld-modal-close {
+  color: white;
+  font-size: 28px;
+  width: 40px;
+  height: 40px;
+}
+
+/* Contact Agent Info in Modal Header */
+.mld-contact-agent-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mld-contact-agent-photo {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--v3-border);
+}
+
+.mld-contact-agent-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mld-contact-agent-details h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--v3-text-primary);
+}
+
+.mld-contact-agent-label {
+  font-size: 13px;
+  color: var(--v3-text-secondary);
+  font-weight: 500;
+}
+
+.mld-modal-body {
+  padding: var(--v3-spacing-md);
+}
+
+.mld-fullscreen-content .mld-modal-body {
+  padding: 0;
+  height: 100%;
+}
+
+/* Map and Street View Modal Specific */
+.mld-map-body,
+.mld-streetview-body {
+  height: 100%;
+  position: relative;
+  overflow: hidden; /* v6.25.38: Prevent any scrolling */
+  overscroll-behavior: none; /* v6.25.38: Prevent scroll chaining */
+}
+
+.mld-modal-map {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  touch-action: none; /* v6.26.4: Let Google Maps handle ALL touch events for single-finger pan */
+}
+
+.mld-modal-streetview {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  touch-action: none; /* v6.25.36: Let Google Maps handle all touch events for Street View */
+  overscroll-behavior: none; /* v6.25.38: Prevent scroll chaining */
+  -webkit-overflow-scrolling: auto; /* v6.25.38: Disable momentum scrolling */
+}
+
+/* Ensure map controls are accessible on mobile */
+.mld-fullscreen-content .gm-style .gmnoprint {
+  margin-right: 10px !important;
+}
+
+.mld-fullscreen-content .gm-style .gm-bundled-control {
+  margin: 10px !important;
+}
+
+/* Fix for iOS Safari */
+.mld-map-modal .mld-modal-content,
+.mld-streetview-modal .mld-modal-content {
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+}
+
+/* =====================================================
+   Map/Street View Toggle Tabs (v6.25.34)
+   ===================================================== */
+.mld-map-view-toggle {
+  display: flex;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+.mld-view-tab {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--v3-text-secondary, #666);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mld-view-tab:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.mld-view-tab.active {
+  background: white;
+  color: var(--v3-text, #1a1a1a);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* View Panels with Transitions */
+.mld-view-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.mld-view-panel.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* v6.25.38: Street View panel needs aggressive touch handling to prevent white flash */
+#modalStreetView.mld-view-panel {
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
+  overflow: hidden;
+}
+
+/* Street View Unavailable Message */
+.mld-streetview-unavailable {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--v3-text-secondary, #666);
+  padding: 20px;
+  text-align: center;
+  background: var(--v3-background-secondary, #f5f5f5);
+}
+
+.mld-streetview-unavailable svg {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.mld-streetview-unavailable p {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+}
+
+.mld-streetview-unavailable .mld-fallback-link {
+  display: inline-block;
+  padding: 10px 20px;
+  background: var(--v3-primary, #2271b1);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.mld-streetview-unavailable .mld-fallback-link:hover {
+  background: var(--v3-primary-dark, #1a5a8a);
+}
+
+/* Mobile-specific Google Maps interactive controls */
+.mld-modal-map .gm-bundled-control,
+.mld-view-panel .gm-bundled-control {
+  margin: 10px !important;
+}
+
+.mld-modal-map .gmnoprint,
+.mld-view-panel .gmnoprint {
+  margin-right: 10px !important;
+}
+
+/* Street View panorama specific styles */
+.mld-view-panel .gm-style-pbc {
+  /* Street View loading indicator */
+  background: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Adjust header for toggle tabs */
+.mld-map-modal .mld-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+}
+
+.mld-map-modal .mld-modal-header h3 {
+  display: none; /* Hide title when using toggle tabs */
+}
+
+/* Forms */
+.mld-form-group {
+  margin-bottom: var(--v3-spacing-md);
+}
+
+.mld-form-group input,
+.mld-form-group select,
+.mld-form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--v3-border);
+  border-radius: var(--v3-radius-sm);
+  font-size: 16px;
+  background: var(--v3-background);
+}
+
+.mld-form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.mld-submit-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--v3-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--v3-radius-md);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mld-submit-btn:hover {
+  background: var(--v3-primary-dark);
+}
+
+/* Contact/Tour Form Styles */
+.mld-form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--v3-text-primary);
+}
+
+.mld-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--v3-spacing-md);
+}
+
+@media (max-width: 480px) {
+  .mld-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mld-form-submit {
+  width: 100%;
+  padding: 14px;
+  background: var(--v3-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--v3-radius-md);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: var(--v3-spacing-md);
+}
+
+.mld-form-submit:hover {
+  background: var(--v3-primary-dark);
+}
+
+.mld-form-submit:disabled {
+  background: var(--v3-text-tertiary);
+  cursor: not-allowed;
+}
+
+.mld-form-status {
+  margin-top: var(--v3-spacing-md);
+  padding: 12px;
+  border-radius: var(--v3-radius-sm);
+  text-align: center;
+  font-size: 14px;
+  display: none;
+}
+
+.mld-form-status:not(:empty) {
+  display: block;
+}
+
+.mld-form-status.success {
+  display: block;
+  background: rgba(5, 150, 105, 0.1);
+  color: #059669;
+  border: 1px solid rgba(5, 150, 105, 0.2);
+}
+
+.mld-form-status.error {
+  display: block;
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+/* Contact and Tour Modal specific styles */
+.mld-contact-modal .mld-modal-content,
+.mld-tour-modal .mld-modal-content {
+  max-width: 500px;
+}
+
+@media (min-width: 768px) {
+  .mld-contact-modal .mld-modal-content,
+  .mld-tour-modal .mld-modal-content {
+    bottom: auto;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: var(--v3-radius-xl);
+    max-height: 85vh;
+  }
+}
+
+.mld-tour-types {
+  display: flex;
+  gap: var(--v3-spacing-md);
+  margin-bottom: var(--v3-spacing-lg);
+}
+
+.mld-tour-type {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: var(--v3-spacing-md);
+  border: 1px solid var(--v3-border);
+  border-radius: var(--v3-radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mld-tour-type input {
+  margin-right: var(--v3-spacing-sm);
+}
+
+.mld-tour-type:has(input:checked) {
+  border-color: var(--v3-primary);
+  background: rgba(26, 115, 232, 0.1);
+}
+
+/* Virtual Tour Modal */
+.mld-tour-modal-content {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: none !important;
+  border-radius: 0;
+  background: #000;
+  z-index: 10;
+}
+
+.mld-tour-viewer {
+  position: absolute;
+  top: 60px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.mld-tour-viewer iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Form Enhancements for Mobile */
+.mld-form-row {
+  display: flex;
+  gap: var(--v3-spacing-sm);
+  margin-bottom: var(--v3-spacing-md);
+}
+
+.mld-form-row .mld-form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.mld-form-group label {
+  display: block;
+  font-size: 14px;
+  color: var(--v3-text-secondary);
+  margin-bottom: var(--v3-spacing-xs);
+  font-weight: 500;
+}
+
+/* Error States */
+.mld-form-error {
+  color: #dc2626;
+  font-size: 13px;
+  margin-top: 4px;
+  display: none;
+}
+
+.mld-form-error.show {
+  display: block;
+}
+
+.mld-form-group.error input,
+.mld-form-group.error textarea,
+.mld-form-group.error select {
+  border-color: #dc2626;
+}
+
+/* Loading States */
+.mld-form-loading {
+  display: none;
+  text-align: center;
+  padding: var(--v3-spacing-md);
+  color: var(--v3-text-secondary);
+}
+
+.mld-form-loading.show {
+  display: block;
+}
+
+.mld-form-loading:after {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-left: 8px;
+  border: 2px solid var(--v3-primary);
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Success Message */
+.mld-form-success {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #166534;
+  padding: var(--v3-spacing-md);
+  border-radius: var(--v3-radius-md);
+  margin-bottom: var(--v3-spacing-md);
+  display: none;
+}
+
+.mld-form-success.show {
+  display: block;
+}
+
+/* Primary Button Styling - Ocean Teal */
+.mld-v3-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--v3-spacing-sm);
+  padding: 14px 24px;
+  background: var(--ds-teal, #0891B2);
+  color: var(--ds-white, #fff);
+  border: none;
+  border-radius: var(--v3-radius-lg);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  width: 100%;
+  min-height: 48px; /* Touch-friendly */
+  box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+}
+
+.mld-v3-btn-primary:hover {
+  background: var(--ds-teal-hover, #0E7490);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.4);
+}
+
+.mld-v3-btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(8, 145, 178, 0.2);
+}
+
+.mld-v3-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Secondary Button - Dark Gray */
+.mld-v3-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--v3-spacing-sm);
+  padding: 14px 24px;
+  background: transparent;
+  color: var(--ds-dark-gray, #1f2937);
+  border: 2px solid var(--ds-dark-gray, #1f2937);
+  border-radius: var(--v3-radius-lg);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  width: 100%;
+  min-height: 48px;
+}
+
+.mld-v3-btn-secondary:hover {
+  background: var(--ds-dark-gray, #1f2937);
+  color: var(--ds-white, #fff);
+}
+
+/* Accent Button - Red */
+.mld-v3-btn-accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--v3-spacing-sm);
+  padding: 14px 24px;
+  background: var(--ds-red, #DC2626);
+  color: var(--ds-white, #fff);
+  border: none;
+  border-radius: var(--v3-radius-lg);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  width: 100%;
+  min-height: 48px;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+.mld-v3-btn-accent:hover {
+  background: var(--ds-red-hover, #B91C1C);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+/* Tour Type Mobile Layout */
+@media (max-width: 480px) {
+  .mld-tour-types {
+    flex-direction: column;
+  }
+  
+  .mld-tour-type {
+    padding: var(--v3-spacing-sm) var(--v3-spacing-md);
+  }
+}
+
+/* Modal Form Adjustments */
+.mld-modal-content .mld-form-group:first-child {
+  margin-top: 0;
+}
+
+.mld-modal-content .mld-submit-btn {
+  margin-top: var(--v3-spacing-lg);
+}
+
+/* Input Focus States */
+.mld-form-group input:focus,
+.mld-form-group select:focus,
+.mld-form-group textarea:focus {
+  outline: none;
+  border-color: var(--v3-primary);
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+}
+
+/* Date/Time Fields */
+.mld-form-group input[type="date"],
+.mld-form-group input[type="time"] {
+  padding-right: 12px;
+}
+
+/* Select Dropdown Arrow */
+.mld-form-group select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+  .mld-bottom-sheet {
+    max-width: 600px;
+    left: 50%;
+    transform: translateX(-50%) translateY(calc(100% - var(--bottom-sheet-default-height)));
+  }
+  
+  .mld-modal-content:not(.mld-tour-modal-content) {
+    max-width: 500px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+/* Loading states */
+.mld-loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--v3-border);
+  border-radius: 50%;
+  border-top-color: var(--v3-primary);
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* No photo placeholder */
+.mld-no-photo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--v3-spacing-md);
+  color: var(--v3-text-secondary);
+  padding: var(--v3-spacing-xl);
+}
+
+.mld-no-photo svg {
+  width: 64px;
+  height: 64px;
+  opacity: 0.3;
+}
+
+/* ========================================
+   Facts & Features Mobile Enhancements
+   ======================================== */
+.mld-v3-facts-grid-mobile {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--v3-spacing-md);
+  margin-top: var(--v3-spacing-md);
+}
+
+@media (max-width: 480px) {
+  .mld-v3-facts-grid-mobile {
+    grid-template-columns: 1fr;
+    gap: var(--v3-spacing-sm);
+  }
+}
+
+.mld-v3-facts-group {
+  margin-bottom: var(--v3-spacing-xl);
+  padding-bottom: var(--v3-spacing-lg);
+  border-bottom: 1px solid var(--v3-border);
+}
+
+.mld-v3-facts-group:last-child {
+  border-bottom: none;
+}
+
+.mld-v3-facts-group h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--v3-text-primary);
+  margin: 0 0 var(--v3-spacing-md) 0;
+}
+
+.mld-v3-fact-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v3-spacing-xs);
+}
+
+.mld-v3-fact-item-full {
+  grid-column: 1 / -1;
+}
+
+.mld-v3-fact-label {
+  font-size: 12px;
+  color: var(--v3-text-secondary);
+  font-weight: 500;
+}
+
+.mld-v3-fact-value {
+  font-size: 14px;
+  color: var(--v3-text-primary);
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.mld-v3-text-block {
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* Room Details Mobile */
+.mld-v3-rooms-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v3-spacing-md);
+  margin-top: var(--v3-spacing-md);
+}
+
+.mld-v3-room-item {
+  padding: var(--v3-spacing-md);
+  background: var(--v3-surface);
+  border-radius: var(--v3-radius-md);
+  border: 1px solid var(--v3-border);
+}
+
+.mld-v3-room-name {
+  font-weight: 600;
+  color: var(--v3-text-primary);
+  margin-bottom: var(--v3-spacing-xs);
+}
+
+.mld-v3-room-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v3-spacing-xs);
+  font-size: 14px;
+  color: var(--v3-text-secondary);
+}
+
+.mld-v3-room-details span {
+  display: block;
+}
+
+.mld-v3-room-desc {
+  margin-top: var(--v3-spacing-sm);
+  font-style: italic;
+}
+
+/* ========================================
+   Open House Calendar Mobile
+   ======================================== */
+.mld-v3-oh-calendar {
+  margin-top: var(--v3-spacing-sm);
+}
+
+.mld-v3-add-calendar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--v3-spacing-xs);
+  padding: var(--v3-spacing-xs) var(--v3-spacing-sm);
+  background: var(--v3-primary);
+  color: white;
+  border: none;
+  border-radius: var(--v3-radius-md);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mld-v3-add-calendar:hover {
+  background: var(--v3-primary-dark);
+}
+
+.mld-v3-add-calendar svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ========================================
+   Admin Section Mobile
+   ======================================== */
+.mld-v3-admin-only {
+  background: var(--v3-admin-bg);
+  border: 2px solid var(--v3-admin-border);
+  border-radius: var(--v3-radius-lg);
+  padding: var(--v3-spacing-lg);
+  margin-bottom: var(--v3-spacing-xl);
+}
+
+.mld-v3-admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--v3-spacing-md);
+}
+
+.mld-v3-admin-header h3 {
+  margin: 0;
+  color: var(--v3-admin-text);
+}
+
+.mld-v3-admin-toggle {
+  background: none;
+  border: none;
+  padding: var(--v3-spacing-xs);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.mld-v3-admin-toggle-icon {
+  width: 24px;
+  height: 24px;
+  stroke: var(--v3-admin-text);
+  transition: transform 0.3s ease;
+}
+
+.mld-v3-admin-section.minimized .mld-v3-admin-toggle-icon {
+  transform: rotate(-90deg);
+}
+
+.mld-v3-admin-notice {
+  background: white;
+  padding: var(--v3-spacing-sm) var(--v3-spacing-md);
+  border-radius: var(--v3-radius-md);
+  font-size: 13px;
+  color: var(--v3-admin-text);
+  margin-bottom: var(--v3-spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--v3-spacing-sm);
+}
+
+.mld-v3-admin-content {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+/* Removed duplicate minimized rule - handled above */
+
+/* Mobile-specific adjustments for admin section */
+@media (max-width: 768px) {
+  .mld-v3-admin-only {
+    padding: var(--v3-spacing-md);
+  }
+  
+  .mld-v3-admin-notice {
+    font-size: 12px;
+    padding: var(--v3-spacing-xs) var(--v3-spacing-sm);
+  }
+}
+
+/* ========================================
+   YouTube Video Preview in Gallery
+   ======================================== */
+.mld-youtube-preview {
+  position: relative;
+  cursor: pointer;
+}
+
+.mld-video-thumbnail-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.mld-video-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mld-video-play-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.2);
+  transition: background 0.3s ease;
+}
+
+.mld-youtube-preview:active .mld-video-play-overlay {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.mld-play-button {
+  width: 80px;
+  height: 80px;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+  transition: transform 0.2s ease;
+}
+
+.mld-youtube-preview:active .mld-play-button {
+  transform: scale(0.95);
+}
+
+/* ========================================
+   Mobile-Specific Content Enhancements
+   ======================================== */
+.mld-v3-description {
+  margin: var(--v3-spacing-md) 0;
+}
+
+.mld-v3-description h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--v3-text-primary);
+  margin-bottom: var(--v3-spacing-sm);
+}
+
+.mld-v3-description p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--v3-text-secondary);
+}
+
+/* ========================================
+   Property Overview Cards - Neutral Dark Theme v6.13.14
+   Clean cards with subtle shadows, no borders
+   ======================================== */
+.mld-v3-property-overview-mobile {
+  background: var(--mld-surface, #F9FAFB);
+  margin: 0 -16px;
+  padding: 20px 16px;
+}
+
+.mld-v3-property-overview-mobile h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mld-primary, #374151);
+  margin-bottom: 16px;
+}
+
+.mld-v3-overview-grid-mobile {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.mld-v3-overview-item-mobile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 12px;
+  background: var(--mld-surface-card, #FFFFFF);
+  border-radius: 12px;
+  text-align: center;
+  min-height: 80px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  /* No border - clean look */
+}
+
+.mld-v3-overview-value-mobile {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--mld-primary, #374151);
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.mld-v3-overview-label-mobile {
+  font-size: 11px;
+  color: var(--mld-text-tertiary, #6B7280);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.3;
+}
+
+/* Responsive Stats Bar */
+.mld-v3-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--v3-spacing-sm);
+  margin: var(--v3-spacing-md) 0;
+  padding: var(--v3-spacing-md);
+  background: var(--v3-surface);
+  border-radius: var(--v3-radius-md);
+}
+
+.mld-v3-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--v3-spacing-sm);
+}
+
+.mld-v3-stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--v3-text-primary);
+  margin-bottom: 4px;
+}
+
+.mld-v3-stat-label {
+  font-size: 12px;
+  color: var(--v3-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Status Bar Mobile */
+.mld-v3-status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--v3-spacing-sm);
+  padding: var(--v3-spacing-md) 0;
+  border-top: 1px solid var(--v3-border);
+  border-bottom: 1px solid var(--v3-border);
+  margin: var(--v3-spacing-md) 0;
+}
+
+.mld-v3-status {
+  padding: 6px 12px;
+  background: var(--v3-success);
+  color: white;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.mld-v3-listing-info {
+  font-size: 12px;
+  color: var(--v3-text-tertiary);
+}
+
+/* Room Details Mobile */
+.mld-v3-rooms-list {
+  display: grid;
+  gap: var(--v3-spacing-sm);
+}
+
+.mld-v3-room-item {
+  padding: var(--v3-spacing-sm);
+  background: var(--v3-surface);
+  border-radius: var(--v3-radius-sm);
+}
+
+.mld-v3-room-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--v3-text-primary);
+  margin-bottom: 4px;
+}
+
+.mld-v3-room-details {
+  font-size: 12px;
+  color: var(--v3-text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--v3-spacing-xs);
+}
+
+.mld-v3-room-details span {
+  padding: 2px 6px;
+  background: var(--v3-background);
+  border-radius: 4px;
+}
+
+/* Neighborhood Info Mobile */
+.mld-v3-neighborhood {
+  margin: var(--v3-spacing-md) 0;
+}
+
+.mld-v3-neighborhood h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: var(--v3-spacing-sm);
+}
+
+.mld-v3-neighborhood-details {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--v3-text-secondary);
+}
+
+/* Performance Metrics Mobile */
+.mld-v3-stat-metric {
+  text-align: center;
+  padding: var(--v3-spacing-md) 0;
+  border-bottom: 1px solid var(--v3-border);
+}
+
+.mld-v3-stat-metric:last-child {
+  border-bottom: none;
+}
+
+.mld-v3-metric-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--v3-primary);
+  margin-bottom: 4px;
+}
+
+.mld-v3-metric-label {
+  font-size: 14px;
+  color: var(--v3-text-secondary);
+  margin-bottom: 4px;
+}
+
+.mld-v3-metric-description {
+  font-size: 12px;
+  color: var(--v3-text-tertiary);
+}
+
+/* ========================================
+   YouTube Video Modal (Fullscreen)
+   ======================================== */
+.mld-youtube-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mld-youtube-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mld-youtube-modal-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 100vw;
+  max-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mld-youtube-modal-close {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 20px) + 20px);
+  right: 20px;
+  z-index: 2147483647; /* Maximum z-index */
+  width: 48px;
+  height: 48px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.mld-youtube-modal-close:active {
+  background: rgba(0, 0, 0, 0.9);
+  transform: scale(0.95);
+}
+
+.mld-youtube-modal-close svg {
+  width: 28px;
+  height: 28px;
+  color: white;
+  stroke-width: 3;
+}
+
+.mld-youtube-iframe-container {
+  position: relative;
+  width: 100%;
+  max-width: 100vw;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  z-index: 100000; /* Below the close button */
+}
+
+.mld-youtube-iframe-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Handle landscape orientation */
+@media (orientation: landscape) {
+  .mld-youtube-iframe-container {
+    height: 100vh;
+    width: auto;
+    max-width: calc(100vh * 16 / 9);
+  }
+}
+
+/* Animation for modal */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.mld-youtube-modal.show {
+  animation: fadeIn 0.3s ease;
+}
+
+.mld-youtube-modal.show .mld-youtube-modal-content {
+  animation: slideUp 0.3s ease;
+}
+
+/* ========================================
+   Hide WordPress Admin Bar on Mobile Property Pages
+   ======================================== */
+/* Completely remove admin bar */
+#wpadminbar {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* Remove ALL spacing - aggressive override */
+html {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+html body {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    position: relative !important;
+    top: 0 !important;
+}
+
+/* Override WordPress default admin bar spacing */
+html.admin-bar {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+body.admin-bar {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    position: relative !important;
+}
+
+/* Mobile specific - WordPress adds 46px on mobile */
+@media screen and (max-width: 782px) {
+    html.admin-bar {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    body.admin-bar {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+}
+
+/* Fix any containers */
+body.mld-property-mobile-v3,
+body.single-property,
+body.mld-property-page {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    position: relative !important;
+    top: 0 !important;
+    min-height: 100vh;
+}
+
+/* Remove any placeholder divs */
+.admin-bar-placeholder,
+#wpadminbar-placeholder,
+.wpadminbar-placeholder {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Ensure page content starts at top */
+body > *:first-child {
+    margin-top: 0 !important;
+}
+
+/* Sticky Contact Bar */
+.mld-sticky-contact-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--v3-background, #fff);
+    border-top: 1px solid var(--v3-border, #e0e0e0);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+}
+
+.mld-sticky-contact-bar.visible {
+    transform: translateY(0);
+}
+
+.mld-sticky-contact-inner {
+    display: flex;
+    padding: 8px;
+    gap: 8px;
+    max-width: 100%;
+}
+
+.mld-sticky-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.mld-sticky-schedule {
+    background: var(--v3-primary, #2c5282);
+    color: white;
+}
+
+.mld-sticky-schedule:hover {
+    background: var(--v3-primary-dark, #1a365d);
+}
+
+.mld-sticky-contact {
+    background: white;
+    color: var(--v3-text, #333);
+    border: 1px solid var(--v3-border, #e0e0e0);
+}
+
+.mld-sticky-contact:hover {
+    background: var(--v3-background-hover, #f5f5f5);
+}
+
+.mld-sticky-btn .mld-icon-sm {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+/* Hide sticky bar on larger screens */
+@media (min-width: 768px) {
+    .mld-sticky-contact-bar {
+        display: none !important;
+    }
+}
+
+/* Adjust bottom padding when sticky bar is visible */
+body.sticky-contact-visible {
+    padding-bottom: 70px;
+}
+
+/* ========================================
+   Button System - Neutral Dark Theme v6.13.14
+   Clean, professional, no gradients
+   ======================================== */
+
+/* Save & Share Container */
+.mld-v3-quick-actions-mobile {
+    display: flex;
+    gap: 12px;
+    margin: 16px 0;
+    padding: 0 16px;
+}
+
+/* Base Button Styles - Clean Design */
+.mld-v3-action-btn-mobile {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 20px;
+    background: var(--mld-surface, #F9FAFB);
+    color: var(--mld-primary, #374151);
+    border: 1px solid var(--mld-border, #E5E7EB);
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mld-v3-action-btn-mobile:active {
+    background: var(--mld-neutral-100, #F3F4F6);
+    border-color: var(--mld-border-strong, #D1D5DB);
+    transform: scale(0.98);
+}
+
+.mld-v3-action-btn-mobile svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+    flex-shrink: 0;
+}
+
+/* Save Button - Neutral with red accent when saved */
+.mld-v3-save-btn-mobile {
+    background: var(--mld-surface, #F9FAFB);
+    color: var(--mld-primary, #374151);
+}
+
+.mld-v3-save-btn-mobile svg {
+    stroke: var(--mld-primary, #374151);
+    fill: none;
+}
+
+.mld-v3-save-btn-mobile.saved {
+    background: var(--mld-saved-bg, #FEF2F2);
+    color: var(--mld-saved-color, #DC2626);
+    border-color: var(--mld-saved-border, #FECACA);
+}
+
+.mld-v3-save-btn-mobile.saved svg {
+    fill: var(--mld-saved-color, #DC2626);
+    stroke: var(--mld-saved-color, #DC2626);
+}
+
+@keyframes heartPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+.mld-v3-save-btn-mobile.saved svg {
+    animation: heartPulse 0.3s ease;
+}
+
+/* Share Button - Matches Save style */
+.mld-v3-share-btn-mobile {
+    background: var(--mld-surface, #F9FAFB);
+    color: var(--mld-primary, #374151);
+}
+
+.mld-v3-share-btn-mobile svg {
+    stroke: var(--mld-primary, #374151);
+}
+
+/* Primary CTA Buttons Container */
+.mld-primary-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+}
+
+/* Primary CTA (Schedule Tour) - Solid Dark */
+body.mld-property-mobile-v3 .mld-cta-primary,
+.mld-cta-primary {
+    width: 100%;
+    padding: 16px 24px;
+    background: var(--mld-primary, #374151);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    transition: background 0.2s, transform 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body.mld-property-mobile-v3 .mld-cta-primary:active,
+.mld-cta-primary:active {
+    background: var(--mld-primary-hover, #1F2937);
+    transform: scale(0.98);
+}
+
+/* Secondary CTA (Contact Agent) - Outlined */
+body.mld-property-mobile-v3 .mld-cta-secondary,
+.mld-cta-secondary {
+    width: 100%;
+    padding: 16px 24px;
+    background: white;
+    color: var(--mld-primary, #374151);
+    border: 2px solid var(--mld-primary, #374151);
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    transition: background 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body.mld-property-mobile-v3 .mld-cta-secondary:active,
+.mld-cta-secondary:active {
+    background: var(--mld-primary, #374151);
+    color: white;
+}
+
+/* Button Icons */
+.mld-cta-primary .mld-icon,
+.mld-cta-secondary .mld-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* Responsive adjustments for small screens */
+@media (max-width: 360px) {
+    .mld-v3-quick-actions-mobile {
+        gap: 8px;
+        padding: 0 12px;
+    }
+
+    .mld-v3-action-btn-mobile {
+        font-size: 14px;
+        padding: 12px 16px;
+    }
+
+    .mld-v3-action-btn-mobile svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .mld-primary-actions {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .mld-cta-primary,
+    .mld-cta-secondary {
+        padding: 14px 20px;
+        font-size: 15px;
+    }
+}
+
+/* ========================================
+   MORTGAGE CALCULATOR STYLES (Desktop Enhanced v6.0.3)
+   Copied from property-desktop-v3.css to match desktop version
+   ======================================== */
+.mld-v3-calculator {
+    background: var(--v3-surface);
+    padding: var(--v3-spacing-lg);
+    border-radius: var(--v3-radius-lg);
+}
+
+.mld-v3-calc-inputs {
+    margin-bottom: var(--v3-spacing-lg);
+}
+
+.mld-v3-calc-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--v3-spacing-md);
+    margin-bottom: var(--v3-spacing-md);
+}
+
+.mld-v3-calc-field label {
+    display: block;
+    font-weight: 500;
+    font-size: var(--v3-font-size-sm);
+    margin-bottom: var(--v3-spacing-sm);
+    color: var(--v3-text-primary);
+}
+
+.mld-v3-calc-field input,
+.mld-v3-calc-field select {
+    width: 100%;
+    padding: var(--v3-spacing-xs) var(--v3-spacing-sm);
+    border: 1px solid var(--v3-border);
+    border-radius: var(--v3-radius-md);
+    font-size: var(--v3-font-size-sm);
+    transition: all 0.2s ease;
+}
+
+.mld-v3-calc-field select {
+    padding-right: var(--v3-spacing-lg);
+    font-size: var(--v3-font-size-sm);
+    line-height: 1.4;
+}
+
+.mld-v3-calc-field input:focus,
+.mld-v3-calc-field select:focus {
+    outline: none;
+    border-color: var(--v3-primary);
+    box-shadow: 0 0 0 3px rgba(0, 106, 255, 0.1);
+}
+
+.mld-v3-calc-input-group {
+    position: relative;
+}
+
+.mld-v3-calc-suffix {
+    position: absolute;
+    right: var(--v3-spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--v3-text-tertiary);
+    pointer-events: none;
+}
+
+.mld-v3-calc-secondary {
+    margin-top: var(--v3-spacing-sm);
+    background: var(--v3-background);
+}
+
+/* Calculator Results */
+.mld-v3-calc-results {
+    padding: var(--v3-spacing-lg);
+    background: var(--v3-background);
+    border-radius: var(--v3-radius-lg);
+}
+
+.mld-v3-calc-payment {
+    text-align: center;
+    margin-bottom: var(--v3-spacing-lg);
+    padding-bottom: var(--v3-spacing-lg);
+    border-bottom: 1px solid var(--v3-border);
+}
+
+.mld-v3-calc-payment span {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--v3-text-secondary);
+    margin-bottom: var(--v3-spacing-sm);
+}
+
+.mld-v3-calc-payment strong {
+    display: block;
+    font-size: var(--v3-font-size-xl);
+    font-weight: 700;
+    color: var(--v3-primary);
+}
+
+.mld-v3-calc-breakdown h4 {
+    font-size: var(--v3-font-size-sm);
+    font-weight: 600;
+    margin: 0 0 var(--v3-spacing-sm) 0;
+}
+
+.mld-v3-calc-item {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--v3-spacing-xs) 0;
+    border-bottom: 1px solid var(--v3-border);
+    font-size: var(--v3-font-size-sm);
+}
+
+.mld-v3-calc-item:last-child {
+    border-bottom: none;
+}
+
+/* Calculator Summary Cards - More Compact */
+.mld-v3-calc-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--v3-spacing-sm);
+    margin-bottom: var(--v3-spacing-lg);
+}
+
+.mld-v3-calc-summary-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f6f7f7 100%);
+    border: 1px solid var(--v3-border);
+    border-radius: var(--v3-radius-md);
+    padding: var(--v3-spacing-sm) var(--v3-spacing-md);
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.mld-v3-calc-summary-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--v3-shadow-sm);
+    border-color: var(--v3-primary);
+}
+
+.mld-v3-summary-label {
+    font-size: 10px;
+    color: var(--v3-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.mld-v3-summary-value {
+    font-size: var(--v3-font-size-lg);
+    font-weight: 700;
+    color: var(--v3-primary);
+    margin-bottom: 2px;
+}
+
+.mld-v3-summary-note {
+    font-size: 10px;
+    color: var(--v3-text-tertiary);
+    line-height: 1.3;
+}
+
+/* Calculator Helper Text */
+.mld-v3-calc-helper {
+    margin-top: var(--v3-spacing-xs);
+    font-size: var(--v3-font-size-xs);
+    color: var(--v3-text-secondary);
+    font-weight: 500;
+}
+
+/* Loan Summary Section - More Compact */
+.mld-v3-calc-loan-summary {
+    margin-top: var(--v3-spacing-md);
+    padding-top: var(--v3-spacing-md);
+    border-top: 1px solid var(--v3-border);
+}
+
+.mld-v3-calc-loan-summary h4 {
+    font-size: var(--v3-font-size-sm);
+    font-weight: 600;
+    margin: 0 0 var(--v3-spacing-sm) 0;
+    color: var(--v3-text-primary);
+}
+
+.mld-v3-calc-highlight {
+    background: var(--v3-surface);
+    padding: var(--v3-spacing-sm) !important;
+    border-radius: var(--v3-radius-sm);
+    font-weight: 600;
+}
+
+/* Rate Impact Analysis - New Feature */
+.mld-v3-rate-impact {
+    margin-top: var(--v3-spacing-lg);
+    padding: var(--v3-spacing-md);
+    background: var(--v3-surface);
+    border-radius: var(--v3-radius-md);
+}
+
+.mld-v3-rate-impact h4 {
+    font-size: var(--v3-font-size-sm);
+    font-weight: 600;
+    margin: 0 0 var(--v3-spacing-sm) 0;
+    color: var(--v3-text-primary);
+}
+
+.mld-v3-rate-comparison {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--v3-spacing-sm);
+}
+
+.mld-v3-rate-scenario {
+    background: var(--v3-background);
+    border: 1px solid var(--v3-border);
+    border-radius: var(--v3-radius-sm);
+    padding: var(--v3-spacing-sm);
+    text-align: center;
+}
+
+.mld-v3-rate-lower {
+    border-color: var(--v3-success);
+    background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+}
+
+.mld-v3-rate-current {
+    border-color: var(--v3-primary);
+    border-width: 2px;
+}
+
+.mld-v3-rate-higher {
+    border-color: var(--v3-danger);
+    background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
+}
+
+.mld-v3-rate-label {
+    font-size: 10px;
+    color: var(--v3-text-secondary);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.mld-v3-rate-value {
+    font-size: var(--v3-font-size-base);
+    font-weight: 700;
+    color: var(--v3-text-primary);
+    margin-bottom: 2px;
+}
+
+.mld-v3-rate-save {
+    font-size: 11px;
+    color: var(--v3-success);
+    font-weight: 600;
+}
+
+.mld-v3-rate-cost {
+    font-size: 11px;
+    color: var(--v3-danger);
+    font-weight: 600;
+}
+
+/* Amortization Visualization - New Feature */
+.mld-v3-amortization {
+    margin-top: var(--v3-spacing-lg);
+    padding: var(--v3-spacing-md);
+    background: var(--v3-surface);
+    border-radius: var(--v3-radius-md);
+}
+
+.mld-v3-amortization h4 {
+    font-size: var(--v3-font-size-sm);
+    font-weight: 600;
+    margin: 0 0 var(--v3-spacing-sm) 0;
+    color: var(--v3-text-primary);
+}
+
+.mld-v3-amort-visual {
+    margin-bottom: var(--v3-spacing-md);
+}
+
+.mld-v3-amort-bar {
+    display: flex;
+    height: 40px;
+    border-radius: var(--v3-radius-sm);
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.mld-v3-amort-interest {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: width 0.5s ease;
+}
+
+.mld-v3-amort-principal {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: width 0.5s ease;
+}
+
+.mld-v3-amort-label {
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.mld-v3-amort-milestones {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--v3-spacing-sm);
+}
+
+.mld-v3-milestone {
+    text-align: center;
+    padding: var(--v3-spacing-xs);
+    background: var(--v3-background);
+    border-radius: var(--v3-radius-sm);
+}
+
+.mld-v3-milestone-year {
+    font-size: 11px;
+    color: var(--v3-text-secondary);
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.mld-v3-milestone-split {
+    font-size: 12px;
+    color: var(--v3-text-primary);
+}
+
+.mld-v3-interest-pct {
+    color: var(--v3-danger);
+    font-weight: 600;
+}
+
+.mld-v3-principal-pct {
+    color: var(--v3-success);
+    font-weight: 600;
+}
+
+/* Calculator Disclaimer */
+.mld-v3-calc-disclaimer {
+    margin-top: var(--v3-spacing-lg);
+    padding: var(--v3-spacing-sm) var(--v3-spacing-md);
+    background: #fffbf0;
+    border-left: 3px solid var(--v3-warning);
+    border-radius: var(--v3-radius-sm);
+    font-size: var(--v3-font-size-xs);
+    color: var(--v3-text-secondary);
+    line-height: 1.5;
+}
+
+/* ========================================
+   MOBILE CALCULATOR RESPONSIVE FIXES (v6.0.3)
+   Fix sizing issues on mobile screens
+   ======================================== */
+
+/* Mobile-specific calculator adjustments */
+@media (max-width: 640px) {
+    /* Force summary cards into 2x2 grid on mobile */
+    .mld-v3-calc-summary-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+    
+    .mld-v3-calc-summary-card {
+        padding: 10px 12px !important;
+        min-height: 85px !important;
+    }
+    
+    .mld-v3-summary-label {
+        font-size: 9px !important;
+        margin-bottom: 3px !important;
+    }
+    
+    .mld-v3-summary-value {
+        font-size: 16px !important;
+        margin-bottom: 2px !important;
+    }
+    
+    .mld-v3-summary-note {
+        font-size: 9px !important;
+    }
+    
+    /* Reduce input field heights */
+    .mld-v3-calc-field input,
+    .mld-v3-calc-field select {
+        padding: 10px 12px !important;
+        font-size: 16px !important;
+        height: 44px !important;
+        line-height: 1.4 !important;
+    }
+    
+    .mld-v3-calc-field label {
+        font-size: 14px !important;
+        margin-bottom: 6px !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Adjust calc row spacing */
+    .mld-v3-calc-row {
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+    }
+    
+    /* Reduce calculator padding */
+    .mld-v3-calculator {
+        padding: 16px !important;
+    }
+    
+    /* Adjust down payment helper text */
+    .mld-v3-calc-helper {
+        font-size: 12px !important;
+        margin-top: 4px !important;
+    }
+    
+    /* Suffix positioning */
+    .mld-v3-calc-suffix {
+        right: 12px !important;
+        font-size: 14px !important;
+    }
+    
+    /* Results section */
+    .mld-v3-calc-results {
+        padding: 16px !important;
+    }
+    
+    .mld-v3-calc-item {
+        padding: 10px 0 !important;
+        font-size: 14px !important;
+    }
+    
+    /* Rate comparison - make 3 columns work on mobile */
+    .mld-v3-rate-comparison {
+        gap: 8px !important;
+    }
+    
+    .mld-v3-rate-scenario {
+        padding: 10px 6px !important;
+    }
+    
+    .mld-v3-rate-label {
+        font-size: 9px !important;
+    }
+    
+    .mld-v3-rate-value {
+        font-size: 13px !important;
+        margin-bottom: 2px !important;
+    }
+    
+    .mld-v3-rate-save,
+    .mld-v3-rate-cost {
+        font-size: 10px !important;
+    }
+    
+    /* Amortization milestones */
+    .mld-v3-amort-milestones {
+        gap: 8px !important;
+    }
+    
+    .mld-v3-milestone {
+        padding: 8px 4px !important;
+    }
+    
+    .mld-v3-milestone-year {
+        font-size: 10px !important;
+    }
+    
+    .mld-v3-milestone-split {
+        font-size: 11px !important;
+    }
+}
+
+/* Very small screens - stack some elements */
+@media (max-width: 380px) {
+    /* Keep summary cards in 2 columns but make them smaller */
+    .mld-v3-calc-summary-card {
+        padding: 8px 10px !important;
+        min-height: 75px !important;
+    }
+    
+    .mld-v3-summary-value {
+        font-size: 14px !important;
+    }
+    
+    /* Reduce rate comparison font size */
+    .mld-v3-rate-scenario {
+        padding: 8px 4px !important;
+    }
+    
+    .mld-v3-rate-value {
+        font-size: 12px !important;
+    }
+}
+
+/* ========================================
+   ULTRA-SPECIFIC MOBILE CALCULATOR FIXES
+   Force override everything - v6.0.3
+   ======================================== */
+
+/* Ultra-specific selectors to override everything */
+.mld-v3-section-mobile .mld-v3-calculator .mld-v3-calc-field input[type="number"],
+.mld-v3-section-mobile .mld-v3-calculator .mld-v3-calc-field select {
+    padding: 8px 12px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    line-height: 1.4 !important;
+    font-size: 16px !important;
+    box-sizing: border-box !important;
+}
+
+/* Force down payment field */
+.mld-v3-section-mobile .mld-v3-calculator .mld-v3-calc-field input#v3CalcDownPercent {
+    padding: 8px 12px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+}
+
+/* Force interest rate field */
+.mld-v3-section-mobile .mld-v3-calculator .mld-v3-calc-field input#v3CalcRate {
+    padding: 8px 12px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+}
+
+/* Force loan term select */
+.mld-v3-section-mobile .mld-v3-calculator .mld-v3-calc-field select#v3CalcTerm {
+    padding: 8px 12px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+}
+
+/* Reduce label size */
+.mld-v3-section-mobile .mld-v3-calculator .mld-v3-calc-field label {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    margin-bottom: 6px !important;
+}
+
+/* ========================================
+   MLS Disclosure Section (Mobile)
+   ======================================== */
+.mld-v3-disclosure-section {
+    margin-bottom: var(--mld-spacing-lg, 24px);
+}
+
+.mld-v3-disclosure-mobile {
+    padding: var(--mld-spacing-md, 16px);
+    background: var(--mld-surface-subtle, #f9fafb);
+    border-radius: var(--mld-radius-lg, 12px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--mld-spacing-md, 16px);
+    text-align: center;
+}
+
+.mld-v3-disclosure-logo-mobile {
+    max-width: 100px;
+    max-height: 50px;
+    object-fit: contain;
+}
+
+.mld-v3-disclosure-text-mobile {
+    font-size: 0.75rem;
+    color: var(--mld-text-secondary, #6b7280);
+    line-height: 1.5;
+}
+
+.mld-v3-disclosure-text-mobile p {
+    margin: 0 0 0.5em 0;
+}
+
+.mld-v3-disclosure-text-mobile p:last-child {
+    margin-bottom: 0;
+}
+
+.mld-v3-disclosure-text-mobile a {
+    color: var(--mld-primary, #2563eb);
+    text-decoration: underline;
+}
+
+/* ========================================
+   Photo Lightbox Styles (v6.13.14)
+   Moved from inline styles for cleaner architecture
+   ======================================== */
+
+body.mld-property-mobile-v3 .mld-photo-lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: none;
+    touch-action: none;
+}
+
+body.mld-property-mobile-v3 .mld-lightbox-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    animation: mld-fadeIn 0.2s ease;
+}
+
+body.mld-property-mobile-v3 .mld-lightbox-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+body.mld-property-mobile-v3 .mld-lightbox-image-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+body.mld-property-mobile-v3 .mld-lightbox-image {
+    max-width: 100vw;
+    max-height: 100vh;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.2s ease;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body.mld-property-mobile-v3 .mld-lightbox-close {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    color: #000;
+    font-size: 30px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10002;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+body.mld-property-mobile-v3 .mld-lightbox-close:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 1);
+}
+
+body.mld-property-mobile-v3 .mld-lightbox-close svg {
+    width: 24px;
+    height: 24px;
+}
+
+body.mld-property-mobile-v3 .mld-lightbox-counter {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 10002;
+}
+
+body.mld-property-mobile-v3 .mld-lightbox-nav {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    color: #000;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10002;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+body.mld-property-mobile-v3 .mld-lightbox-nav:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+body.mld-property-mobile-v3 .mld-lightbox-prev {
+    left: 20px;
+}
+
+body.mld-property-mobile-v3 .mld-lightbox-next {
+    right: 20px;
+}
+
+/* Rotation Hint */
+body.mld-property-mobile-v3 .mld-lightbox-rotate-hint {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 10002;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: mld-fadeIn 0.3s ease, mld-pulse 2s ease-in-out infinite;
+}
+
+body.mld-property-mobile-v3 .mld-lightbox-rotate-hint svg {
+    width: 24px;
+    height: 24px;
+}
+
+@media (orientation: landscape) {
+    body.mld-property-mobile-v3 .mld-lightbox-rotate-hint {
+        display: none;
+    }
+}
+
+@keyframes mld-fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes mld-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Lightbox Control Visibility - Tap to Toggle */
+body.mld-property-mobile-v3 .mld-lightbox-close,
+body.mld-property-mobile-v3 .mld-lightbox-counter,
+body.mld-property-mobile-v3 .mld-lightbox-nav,
+body.mld-property-mobile-v3 .mld-lightbox-rotate-hint {
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+body.mld-property-mobile-v3 .mld-controls-hidden .mld-lightbox-close,
+body.mld-property-mobile-v3 .mld-controls-hidden .mld-lightbox-counter,
+body.mld-property-mobile-v3 .mld-controls-hidden .mld-lightbox-nav,
+body.mld-property-mobile-v3 .mld-controls-hidden .mld-lightbox-rotate-hint {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* ========================================
+   Quick Nav Button & Sheet (v6.13.14)
+   Updated to neutral dark theme
+   ======================================== */
+
+body.mld-property-mobile-v3 .mld-quick-nav-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--mld-primary, #374151);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(55, 65, 81, 0.3);
+    z-index: 9999;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body.mld-property-mobile-v3 .mld-quick-nav-btn:active {
+    transform: scale(0.95);
+    background: var(--mld-primary-hover, #1F2937);
+    box-shadow: 0 2px 8px rgba(55, 65, 81, 0.2);
+}
+
+body.mld-property-mobile-v3 .mld-quick-nav-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Quick Nav Bottom Sheet */
+body.mld-property-mobile-v3 .mld-quick-nav-sheet {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: none;
+    pointer-events: none;
+}
+
+body.mld-property-mobile-v3 .mld-quick-nav-sheet.active {
+    display: block;
+    pointer-events: auto;
+}
+
+body.mld-property-mobile-v3 .mld-nav-sheet-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+body.mld-property-mobile-v3 .mld-quick-nav-sheet.active .mld-nav-sheet-overlay {
+    opacity: 1;
+}
+
+body.mld-property-mobile-v3 .mld-nav-sheet-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    max-height: 70vh;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+}
+
+body.mld-property-mobile-v3 .mld-quick-nav-sheet.active .mld-nav-sheet-content {
+    transform: translateY(0);
+}
+
+body.mld-property-mobile-v3 .mld-nav-sheet-header {
+    position: relative;
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--mld-border, #E5E7EB);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.mld-property-mobile-v3 .mld-nav-sheet-handle {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: var(--mld-border-strong, #D1D5DB);
+    border-radius: 2px;
+}
+
+body.mld-property-mobile-v3 .mld-nav-sheet-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--mld-text-primary, #111827);
+}
+
+body.mld-property-mobile-v3 .mld-nav-sheet-close {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--mld-surface, #F9FAFB);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+body.mld-property-mobile-v3 .mld-nav-sheet-close:active {
+    background: var(--mld-border, #E5E7EB);
+}
+
+body.mld-property-mobile-v3 .mld-nav-sheet-close svg {
+    width: 16px;
+    height: 16px;
+    color: var(--mld-text-secondary, #374151);
+}
+
+body.mld-property-mobile-v3 .mld-nav-sheet-list {
+    padding: 8px;
+    max-height: calc(70vh - 80px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+body.mld-property-mobile-v3 .mld-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--mld-text-primary, #111827);
+    font-size: 16px;
+    font-weight: 500;
+    transition: background 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body.mld-property-mobile-v3 .mld-nav-link:active {
+    background: var(--mld-surface, #F9FAFB);
+}
+
+body.mld-property-mobile-v3 .mld-nav-link svg {
+    width: 24px;
+    height: 24px;
+    color: var(--mld-primary, #374151);
+    flex-shrink: 0;
+}
+
+body.mld-property-mobile-v3 .mld-nav-link span {
+    flex: 1;
+}
+
+body.mld-property-mobile-v3 .mld-nav-link.hidden {
+    display: none;
+}
+
+/* ========================================
+   YouTube Video Preview (v6.13.14)
+   ======================================== */
+
+body.mld-property-mobile-v3 .mld-youtube-preview {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    background: #000;
+}
+
+body.mld-property-mobile-v3 .mld-video-thumbnail-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+body.mld-property-mobile-v3 .mld-video-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+body.mld-property-mobile-v3 .mld-video-play-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+}
+
+body.mld-property-mobile-v3 .mld-play-button {
+    width: 100%;
+    height: 100%;
+}
+
+/* ========================================
+   Gallery & Bottom Sheet Positioning (v6.13.14)
+   Core layout styles moved from inline
+   ======================================== */
+
+body.mld-property-mobile-v3 .mld-gallery-container,
+body.mld-property-mobile-v3 #gallery {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    background: #000;
+    display: block;
+    visibility: visible;
+    opacity: 1;
+}
+
+body.mld-property-mobile-v3 .mld-gallery-scroll {
+    /* v6.25.17: Maintain flex layout for proper column stacking */
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 50vh; /* Space for bottom sheet */
+    visibility: visible;
+    opacity: 1;
+}
+
+body.mld-property-mobile-v3 .mld-photo-item {
+    display: block;
+    position: relative;
+    width: 100%;
+    /* v6.25.14: Use aspect-ratio with min-height fallback */
+    aspect-ratio: 4/3;
+    min-height: 75vw; /* Fallback: 100vw width * 0.75 = 4:3 ratio */
+    overflow: hidden;
+    background: #000;
+    visibility: visible;
+    opacity: 1;
+}
+
+body.mld-property-mobile-v3 .mld-photo-item img,
+body.mld-property-mobile-v3 .mld-photo {
+    /* v6.25.16: Absolute positioning to fill aspect-ratio container */
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    object-fit: cover;
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Image placeholder styling */
+body.mld-property-mobile-v3 .mld-image-placeholder {
+    background: transparent;
+}
+
+body.mld-property-mobile-v3 .mld-image-spinner {
+    display: none;
+}
+
+/* Ensure lazy images are visible */
+body.mld-property-mobile-v3 img[data-src] {
+    opacity: 1;
+    filter: none;
+}
+
+/* Bottom sheet base positioning */
+body.mld-property-mobile-v3 .mld-bottom-sheet,
+body.mld-property-mobile-v3 #bottomSheet {
+    transform: translateY(50%);
+    display: flex;
+    height: 100vh;
+    z-index: 1000;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    transition: transform 0.3s ease-out;
+}
+
+/* Make handle draggable - v6.53.1: Added robust touch event handling */
+body.mld-property-mobile-v3 .mld-sheet-handle {
+    cursor: grab;
+    touch-action: none !important;
+    -webkit-touch-callout: none !important;
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 1001;
+}
+
+/* Ensure handle bar is clickable/touchable */
+body.mld-property-mobile-v3 .mld-handle-bar {
+    pointer-events: none;
+}
+
+/* v6.53.2: Ensure sheet content is scrollable, interactive, and fully visible */
+body.mld-property-mobile-v3 .mld-sheet-content {
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch !important;
+    pointer-events: auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    position: relative;
+    z-index: 1;
+    /* Ensure no visual effects gray out content */
+    opacity: 1 !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+    visibility: visible !important;
+    background: white !important;
+}
+
+/* Ensure all content inside sheet is interactive and visible */
+body.mld-property-mobile-v3 .mld-sheet-content * {
+    pointer-events: auto;
+}
+
+/* Ensure main content wrapper is visible and scrollable */
+body.mld-property-mobile-v3 .mld-sheet-content .mld-v3-main-mobile {
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+/* Ensure sections within sheet are visible */
+body.mld-property-mobile-v3 .mld-sheet-content .mld-v3-section-mobile {
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+}
+
+/* ========================================
+   Image Loading States (v6.13.14)
+   Moved from inline styles
+   ======================================== */
+
+/* Placeholder with checkered pattern for lazy images */
+body.mld-property-mobile-v3 .mld-image-placeholder.mld-placeholder-pattern {
+    background:
+        linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+        linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+        linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+/* Image spinner overlay */
+body.mld-property-mobile-v3 .mld-image-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+}
+
+body.mld-property-mobile-v3 .mld-spinner-circle {
+    border: 2px solid var(--mld-border, #f3f3f3);
+    border-top: 2px solid var(--mld-primary, #374151);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: mld-spin 1s linear infinite;
+}
+
+@keyframes mld-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ========================================
+   Monthly Estimate Styling (v6.13.14)
+   ======================================== */
+
+body.mld-property-mobile-v3 .mld-v3-monthly {
+    font-size: 14px;
+    color: var(--mld-text-tertiary, #6B7280);
+    margin-top: 5px;
+}
+
+/* Property type link styling */
+body.mld-property-mobile-v3 .mld-property-type-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+body.mld-property-mobile-v3 .mld-property-type-link:hover {
+    text-decoration: underline;
+}
+
+/* =====================================================
+   Mobile Map Enhancement v6.26.0
+   Zillow/Redfin-inspired professional map experience
+   ===================================================== */
+
+/* =====================================================
+   Simple Price Pin Marker (v6.26.1 - Clean Zillow-style)
+   ===================================================== */
+.mld-price-marker {
+  position: relative;
+  background: #1a1a1a;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: 0.3px;
+}
+
+.mld-price-marker::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1a1a1a;
+}
+
+.mld-price-marker:hover,
+.mld-price-marker:active {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.45);
+  z-index: 100;
+}
+
+/* Selected/active state */
+.mld-price-marker.active {
+  background: #0066cc;
+}
+
+.mld-price-marker.active::after {
+  border-top-color: #0066cc;
+}
+
+/* =====================================================
+   Map Floating Action Buttons (FABs)
+   ===================================================== */
+.mld-map-fab-container {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 20;
+  pointer-events: none; /* Container doesn't block clicks */
+}
+
+/* For inline map, position relative to container */
+.mld-v3-map-container .mld-map-fab-container {
+  bottom: 12px;
+  right: 12px;
+}
+
+/* v6.26.7: For modal map, position FABs at top-right */
+.mld-map-body .mld-map-fab-container {
+  top: 70px;
+  bottom: auto;
+  right: 16px;
+}
+
+.mld-map-fab {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: white;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  pointer-events: auto; /* FABs are clickable */
+}
+
+.mld-map-fab:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.mld-map-fab:active {
+  transform: scale(0.92);
+  background: #f5f5f5;
+}
+
+.mld-map-fab svg {
+  width: 22px;
+  height: 22px;
+}
+
+.mld-map-fab-directions svg {
+  fill: #1a73e8;
+}
+
+/* =====================================================
+   Map Container - Enhanced with Expand Functionality
+   ===================================================== */
+.mld-v3-map-container {
+  height: 400px;
+  margin: 0 -16px var(--v3-spacing-lg);
+  border-radius: 0;
+  overflow: hidden;
+  position: relative;
+  background: #e8eaed;
+}
+
+.mld-v3-map {
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.mld-v3-map-container.map-loaded .mld-v3-map {
+  opacity: 1;
+}
+
+/* Expand overlay button */
+.mld-map-expand-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.15) 100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 16px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.mld-map-expand-btn {
+  background: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mld-map-expand-btn:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+
+.mld-map-expand-btn:active {
+  transform: scale(0.95);
+  background: #f5f5f5;
+}
+
+.mld-map-expand-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+/* Skeleton loader for map */
+.mld-map-skeleton {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: mld-shimmer 1.5s infinite;
+  z-index: 1;
+}
+
+@keyframes mld-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Map loaded state hides skeleton */
+.mld-v3-map-container.map-loaded .mld-map-skeleton {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+/* =====================================================
+   Enhanced Info Window (Card Style)
+   ===================================================== */
+.mld-map-info-card {
+  padding: 0;
+  max-width: 280px;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: white;
+}
+
+.mld-info-card-image {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  display: block;
+}
+
+.mld-info-card-content {
+  padding: 12px 14px 14px;
+}
+
+.mld-info-card-price {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 4px 0;
+  line-height: 1.2;
+}
+
+.mld-info-card-address {
+  font-size: 13px;
+  color: #666;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+}
+
+.mld-info-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.mld-info-card-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.2s ease, transform 0.15s ease;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mld-info-card-btn:active {
+  transform: scale(0.96);
+}
+
+.mld-info-card-btn-primary {
+  background: #1a73e8;
+  color: white;
+}
+
+.mld-info-card-btn-primary:hover {
+  background: #1557b0;
+}
+
+.mld-info-card-btn-secondary {
+  background: #f1f3f4;
+  color: #1a1a1a;
+}
+
+.mld-info-card-btn-secondary:hover {
+  background: #e8eaed;
+}
+
+.mld-info-card-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+/* Override Google Maps info window styles */
+.gm-style .gm-style-iw-c {
+  padding: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
+}
+
+.gm-style .gm-style-iw-d {
+  overflow: hidden !important;
+}
+
+.gm-style .gm-style-iw-tc::after {
+  background: white !important;
+}
+
+/* =====================================================
+   Map Animations
+   ===================================================== */
+@keyframes mld-fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes mld-fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes mld-pulseMarker {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* Street View loading indicator */
+.mld-streetview-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #666;
+  z-index: 5;
+}
+
+.mld-streetview-loading .mld-loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #f0f0f0;
+  border-top-color: #1a73e8;
+  border-radius: 50%;
+  animation: mld-spin 0.8s linear infinite;
+}
+
+.mld-streetview-loading span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@keyframes mld-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Toast notification for FAB actions */
+.mld-fab-toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.85);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 10001;
+  animation: mld-fadeInUp 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* =====================================================
+   iOS Safe Area Support
+   ===================================================== */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .mld-map-body .mld-map-fab-container {
+    bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .mld-map-modal .mld-modal-header {
+    padding-top: calc(12px + env(safe-area-inset-top));
+  }
+}
+
+/* =====================================================
+   Modal Map Enhancements
+   ===================================================== */
+.mld-modal-map {
+  opacity: 0;
+  transition: opacity 0.3s ease 0.1s;
+}
+
+.mld-view-panel.active .mld-modal-map,
+.mld-modal-map.active {
+  opacity: 1;
+}
+
+/* Show FABs when modal map is active */
+.mld-map-body .mld-map-fab-container {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.mld-view-panel.active ~ .mld-map-fab-container,
+.mld-map-body .mld-map-fab-container.visible {
+  opacity: 1;
+}
+
+/* Hide FABs on street view panel */
+.mld-streetview-body .mld-map-fab-container {
+  display: none;
+}
+
+/* =====================================================
+   v6.26.1: Enhanced Modal Design with Animations
+   ===================================================== */
+
+/* Slide-in animation for modal */
+.mld-map-modal .mld-modal-content {
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.mld-map-modal.active .mld-modal-content {
+  transform: translateY(0);
+}
+
+/* Backdrop fade */
+.mld-map-modal .mld-modal-backdrop {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.mld-map-modal.active .mld-modal-backdrop {
+  opacity: 1;
+}
+
+/* v6.26.1: New Map Modal Header Design */
+.mld-map-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* Back button */
+.mld-modal-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #333;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.mld-modal-back:hover,
+.mld-modal-back:active {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.mld-modal-back svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Address display */
+.mld-modal-address {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* View toggle tabs - enhanced */
+.mld-map-modal-header .mld-map-view-toggle {
+  display: flex;
+  gap: 0;
+  background: #f5f5f5;
+  border-radius: 20px;
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+.mld-map-modal-header .mld-view-tab {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mld-map-modal-header .mld-view-tab.active {
+  background: #fff;
+  color: #333;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.mld-map-modal-header .mld-view-tab:hover:not(.active) {
+  color: #333;
+}
+
+/* iOS safe area for new header */
+@supports (padding: env(safe-area-inset-top)) {
+  .mld-map-modal-header {
+    padding-top: calc(12px + env(safe-area-inset-top));
+  }
+}
+
+/* v6.26.3: Ensure map modal header is NOT positioned absolutely like other fullscreen headers */
+.mld-map-modal .mld-modal-content .mld-map-modal-header {
+  position: relative !important;
+  background: #fff !important;
+  z-index: 20;
+}
+
+/* v6.26.3: Fix map modal layout - use flexbox for proper header/body split */
+.mld-map-modal .mld-fullscreen-content {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.mld-map-modal .mld-map-body {
+  flex: 1;
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  touch-action: none; /* v6.26.5: Allow Google Maps to handle all touch events */
+}
+
+/* v6.26.5: Ensure map view panel allows touch pass-through to Google Maps */
+#modalMap.mld-view-panel {
+  touch-action: none;
+}
+
+/* v6.26.7: Adjust Google Maps rotate control position (move up 20px) */
+.mld-map-modal .gm-style .gm-bundled-control {
+  transform: translateY(-20px) !important;
+}
+
+/* v6.26.7: Hide default Google Maps navigation controls in bottom right */
+.mld-map-modal .gm-style .gmnoprint:not([style*="left"]) {
+  display: none !important;
+}
+
+/* v6.26.7: But keep rotate control visible when in satellite mode */
+.mld-map-modal .gm-style .gm-bundled-control .gmnoprint {
+  display: block !important;
+}
+
+/* v6.72.4: CRITICAL FIX - Hide all modal overlays by default on mobile property pages
+   This prevents orphan overlays from blocking the gallery and page interactions */
+body.mld-property-mobile-v3 .mld-modal-overlay {
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Only show modal overlay when parent modal is active */
+body.mld-property-mobile-v3 .mld-modal.active .mld-modal-overlay,
+body.mld-property-mobile-v3 .mld-comparison-modal.active .mld-modal-overlay,
+body.mld-property-mobile-v3 .mld-trends-modal.active .mld-modal-overlay {
+  display: block !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}

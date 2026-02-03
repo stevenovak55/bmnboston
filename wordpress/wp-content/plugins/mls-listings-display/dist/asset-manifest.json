@@ -1,0 +1,53 @@
+{
+  "files": {
+    "map-bundle.js": "/wp-content/plugins/mls-listings-display/dist/js/map-bundle.072c89be.min.js",
+    "property-bundle.js": "/wp-content/plugins/mls-listings-display/dist/js/property-bundle.8231cd33.min.js",
+    "admin-bundle.js": "/wp-content/plugins/mls-listings-display/dist/js/admin-bundle.d0867920.min.js",
+    "lazy-images.js": "/wp-content/plugins/mls-listings-display/dist/js/lazy-images.6104bfcd.min.js",
+    "cma-admin.js": "/wp-content/plugins/mls-listings-display/dist/js/cma-admin.8ad8d691.min.js",
+    "chatbot-widget.css": "/wp-content/plugins/mls-listings-display/dist/js/../css/chatbot-widget.63457b7a.min.css",
+    "chatbot-widget.js": "/wp-content/plugins/mls-listings-display/dist/js/chatbot-widget.be87d778.min.js",
+    "runtime.js": "/wp-content/plugins/mls-listings-display/dist/js/runtime.19df2749.min.js",
+    "vendors.js": "/wp-content/plugins/mls-listings-display/dist/js/vendors.83928256.min.js",
+    "map-bundle.js.map": "/wp-content/plugins/mls-listings-display/dist/js/map-bundle.072c89be.min.js.map",
+    "property-bundle.js.map": "/wp-content/plugins/mls-listings-display/dist/js/property-bundle.8231cd33.min.js.map",
+    "admin-bundle.js.map": "/wp-content/plugins/mls-listings-display/dist/js/admin-bundle.d0867920.min.js.map",
+    "lazy-images.js.map": "/wp-content/plugins/mls-listings-display/dist/js/lazy-images.6104bfcd.min.js.map",
+    "cma-admin.js.map": "/wp-content/plugins/mls-listings-display/dist/js/cma-admin.8ad8d691.min.js.map",
+    "chatbot-widget.css.map": "/wp-content/plugins/mls-listings-display/dist/js/../css/chatbot-widget.63457b7a.min.css.map",
+    "chatbot-widget.js.map": "/wp-content/plugins/mls-listings-display/dist/js/chatbot-widget.be87d778.min.js.map",
+    "runtime.js.map": "/wp-content/plugins/mls-listings-display/dist/js/runtime.19df2749.min.js.map",
+    "vendors.js.map": "/wp-content/plugins/mls-listings-display/dist/js/vendors.83928256.min.js.map"
+  },
+  "entrypoints": {
+    "map-bundle": [
+      "js/runtime.19df2749.min.js",
+      "js/vendors.83928256.min.js",
+      "js/map-bundle.072c89be.min.js"
+    ],
+    "property-bundle": [
+      "js/runtime.19df2749.min.js",
+      "js/vendors.83928256.min.js",
+      "js/property-bundle.8231cd33.min.js"
+    ],
+    "admin-bundle": [
+      "js/runtime.19df2749.min.js",
+      "js/vendors.83928256.min.js",
+      "js/admin-bundle.d0867920.min.js"
+    ],
+    "lazy-images": [
+      "js/runtime.19df2749.min.js",
+      "js/lazy-images.6104bfcd.min.js"
+    ],
+    "cma-admin": [
+      "js/runtime.19df2749.min.js",
+      "js/vendors.83928256.min.js",
+      "js/cma-admin.8ad8d691.min.js"
+    ],
+    "chatbot-widget": [
+      "js/runtime.19df2749.min.js",
+      "js/../css/chatbot-widget.63457b7a.min.css",
+      "js/chatbot-widget.be87d778.min.js"
+    ]
+  }
+}

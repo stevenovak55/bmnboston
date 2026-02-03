@@ -1,0 +1,811 @@
+/**
+ * MLD Navigation Drawer Styles
+ * Slide-in navigation drawer for search pages
+ *
+ * @package MLS_Listings_Display
+ * @version 6.36.9
+ */
+
+/* ==========================================================================
+   Hamburger Toggle Button
+   ========================================================================== */
+
+.mld-nav-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    background: var(--ds-glass-bg, rgba(255, 255, 255, 0.95));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 2px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-lg, 8px);
+    box-shadow: var(--ds-shadow-md, 0 4px 6px rgba(0,0,0,0.1));
+    color: var(--ds-text-primary, #1f2937);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: 8px;
+    padding: 0;
+}
+
+.mld-nav-toggle:hover,
+.mld-nav-toggle:focus {
+    background: var(--ds-white, #fff);
+    border-color: var(--ds-teal, #0891B2);
+    box-shadow: var(--ds-shadow-teal, 0 4px 12px rgba(8, 145, 178, 0.3));
+}
+
+.mld-nav-toggle:focus-visible {
+    outline: 2px solid var(--ds-teal, #0891B2);
+    outline-offset: 2px;
+}
+
+.mld-nav-toggle svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+}
+
+/* ==========================================================================
+   Drawer Overlay
+   ========================================================================== */
+
+.mld-nav-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 10010;
+}
+
+.mld-nav-overlay.is-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ==========================================================================
+   Drawer Container
+   ========================================================================== */
+
+.mld-nav-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 320px;
+    max-width: 85vw;
+    background: rgba(10, 10, 15, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10011;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    /* Safe area for notch devices */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+}
+
+.mld-nav-drawer.is-open {
+    transform: translateX(0);
+}
+
+/* Fallback for browsers without backdrop-filter */
+@supports not (backdrop-filter: blur(12px)) {
+    .mld-nav-drawer {
+        background: rgba(10, 10, 15, 0.98);
+    }
+}
+
+/* ==========================================================================
+   Drawer Header
+   ========================================================================== */
+
+.mld-nav-drawer__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    flex-shrink: 0;
+    background: rgba(30, 30, 35, 0.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.mld-nav-drawer__logo {
+    max-height: 40px;
+    width: auto;
+    flex-shrink: 0;
+    max-width: 180px;
+}
+
+.mld-nav-drawer__logo img,
+.mld-nav-drawer__logo .custom-logo {
+    max-height: 40px !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: 100% !important;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+}
+
+.mld-nav-drawer__logo .custom-logo-link {
+    display: block;
+    max-height: 40px;
+}
+
+.mld-nav-drawer__site-title {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.mld-nav-drawer__close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+    padding: 0;
+}
+
+.mld-nav-drawer__close:hover,
+.mld-nav-drawer__close:focus {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+
+.mld-nav-drawer__close:focus-visible {
+    outline: 2px solid var(--ds-teal, #0891B2);
+    outline-offset: 2px;
+}
+
+.mld-nav-drawer__close svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+/* ==========================================================================
+   Drawer Navigation
+   ========================================================================== */
+
+.mld-nav-drawer__nav {
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.mld-nav-drawer__menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.mld-nav-drawer__menu li {
+    margin: 0;
+}
+
+.mld-nav-drawer__menu a {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 12px 16px;
+    font-size: 18px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.mld-nav-drawer__menu a:hover,
+.mld-nav-drawer__menu a:focus {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.mld-nav-drawer__menu .current-menu-item > a,
+.mld-nav-drawer__menu .current_page_item > a {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* Sub-menu items */
+.mld-nav-drawer__menu .sub-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 16px;
+}
+
+.mld-nav-drawer__menu .sub-menu a {
+    font-size: 16px;
+    min-height: 44px;
+    padding-left: 24px;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.mld-nav-drawer__menu .sub-menu a:hover {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* ==========================================================================
+   Drawer Footer
+   ========================================================================== */
+
+.mld-nav-drawer__footer {
+    padding: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    flex-shrink: 0;
+}
+
+.mld-nav-drawer__phone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #0891B2 0%, #0E7490 100%);
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mld-nav-drawer__phone:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(8, 145, 178, 0.4);
+    color: #ffffff;
+}
+
+.mld-nav-drawer__phone svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+/* ==========================================================================
+   Body Scroll Lock
+   ========================================================================== */
+
+body.mld-drawer-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}
+
+/* ==========================================================================
+   Desktop Styles (wider drawer)
+   ========================================================================== */
+
+@media (min-width: 768px) {
+    .mld-nav-drawer {
+        width: 360px;
+    }
+}
+
+/* ==========================================================================
+   Mobile Adjustments - Hamburger Repositioning (v6.25.1)
+   On mobile, move hamburger to where save button was (after filters)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    /* Hide hamburger from its default position in top-bar */
+    #bme-top-bar > .mld-nav-toggle {
+        display: none !important;
+    }
+
+    /* Hide save search button on mobile - it moves to drawer menu */
+    #bme-save-search-btn {
+        display: none !important;
+    }
+
+    /* Show the mobile hamburger (added via JS after filters button) */
+    #mld-nav-toggle-mobile {
+        display: flex !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .mld-nav-toggle {
+        width: 36px;
+        height: 36px;
+        margin-right: 6px;
+    }
+
+    .mld-nav-toggle svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .mld-nav-drawer {
+        width: 100vw;
+        max-width: 100%;
+    }
+}
+
+/* ==========================================================================
+   Save Search Action in Drawer (search pages only)
+   ========================================================================== */
+
+.mld-nav-drawer__actions {
+    padding: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.mld-nav-drawer__save-search {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #0891B2 0%, #0E7490 100%);
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mld-nav-drawer__save-search:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(8, 145, 178, 0.4);
+    color: #ffffff;
+}
+
+.mld-nav-drawer__save-search svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+/* Mobile hamburger toggle - same style as desktop but positioned differently */
+#mld-nav-toggle-mobile {
+    display: none; /* Hidden by default, shown via media query */
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    background: var(--ds-glass-bg, rgba(255, 255, 255, 0.95));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 2px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-lg, 8px);
+    box-shadow: var(--ds-shadow-md, 0 4px 6px rgba(0,0,0,0.1));
+    color: var(--ds-text-primary, #1f2937);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 8px;
+    padding: 0;
+}
+
+#mld-nav-toggle-mobile:hover,
+#mld-nav-toggle-mobile:focus {
+    background: var(--ds-white, #fff);
+    border-color: var(--ds-teal, #0891B2);
+    box-shadow: var(--ds-shadow-teal, 0 4px 12px rgba(8, 145, 178, 0.3));
+}
+
+#mld-nav-toggle-mobile svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+}
+
+/* ==========================================================================
+   Property Page Navigation Toggle (v6.25.2)
+   Replaces back button with hamburger menu on property detail pages
+   ========================================================================== */
+
+/* Desktop property page - hamburger in gallery overlay (visible when gallery is in view) */
+.mld-v3-nav-toggle {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: none;
+    border-radius: 50%;
+    color: #ffffff;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 10;
+    pointer-events: all;
+}
+
+.mld-v3-nav-toggle:hover {
+    opacity: 0.9;
+}
+
+.mld-v3-nav-toggle:active {
+    transform: scale(0.95);
+}
+
+.mld-v3-nav-toggle svg {
+    width: 22px;
+    height: 22px;
+    fill: #ffffff;
+}
+
+/* Mobile property page - hamburger over gallery */
+.mld-nav-toggle-property {
+    position: fixed;
+    top: calc(var(--safe-top, 0px) + 16px);
+    left: calc(var(--safe-left, 0px) + 16px);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: none;
+    border-radius: 50%;
+    color: #ffffff;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 1000;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    outline: none !important;
+    padding: 0;
+    margin: 0;
+}
+
+.mld-nav-toggle-property:hover {
+    opacity: 0.9;
+}
+
+.mld-nav-toggle-property:active {
+    transform: scale(0.95);
+}
+
+.mld-nav-toggle-property svg {
+    width: 22px;
+    height: 22px;
+    fill: #ffffff;
+}
+
+/* ==========================================================================
+   Desktop Sticky Nav Hamburger (v6.25.3)
+   Shows hamburger in sticky nav bar when user scrolls past gallery
+   ========================================================================== */
+
+.mld-v3-nav-toggle-sticky {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: 16px;
+    padding: 0;
+}
+
+.mld-v3-nav-toggle-sticky:hover,
+.mld-v3-nav-toggle-sticky:focus {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.mld-v3-nav-toggle-sticky:focus-visible {
+    outline: 2px solid var(--ds-teal, #0891B2);
+    outline-offset: 2px;
+}
+
+.mld-v3-nav-toggle-sticky svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+/* Hide sticky hamburger on mobile (mobile has its own fixed hamburger) */
+@media (max-width: 768px) {
+    .mld-v3-nav-toggle-sticky {
+        display: none;
+    }
+}
+
+/* ==========================================================================
+   Drawer User Menu (Collapsible v6.44.0)
+   ========================================================================== */
+
+.mld-nav-drawer__user {
+    padding: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    flex-shrink: 0;
+}
+
+/* User Toggle Button (Collapsible Header) */
+.mld-nav-drawer__user-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.95);
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    text-align: left;
+}
+
+.mld-nav-drawer__user-toggle:hover,
+.mld-nav-drawer__user-toggle:focus {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.mld-nav-drawer__user-toggle:focus-visible {
+    outline: 2px solid var(--ds-teal, #0891B2);
+    outline-offset: 2px;
+}
+
+/* User Toggle Info */
+.mld-nav-drawer__user-toggle .mld-nav-drawer__user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.mld-nav-drawer__user-toggle .mld-nav-drawer__user-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* User Toggle Chevron */
+.mld-nav-drawer__user-chevron {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+    opacity: 0.7;
+    transition: transform 0.25s ease;
+}
+
+.mld-nav-drawer__user-toggle[aria-expanded="true"] .mld-nav-drawer__user-chevron {
+    transform: rotate(180deg);
+}
+
+/* Guest Toggle Styling */
+.mld-nav-drawer__user-toggle--guest {
+    background: linear-gradient(135deg, rgba(8, 145, 178, 0.2) 0%, rgba(14, 116, 144, 0.2) 100%);
+    border-color: rgba(8, 145, 178, 0.3);
+}
+
+.mld-nav-drawer__user-toggle--guest:hover,
+.mld-nav-drawer__user-toggle--guest:focus {
+    background: linear-gradient(135deg, rgba(8, 145, 178, 0.3) 0%, rgba(14, 116, 144, 0.3) 100%);
+    border-color: rgba(8, 145, 178, 0.4);
+}
+
+/* Collapsible User Nav */
+.mld-nav-drawer__user-nav--collapsed {
+    display: none;
+    max-height: 0;
+    overflow: hidden;
+}
+
+.mld-nav-drawer__user-nav--expanded {
+    display: flex;
+    max-height: 400px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    animation: mld-drawer-user-expand 0.25s ease-out;
+}
+
+@keyframes mld-drawer-user-expand {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Legacy User Header (for backwards compatibility) */
+.mld-nav-drawer__user-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mld-nav-drawer__user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.mld-nav-drawer__user-avatar--guest {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.mld-nav-drawer__user-avatar--guest svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+.mld-nav-drawer__user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.mld-nav-drawer__user-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mld-nav-drawer__user-email {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* User Navigation Items */
+.mld-nav-drawer__user-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mld-nav-drawer__user-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 8px 12px;
+    font-size: 16px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.mld-nav-drawer__user-item:hover,
+.mld-nav-drawer__user-item:focus {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.mld-nav-drawer__user-item:focus-visible {
+    outline: 2px solid var(--ds-teal, #0891B2);
+    outline-offset: 2px;
+}
+
+.mld-nav-drawer__user-item svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    fill: currentColor;
+    opacity: 0.8;
+}
+
+.mld-nav-drawer__user-item:hover svg,
+.mld-nav-drawer__user-item:focus svg {
+    opacity: 1;
+}
+
+/* Primary action (Log In button for guests) */
+.mld-nav-drawer__user-item--primary {
+    background: linear-gradient(135deg, #0891B2 0%, #0E7490 100%);
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+}
+
+.mld-nav-drawer__user-item--primary:hover,
+.mld-nav-drawer__user-item--primary:focus {
+    background: linear-gradient(135deg, #0891B2 0%, #0E7490 100%);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(8, 145, 178, 0.4);
+}
+
+.mld-nav-drawer__user-item--primary svg {
+    opacity: 1;
+}
+
+/* Logout button styling */
+.mld-nav-drawer__user-item--logout {
+    margin-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.mld-nav-drawer__user-item--logout:hover,
+.mld-nav-drawer__user-item--logout:focus {
+    background: rgba(220, 38, 38, 0.15);
+    color: #f87171;
+}
+
+.mld-nav-drawer__user-item--logout:hover svg,
+.mld-nav-drawer__user-item--logout:focus svg {
+    fill: #f87171;
+}
+
+/* Guest header styling */
+.mld-nav-drawer__user-header--guest {
+    padding-bottom: 16px;
+}
+
+/* ==========================================================================
+   Reduced Motion Support
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .mld-nav-drawer,
+    .mld-nav-overlay,
+    .mld-nav-toggle,
+    .mld-v3-nav-toggle,
+    .mld-nav-toggle-property {
+        transition: none;
+    }
+}

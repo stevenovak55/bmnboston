@@ -1,0 +1,1248 @@
+/**
+ * MA School Districts Guide Landing Page Styles
+ *
+ * @package flavor_flavor_flavor
+ * @version 1.0.0
+ */
+
+/* ==========================================================================
+   Page Container - Header Clearance
+   ========================================================================== */
+
+.bne-guide-page {
+    padding-top: 100px; /* Clear fixed header navigation */
+}
+
+/* ==========================================================================
+   Hero Section
+   ========================================================================== */
+
+.bne-guide-hero {
+    background: linear-gradient(135deg, #1a365d 0%, #2d4a7c 100%);
+    color: #fff;
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.bne-guide-hero__badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.bne-guide-hero__title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0 0 1.5rem;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.bne-guide-hero__subtitle {
+    font-size: 1.25rem;
+    opacity: 0.9;
+    max-width: 700px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+}
+
+.bne-guide-hero__stats {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+}
+
+.bne-guide-hero__stat {
+    text-align: center;
+}
+
+.bne-guide-hero__stat-number {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.bne-guide-hero__stat-label {
+    display: block;
+    font-size: 0.875rem;
+    opacity: 0.8;
+    margin-top: 0.5rem;
+}
+
+.bne-guide-hero__cta {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.bne-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.bne-btn--primary {
+    background: #c53030;
+    color: #fff;
+    border-color: #c53030;
+}
+
+.bne-btn--primary:hover {
+    background: #9b2c2c;
+    border-color: #9b2c2c;
+}
+
+.bne-btn--outline {
+    background: transparent;
+    color: inherit;
+    border-color: currentColor;
+}
+
+.bne-btn--outline:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.bne-btn--lg {
+    padding: 1rem 2rem;
+    font-size: 1.125rem;
+}
+
+.bne-btn--sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.bne-btn--full {
+    width: 100%;
+}
+
+/* ==========================================================================
+   Content Sections
+   ========================================================================== */
+
+.bne-guide-section {
+    padding: 4rem 0;
+}
+
+.bne-guide-section--intro {
+    background: #f7fafc;
+}
+
+.bne-guide-section--rankings {
+    background: #fff;
+}
+
+.bne-guide-section--prices {
+    background: #f7fafc;
+}
+
+.bne-guide-section--platform {
+    background: #fff;
+}
+
+.bne-guide-section--team {
+    background: #1a365d;
+    color: #fff;
+}
+
+.bne-guide-section--download {
+    background: linear-gradient(135deg, #c53030 0%, #9b2c2c 100%);
+    color: #fff;
+}
+
+.bne-guide-section--cta {
+    background: #f7fafc;
+    text-align: center;
+}
+
+.bne-guide-section h2 {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 700;
+    margin: 0 0 1rem;
+    text-align: center;
+}
+
+.bne-guide-section__intro {
+    text-align: center;
+    font-size: 1.125rem;
+    color: #4a5568;
+    max-width: 800px;
+    margin: 0 auto 2.5rem;
+}
+
+.bne-guide-section--team .bne-guide-section__intro {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* ==========================================================================
+   Guide Content
+   ========================================================================== */
+
+.bne-guide-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.bne-guide-lead {
+    font-size: 1.25rem;
+    line-height: 1.7;
+    color: #2d3748;
+    margin-bottom: 2rem;
+}
+
+.bne-guide-highlights {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+@media (min-width: 768px) {
+    .bne-guide-highlights {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.bne-guide-highlight {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bne-guide-highlight__icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.bne-guide-highlight__content strong {
+    display: block;
+    font-size: 1.125rem;
+    color: #1a365d;
+    margin-bottom: 0.25rem;
+}
+
+.bne-guide-highlight__content span {
+    font-size: 0.875rem;
+    color: #4a5568;
+    line-height: 1.5;
+}
+
+.bne-guide-callout {
+    background: #fff;
+    border-left: 4px solid #c53030;
+    padding: 1.5rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.bne-guide-callout h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1.25rem;
+    color: #1a365d;
+}
+
+.bne-guide-callout p {
+    margin: 0 0 0.5rem;
+    color: #4a5568;
+}
+
+.bne-guide-callout p:last-child {
+    margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Table Styles
+   ========================================================================== */
+
+.bne-guide-table-wrapper {
+    overflow-x: auto;
+    margin-bottom: 2rem;
+}
+
+.bne-guide-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bne-guide-table th,
+.bne-guide-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.bne-guide-table th {
+    background: #1a365d;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.bne-guide-table tbody tr:hover {
+    background: #f7fafc;
+}
+
+.bne-guide-table__rank {
+    font-weight: 700;
+    color: #1a365d;
+    width: 60px;
+}
+
+.bne-guide-table__district strong {
+    color: #2d3748;
+}
+
+.bne-guide-table__district-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.bne-guide-table__district-link:hover {
+    color: #1e73be;
+}
+
+.bne-guide-table__district-link:hover strong {
+    color: #1e73be;
+}
+
+.bne-guide-table__grade {
+    width: 80px;
+}
+
+.bne-grade-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.bne-grade-badge--aplus {
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+.bne-grade-badge--a {
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+.bne-grade-badge--aminus {
+    background: #fefcbf;
+    color: #744210;
+}
+
+.bne-guide-cta-inline {
+    text-align: center;
+}
+
+/* ==========================================================================
+   Price Tiers
+   ========================================================================== */
+
+.bne-guide-price-tiers {
+    display: grid;
+    gap: 2rem;
+}
+
+@media (min-width: 992px) {
+    .bne-guide-price-tiers {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.bne-guide-price-tier {
+    background: #fff;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bne-guide-price-tier__header {
+    padding: 1.5rem;
+    text-align: center;
+    color: #fff;
+}
+
+.bne-guide-price-tier__header--premium {
+    background: linear-gradient(135deg, #1a365d 0%, #2d4a7c 100%);
+}
+
+.bne-guide-price-tier__header--value {
+    background: linear-gradient(135deg, #2f855a 0%, #38a169 100%);
+}
+
+.bne-guide-price-tier__header--budget {
+    background: linear-gradient(135deg, #c53030 0%, #e53e3e 100%);
+}
+
+.bne-guide-price-tier__header h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    text-align: center;
+}
+
+.bne-guide-price-tier__range {
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+.bne-guide-price-tier__content {
+    padding: 1.5rem;
+}
+
+.bne-guide-price-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem;
+}
+
+.bne-guide-price-list li {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.bne-guide-price-list li:last-child {
+    border-bottom: none;
+}
+
+.bne-tag {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    background: #e2e8f0;
+    color: #4a5568;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.bne-tag--best {
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+/* ==========================================================================
+   Platform Comparison
+   ========================================================================== */
+
+.bne-guide-platform {
+    display: grid;
+    gap: 3rem;
+    align-items: center;
+}
+
+@media (min-width: 992px) {
+    .bne-guide-platform {
+        grid-template-columns: 2fr 1fr;
+    }
+}
+
+.bne-guide-platform__content h2 {
+    text-align: left;
+}
+
+.bne-guide-comparison {
+    background: #f7fafc;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    margin-top: 1.5rem;
+}
+
+.bne-guide-comparison__row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    align-items: center;
+}
+
+.bne-guide-comparison__row:last-child {
+    border-bottom: none;
+}
+
+.bne-guide-comparison__row--header {
+    background: #1a365d;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.bne-guide-comparison__yes {
+    color: #22543d;
+    font-weight: 700;
+}
+
+.bne-guide-comparison__yes::before {
+    content: "✓ ";
+}
+
+.bne-guide-comparison__no {
+    color: #9b2c2c;
+}
+
+.bne-guide-comparison__no::before {
+    content: "✗ ";
+}
+
+.bne-guide-app-promo {
+    background: #f7fafc;
+    padding: 2rem;
+    border-radius: 0.75rem;
+    text-align: center;
+}
+
+.bne-guide-app-promo h3 {
+    margin: 0 0 0.5rem;
+    color: #1a365d;
+}
+
+.bne-guide-app-promo p {
+    margin: 0 0 1.5rem;
+    color: #4a5568;
+}
+
+.bne-guide-app-promo__download {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.bne-guide-app-promo__qr {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    background: #fff;
+    padding: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.bne-guide-app-promo__badges {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+}
+
+.bne-guide-app-promo__label {
+    font-size: 0.75rem;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.bne-guide-app-badge img {
+    display: block;
+    height: 40px;
+    width: auto;
+}
+
+.bne-guide-app-badge:hover {
+    opacity: 0.8;
+}
+
+@media (max-width: 480px) {
+    .bne-guide-app-promo__download {
+        flex-direction: column;
+    }
+
+    .bne-guide-app-promo__badges {
+        align-items: center;
+    }
+}
+
+/* ==========================================================================
+   Team Section
+   ========================================================================== */
+
+.bne-guide-team-stats {
+    display: flex;
+    justify-content: center;
+    gap: 4rem;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+}
+
+.bne-guide-team-stat {
+    text-align: center;
+}
+
+.bne-guide-team-stat__number {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.bne-guide-team-stat__label {
+    display: block;
+    font-size: 0.875rem;
+    opacity: 0.8;
+}
+
+.bne-guide-team-grid {
+    display: grid;
+    gap: 2rem;
+}
+
+@media (min-width: 768px) {
+    .bne-guide-team-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.bne-guide-team-member {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    text-align: center;
+}
+
+.bne-guide-team-member__photo {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 1rem;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.bne-guide-team-member h4 {
+    margin: 0 0 0.25rem;
+    font-size: 1.25rem;
+}
+
+.bne-guide-team-member__title {
+    display: block;
+    font-size: 0.875rem;
+    opacity: 0.8;
+    margin-bottom: 1rem;
+}
+
+.bne-guide-team-member p {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    opacity: 0.9;
+    margin: 0 0 1rem;
+}
+
+.bne-guide-team-member__phone {
+    display: inline-block;
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 0.25rem;
+    transition: background 0.2s ease;
+}
+
+.bne-guide-team-member__phone:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* ==========================================================================
+   Download Section
+   ========================================================================== */
+
+.bne-guide-download {
+    display: grid;
+    gap: 3rem;
+    align-items: center;
+}
+
+@media (min-width: 992px) {
+    .bne-guide-download {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.bne-guide-download__content h2 {
+    text-align: left;
+    margin-bottom: 1rem;
+}
+
+.bne-guide-download__content ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.bne-guide-download__content li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.bne-guide-download__content li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    font-weight: 700;
+}
+
+.bne-guide-download__form {
+    background: #fff;
+    color: #1a202c;
+    padding: 2rem;
+    border-radius: 0.75rem;
+}
+
+.bne-guide-form__field {
+    margin-bottom: 1rem;
+}
+
+.bne-guide-form__field label {
+    display: block;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.bne-guide-form__field input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.bne-guide-form__field input:focus {
+    outline: none;
+    border-color: #c53030;
+}
+
+.bne-guide-form__disclaimer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #718096;
+    margin-top: 1rem;
+}
+
+.bne-guide-form__success {
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.bne-guide-form__success h3 {
+    margin: 0 0 1rem;
+    font-size: 1.5rem;
+    color: #fff;
+}
+
+.bne-guide-form__success p {
+    margin: 0 0 1rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* ==========================================================================
+   Final CTA
+   ========================================================================== */
+
+.bne-guide-final-cta {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.bne-guide-final-cta h2 {
+    margin-bottom: 0.75rem;
+}
+
+.bne-guide-final-cta p {
+    font-size: 1.125rem;
+    color: #4a5568;
+    margin-bottom: 2rem;
+}
+
+.bne-guide-final-cta__buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.bne-guide-final-cta__buttons .bne-btn--outline {
+    color: #1a365d;
+    border-color: #1a365d;
+}
+
+.bne-guide-final-cta__buttons .bne-btn--outline:hover {
+    background: #1a365d;
+    color: #fff;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 767px) {
+    .bne-guide-hero {
+        padding: 2rem 0;
+    }
+
+    .bne-guide-hero__stats {
+        gap: 1.5rem;
+    }
+
+    .bne-guide-hero__stat-number {
+        font-size: 1.75rem;
+    }
+
+    .bne-guide-section {
+        padding: 2.5rem 0;
+    }
+
+    .bne-guide-comparison__row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        text-align: center;
+    }
+
+    .bne-guide-comparison__row--header {
+        display: none;
+    }
+
+    .bne-guide-comparison__row span:first-child {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* ==========================================================================
+   Social Proof (Download Counter)
+   ========================================================================== */
+
+.bne-guide-hero__social-proof {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-bottom: 1.5rem;
+}
+
+.bne-guide-social-proof__count {
+    font-weight: 700;
+    color: #fbd38d;
+}
+
+/* ==========================================================================
+   Hero Inline Form
+   ========================================================================== */
+
+.bne-guide-hero__inline-form {
+    margin-bottom: 1.5rem;
+}
+
+.bne-guide-inline-form {
+    display: flex;
+    gap: 0.5rem;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.bne-guide-inline-form input {
+    flex: 1;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.95);
+    font-size: 1rem;
+    color: #2d3748;
+}
+
+.bne-guide-inline-form input:focus {
+    outline: none;
+    border-color: #fff;
+}
+
+.bne-guide-inline-form input::placeholder {
+    color: #718096;
+}
+
+.bne-guide-inline-form__note {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    margin-top: 0.5rem;
+}
+
+@media (max-width: 576px) {
+    .bne-guide-inline-form {
+        flex-direction: column;
+    }
+
+    .bne-guide-inline-form .bne-btn {
+        width: 100%;
+    }
+}
+
+/* ==========================================================================
+   Testimonials Section
+   ========================================================================== */
+
+.bne-guide-section--testimonials {
+    background: #edf2f7;
+}
+
+.bne-guide-testimonials {
+    display: grid;
+    gap: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+    .bne-guide-testimonials {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.bne-guide-testimonial {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bne-guide-testimonial__stars {
+    color: #f6ad55;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    letter-spacing: 0.1em;
+}
+
+.bne-guide-testimonial blockquote {
+    margin: 0 0 1rem;
+    font-style: italic;
+    color: #4a5568;
+    line-height: 1.6;
+}
+
+.bne-guide-testimonial cite {
+    font-style: normal;
+    font-weight: 600;
+    color: #1a365d;
+    font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   FAQ Section
+   ========================================================================== */
+
+.bne-guide-section--faq {
+    background: #fff;
+}
+
+.bne-guide-faq-list {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.bne-guide-faq-item {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1.5rem 0;
+}
+
+.bne-guide-faq-item:last-child {
+    border-bottom: none;
+}
+
+.bne-guide-faq-item__question {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1a365d;
+    margin: 0 0 0.75rem;
+    line-height: 1.4;
+}
+
+.bne-guide-faq-item__answer p {
+    margin: 0;
+    color: #4a5568;
+    line-height: 1.7;
+}
+
+.bne-guide-faq-item__answer a {
+    color: #c53030;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.bne-guide-faq-item__answer a:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   Trust Badges
+   ========================================================================== */
+
+.bne-guide-trust-badges {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+.bne-guide-trust-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.bne-guide-trust-badge__icon {
+    font-size: 1.125rem;
+}
+
+/* ==========================================================================
+   Sticky Bottom Bar
+   ========================================================================== */
+
+.bne-guide-sticky-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #1a365d;
+    color: #fff;
+    padding: 1rem 0;
+    z-index: 1000;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+}
+
+.bne-guide-sticky-bar.is-visible {
+    transform: translateY(0);
+}
+
+.bne-guide-sticky-bar__content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.bne-guide-sticky-bar__text {
+    font-size: 0.9375rem;
+}
+
+@media (max-width: 576px) {
+    .bne-guide-sticky-bar {
+        padding: 0.75rem 0;
+    }
+
+    .bne-guide-sticky-bar__content {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+
+    .bne-guide-sticky-bar .bne-btn {
+        width: 100%;
+    }
+
+    .bne-guide-sticky-bar__text {
+        font-size: 0.875rem;
+    }
+}
+
+/* ==========================================================================
+   Exit Intent Popup
+   ========================================================================== */
+
+.bne-guide-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+    padding: 1rem;
+    backdrop-filter: blur(4px);
+}
+
+.bne-guide-popup {
+    background: #fff;
+    border-radius: 1rem;
+    max-width: 420px;
+    width: 100%;
+    padding: 2rem;
+    position: relative;
+    animation: popupSlideIn 0.4s ease;
+}
+
+@keyframes popupSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.bne-guide-popup__close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    cursor: pointer;
+    color: #a0aec0;
+    line-height: 1;
+    padding: 0.25rem;
+    transition: color 0.2s ease;
+}
+
+.bne-guide-popup__close:hover {
+    color: #4a5568;
+}
+
+.bne-guide-popup__content h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1.5rem;
+    color: #1a365d;
+}
+
+.bne-guide-popup__content > p {
+    margin: 0 0 1.5rem;
+    color: #4a5568;
+    line-height: 1.6;
+}
+
+.bne-guide-popup-form input {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.bne-guide-popup-form input:focus {
+    outline: none;
+    border-color: #c53030;
+}
+
+.bne-guide-popup__disclaimer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #a0aec0;
+    margin-top: 1rem;
+}
+
+/* ==========================================================================
+   Phone Capture Form
+   ========================================================================== */
+
+.bne-guide-phone-capture {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.bne-guide-phone-capture p {
+    margin: 0 0 1rem;
+}
+
+.bne-guide-phone-capture .bne-guide-form__field {
+    margin-bottom: 1rem;
+}
+
+.bne-guide-phone-capture .bne-guide-form__field input {
+    background: rgba(255, 255, 255, 0.95);
+    color: #2d3748;
+}
+
+.bne-guide-skip-link {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    font-size: 0.875rem;
+    text-decoration: underline;
+    margin-top: 0.75rem;
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 0.5rem;
+}
+
+.bne-guide-skip-link:hover {
+    color: #fff;
+}
+
+.bne-guide-final-success {
+    margin-top: 1.5rem;
+}
+
+/* ==========================================================================
+   Additional Mobile Optimizations
+   ========================================================================== */
+
+@media (max-width: 576px) {
+    /* Larger touch targets */
+    .bne-guide-form__field input,
+    .bne-guide-popup-form input {
+        padding: 1rem;
+        font-size: 16px; /* Prevents iOS zoom */
+    }
+
+    /* Popup adjustments */
+    .bne-guide-popup {
+        max-height: 90vh;
+        overflow-y: auto;
+        margin: 0.5rem;
+    }
+
+    /* Ensure proper spacing for sticky bar */
+    .bne-guide-page {
+        padding-bottom: 80px;
+    }
+}

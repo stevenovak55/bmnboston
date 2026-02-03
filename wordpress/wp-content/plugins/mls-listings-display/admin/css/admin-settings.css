@@ -1,0 +1,73 @@
+/**
+ * MLD Admin Settings Styles
+ */
+
+/* API Status Table */
+#mld-api-status {
+    margin-top: 20px;
+}
+
+#mld-api-status .widefat {
+    max-width: 600px;
+}
+
+#mld-api-status .mld-status {
+    font-weight: 600;
+}
+
+#mld-api-status .dashicons {
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+/* Settings Form */
+.form-table th {
+    width: 200px;
+}
+
+.form-table .description {
+    margin-top: 5px;
+}
+
+.form-table input[type="text"] {
+    width: 350px;
+    max-width: 100%;
+}
+
+/* Section Headers */
+h2.title {
+    margin-top: 30px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+/* Useful Links */
+.wrap ul {
+    margin-left: 20px;
+}
+
+.wrap ul li {
+    margin-bottom: 5px;
+}
+
+/* Status Colors */
+.dashicons-yes {
+    color: #46b450;
+}
+
+.dashicons-no {
+    color: #dc3232;
+}
+
+.dashicons-warning {
+    color: #ffb900;
+}
+
+.dashicons-clock {
+    color: #666;
+}
+
+/* Hide dependent fields */
+tr.hidden {
+    display: none;
+}

@@ -1,0 +1,2802 @@
+/**
+ * Schools Pages Stylesheet
+ *
+ * Styles for school district browse and detail pages.
+ *
+ * @package flavor_flavor_flavor
+ * @version 1.0.0
+ */
+
+/* ==========================================================================
+   Variables
+   ========================================================================== */
+
+:root {
+    --grade-a-bg: #22c55e;
+    --grade-a-text: #fff;
+    --grade-b-bg: #3b82f6;
+    --grade-b-text: #fff;
+    --grade-c-bg: #eab308;
+    --grade-c-text: #fff;
+    --grade-d-bg: #f97316;
+    --grade-d-text: #fff;
+    --grade-f-bg: #ef4444;
+    --grade-f-text: #fff;
+    --grade-na-bg: #9ca3af;
+    --grade-na-text: #fff;
+}
+
+/* ==========================================================================
+   Breadcrumbs
+   ========================================================================== */
+
+.bne-breadcrumbs {
+    margin-bottom: 1.5rem;
+}
+
+.bne-breadcrumbs__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.875rem;
+}
+
+.bne-breadcrumbs__item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-size: 0.875rem;
+}
+
+.bne-breadcrumbs__item:not(:last-child)::after {
+    content: '/';
+    opacity: 0.6;
+    margin-left: 0.5rem;
+}
+
+.bne-breadcrumbs__item a {
+    color: rgba(255, 255, 255, 0.85) !important;
+    text-decoration: none;
+}
+
+.bne-breadcrumbs__item a:hover {
+    color: #fff !important;
+    text-decoration: underline;
+}
+
+.bne-breadcrumbs__item--current {
+    color: #fff !important;
+}
+
+.bne-breadcrumbs__item--current span {
+    color: #fff !important;
+}
+
+/* ==========================================================================
+   Schools Browse Hero
+   ========================================================================== */
+
+.bne-schools-hero {
+    background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+    color: #fff;
+    padding: calc(var(--bne-header-height, 80px) + 2rem) 1.5rem 3rem;
+}
+
+.bne-schools-hero__title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 0.75rem;
+}
+
+.bne-schools-hero__subtitle {
+    font-size: 1.125rem;
+    opacity: 0.9;
+    margin: 0 0 2rem;
+}
+
+.bne-schools-hero__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.bne-schools-hero__stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.bne-schools-hero__stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.bne-schools-hero__stat-label {
+    font-size: 0.875rem;
+    opacity: 0.8;
+}
+
+/* ==========================================================================
+   District Filters
+   ========================================================================== */
+
+.bne-districts-filters {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.bne-districts-filters__form {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.bne-districts-filters__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.bne-districts-filters__group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.bne-districts-filters__group--city {
+    flex: 1;
+    min-width: 200px;
+}
+
+.bne-districts-filters__label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+}
+
+.bne-districts-filters__grade-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.bne-grade-btn {
+    padding: 0.5rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    color: #1e293b;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.bne-grade-btn:hover {
+    border-color: #94a3b8;
+}
+
+.bne-grade-btn--active {
+    border-color: #1e40af;
+    background: #1e40af;
+    color: #fff;
+}
+
+.bne-grade-btn--a.bne-grade-btn--active { background: var(--grade-a-bg); border-color: var(--grade-a-bg); }
+.bne-grade-btn--b.bne-grade-btn--active { background: var(--grade-b-bg); border-color: var(--grade-b-bg); }
+.bne-grade-btn--c.bne-grade-btn--active { background: var(--grade-c-bg); border-color: var(--grade-c-bg); }
+.bne-grade-btn--d.bne-grade-btn--active { background: var(--grade-d-bg); border-color: var(--grade-d-bg); }
+.bne-grade-btn--f.bne-grade-btn--active { background: var(--grade-f-bg); border-color: var(--grade-f-bg); }
+
+.bne-districts-filters__input,
+.bne-districts-filters__select {
+    padding: 0.625rem 0.875rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    min-width: 150px;
+}
+
+.bne-districts-filters__input:focus,
+.bne-districts-filters__select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.bne-districts-filters__group--submit {
+    display: flex;
+    flex-direction: row;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.bne-districts-filters__summary {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+/* ==========================================================================
+   Districts Grid
+   ========================================================================== */
+
+.bne-districts-grid-section {
+    padding: 2rem 1.5rem;
+}
+
+.bne-districts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.bne-districts-grid__empty {
+    text-align: center;
+    padding: 3rem;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+/* ==========================================================================
+   District Card
+   ========================================================================== */
+
+.bne-district-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.bne-district-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.bne-district-card__link {
+    display: block;
+    padding: 1.25rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.bne-district-card__header {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.bne-district-card__grade {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.bne-district-card__title-wrap {
+    flex: 1;
+    min-width: 0;
+}
+
+.bne-district-card__title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.3;
+    color: #1e293b;
+}
+
+.bne-district-card__location {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0.25rem 0 0;
+}
+
+.bne-district-card__stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.bne-district-card__stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.bne-district-card__stat-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.bne-district-card__stat-label {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.bne-district-card__levels {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+
+.bne-district-card__level {
+    font-size: 0.75rem;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.bne-district-card__footer {
+    padding-top: 0.75rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.bne-district-card__cta {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #3b82f6;
+}
+
+/* ==========================================================================
+   Grade Classes
+   ========================================================================== */
+
+.bne-grade--a { background: var(--grade-a-bg); color: var(--grade-a-text); }
+.bne-grade--b { background: var(--grade-b-bg); color: var(--grade-b-text); }
+.bne-grade--c { background: var(--grade-c-bg); color: var(--grade-c-text); }
+.bne-grade--d { background: var(--grade-d-bg); color: var(--grade-d-text); }
+.bne-grade--f { background: var(--grade-f-bg); color: var(--grade-f-text); }
+.bne-grade--na { background: var(--grade-na-bg); color: var(--grade-na-text); }
+
+/* ==========================================================================
+   Pagination
+   ========================================================================== */
+
+.bne-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.bne-pagination__link {
+    padding: 0.5rem 1rem;
+    background: #1e40af;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.bne-pagination__link:hover {
+    background: #1e3a8a;
+}
+
+.bne-pagination__info {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+/* ==========================================================================
+   District Detail Hero
+   ========================================================================== */
+
+.bne-district-hero {
+    background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+    color: #fff;
+    padding: calc(var(--bne-header-height, 80px) + 2rem) 1.5rem 3rem;
+}
+
+.bne-district-hero .bne-breadcrumbs__item {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.bne-district-hero__content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.bne-district-hero__main {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+
+.bne-district-hero__grade-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    flex-shrink: 0;
+}
+
+.bne-district-hero__grade {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.bne-district-hero__percentile {
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+.bne-district-hero__title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    line-height: 1.2;
+}
+
+.bne-district-hero__subtitle {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.bne-district-hero__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.bne-district-hero__stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.bne-district-hero__stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.bne-district-hero__stat-label {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.bne-district-hero__contact {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.bne-district-hero__link {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.bne-district-hero__link:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   Section Titles
+   ========================================================================== */
+
+.bne-section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    color: #1e293b;
+}
+
+.bne-section-subtitle {
+    font-size: 1rem;
+    color: #64748b;
+    margin: 0 0 1.5rem;
+}
+
+/* ==========================================================================
+   Metrics Section
+   ========================================================================== */
+
+.bne-district-metrics {
+    padding: 2.5rem 1.5rem;
+    background: #fff;
+}
+
+.bne-district-metrics__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.bne-metric-card {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 12px;
+}
+
+.bne-metric-card__title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin: 0 0 1rem;
+}
+
+.bne-metric-card__value-large {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.bne-metric-card__description {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0.5rem 0 0;
+}
+
+.bne-metric-card__scores {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.bne-metric-card__score {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.bne-metric-card__score-label {
+    flex: 1;
+    font-weight: 500;
+}
+
+.bne-metric-card__score-value {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.bne-metric-card__score-grade {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.bne-metric-card__cities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.bne-metric-card__city {
+    background: #e2e8f0;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+.bne-metric-card__facts {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.bne-metric-card__facts li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.bne-metric-card__facts li:last-child {
+    border-bottom: none;
+}
+
+/* ==========================================================================
+   Schools Section
+   ========================================================================== */
+
+.bne-district-schools {
+    padding: 2.5rem 1.5rem;
+    background: #f8fafc;
+}
+
+.bne-district-schools__level {
+    margin-bottom: 2rem;
+}
+
+.bne-district-schools__level:last-child {
+    margin-bottom: 0;
+}
+
+.bne-district-schools__level-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    color: #1e293b;
+}
+
+.bne-district-schools__level-count {
+    font-weight: 400;
+    color: #64748b;
+}
+
+.bne-district-schools__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.bne-school-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #fff;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.bne-school-card__grade {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.bne-school-card__content {
+    flex: 1;
+    min-width: 0;
+}
+
+.bne-school-card__name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: #1e293b;
+}
+
+.bne-school-card__details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.bne-school-card__details span {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.bne-school-card__address {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin: 0.25rem 0 0;
+}
+
+.bne-school-card__score {
+    text-align: center;
+}
+
+.bne-school-card__score-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.bne-school-card__score-label {
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+/* Clickable School Card */
+.bne-school-card--clickable {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.bne-school-card--clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.bne-school-card__link-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+.bne-school-card__name a {
+    color: inherit;
+    text-decoration: none;
+    position: relative;
+    z-index: 2;
+}
+
+.bne-school-card__name a:hover {
+    color: #3b82f6;
+    text-decoration: underline;
+}
+
+.bne-school-card__action {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+}
+
+.bne-school-card__view-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    background: #f1f5f9;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #3b82f6;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+}
+
+.bne-school-card__view-link:hover {
+    background: #3b82f6;
+    color: #fff;
+}
+
+/* ==========================================================================
+   Map Section
+   ========================================================================== */
+
+.bne-district-map {
+    padding: 2.5rem 1.5rem;
+    background: #fff;
+}
+
+.bne-district-map__container {
+    height: 400px;
+    background: #f1f5f9;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.bne-district-map__placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #64748b;
+}
+
+.bne-district-map__legend {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+/* ==========================================================================
+   Nearby Districts
+   ========================================================================== */
+
+.bne-nearby-districts {
+    padding: 2.5rem 1.5rem;
+    background: #f8fafc;
+}
+
+.bne-nearby-districts__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.bne-nearby-district-card {
+    display: flex;
+    gap: 0.75rem;
+    background: #fff;
+    padding: 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow 0.2s;
+}
+
+.bne-nearby-district-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.bne-nearby-district-card__grade {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.bne-nearby-district-card__name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0;
+    color: #1e293b;
+}
+
+.bne-nearby-district-card__city {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin: 0;
+}
+
+.bne-nearby-district-card__score {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+}
+
+/* ==========================================================================
+   FAQ Section
+   ========================================================================== */
+
+.bne-district-faq {
+    padding: 2.5rem 1.5rem;
+    background: #fff;
+}
+
+.bne-faq-list {
+    max-width: 800px;
+}
+
+.bne-faq-item {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1.25rem 0;
+}
+
+.bne-faq-item:last-child {
+    border-bottom: none;
+}
+
+.bne-faq-item__question {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem;
+    color: #1e293b;
+}
+
+.bne-faq-item__answer p {
+    margin: 0;
+    color: #475569;
+    line-height: 1.6;
+}
+
+/* ==========================================================================
+   Outcomes Section
+   ========================================================================== */
+
+.bne-district-outcomes {
+    padding: 2.5rem 1.5rem;
+    background: #f8fafc;
+}
+
+.bne-outcomes-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.bne-outcome-card {
+    background: #fff;
+    padding: 1.25rem;
+    border-radius: 8px;
+    text-align: center;
+    min-width: 120px;
+}
+
+.bne-outcome-card--featured {
+    background: #1e40af;
+    color: #fff;
+}
+
+.bne-outcome-card__value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.bne-outcome-card__label {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.bne-district-outcomes__note {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+/* ==========================================================================
+   Safety Section
+   ========================================================================== */
+
+.bne-district-safety {
+    padding: 2.5rem 1.5rem;
+    background: #fff;
+}
+
+.bne-safety-summary {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.bne-safety-summary--low {
+    border-left: 4px solid #22c55e;
+}
+
+.bne-safety-summary--average {
+    border-left: 4px solid #eab308;
+}
+
+.bne-safety-summary--high {
+    border-left: 4px solid #f97316;
+}
+
+.bne-safety-summary__value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.bne-safety-summary__label {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.bne-safety-summary__badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: #e2e8f0;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.bne-safety-summary__note {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+}
+
+.bne-safety-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.bne-safety-stat {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 8px;
+    min-width: 150px;
+}
+
+.bne-safety-stat__value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.bne-safety-stat__label {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+/* ==========================================================================
+   Financial Section
+   ========================================================================== */
+
+.bne-district-financial {
+    padding: 2.5rem 1.5rem;
+    background: #f8fafc;
+}
+
+.bne-financial-card {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 400px;
+}
+
+.bne-financial-card__value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.bne-financial-card__label {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+}
+
+.bne-financial-card__comparison {
+    margin-top: 1rem;
+}
+
+.bne-financial-card__diff {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+}
+
+.bne-financial-card__diff--above {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.bne-financial-card__diff--below {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.bne-district-financial__note {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #64748b;
+    max-width: 600px;
+}
+
+/* ==========================================================================
+   Listings Section
+   ========================================================================== */
+
+.bne-district-listings {
+    padding: 2.5rem 1.5rem;
+    background: #fff;
+}
+
+.bne-district-listings__header {
+    margin-bottom: 1.5rem;
+}
+
+.bne-district-listings__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.bne-listing-card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.bne-listing-card__image {
+    aspect-ratio: 4/3;
+    overflow: hidden;
+}
+
+.bne-listing-card__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.bne-listing-card__content {
+    padding: 1rem;
+}
+
+.bne-listing-card__price {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.bne-listing-card__address {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0.25rem 0 0;
+    color: #1e293b;
+}
+
+.bne-listing-card__city {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin: 0;
+}
+
+.bne-listing-card__details {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.bne-listing-card__link {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+.bne-district-listings__cta {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.bne-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.bne-btn--primary {
+    background: #1e40af;
+    color: #fff;
+}
+
+.bne-btn--primary:hover {
+    background: #1e3a8a;
+}
+
+.bne-btn--text {
+    background: transparent;
+    color: #64748b;
+}
+
+.bne-btn--text:hover {
+    color: #1e293b;
+}
+
+/* ==========================================================================
+   City Autocomplete
+   ========================================================================== */
+
+.bne-autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 4px;
+}
+
+.bne-autocomplete-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.bne-autocomplete-item:hover,
+.bne-autocomplete-item--selected {
+    background: #f1f5f9;
+}
+
+.bne-autocomplete-grade {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.bne-autocomplete-label {
+    flex: 1;
+    font-size: 0.875rem;
+    color: #1e293b;
+}
+
+/* Autocomplete grade colors */
+.bne-autocomplete-grade.bne-grade--a { background: var(--grade-a-bg); color: var(--grade-a-text); }
+.bne-autocomplete-grade.bne-grade--b { background: var(--grade-b-bg); color: var(--grade-b-text); }
+.bne-autocomplete-grade.bne-grade--c { background: var(--grade-c-bg); color: var(--grade-c-text); }
+.bne-autocomplete-grade.bne-grade--d { background: var(--grade-d-bg); color: var(--grade-d-text); }
+.bne-autocomplete-grade.bne-grade--f { background: var(--grade-f-bg); color: var(--grade-f-text); }
+.bne-autocomplete-grade.bne-grade--n { background: var(--grade-na-bg); color: var(--grade-na-text); }
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .bne-schools-hero__title,
+    .bne-district-hero__title {
+        font-size: 1.75rem;
+    }
+
+    .bne-districts-filters__row {
+        flex-direction: column;
+    }
+
+    .bne-districts-filters__group--submit {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .bne-districts-filters__group--submit .bne-btn {
+        width: 100%;
+    }
+
+    .bne-district-hero__main {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .bne-district-hero__stats {
+        justify-content: center;
+    }
+
+    .bne-school-card {
+        flex-wrap: wrap;
+    }
+
+    .bne-school-card__score {
+        width: auto;
+        text-align: left;
+        padding-top: 0;
+        border-top: none;
+    }
+
+    .bne-school-card__action {
+        margin-left: auto;
+    }
+
+    .bne-school-card--clickable .bne-school-card__content {
+        width: 100%;
+    }
+}
+
+/* ==========================================================================
+   School Detail Page Styles
+   ========================================================================== */
+
+/* School Hero */
+.bne-school-hero {
+    background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+    color: #fff;
+    padding: calc(var(--bne-header-height, 80px) + 2rem) 1.5rem 3rem;
+}
+
+.bne-school-hero .bne-breadcrumbs__item {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.bne-school-hero .bne-breadcrumbs__item a {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.bne-school-hero .bne-breadcrumbs__item a:hover {
+    color: #fff;
+}
+
+.bne-school-hero .bne-breadcrumbs__item--current {
+    color: #fff;
+}
+
+.bne-school-hero__content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.bne-school-hero__main {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.bne-school-hero__grade-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    flex-shrink: 0;
+}
+
+.bne-school-hero__grade {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.bne-school-hero__percentile {
+    font-size: 0.7rem;
+    opacity: 0.9;
+    margin-top: 0.25rem;
+}
+
+.bne-school-hero__info {
+    flex: 1;
+}
+
+.bne-school-hero__title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    line-height: 1.2;
+}
+
+.bne-school-hero__subtitle {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+}
+
+.bne-school-hero__location {
+    opacity: 0.8;
+}
+
+.bne-school-hero__location::before {
+    content: '•';
+    margin-right: 0.5rem;
+}
+
+.bne-school-hero__trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    margin: 0.5rem 0 0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.bne-school-hero__trend--up {
+    color: #86efac;
+}
+
+.bne-school-hero__trend--down {
+    color: #fca5a5;
+}
+
+.bne-school-hero__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.bne-school-hero__stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.bne-school-hero__stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.bne-school-hero__stat-label {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.bne-school-hero__contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+.bne-school-hero__address {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.bne-school-hero__link {
+    color: #fff;
+    text-decoration: none;
+}
+
+.bne-school-hero__link:hover {
+    text-decoration: underline;
+}
+
+/* School Stats Bar */
+.bne-school-stats {
+    background: #fff;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.bne-school-stats__grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.bne-school-stats__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.bne-school-stats__value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.bne-school-stats__label {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* School MCAS Section */
+.bne-school-mcas {
+    padding: 2.5rem 1.5rem;
+    background: #f8fafc;
+}
+
+.bne-school-mcas .bne-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.bne-mcas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.bne-mcas-card {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.bne-mcas-card__subject {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 0.75rem;
+}
+
+.bne-mcas-card__score {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1;
+}
+
+.bne-mcas-card__label {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+}
+
+.bne-mcas-history {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bne-mcas-history__title {
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    margin: 0;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.bne-mcas-history table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.bne-mcas-history th,
+.bne-mcas-history td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.bne-mcas-history th {
+    background: #f8fafc;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+}
+
+.bne-mcas-history td {
+    font-size: 0.875rem;
+}
+
+.bne-mcas-history tr:last-child td {
+    border-bottom: none;
+}
+
+/* School Demographics Section */
+.bne-school-demographics {
+    padding: 2.5rem 1.5rem;
+    background: #fff;
+}
+
+.bne-school-demographics .bne-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.bne-demographics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.bne-demographics-card {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 12px;
+}
+
+.bne-demographics-card__title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    color: #1e293b;
+}
+
+.bne-demographics-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.bne-demographics-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.bne-demographics-bar__header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem;
+}
+
+.bne-demographics-bar__label {
+    color: #475569;
+}
+
+.bne-demographics-bar__value {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.bne-demographics-bar__track {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.bne-demographics-bar__fill {
+    height: 100%;
+    background: #3b82f6;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.bne-demographics-split {
+    display: flex;
+    gap: 1rem;
+}
+
+.bne-demographics-split__item {
+    flex: 1;
+    text-align: center;
+    padding: 1rem;
+    background: #fff;
+    border-radius: 8px;
+}
+
+.bne-demographics-split__value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.bne-demographics-split__label {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.bne-demographics-populations {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.bne-demographics-population {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #fff;
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+.bne-demographics-population__value {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.bne-demographics-population__label {
+    color: #64748b;
+}
+
+/* School Sports Section */
+.bne-school-sports {
+    padding: 2.5rem 1.5rem;
+    background: #f8fafc;
+}
+
+.bne-school-sports .bne-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.bne-sports-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #fff;
+    border-radius: 12px;
+}
+
+.bne-sports-summary__stat {
+    text-align: center;
+}
+
+.bne-sports-summary__value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.bne-sports-summary__label {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.bne-sports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.bne-sports-category {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 12px;
+}
+
+.bne-sports-category__title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    color: #1e293b;
+}
+
+.bne-sports-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.bne-sport-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    background: #f1f5f9;
+    border-radius: 6px;
+    font-size: 0.8rem;
+}
+
+.bne-sport-tag__count {
+    font-weight: 600;
+    color: #64748b;
+}
+
+/* School Features Section */
+.bne-school-features {
+    padding: 2.5rem 1.5rem;
+    background: #fff;
+}
+
+.bne-school-features .bne-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.bne-features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.bne-feature-card {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 12px;
+}
+
+.bne-feature-card__title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin: 0 0 1rem;
+}
+
+.bne-feature-card__metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.bne-feature-metric {
+    display: flex;
+    flex-direction: column;
+}
+
+.bne-feature-metric__value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.bne-feature-metric__label {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.bne-feature-card__note {
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+/* School Map Section */
+.bne-school-map {
+    padding: 2.5rem 1.5rem;
+    background: #f8fafc;
+}
+
+.bne-school-map .bne-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.bne-school-map__container {
+    height: 300px;
+    background: #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.bne-school-map__placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #64748b;
+}
+
+.bne-school-map__actions {
+    text-align: center;
+}
+
+/* School Navigation Section */
+.bne-school-navigation {
+    padding: 2.5rem 1.5rem;
+    background: #fff;
+}
+
+.bne-school-navigation .bne-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.bne-school-navigation__content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.bne-school-navigation__district,
+.bne-school-navigation__browse {
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+.bne-school-navigation__title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+    color: #1e293b;
+}
+
+.bne-school-navigation__description {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0 0 1rem;
+}
+
+/* School FAQ Section */
+.bne-school-faq {
+    padding: 2.5rem 1.5rem;
+    background: #f8fafc;
+}
+
+.bne-school-faq .bne-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Responsive for School Detail */
+@media (max-width: 768px) {
+    .bne-school-hero__main {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .bne-school-hero__grade-badge {
+        margin-bottom: 1rem;
+    }
+
+    .bne-school-hero__stats {
+        justify-content: center;
+    }
+
+    .bne-school-hero__contact {
+        justify-content: center;
+    }
+
+    .bne-school-hero__subtitle {
+        justify-content: center;
+    }
+
+    .bne-school-stats__grid {
+        gap: 1rem;
+    }
+
+    .bne-school-stats__item {
+        min-width: 80px;
+    }
+
+    .bne-mcas-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ==========================================================================
+   Highlight Badges (SEO keywords + UX signals)
+   ========================================================================== */
+
+.bne-school-hero__highlights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.bne-highlight-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    backdrop-filter: blur(4px);
+}
+
+.bne-highlight-badge__detail {
+    opacity: 0.8;
+    font-size: 0.7rem;
+    font-weight: 400;
+}
+
+/* Badge type colors */
+.bne-highlight-badge--ap {
+    background: rgba(124, 58, 237, 0.4);
+}
+
+.bne-highlight-badge--ratio {
+    background: rgba(34, 197, 94, 0.4);
+}
+
+.bne-highlight-badge--graduation {
+    background: rgba(234, 179, 8, 0.4);
+}
+
+.bne-highlight-badge--sports {
+    background: rgba(249, 115, 22, 0.4);
+}
+
+.bne-highlight-badge--diversity {
+    background: rgba(59, 130, 246, 0.4);
+}
+
+.bne-highlight-badge--attendance {
+    background: rgba(16, 185, 129, 0.4);
+}
+
+/* ==========================================================================
+   Data Freshness Indicator (Trust signals)
+   ========================================================================== */
+
+.bne-data-freshness {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.bne-data-freshness span {
+    display: inline-flex;
+    align-items: center;
+}
+
+.bne-data-freshness span:not(:first-child)::before {
+    content: '•';
+    margin-right: 0.75rem;
+}
+
+/* ==========================================================================
+   Related Schools Section (Internal linking)
+   ========================================================================== */
+
+.bne-related-schools {
+    padding: 2.5rem 1.5rem;
+    background: #fff;
+}
+
+.bne-related-schools .bne-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.bne-related-schools__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.bne-related-school-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.bne-related-school-card:hover {
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.bne-related-school-card__grade {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.bne-related-school-card__info {
+    flex: 1;
+    min-width: 0;
+}
+
+.bne-related-school-card__name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bne-related-school-card__meta {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.125rem;
+    display: block;
+}
+
+.bne-related-school-card__arrow {
+    flex-shrink: 0;
+    font-size: 1rem;
+    color: #94a3b8;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.bne-related-school-card:hover .bne-related-school-card__arrow {
+    color: #3b82f6;
+    transform: translateX(2px);
+}
+
+.bne-related-schools__cta {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+/* ==========================================================================
+   Button Variants
+   ========================================================================== */
+
+.bne-btn--outline {
+    background: transparent;
+    border: 2px solid #1e40af;
+    color: #1e40af;
+}
+
+.bne-btn--outline:hover {
+    background: #1e40af;
+    color: #fff;
+}
+
+/* ==========================================================================
+   Responsive - Highlights and Related Schools
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .bne-school-hero__highlights {
+        justify-content: center;
+    }
+
+    .bne-data-freshness {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .bne-related-schools__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bne-related-school-card__name {
+        white-space: normal;
+    }
+}
+
+/* ==========================================================================
+   Methodology Page
+   ========================================================================== */
+
+.bne-methodology-page {
+    background: #f8fafc;
+}
+
+.bne-methodology-hero {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+    color: #fff;
+    padding: 3rem 0;
+}
+
+.bne-methodology-hero .bne-breadcrumbs__item a {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.bne-methodology-hero .bne-breadcrumbs__item--current span {
+    color: #fff;
+}
+
+.bne-methodology-hero__title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 1rem 0;
+}
+
+.bne-methodology-hero__subtitle {
+    font-size: 1.125rem;
+    opacity: 0.9;
+    max-width: 800px;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Overview Cards */
+.bne-methodology-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.bne-methodology-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.bne-methodology-card__icon {
+    margin-bottom: 1rem;
+}
+
+.bne-methodology-card__icon .bne-grade-badge {
+    font-size: 2rem;
+    width: 60px;
+    height: 60px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bne-methodology-card__number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e3a5f;
+}
+
+.bne-methodology-card__rank {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #7c3aed;
+}
+
+.bne-methodology-card h3 {
+    font-size: 1.125rem;
+    margin: 0 0 0.5rem 0;
+    color: #1e3a5f;
+}
+
+.bne-methodology-card p {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0;
+}
+
+/* Section Intro */
+.bne-section-intro {
+    font-size: 1.125rem;
+    color: #475569;
+    max-width: 800px;
+    margin: 0 0 2rem 0;
+    line-height: 1.7;
+}
+
+/* Methodology Tables */
+.bne-methodology-tables {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+}
+
+.bne-methodology-table-wrapper {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.bne-methodology-table-wrapper h3 {
+    font-size: 1.25rem;
+    margin: 0 0 1rem 0;
+    color: #1e3a5f;
+}
+
+.bne-methodology-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.bne-methodology-table th,
+.bne-methodology-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.bne-methodology-table th {
+    background: #f8fafc;
+    font-weight: 600;
+    color: #475569;
+}
+
+.bne-methodology-table td:nth-child(2) {
+    font-weight: 600;
+    color: #1e3a5f;
+    white-space: nowrap;
+}
+
+.bne-methodology-note {
+    font-size: 0.8125rem;
+    color: #64748b;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: #f8fafc;
+    border-radius: 8px;
+}
+
+/* Grade Scale */
+.bne-grade-scale {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.bne-grade-scale__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    background: #fff;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.bne-grade-scale__range {
+    font-size: 0.8125rem;
+    color: #64748b;
+}
+
+/* Sources Grid */
+.bne-sources-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.bne-source-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.bne-source-card h3 {
+    font-size: 1.125rem;
+    margin: 0 0 0.25rem 0;
+    color: #1e3a5f;
+}
+
+.bne-source-card > p {
+    font-size: 0.8125rem;
+    color: #64748b;
+    margin: 0 0 1rem 0;
+}
+
+.bne-source-card ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    font-size: 0.875rem;
+    color: #475569;
+}
+
+.bne-source-card li {
+    margin-bottom: 0.25rem;
+}
+
+/* Update Info */
+.bne-update-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.bne-update-item {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.bne-update-item h3 {
+    font-size: 1rem;
+    margin: 0 0 0.5rem 0;
+    color: #1e3a5f;
+}
+
+.bne-update-item p {
+    font-size: 0.875rem;
+    color: #475569;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Limitations */
+.bne-limitations-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.bne-limitation-item {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid #f59e0b;
+}
+
+.bne-limitation-item h3 {
+    font-size: 1rem;
+    margin: 0 0 0.5rem 0;
+    color: #1e3a5f;
+}
+
+.bne-limitation-item p {
+    font-size: 0.875rem;
+    color: #475569;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* CTA Section */
+.bne-methodology-cta {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+    color: #fff;
+    text-align: center;
+    padding: 4rem 0;
+}
+
+.bne-methodology-cta h2 {
+    font-size: 2rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.bne-methodology-cta p {
+    font-size: 1.125rem;
+    opacity: 0.9;
+    margin: 0 0 1.5rem 0;
+}
+
+.bne-btn--large {
+    padding: 1rem 2rem;
+    font-size: 1.125rem;
+}
+
+/* Responsive - Methodology */
+@media (max-width: 768px) {
+    .bne-methodology-hero__title {
+        font-size: 1.75rem;
+    }
+
+    .bne-methodology-tables {
+        grid-template-columns: 1fr;
+    }
+
+    .bne-methodology-table-wrapper {
+        overflow-x: auto;
+    }
+
+    .bne-grade-scale {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .bne-grade-scale__item {
+        flex-direction: row;
+        width: 100%;
+        max-width: 200px;
+        justify-content: space-between;
+    }
+}
+
+/* ==========================================================================
+   School Listings CTA Section
+   ========================================================================== */
+
+.bne-school-listings-cta {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-top: 1px solid #bae6fd;
+    border-bottom: 1px solid #bae6fd;
+}
+
+.bne-listings-cta__content {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2rem;
+    align-items: center;
+}
+
+.bne-listings-cta__badge {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+}
+
+.bne-listings-cta__badge.bne-grade--a { background: rgba(34, 197, 94, 0.2); color: #166534; }
+.bne-listings-cta__badge.bne-grade--b { background: rgba(59, 130, 246, 0.2); color: #1e40af; }
+.bne-listings-cta__badge.bne-grade--c { background: rgba(234, 179, 8, 0.2); color: #854d0e; }
+.bne-listings-cta__badge.bne-grade--d { background: rgba(249, 115, 22, 0.2); color: #9a3412; }
+
+.bne-listings-cta__title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e3a5f;
+    margin: 0 0 0.75rem 0;
+}
+
+.bne-listings-cta__description {
+    font-size: 1rem;
+    color: #475569;
+    margin: 0 0 1.5rem 0;
+    line-height: 1.6;
+}
+
+.bne-listings-cta__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.bne-btn__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.25);
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    margin-left: 0.5rem;
+}
+
+.bne-listings-cta__visual {
+    text-align: center;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    min-width: 160px;
+}
+
+.bne-listings-cta__icon {
+    color: #1e3a5f;
+    margin-bottom: 0.75rem;
+}
+
+.bne-listings-cta__stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e3a5f;
+}
+
+.bne-listings-cta__stat-label {
+    font-size: 0.8125rem;
+    color: #64748b;
+}
+
+.bne-listings-cta__secondary {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    text-align: center;
+    font-size: 0.9375rem;
+    color: #475569;
+}
+
+.bne-listings-cta__secondary a {
+    color: #1e3a5f;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.bne-listings-cta__secondary a:hover {
+    color: #0369a1;
+}
+
+/* District Listings Enhancements */
+.bne-district-listings__header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.bne-district-listings__header-main {
+    flex: 1;
+}
+
+.bne-district-listings__grade-tag {
+    display: inline-block;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.bne-district-listings__grade-tag.bne-grade--a { background: rgba(34, 197, 94, 0.2); color: #166534; }
+.bne-district-listings__grade-tag.bne-grade--b { background: rgba(59, 130, 246, 0.2); color: #1e40af; }
+.bne-district-listings__grade-tag.bne-grade--c { background: rgba(234, 179, 8, 0.2); color: #854d0e; }
+.bne-district-listings__grade-tag.bne-grade--d { background: rgba(249, 115, 22, 0.2); color: #9a3412; }
+
+.bne-district-listings__header-action {
+    flex-shrink: 0;
+}
+
+.bne-district-listings__cta-box {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+    border-radius: 16px;
+    padding: 2.5rem;
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.bne-district-listings__cta-content h2,
+.bne-district-listings__cta-content h3 {
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.75rem 0;
+}
+
+.bne-district-listings__cta-content p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    margin: 0 0 1.5rem 0;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+}
+
+.bne-district-listings__cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.bne-district-listings__cta-box .bne-btn--outline {
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    color: #fff;
+}
+
+.bne-district-listings__cta-box .bne-btn--outline:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #fff;
+}
+
+.bne-district-listings__cta-box .bne-listings-cta__badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+/* No listings variant */
+.bne-district-listings--no-listings {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+.bne-district-listings--no-listings .bne-district-listings__cta-box {
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.bne-district-listings--no-listings .bne-district-listings__cta-content h2 {
+    color: #1e3a5f;
+}
+
+.bne-district-listings--no-listings .bne-district-listings__cta-content p {
+    color: #475569;
+}
+
+.bne-district-listings--no-listings .bne-btn--outline {
+    background: transparent;
+    border: 2px solid #1e3a5f;
+    color: #1e3a5f;
+}
+
+.bne-district-listings--no-listings .bne-btn--outline:hover {
+    background: #1e3a5f;
+    color: #fff;
+}
+
+/* Responsive CTA sections */
+@media (max-width: 768px) {
+    .bne-listings-cta__content {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .bne-listings-cta__visual {
+        order: -1;
+    }
+
+    .bne-listings-cta__title {
+        font-size: 1.5rem;
+    }
+
+    .bne-listings-cta__actions {
+        justify-content: center;
+    }
+
+    .bne-district-listings__header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .bne-district-listings__header-action {
+        width: 100%;
+    }
+
+    .bne-district-listings__header-action .bne-btn {
+        width: 100%;
+    }
+
+    .bne-district-listings__cta-box {
+        padding: 1.5rem;
+    }
+
+    .bne-district-listings__cta-actions {
+        flex-direction: column;
+    }
+
+    .bne-district-listings__cta-actions .bne-btn {
+        width: 100%;
+    }
+}
+
+/* ==========================================================================
+   Inline Stats CTA
+   ========================================================================== */
+
+.bne-school-stats__item--cta {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+    border-radius: 12px;
+    padding: 0 !important;
+}
+
+.bne-school-stats__cta-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    color: #fff;
+    text-decoration: none;
+    height: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bne-school-stats__cta-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);
+}
+
+.bne-school-stats__cta-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+}
+
+.bne-school-stats__cta-text {
+    font-size: 0.875rem;
+    font-weight: 600;
+}

@@ -1,0 +1,956 @@
+/**
+ * Mobile Property Search Styles
+ * Enhances existing map UI for mobile devices
+ * Updated to use design system tokens
+ *
+ * @package MLS_Listings_Display
+ * @version 7.0.0
+ */
+
+/* Mobile-specific overrides for map view */
+@media (max-width: 768px) {
+    /* Full screen wrapper on mobile */
+    .mld-fixed-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 9999;
+    }
+    
+    /* Ensure map container fills available space */
+    #bme-half-map-wrapper {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    
+    /* Hide resize handle on mobile */
+    .bme-resize-handle {
+        display: none !important;
+    }
+    
+    /* Map container in mobile view */
+    .bme-map-ui-wrapper {
+        position: relative;
+        height: 100%;
+        width: 100%;
+    }
+    
+    #bme-map-container {
+        height: 100%;
+        width: 100%;
+    }
+    
+    /* Top bar adjustments for mobile */
+    #bme-top-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 10;
+        background: white;
+        padding: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Search controls on mobile */
+    #bme-search-controls-container {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+    }
+    
+    #bme-search-wrapper {
+        flex: 1;
+    }
+    
+    #bme-search-input {
+        width: 100%;
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+    
+    /* Hide desktop-specific elements */
+    #bme-property-type-desktop-container {
+        display: none !important;
+    }
+    
+    /* Style nearby toggle for mobile */
+    .bme-nearby-toggle-container {
+        position: absolute;
+        right: 2px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--ds-white, white);
+        padding: 4px 8px;
+        border-radius: 20px;
+        border: 1px solid var(--ds-border, #e5e7eb);
+        z-index: 2;
+    }
+
+    .bme-nearby-label {
+        font-size: 12px;
+        color: var(--ds-text-muted, #6b7280);
+        white-space: nowrap;
+    }
+    
+    .bme-switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 24px;
+    }
+    
+    .bme-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .bme-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--ds-border-strong, #d1d5db);
+        transition: .2s;
+        border-radius: 24px;
+    }
+    
+    .bme-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .2s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .bme-slider {
+        background-color: var(--ds-teal, #0891B2);
+    }
+    
+    input:checked + .bme-slider:before {
+        transform: translateX(16px);
+    }
+    
+    /* Listings container for mobile */
+    #bme-listings-list-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        background: white;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        z-index: 5;
+        /* Padding will be set dynamically by JavaScript */
+    }
+    
+    /* View mode specific styles */
+    #bme-half-map-wrapper.view-mode-list #bme-listings-list-container {
+        transform: translateY(0);
+        padding-top: 65px; /* Offset for search bar height to prevent first card being hidden */
+    }
+
+    #bme-half-map-wrapper.view-mode-map #bme-listings-list-container {
+        transform: translateY(100%);
+    }
+    
+    /* Mobile view toggle buttons */
+    .bme-view-mode-toggle {
+        position: fixed !important;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20;
+        display: flex !important;
+        background: rgba(255, 255, 255, 0.5) !important; /* 50% transparency */
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 30px;
+        padding: 4px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.15),
+                    0 0 0 1px rgba(255,255,255,0.2) inset !important;
+        gap: 4px;
+        transition: background 0.3s ease;
+    }
+
+    .bme-view-mode-toggle:hover {
+        background: rgba(255, 255, 255, 0.8) !important; /* 80% on hover */
+    }
+    
+    .bme-view-mode-btn {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 14px;
+        border: none;
+        background: transparent;
+        color: var(--ds-text-tertiary, #374151);
+        border-radius: 26px;
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        min-height: 40px; /* Still touch-friendly */
+    }
+
+    .bme-view-mode-btn.active {
+        background: rgba(8, 145, 178, 0.9); /* Semi-transparent teal */
+        color: white;
+        box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+    }
+
+    .bme-view-mode-btn:not(.active):hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .bme-view-mode-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+    
+    /* Listings grid on mobile */
+    .bme-listings-grid {
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    /* Property cards on mobile */
+    .bme-property-card {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid var(--ds-border, #e5e7eb);
+        border-radius: var(--ds-radius-lg, 8px);
+        background: var(--ds-white, white);
+        text-decoration: none;
+        color: inherit;
+        transition: box-shadow 0.2s ease;
+    }
+    
+    .bme-property-card:active {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .bme-property-card-image {
+        width: 100px;
+        height: 75px;
+        object-fit: cover;
+        border-radius: 4px;
+        flex-shrink: 0;
+    }
+    
+    .bme-property-card-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .bme-property-card-price {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--ds-text-secondary, #1f2937);
+    }
+
+    .bme-property-card-info {
+        font-size: 14px;
+        color: var(--ds-text-muted, #6b7280);
+    }
+
+    .bme-property-card-address {
+        font-size: 13px;
+        color: var(--ds-text-light, #9ca3af);
+    }
+    
+    /* Filter modal adjustments */
+    #bme-filters-modal-content {
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        margin: 0;
+    }
+    
+    #bme-modal-search-group {
+        display: block !important;
+    }
+    
+    #bme-property-type-mobile-container {
+        display: block !important;
+    }
+    
+    /* Filter tags on mobile */
+    #bme-filter-tags-container {
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        padding: 8px;
+        background: var(--ds-white, white);
+        border-bottom: 1px solid var(--ds-border, #e5e7eb);
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+        z-index: 9;
+        max-height: 50px;
+    }
+    
+    /* Remove static padding adjustment - now handled by JavaScript */
+    
+    /* Popup adjustments for mobile */
+    .bme-popup {
+        max-width: 90vw;
+        max-height: 80vh;
+    }
+    
+    .bme-popup-gallery {
+        height: 200px;
+    }
+    
+    /* Loading indicator */
+    .bme-loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 100;
+    }
+    
+    /* Count indicator on mobile - bottom left */
+    #bme-listings-count-indicator {
+        position: fixed !important;
+        top: auto !important;
+        right: auto !important;
+        bottom: 70px !important;
+        left: 10px !important;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 6px 16px !important;
+        border-radius: 20px;
+        font-size: 14px;
+        z-index: 19;
+        white-space: nowrap;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: 200px;
+        display: inline-block !important;
+        line-height: 1.2;
+        overflow: visible !important;
+        box-sizing: content-box !important;
+    }
+    
+    /* Mobile draw button container - positioned below listings count */
+    .bme-mobile-draw-container {
+        position: fixed !important;
+        top: 105px !important; /* Below listings count indicator */
+        right: 10px !important;
+        z-index: 19;
+        display: none; /* Hidden by default, shown in list view */
+    }
+    
+    /* Show mobile draw button only in list view */
+    #bme-half-map-wrapper.view-mode-list .bme-mobile-draw-container {
+        display: block !important;
+    }
+    
+    /* Hide mobile draw button in map view */
+    #bme-half-map-wrapper.view-mode-map .bme-mobile-draw-container {
+        display: none !important;
+    }
+    
+    .bme-mobile-draw-button {
+        background: var(--ds-teal, #0891B2);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+        white-space: nowrap;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .bme-mobile-draw-button:active {
+        background: var(--ds-teal-hover, #0E7490);
+    }
+    
+    /* Hide Google Maps controls on mobile */
+    .gm-bundled-control,
+    .gm-svpc,
+    .gm-control-active {
+        display: none !important;
+    }
+    
+    /* Safe area insets for modern devices */
+    .mld-fixed-wrapper {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    .bme-view-mode-toggle {
+        bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+}
+
+/* Landscape adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+    #bme-top-bar {
+        padding: 5px 10px;
+    }
+    
+    #bme-search-input {
+        height: 36px;
+    }
+    
+    .bme-view-mode-toggle {
+        bottom: 10px;
+    }
+    
+    .bme-view-mode-btn {
+        min-height: 36px;
+        padding: 6px 12px;
+    }
+}
+
+/* Prevent zoom on input focus */
+@media (max-width: 768px) {
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select {
+        font-size: 16px !important;
+    }
+}
+
+/* Touch-friendly adjustments */
+@media (pointer: coarse) {
+    .bme-control-button,
+    .bme-view-mode-btn,
+    .button-primary,
+    .button-secondary {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    .bme-checkbox-group label,
+    .bme-button-group button {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+}
+
+/* Mobile filter indicator in search bar */
+@media (max-width: 768px) {
+    .bme-mobile-filter-indicator {
+        position: absolute;
+        right: 50px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--ds-teal, #0891B2);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        white-space: nowrap;
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        z-index: 2;
+    }
+
+    .bme-mobile-filter-indicator:active {
+        background: var(--ds-teal-hover, #0E7490);
+    }
+    
+    /* Filter summary modal */
+    .bme-mobile-filter-summary-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: flex;
+        align-items: flex-end;
+        animation: fadeIn 0.2s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .bme-mobile-filter-summary-content {
+        background: white;
+        width: 100%;
+        max-height: 70vh;
+        border-radius: 16px 16px 0 0;
+        display: flex;
+        flex-direction: column;
+        animation: slideUp 0.3s ease;
+    }
+    
+    @keyframes slideUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+    
+    .bme-mobile-filter-summary-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--ds-border, #e5e7eb);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .bme-mobile-filter-summary-header h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .bme-close-modal {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: var(--ds-text-muted, #6b7280);
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .bme-mobile-filter-summary-body {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .bme-mobile-filter-tag {
+        background: var(--ds-surface-muted, #f3f4f6);
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .bme-remove-filter {
+        color: var(--ds-text-muted, #6b7280);
+        cursor: pointer;
+        font-size: 18px;
+        line-height: 1;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.1);
+    }
+    
+    .bme-remove-filter:active {
+        background: rgba(0, 0, 0, 0.2);
+    }
+    
+    .bme-mobile-filter-summary-footer {
+        padding: 20px;
+        border-top: 1px solid var(--ds-border, #e5e7eb);
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+    
+    .bme-clear-all-filters {
+        width: 100%;
+        padding: 12px;
+        background: var(--ds-red, #DC2626);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .bme-clear-all-filters:active {
+        background: var(--ds-red-hover, #B91C1C);
+    }
+    
+    /* Adjust search input padding - nearby toggle moved to map controls */
+    #bme-search-input {
+        padding-right: 15px; /* Standard padding since nearby toggle moved */
+    }
+
+    #bme-search-bar-wrapper:has(.bme-mobile-filter-indicator) #bme-search-input {
+        padding-right: 120px; /* Space for filter indicator only */
+    }
+    
+    /* Make search wrapper relative for indicator positioning */
+    #bme-search-wrapper {
+        position: relative;
+    }
+    
+    /* Update indicator positioning - tight next to nearby toggle */
+    .bme-mobile-filter-indicator {
+        right: 110px !important; /* Positioned right next to nearby toggle */
+        pointer-events: all !important;
+        max-width: 120px !important;
+    }
+    
+    /* Mobile filter tags in modal */
+    .bme-mobile-modal-tags {
+        padding: 10px 20px;
+        background: var(--ds-surface-subtle, #f9fafb);
+        border-bottom: 1px solid var(--ds-border, #e5e7eb);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    #bme-modal-search-group + .bme-mobile-modal-tags {
+        margin-top: -20px;
+        margin-bottom: 20px;
+    }
+}
+
+/* Map drawing controls for mobile */
+@media (max-width: 768px) {
+    /* New Map Controls Panel for mobile */
+    .bme-map-controls-panel {
+        position: fixed !important;
+        top: 66px !important; /* Moved down 5px */
+        right: 0 !important; /* Flush to right edge */
+        width: 180px !important;
+        max-width: calc(100vw - 100px) !important;
+        background: rgba(255, 255, 255, 0.5) !important; /* 50% transparency */
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 10px 0 0 10px !important; /* No radius on right edge */
+        box-shadow: 0 2px 12px rgba(0,0,0,0.1),
+                    0 0 0 1px rgba(255,255,255,0.2) inset !important;
+        z-index: 100 !important;
+    }
+
+    .bme-map-controls-panel:hover {
+        background: rgba(255, 255, 255, 0.8) !important; /* 80% on hover */
+    }
+
+    .bme-controls-header {
+        padding: 7px 8px !important;
+        min-height: 40px !important; /* Still touch-friendly */
+    }
+
+    .bme-controls-title {
+        font-size: 11px !important;
+    }
+
+    .bme-controls-content {
+        padding: 5px !important;
+    }
+
+    .bme-control-item {
+        padding: 7px 5px !important;
+        min-height: 38px !important; /* Still touch-friendly */
+    }
+
+    .bme-control-label {
+        font-size: 10px !important;
+    }
+
+    /* Action buttons on mobile */
+    .bme-map-action-buttons {
+        position: fixed !important;
+        top: auto !important;
+        bottom: 120px !important;
+        right: 8px !important;
+        left: auto !important;
+    }
+
+    .bme-map-controls-panel.collapsed {
+        width: auto !important;
+    }
+
+    /* Legacy support - hide old controls */
+    #bme-map-controls {
+        display: none !important;
+    }
+    
+    /* Allow JavaScript to control display */
+    #bme-half-map-wrapper.mobile-view #bme-map-controls {
+        /* JavaScript will handle display property */
+    }
+    
+    /* Ensure only buttons capture touch events */
+    #bme-map-controls .bme-map-control-btn {
+        pointer-events: auto;
+    }
+    
+    /* Old toggle styles - preserved for backwards compatibility */
+    
+    .bme-draw-toggle-label {
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        color: var(--ds-text-secondary, #1f2937) !important;
+        white-space: nowrap !important;
+    }
+
+    /* Toggle switch styles */
+    .bme-draw-toggle {
+        position: relative !important;
+        width: 40px !important;
+        height: 24px !important;
+        background-color: var(--ds-border-strong, #d1d5db) !important;
+        border-radius: 24px !important;
+        cursor: pointer !important;
+        transition: background-color 0.3s ease !important;
+        pointer-events: auto !important;
+    }
+    
+    .bme-draw-toggle.active {
+        background-color: var(--ds-teal, #0891B2) !important;
+    }
+    
+    .bme-draw-toggle-slider {
+        position: absolute !important;
+        top: 2px !important;
+        left: 2px !important;
+        width: 20px !important;
+        height: 20px !important;
+        background-color: white !important;
+        border-radius: 50% !important;
+        transition: transform 0.3s ease !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+    }
+    
+    .bme-draw-toggle.active .bme-draw-toggle-slider {
+        transform: translateX(16px) !important;
+    }
+    
+    /* Reset button */
+    .bme-reset-button {
+        background: var(--ds-red, #DC2626) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 6px !important;
+        padding: 6px 14px !important;
+        cursor: pointer !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        white-space: nowrap !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        pointer-events: auto !important;
+        transition: background-color 0.2s ease !important;
+        box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3) !important;
+    }
+
+    .bme-reset-button:active {
+        background-color: var(--ds-red-hover, #B91C1C) !important;
+    }
+    
+    .bme-reset-button[style*="display: none"] {
+        display: none !important;
+    }
+    
+    .bme-reset-button.force-hidden {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+    
+    /* Hide Complete Shape button on mobile only */
+    @media (max-width: 768px) {
+        #bme-complete-shape-button {
+            display: none !important;
+        }
+    }
+    
+    .bme-map-control-btn:active {
+        background-color: var(--ds-surface-muted, #f3f4f6);
+    }
+    
+    .bme-map-control-btn.active {
+        background-color: var(--ds-teal, #0891B2);
+        color: white;
+        border-color: var(--ds-teal, #0891B2);
+    }
+
+    .bme-complete-shape {
+        background-color: var(--ds-success, #10b981);
+        color: white;
+        border-color: var(--ds-success, #10b981);
+    }
+    
+    /* Drawing panel on mobile */
+    .bme-drawing-panel {
+        position: fixed;
+        bottom: 100px; /* Above view toggle */
+        left: 10px;
+        right: 10px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        padding: 15px;
+        max-height: 40vh;
+        overflow-y: auto;
+        display: none;
+        z-index: 25; /* Increased to match map controls */
+        pointer-events: auto; /* Only capture events when visible */
+    }
+    
+    .bme-drawing-panel.active {
+        display: block;
+    }
+    
+    /* Editable shape names on mobile */
+    .bme-polygon-name-input {
+        width: calc(100% - 50px);
+        padding: 6px 10px;
+        font-size: 14px;
+        border: 1px solid var(--ds-teal, #0891B2);
+        border-radius: var(--ds-radius-md, 4px);
+        background: var(--ds-white, white);
+    }
+    
+    /* Adjust polygon list for mobile */
+    .bme-polygon-item {
+        padding: 12px;
+        font-size: 14px;
+    }
+    
+    .bme-polygon-delete {
+        width: 32px;
+        height: 32px;
+        font-size: 20px;
+    }
+    
+    /* Ensure map controls are above everything on mobile */
+    .bme-map-ui-wrapper {
+        position: relative;
+    }
+    
+    /* Active state for draw button */
+    #bme-map-controls .bme-map-control-btn.active {
+        background-color: var(--ds-teal, #0891B2) !important;
+        color: white !important;
+        border-color: var(--ds-teal, #0891B2) !important;
+    }
+    
+    /* Ensure Clear Shapes button respects inline display:none */
+    #bme-clear-shapes-button[style*="display: none"] {
+        display: none !important;
+    }
+    
+    /* Force hidden class for clear shapes button */
+    #bme-clear-shapes-button.force-hidden {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+    
+    /* Force hide map controls in list view - highest specificity */
+    #bme-half-map-wrapper.mobile-view.view-mode-list #bme-map-controls,
+    #bme-half-map-wrapper.view-mode-list #bme-map-controls,
+    .view-mode-list #bme-map-controls {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+    
+    /* Only show in map view */
+    #bme-half-map-wrapper.mobile-view.view-mode-map #bme-map-controls {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    /* Force hidden class - absolute override */
+    #bme-map-controls.force-hidden {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+        top: -9999px !important;
+    }
+    
+    /* Ensure proper visibility for both button types */
+    @media (max-width: 768px) {
+        /* In list view: show mobile button, hide map controls */
+        .view-mode-list .bme-mobile-draw-container {
+            display: block !important;
+        }
+        .view-mode-list #bme-map-controls {
+            display: none !important;
+        }
+        
+        /* In map view: hide mobile button, show map controls */
+        .view-mode-map .bme-mobile-draw-container {
+            display: none !important;
+        }
+        .view-mode-map #bme-map-controls {
+            display: flex !important;
+        }
+    }
+
+    /* Scroll-based hiding for mobile list view */
+    @media (max-width: 768px) {
+        /* Hide controls when scrolling */
+        #bme-map-controls-panel.hidden-on-scroll {
+            opacity: 0 !important;
+            transform: translateX(120%) !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        .bme-view-mode-toggle.hidden-on-scroll {
+            opacity: 0 !important;
+            transform: translateX(-50%) translateY(150%) !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+    }
+}

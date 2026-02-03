@@ -1,0 +1,103 @@
+/**
+ * SNAB Frontend CSS Custom Properties
+ *
+ * Theme variables for the appointment booking widget.
+ * These can be overridden via admin settings or custom CSS.
+ *
+ * @package SN_Appointment_Booking
+ * @since 1.3.0
+ */
+
+/* ==========================================================================
+   Default Theme Variables
+   ========================================================================== */
+
+:root {
+    /* Primary Colors */
+    --snab-primary-color: #1e73be;
+    --snab-primary-hover: #165a96;
+    --snab-primary-light: #e8f2fb;
+
+    /* Accent Colors */
+    --snab-accent-color: #0891b2;
+    --snab-accent-hover: #0e7490;
+    --snab-accent-light: #e0f7fa;
+
+    /* Text Colors */
+    --snab-text-color: #222222;
+    --snab-text-muted: #666666;
+    --snab-text-light: #888888;
+
+    /* Background Colors */
+    --snab-bg-color: #ffffff;
+    --snab-bg-secondary: #f7f8f9;
+    --snab-bg-highlight: var(--snab-primary-light);
+
+    /* Border Colors */
+    --snab-border-color: #e5e7eb;
+    --snab-border-focus: var(--snab-primary-color);
+
+    /* Status Colors */
+    --snab-success-color: #10b981;
+    --snab-success-bg: #d1fae5;
+    --snab-error-color: #ef4444;
+    --snab-error-bg: #fef2f2;
+    --snab-warning-color: #f59e0b;
+    --snab-warning-bg: #fef3c7;
+
+    /* Typography */
+    --snab-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --snab-font-size-base: 16px;
+    --snab-font-size-sm: 0.875rem;
+    --snab-font-size-xs: 0.75rem;
+    --snab-font-size-lg: 1.125rem;
+    --snab-font-weight-normal: 400;
+    --snab-font-weight-medium: 500;
+    --snab-font-weight-bold: 600;
+    --snab-line-height: 1.5;
+
+    /* Spacing */
+    --snab-spacing-xs: 4px;
+    --snab-spacing-sm: 8px;
+    --snab-spacing-md: 16px;
+    --snab-spacing-lg: 24px;
+    --snab-spacing-xl: 32px;
+
+    /* Border Radius */
+    --snab-radius-sm: 4px;
+    --snab-radius-md: 6px;
+    --snab-radius-lg: 8px;
+    --snab-radius-xl: 12px;
+    --snab-radius-full: 9999px;
+
+    /* Shadows */
+    --snab-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --snab-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --snab-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --snab-shadow-focus: 0 0 0 3px rgba(30, 115, 190, 0.2);
+
+    /* Transitions */
+    --snab-transition-fast: 150ms ease;
+    --snab-transition-normal: 200ms ease;
+    --snab-transition-slow: 300ms ease;
+
+    /* Widget Dimensions */
+    --snab-widget-max-width: 600px;
+    --snab-input-height: 44px;
+    --snab-button-height: 48px;
+}
+
+/* ==========================================================================
+   Dark Mode Support (future)
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+    .snab-booking-widget.snab-auto-dark {
+        --snab-text-color: #f3f4f6;
+        --snab-text-muted: #9ca3af;
+        --snab-text-light: #6b7280;
+        --snab-bg-color: #1f2937;
+        --snab-bg-secondary: #374151;
+        --snab-border-color: #4b5563;
+    }
+}

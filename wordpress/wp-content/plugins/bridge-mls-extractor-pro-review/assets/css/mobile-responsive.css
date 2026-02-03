@@ -1,0 +1,566 @@
+/**
+ * BME Mobile-Responsive UI Enhancements
+ * Updated to use design system tokens
+ *
+ * @package Bridge_MLS_Extractor_Pro
+ * @version 4.0.11
+ */
+
+/* Base Mobile Optimizations */
+@media (max-width: 768px) {
+
+    /* Typography */
+    body {
+        font-size: var(--ds-text-sm, 14px);
+        line-height: 1.5;
+    }
+
+    h1 {
+        font-size: var(--ds-text-2xl, 24px);
+        line-height: 1.3;
+    }
+
+    h2 {
+        font-size: var(--ds-text-xl, 20px);
+        line-height: 1.3;
+    }
+
+    h3 {
+        font-size: var(--ds-text-lg, 18px);
+        line-height: 1.3;
+    }
+
+    /* Container Adjustments */
+    .bme-container,
+    .bme-advanced-search-form,
+    .bme-saved-searches-container,
+    .bme-favorites-container,
+    .bme-comparison-container {
+        margin: var(--ds-space-3, 10px);
+        padding: var(--ds-space-4, 15px);
+        border-radius: var(--ds-radius-md, 6px);
+    }
+
+    /* Search Form Mobile Optimization */
+    .bme-search-row {
+        flex-direction: column;
+        gap: var(--ds-space-3, 10px);
+    }
+
+    .bme-search-field {
+        min-width: 100%;
+    }
+
+    .bme-search-field input,
+    .bme-search-field select,
+    .bme-search-field textarea {
+        font-size: var(--ds-text-base, 16px); /* Prevents zoom on iOS */
+        padding: var(--ds-space-3, 12px);
+    }
+
+    .bme-search-actions {
+        flex-direction: column;
+        gap: var(--ds-space-3, 10px);
+        margin-top: var(--ds-space-4, 15px);
+    }
+
+    .bme-search-btn,
+    .bme-clear-filters,
+    .bme-save-search {
+        width: 100%;
+        padding: var(--ds-space-4, 14px);
+        font-size: var(--ds-text-base, 16px);
+        border-radius: var(--ds-radius-md, 6px);
+    }
+
+    /* Filter Sections */
+    .bme-filter-header {
+        padding: var(--ds-space-3, 12px) var(--ds-space-4, 15px);
+    }
+
+    .bme-filter-content {
+        padding: var(--ds-space-3, 12px) var(--ds-space-4, 15px);
+    }
+
+    .bme-checkbox-group {
+        flex-direction: column;
+        gap: var(--ds-space-3, 10px);
+    }
+
+    .bme-checkbox-item {
+        padding: var(--ds-space-2, 8px) 0;
+        border-bottom: 1px solid var(--ds-border-light, #f0f0f0);
+    }
+
+    /* Results Grid Mobile */
+    .bme-results-header {
+        flex-direction: column;
+        gap: var(--ds-space-4, 15px);
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .bme-results-controls {
+        flex-direction: column;
+        gap: var(--ds-space-3, 10px);
+    }
+
+    .bme-sort-select,
+    .bme-toggle-view {
+        width: 100%;
+        padding: var(--ds-space-3, 12px);
+        font-size: var(--ds-text-base, 16px);
+    }
+
+    .bme-results-grid {
+        grid-template-columns: 1fr;
+        gap: var(--ds-space-4, 15px);
+    }
+
+    /* Property Cards Mobile */
+    .bme-property-card {
+        border-radius: var(--ds-radius-lg, 8px);
+        margin-bottom: var(--ds-space-4, 15px);
+    }
+
+    .bme-property-image {
+        height: 180px;
+    }
+
+    .bme-property-actions {
+        top: var(--ds-space-2, 8px);
+        right: var(--ds-space-2, 8px);
+        gap: var(--ds-space-2, 6px);
+    }
+
+    .bme-favorite-btn,
+    .bme-compare-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .bme-property-details {
+        padding: var(--ds-space-3, 12px);
+    }
+
+    .bme-property-price {
+        font-size: var(--ds-text-lg, 18px);
+        margin-bottom: var(--ds-space-2, 6px);
+    }
+
+    .bme-property-address {
+        font-size: var(--ds-text-sm, 14px);
+        margin-bottom: var(--ds-space-2, 8px);
+        line-height: 1.4;
+    }
+
+    .bme-property-specs {
+        flex-direction: column;
+        gap: 4px;
+        font-size: var(--ds-text-sm, 13px);
+    }
+
+    /* Pagination Mobile */
+    .bme-pagination {
+        flex-wrap: wrap;
+        gap: var(--ds-space-2, 8px);
+        justify-content: center;
+    }
+
+    .bme-page-btn {
+        min-width: 44px;
+        padding: var(--ds-space-3, 10px);
+        font-size: var(--ds-text-sm, 14px);
+    }
+
+    /* Saved Searches Mobile */
+    .bme-saved-search-item {
+        padding: var(--ds-space-4, 15px);
+    }
+
+    .bme-search-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--ds-space-2, 8px);
+        margin-top: var(--ds-space-4, 15px);
+    }
+
+    .bme-toggle-alerts {
+        justify-content: space-between;
+        padding: var(--ds-space-3, 10px) 0;
+        border-top: 1px solid var(--ds-border-light, #f0f0f0);
+        margin-top: var(--ds-space-3, 10px);
+        width: 100%;
+    }
+
+    /* Favorites Mobile */
+    .bme-favorites-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bme-favorite-specs {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    /* Comparison Mobile */
+    .bme-comparison-header {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--ds-space-4, 15px);
+    }
+
+    .bme-comparison-table-wrapper {
+        border-radius: 0;
+        margin: 0 -15px;
+        border-left: none;
+        border-right: none;
+    }
+
+    .bme-comparison-table {
+        font-size: var(--ds-text-sm, 13px);
+    }
+
+    .bme-comparison-table th,
+    .bme-comparison-table td {
+        padding: var(--ds-space-2, 8px) var(--ds-space-2, 6px);
+        word-break: break-word;
+    }
+
+    .bme-comparison-feature {
+        position: sticky;
+        left: 0;
+        background: var(--ds-surface-subtle, #f9fafb);
+        min-width: 100px;
+        max-width: 120px;
+        font-size: var(--ds-text-xs, 12px);
+        z-index: 2;
+    }
+
+    .bme-comparison-property {
+        min-width: 140px;
+        max-width: 160px;
+    }
+
+    .bme-property-image {
+        height: 80px;
+    }
+
+    .bme-property-price {
+        font-size: var(--ds-text-sm, 14px);
+    }
+
+    .bme-property-address {
+        font-size: 11px;
+        line-height: 1.3;
+    }
+
+    .bme-property-mls {
+        font-size: 10px;
+    }
+
+    .bme-feature-value {
+        font-size: var(--ds-text-xs, 12px);
+    }
+
+    /* Touch-Friendly Elements */
+    button,
+    .bme-btn,
+    a.bme-btn {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Modal Adjustments */
+    .bme-search-form-modal {
+        width: 95%;
+        margin: var(--ds-space-5, 20px) auto;
+        max-height: 90vh;
+        padding: var(--ds-space-5, 20px);
+    }
+
+    /* Widget Mobile */
+    .bme-comparison-widget {
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        min-width: auto;
+        max-width: none;
+    }
+
+    .bme-widget-content {
+        max-height: 300px;
+    }
+
+    .bme-widget-actions {
+        flex-direction: column;
+        gap: var(--ds-space-2, 8px);
+    }
+
+    .bme-widget-actions .bme-btn {
+        padding: var(--ds-space-3, 12px);
+        font-size: var(--ds-text-sm, 14px);
+    }
+
+    /* Form Elements */
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    input[type="tel"],
+    select,
+    textarea {
+        font-size: var(--ds-text-base, 16px) !important; /* Prevent zoom on iOS */
+        border-radius: var(--ds-radius-md, 6px);
+    }
+
+    .bme-price-range {
+        width: 100%;
+        margin: var(--ds-space-3, 10px) 0;
+    }
+
+    /* Loading States */
+    .bme-loading {
+        padding: var(--ds-space-8, 30px) var(--ds-space-4, 15px);
+        font-size: var(--ds-text-sm, 14px);
+    }
+
+    /* Error States */
+    .bme-error,
+    .bme-no-results,
+    .bme-no-saved-searches,
+    .bme-no-favorites,
+    .bme-no-comparison {
+        padding: var(--ds-space-5, 20px) var(--ds-space-4, 15px);
+        font-size: var(--ds-text-sm, 14px);
+        line-height: 1.5;
+    }
+}
+
+/* Small Mobile (iPhone SE, etc.) */
+@media (max-width: 480px) {
+
+    /* Even Smaller Typography */
+    body {
+        font-size: var(--ds-text-sm, 13px);
+    }
+
+    h1 {
+        font-size: var(--ds-text-xl, 20px);
+    }
+
+    h2 {
+        font-size: var(--ds-text-lg, 18px);
+    }
+
+    h3 {
+        font-size: var(--ds-text-base, 16px);
+    }
+
+    /* Tighter Spacing */
+    .bme-container,
+    .bme-advanced-search-form,
+    .bme-saved-searches-container,
+    .bme-favorites-container,
+    .bme-comparison-container {
+        margin: var(--ds-space-1, 5px);
+        padding: var(--ds-space-3, 12px);
+    }
+
+    .bme-property-details,
+    .bme-saved-search-item,
+    .bme-favorite-details {
+        padding: var(--ds-space-3, 10px);
+    }
+
+    .bme-property-image,
+    .bme-favorite-image {
+        height: 150px;
+    }
+
+    /* Smaller Buttons */
+    .bme-favorite-btn,
+    .bme-compare-btn,
+    .bme-remove-favorite {
+        width: 36px;
+        height: 36px;
+    }
+
+    /* Comparison Table Adjustments */
+    .bme-comparison-table {
+        font-size: 11px;
+    }
+
+    .bme-comparison-feature {
+        min-width: 80px;
+        max-width: 100px;
+        font-size: 11px;
+    }
+
+    .bme-comparison-property {
+        min-width: 120px;
+        max-width: 140px;
+    }
+
+    .bme-property-image {
+        height: 60px;
+    }
+
+    .bme-property-price {
+        font-size: var(--ds-text-xs, 12px);
+    }
+
+    .bme-property-address {
+        font-size: 10px;
+    }
+
+    .bme-property-mls {
+        font-size: 9px;
+    }
+
+    /* Widget Adjustments */
+    .bme-widget-property img {
+        width: 40px;
+        height: 30px;
+    }
+
+    .bme-widget-price {
+        font-size: var(--ds-text-xs, 12px);
+    }
+
+    .bme-widget-address {
+        font-size: 11px;
+    }
+}
+
+/* Landscape Mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+
+    .bme-results-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--ds-space-3, 10px);
+    }
+
+    .bme-property-image,
+    .bme-favorite-image {
+        height: 120px;
+    }
+
+    .bme-search-actions {
+        flex-direction: row;
+        gap: var(--ds-space-3, 10px);
+    }
+
+    .bme-search-btn,
+    .bme-clear-filters,
+    .bme-save-search {
+        flex: 1;
+        padding: var(--ds-space-3, 10px);
+    }
+}
+
+/* Tablet Portrait */
+@media (min-width: 769px) and (max-width: 1024px) {
+
+    .bme-results-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--ds-space-4, 15px);
+    }
+
+    .bme-favorites-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bme-comparison-property {
+        min-width: 200px;
+        max-width: 220px;
+    }
+}
+
+/* High DPI Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+
+    .bme-property-image img,
+    .bme-favorite-image img {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+
+    /* Larger touch targets */
+    .bme-favorite-btn,
+    .bme-compare-btn,
+    .bme-remove-favorite,
+    .bme-widget-remove,
+    .bme-remove-property {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    /* Remove hover states on touch devices */
+    .bme-property-card:hover,
+    .bme-favorite-item:hover,
+    .bme-saved-search-item:hover {
+        transform: none;
+        box-shadow: var(--ds-shadow-sm, 0 2px 4px rgba(0,0,0,0.1));
+    }
+
+    .bme-property-image img {
+        transform: none !important;
+    }
+
+    /* Always show action buttons on touch devices */
+    .bme-remove-favorite,
+    .bme-remove-property {
+        opacity: 1;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+
+    .bme-container,
+    .bme-advanced-search-form,
+    .bme-saved-searches-container,
+    .bme-favorites-container,
+    .bme-comparison-container,
+    .bme-property-card,
+    .bme-favorite-item,
+    .bme-saved-search-item {
+        background: var(--ds-dark-gray, #1f2937);
+        color: var(--ds-off-white, #f3f4f6);
+        border-color: #374151;
+    }
+
+    .bme-comparison-table th,
+    .bme-comparison-feature,
+    .bme-filter-header {
+        background: #374151;
+        color: var(--ds-off-white, #f3f4f6);
+    }
+
+    .bme-property-price,
+    .bme-favorite-price {
+        color: var(--ds-teal, #0891B2);
+    }
+}
+
+/* Reduced Motion Preference */
+@media (prefers-reduced-motion: reduce) {
+
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .bme-property-card,
+    .bme-favorite-item,
+    .bme-saved-search-item {
+        transform: none !important;
+    }
+}

@@ -1,0 +1,46 @@
+{
+    "name": "bmnboston/mls-listings-display",
+    "description": "MLS Listings Display WordPress Plugin",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=8.0",
+        "tecnickcom/tcpdf": "^6.4"
+    },
+    "require-dev": {
+        "brain/monkey": "^2.6",
+        "hamcrest/hamcrest-php": "^2.0",
+        "mockery/mockery": "^1.6",
+        "phpstan/extension-installer": "*",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-deprecation-rules": "^2.0",
+        "phpunit/phpunit": "^10.0",
+        "yoast/phpunit-polyfills": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "MLSDisplay\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "MLSDisplay\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit --configuration tests/phpunit.xml",
+        "test:unit": "phpunit --configuration tests/phpunit.xml --testsuite=unit",
+        "test:integration": "phpunit --configuration tests/phpunit.xml --testsuite=integration",
+        "test:coverage": "phpunit --configuration tests/phpunit.xml --coverage-html coverage",
+        "analyse": "phpstan analyse --memory-limit=1G",
+        "analyse:baseline": "phpstan analyse --memory-limit=1G --generate-baseline",
+        "cs": "@analyse"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true,
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        }
+    }
+}

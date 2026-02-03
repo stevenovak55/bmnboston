@@ -1,0 +1,69 @@
+/**
+ * BMN Schools Admin Styles
+ *
+ * @package BMN_Schools
+ * @since 0.1.0
+ */
+
+/* Common admin styles are embedded in view files for simplicity */
+/* This file can be used for additional global admin styles */
+
+.bmn-schools-admin {
+    max-width: 1400px;
+}
+
+/* Loading states */
+.bmn-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.bmn-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ccc;
+    border-top-color: #007cba;
+    border-radius: 50%;
+    animation: bmn-spin 1s linear infinite;
+}
+
+@keyframes bmn-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Button enhancements */
+.bmn-schools-admin .button .dashicons {
+    vertical-align: middle;
+    margin-top: -2px;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 782px) {
+    .bmn-dashboard-grid,
+    .bmn-settings-grid,
+    .bmn-sources-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .bmn-log-filters {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .bmn-log-filters form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .bmn-log-stats {
+        flex-wrap: wrap;
+    }
+
+    .bmn-stat-box {
+        flex: 1 1 45%;
+    }
+}

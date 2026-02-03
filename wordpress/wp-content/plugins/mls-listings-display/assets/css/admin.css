@@ -1,0 +1,297 @@
+/**
+ * Styles for MLS Display Admin Pages
+ * Updated to use design system tokens
+ *
+ * @package MLS_Listings_Display
+ * @version 7.0.0
+ */
+
+.mld-image-preview img {
+    max-width: 200px;
+    max-height: 50px;
+    margin-top: var(--ds-space-2, 10px);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    padding: var(--ds-space-1, 5px);
+    background: var(--ds-surface-subtle, #f9fafb);
+    border-radius: var(--ds-radius-md, 6px);
+}
+
+/* Styles for Icon & Label Manager */
+.mld-icon-manager .wp-list-table th,
+.mld-icon-manager .wp-list-table td {
+    vertical-align: middle;
+}
+
+.mld-icon-uploader-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-2, 10px);
+}
+
+.mld-icon-uploader-wrapper .mld-image-preview {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--ds-border, #e5e7eb);
+    background: var(--ds-surface-subtle, #f9fafb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--ds-radius-md, 6px);
+}
+
+.mld-icon-uploader-wrapper .mld-image-preview img {
+    max-width: 32px;
+    max-height: 32px;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.mld-icon-uploader-wrapper .mld-icon-url-input {
+    flex-grow: 1;
+}
+
+/* Import Admin Pages Styles */
+.mld-admin-header {
+    margin-bottom: var(--ds-space-5, 20px);
+}
+
+.mld-import-section {
+    background: var(--ds-white, white);
+    padding: var(--ds-space-5, 20px);
+    margin-bottom: var(--ds-space-5, 20px);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-lg, 8px);
+    box-shadow: var(--ds-shadow-sm, 0 1px 3px rgba(0,0,0,0.1));
+}
+
+.mld-import-section h2 {
+    margin-top: 0;
+    padding-bottom: var(--ds-space-2, 10px);
+    border-bottom: 1px solid var(--ds-border, #e5e7eb);
+    color: var(--ds-text-primary, #000);
+}
+
+.mld-import-form {
+    margin-top: var(--ds-space-5, 20px);
+}
+
+.mld-import-form label {
+    display: inline-block;
+    margin-bottom: var(--ds-space-1, 5px);
+    font-weight: 600;
+    color: var(--ds-text-secondary, #1f2937);
+}
+
+.mld-import-form select {
+    min-width: 200px;
+    margin-right: var(--ds-space-2, 10px);
+    border: 1px solid var(--ds-border-strong, #d1d5db);
+    border-radius: var(--ds-radius-md, 6px);
+    padding: 8px 12px;
+}
+
+.mld-import-progress {
+    margin-top: var(--ds-space-5, 20px);
+    display: none;
+}
+
+/* Statistics Grid */
+.mld-statistics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--ds-space-5, 20px);
+    margin-top: var(--ds-space-5, 20px);
+}
+
+.mld-stat-card {
+    background: var(--ds-white, white);
+    padding: var(--ds-space-5, 20px);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-lg, 8px);
+    box-shadow: var(--ds-shadow-sm, 0 1px 3px rgba(0,0,0,0.1));
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.mld-stat-card:hover {
+    box-shadow: var(--ds-shadow-md, 0 4px 6px rgba(0,0,0,0.1));
+    transform: translateY(-2px);
+}
+
+.mld-stat-card .stat-value {
+    font-size: var(--ds-text-4xl, 36px);
+    font-weight: bold;
+    color: var(--ds-teal, #0891B2);
+    display: block;
+    margin: var(--ds-space-2, 10px) 0;
+}
+
+.mld-stat-card .stat-label {
+    font-size: var(--ds-text-sm, 14px);
+    color: var(--ds-text-muted, #6b7280);
+}
+
+.mld-stat-card .stat-label small {
+    font-size: var(--ds-text-xs, 12px);
+    color: var(--ds-text-tertiary, #9ca3af);
+}
+
+/* Clear Data Buttons */
+.clear-data-btn {
+    background-color: var(--ds-red, #DC2626) !important;
+    border-color: var(--ds-red, #DC2626) !important;
+    color: var(--ds-white, white) !important;
+    border-radius: var(--ds-radius-md, 6px) !important;
+    transition: all 0.2s ease !important;
+}
+
+.clear-data-btn:hover {
+    background-color: #b91c1c !important;
+    border-color: #b91c1c !important;
+    transform: translateY(-1px);
+}
+
+/* Admin Notice Styles */
+.mld-import-progress .notice {
+    margin: var(--ds-space-2, 10px) 0;
+    border-radius: var(--ds-radius-md, 6px);
+}
+
+.mld-import-progress .notice p {
+    margin: 0.5em 0;
+}
+
+/* State selector styles */
+.state-selector-wrapper {
+    margin: var(--ds-space-5, 20px) 0;
+}
+
+.state-selector-wrapper select {
+    width: 100%;
+    max-width: 300px;
+    border: 1px solid var(--ds-border-strong, #d1d5db);
+    border-radius: var(--ds-radius-md, 6px);
+    padding: 8px 12px;
+}
+
+/* Table styles for data display */
+.mld-data-table {
+    background: var(--ds-white, white);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    margin-top: var(--ds-space-5, 20px);
+    border-radius: var(--ds-radius-lg, 8px);
+    overflow: hidden;
+}
+
+.mld-data-table th {
+    background: var(--ds-surface-subtle, #f9fafb);
+    font-weight: 600;
+    color: var(--ds-text-secondary, #1f2937);
+}
+
+.mld-data-table td,
+.mld-data-table th {
+    padding: var(--ds-space-3, 12px);
+    text-align: left;
+    border-bottom: 1px solid var(--ds-border, #e5e7eb);
+}
+
+.mld-data-table tr:last-child td {
+    border-bottom: none;
+}
+
+.mld-data-table tr:hover td {
+    background: var(--ds-surface-subtle, #f9fafb);
+}
+
+/* Primary Button Style - Teal */
+.button.mld-btn-primary,
+.mld-btn-primary {
+    background: var(--ds-teal, #0891B2) !important;
+    border-color: var(--ds-teal, #0891B2) !important;
+    color: var(--ds-white, white) !important;
+    border-radius: var(--ds-radius-md, 6px) !important;
+    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+    transition: all 0.2s ease !important;
+}
+
+.button.mld-btn-primary:hover,
+.mld-btn-primary:hover {
+    background: var(--ds-teal-hover, #0E7490) !important;
+    border-color: var(--ds-teal-hover, #0E7490) !important;
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.4);
+    transform: translateY(-1px);
+}
+
+/* Secondary Button Style */
+.button.mld-btn-secondary {
+    background: var(--ds-white, white) !important;
+    border-color: var(--ds-border-strong, #d1d5db) !important;
+    color: var(--ds-text-secondary, #1f2937) !important;
+    border-radius: var(--ds-radius-md, 6px) !important;
+    transition: all 0.2s ease !important;
+}
+
+.button.mld-btn-secondary:hover {
+    background: var(--ds-surface-subtle, #f9fafb) !important;
+    border-color: var(--ds-teal, #0891B2) !important;
+    color: var(--ds-teal, #0891B2) !important;
+}
+
+/* Admin Card Style */
+.mld-admin-card {
+    background: var(--ds-white, white);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-xl, 12px);
+    padding: var(--ds-space-6, 24px);
+    margin-bottom: var(--ds-space-5, 20px);
+    box-shadow: var(--ds-shadow-sm, 0 1px 3px rgba(0,0,0,0.1));
+}
+
+.mld-admin-card h2,
+.mld-admin-card h3 {
+    margin-top: 0;
+    color: var(--ds-text-primary, #000);
+    padding-bottom: var(--ds-space-3, 12px);
+    border-bottom: 1px solid var(--ds-border, #e5e7eb);
+    margin-bottom: var(--ds-space-4, 16px);
+}
+
+/* Admin Header with Dark Gradient */
+.mld-admin-page-header {
+    background: linear-gradient(135deg, var(--ds-dark-gray, #1f2937) 0%, var(--ds-black, #000000) 100%);
+    color: var(--ds-white, white);
+    padding: var(--ds-space-6, 24px);
+    border-radius: var(--ds-radius-xl, 12px);
+    margin-bottom: var(--ds-space-5, 20px);
+    box-shadow: var(--ds-shadow-lg, 0 10px 15px rgba(0,0,0,0.1));
+}
+
+.mld-admin-page-header h1 {
+    margin: 0;
+    color: var(--ds-white, white);
+    font-size: var(--ds-text-2xl, 24px);
+}
+
+.mld-admin-page-header p {
+    margin: var(--ds-space-2, 8px) 0 0;
+    opacity: 0.9;
+}
+
+/* Teal Accent on Active/Selected States */
+.mld-admin-tab.active,
+.mld-admin-nav-item.active {
+    border-color: var(--ds-teal, #0891B2);
+    color: var(--ds-teal, #0891B2);
+}
+
+/* Form Input Focus States */
+.mld-admin-card input:focus,
+.mld-admin-card select:focus,
+.mld-admin-card textarea:focus {
+    border-color: var(--ds-teal, #0891B2);
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+    outline: none;
+}

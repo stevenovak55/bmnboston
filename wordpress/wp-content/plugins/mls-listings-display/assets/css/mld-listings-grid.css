@@ -1,0 +1,1276 @@
+/**
+ * MLS Listings Grid Styles
+ * Updated to use design system tokens
+ *
+ * @version 7.0.0
+ */
+
+.mld-listings-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--ds-space-5, 20px);
+}
+
+/* Header */
+.mld-listings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ds-space-5, 20px);
+    padding-bottom: var(--ds-space-4, 15px);
+    border-bottom: 2px solid var(--ds-border, #e5e7eb);
+}
+
+.mld-listings-count {
+    font-size: var(--ds-text-base, 16px);
+    color: var(--ds-text-tertiary, #374151);
+}
+
+.mld-listings-controls {
+    display: flex;
+    gap: var(--ds-space-4, 15px);
+    align-items: center;
+}
+
+/* Layout Toggle */
+.mld-layout-toggle {
+    display: flex;
+    gap: var(--ds-space-1, 5px);
+}
+
+.mld-layout-btn {
+    background: var(--ds-surface-subtle, #f9fafb);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    padding: var(--ds-space-2, 8px);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: var(--ds-radius-md, 6px);
+}
+
+.mld-layout-btn:hover {
+    background: var(--ds-surface-muted, #f3f4f6);
+    border-color: var(--ds-border-strong, #d1d5db);
+}
+
+.mld-layout-btn.active {
+    background: var(--ds-teal, #0891B2);
+    color: var(--ds-white, white);
+    border-color: var(--ds-teal, #0891B2);
+}
+
+.mld-layout-btn .dashicons {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+/* Sort Select */
+.mld-sort-select {
+    padding: var(--ds-space-2, 8px) var(--ds-space-3, 12px);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-md, 4px);
+    font-size: var(--ds-text-sm, 14px);
+    cursor: pointer;
+}
+
+/* Grid Layout */
+.mld-listings-container.mld-layout-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+/* List Layout */
+.mld-listings-container.mld-layout-list .mld-listing-item {
+    display: flex;
+    margin-bottom: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.mld-listings-container.mld-layout-list .mld-listing-image {
+    flex: 0 0 300px;
+}
+
+.mld-listings-container.mld-layout-list .mld-listing-details {
+    flex: 1;
+    padding: 20px;
+}
+
+/* Listing Item - Modern card style */
+.mld-listing-item {
+    background: var(--ds-white, white);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-xl, 12px);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: var(--ds-shadow-sm, 0 1px 3px rgba(0,0,0,0.1));
+}
+
+.mld-listing-item:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--ds-shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.1));
+}
+
+/* Listing Image */
+.mld-listing-image {
+    position: relative;
+    padding-bottom: 66.66%; /* 3:2 aspect ratio */
+    overflow: hidden;
+    background: var(--ds-surface-subtle, #f9fafb);
+}
+
+.mld-listing-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.mld-listing-item:hover .mld-listing-image img {
+    transform: scale(1.05);
+}
+
+.mld-listing-price {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background: var(--ds-glass-bg-dark, rgba(0, 0, 0, 0.85));
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: var(--ds-white, white);
+    padding: 8px 14px;
+    border-radius: var(--ds-radius-lg, 8px);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* Listing Details */
+.mld-listing-details {
+    padding: var(--ds-space-4, 15px);
+}
+
+.mld-listing-address {
+    margin: 0 0 var(--ds-space-2, 10px) 0;
+    font-size: var(--ds-text-lg, 18px);
+    font-weight: 600;
+    color: var(--ds-text-primary, #000);
+    line-height: 1.3;
+}
+
+.mld-listing-info {
+    display: flex;
+    gap: var(--ds-space-4, 15px);
+    margin-bottom: var(--ds-space-4, 15px);
+    font-size: var(--ds-text-sm, 14px);
+    color: var(--ds-text-muted, #6b7280);
+}
+
+.mld-listing-info span {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-1, 5px);
+}
+
+.mld-listing-info strong {
+    color: var(--ds-text-secondary, #1f2937);
+}
+
+.mld-listing-link {
+    color: var(--ds-teal, #0891B2);
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mld-listing-link:hover {
+    text-decoration: underline;
+}
+
+.mld-listing-link .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* No Listings */
+.mld-no-listings {
+    text-align: center;
+    padding: 60px 20px;
+    background: var(--ds-surface-subtle, #f9fafb);
+    border-radius: var(--ds-radius-lg, 8px);
+}
+
+.mld-no-listings p {
+    font-size: var(--ds-text-lg, 18px);
+    color: var(--ds-text-muted, #6b7280);
+}
+
+/* Pagination */
+.mld-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 40px;
+}
+
+.mld-page-link {
+    display: inline-block;
+    padding: 8px 12px;
+    background: var(--ds-white, white);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-md, 4px);
+    color: var(--ds-text-secondary, #1f2937);
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.mld-page-link:hover {
+    background: var(--ds-surface-muted, #f3f4f6);
+    border-color: var(--ds-teal, #0891B2);
+}
+
+.mld-page-link.active {
+    background: var(--ds-teal, #0891B2);
+    color: var(--ds-white, white);
+    border-color: var(--ds-teal, #0891B2);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .mld-listings-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .mld-listings-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .mld-listings-container.mld-layout-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mld-listings-container.mld-layout-list .mld-listing-item {
+        flex-direction: column;
+    }
+
+    .mld-listings-container.mld-layout-list .mld-listing-image {
+        flex: none;
+        width: 100%;
+    }
+
+    .mld-pagination {
+        flex-wrap: wrap;
+    }
+}
+
+/* ==========================================================================
+   Listing Cards Shortcode - Infinite Scroll Styles
+   [mld_listing_cards] shortcode specific styles
+   ========================================================================== */
+
+/* Wrapper */
+.mld-listing-cards-wrapper {
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Header */
+.mld-cards-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ds-space-4, 16px);
+    padding-bottom: var(--ds-space-3, 12px);
+    border-bottom: 1px solid var(--ds-border, #e5e7eb);
+}
+
+.mld-cards-count {
+    font-size: var(--ds-text-sm, 14px);
+    color: var(--ds-text-muted, #6b7280);
+}
+
+.mld-cards-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-3, 12px);
+}
+
+.mld-cards-sort {
+    padding: var(--ds-space-2, 8px) var(--ds-space-3, 12px);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-md, 6px);
+    font-size: var(--ds-text-sm, 14px);
+    background: var(--ds-white, #fff);
+    cursor: pointer;
+}
+
+.mld-cards-sort:focus {
+    outline: none;
+    border-color: var(--ds-teal, #0891B2);
+    box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.2);
+}
+
+/* Grid Layout */
+.mld-cards-grid {
+    display: grid;
+    gap: var(--ds-space-5, 20px);
+}
+
+.mld-cards-grid.mld-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.mld-cards-grid.mld-cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.mld-cards-grid.mld-cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* Loading Indicator */
+.mld-cards-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--ds-space-3, 12px);
+    padding: var(--ds-space-6, 30px);
+    color: var(--ds-text-muted, #6b7280);
+    font-size: var(--ds-text-sm, 14px);
+}
+
+.mld-cards-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--ds-border, #e5e7eb);
+    border-top-color: var(--ds-teal, #0891B2);
+    border-radius: 50%;
+    animation: mld-cards-spin 0.8s linear infinite;
+}
+
+@keyframes mld-cards-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* End of Results Message */
+.mld-cards-end {
+    text-align: center;
+    padding: var(--ds-space-5, 20px);
+    color: var(--ds-text-muted, #6b7280);
+    font-size: var(--ds-text-sm, 14px);
+    border-top: 1px solid var(--ds-border, #e5e7eb);
+    margin-top: var(--ds-space-5, 20px);
+}
+
+.mld-cards-end p {
+    margin: 0;
+}
+
+/* No Results */
+.mld-cards-no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: var(--ds-space-8, 60px) var(--ds-space-5, 20px);
+    background: var(--ds-surface-subtle, #f9fafb);
+    border-radius: var(--ds-radius-lg, 8px);
+}
+
+.mld-cards-no-results p {
+    margin: 0;
+    color: var(--ds-text-muted, #6b7280);
+    font-size: var(--ds-text-base, 16px);
+}
+
+/* Error State */
+.mld-listing-cards-error {
+    padding: var(--ds-space-5, 20px);
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: var(--ds-radius-md, 6px);
+    color: #dc2626;
+    text-align: center;
+}
+
+/* Responsive - Tablet */
+@media (max-width: 1024px) {
+    .mld-cards-grid.mld-cols-4 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .mld-cards-grid.mld-cols-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 768px) {
+    .mld-cards-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--ds-space-3, 12px);
+    }
+
+    .mld-cards-controls {
+        width: 100%;
+    }
+
+    .mld-cards-sort {
+        width: 100%;
+    }
+
+    .mld-cards-grid.mld-cols-2,
+    .mld-cards-grid.mld-cols-3,
+    .mld-cards-grid.mld-cols-4 {
+        grid-template-columns: 1fr;
+    }
+
+    .mld-cards-count {
+        font-size: var(--ds-text-xs, 12px);
+    }
+}
+
+/* ==========================================================================
+   Listing Card - Simple Card Style
+   Used by [mld_listing_cards] shortcode
+   ========================================================================== */
+
+.mld-listing-card-simple {
+    display: block;
+    background: var(--ds-white, #fff);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-xl, 12px);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: var(--ds-shadow-sm, 0 1px 3px rgba(0,0,0,0.1));
+    text-decoration: none;
+    color: inherit;
+}
+
+.mld-listing-card-simple:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--ds-shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.1));
+    text-decoration: none;
+    color: inherit;
+}
+
+.mld-card-simple-image {
+    position: relative;
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    background: var(--ds-surface-subtle, #f9fafb);
+}
+
+.mld-card-simple-image img,
+.mld-card-simple-image .mld-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.mld-listing-card-simple:hover .mld-card-simple-image img,
+.mld-listing-card-simple:hover .mld-card-simple-image .mld-card-image {
+    transform: scale(1.05);
+}
+
+/* Favorite/Hide action buttons for simple cards (v6.31.14 - top-right) */
+.mld-simple-card-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 6px;
+    z-index: 11;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.mld-listing-card-simple:hover .mld-simple-card-actions {
+    opacity: 1;
+}
+
+/* Always show on touch devices (no hover) */
+@media (hover: none) {
+    .mld-simple-card-actions {
+        opacity: 1;
+    }
+}
+
+/* Button base styles - reuse bme- classes from main.css but ensure proper sizing */
+.mld-simple-card-actions .bme-favorite-btn,
+.mld-simple-card-actions .bme-hide-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    padding: 0;
+}
+
+.mld-simple-card-actions .bme-favorite-btn:hover,
+.mld-simple-card-actions .bme-hide-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+}
+
+.mld-simple-card-actions .bme-favorite-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: #6b7280;
+    transition: fill 0.15s ease;
+}
+
+.mld-simple-card-actions .bme-favorite-btn:hover svg {
+    fill: #ef4444;
+}
+
+.mld-simple-card-actions .bme-favorite-btn.saved {
+    background: #fef2f2;
+}
+
+.mld-simple-card-actions .bme-favorite-btn.saved svg {
+    fill: #ef4444;
+}
+
+.mld-simple-card-actions .bme-hide-btn svg {
+    width: 14px;
+    height: 14px;
+    fill: #6b7280;
+    transition: fill 0.15s ease;
+}
+
+.mld-simple-card-actions .bme-hide-btn:hover {
+    background: #fee2e2;
+}
+
+.mld-simple-card-actions .bme-hide-btn:hover svg {
+    fill: #dc2626;
+}
+
+/* Loading state */
+.mld-simple-card-actions .bme-favorite-btn.loading,
+.mld-simple-card-actions .bme-hide-btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.mld-card-simple-details {
+    padding: var(--ds-space-4, 16px);
+}
+
+.mld-card-simple-price {
+    font-size: var(--ds-text-xl, 20px);
+    font-weight: 700;
+    color: var(--ds-text-primary, #1f2937);
+    margin-bottom: var(--ds-space-2, 8px);
+}
+
+.mld-card-simple-address {
+    margin-bottom: var(--ds-space-3, 12px);
+}
+
+.mld-card-simple-address span {
+    display: block;
+}
+
+.mld-card-simple-address span:first-child {
+    font-size: var(--ds-text-base, 16px);
+    font-weight: 600;
+    color: var(--ds-text-primary, #1f2937);
+    line-height: 1.3;
+}
+
+.mld-card-simple-address span:last-child {
+    font-size: var(--ds-text-sm, 14px);
+    color: var(--ds-text-muted, #6b7280);
+    margin-top: var(--ds-space-1, 4px);
+}
+
+.mld-card-simple-specs {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-2, 8px);
+    font-size: var(--ds-text-sm, 14px);
+    color: var(--ds-text-muted, #6b7280);
+}
+
+.mld-card-simple-specs strong {
+    color: var(--ds-text-secondary, #374151);
+    font-weight: 600;
+}
+
+.mld-spec-divider {
+    color: var(--ds-border-strong, #d1d5db);
+}
+
+/* Responsive - Tablet */
+@media (max-width: 1024px) {
+    .mld-card-simple-details {
+        padding: var(--ds-space-3, 12px);
+    }
+
+    .mld-card-simple-price {
+        font-size: var(--ds-text-lg, 18px);
+    }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 768px) {
+    .mld-card-simple-address span:first-child {
+        font-size: var(--ds-text-sm, 14px);
+    }
+
+    .mld-card-simple-specs {
+        font-size: var(--ds-text-xs, 12px);
+        gap: var(--ds-space-1, 4px);
+    }
+}
+
+/* ==========================================================================
+   iOS-Style Card Enhancements (v6.56.0)
+   ========================================================================== */
+
+/* Updated border radius to match iOS (12px) */
+.mld-listing-card-simple {
+    border-radius: 12px;
+}
+
+/* Price row with monthly estimate */
+.mld-card-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--ds-space-2, 8px);
+    margin-bottom: var(--ds-space-1, 4px);
+    flex-wrap: wrap;
+}
+
+.mld-card-monthly-estimate {
+    font-size: var(--ds-text-sm, 14px);
+    color: var(--ds-text-muted, #6b7280);
+    font-weight: 400;
+}
+
+/* Single-line truncated address */
+.mld-card-simple-address {
+    margin-bottom: var(--ds-space-1, 4px);
+}
+
+.mld-address-line {
+    display: block;
+    font-size: var(--ds-text-base, 16px);
+    font-weight: 500;
+    color: var(--ds-text-primary, #1f2937);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* MLS Number */
+.mld-card-mls-number {
+    font-size: var(--ds-text-xs, 12px);
+    color: var(--ds-text-light, #9ca3af);
+    margin-bottom: var(--ds-space-2, 8px);
+}
+
+/* Days on Market */
+.mld-card-dom {
+    font-size: var(--ds-text-xs, 12px);
+    color: var(--ds-text-muted, #6b7280);
+    margin-top: var(--ds-space-2, 8px);
+}
+
+/* Property Type Badge (bottom-left overlay on image) */
+.mld-property-type-badge,
+.bme-property-type-badge {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(128, 128, 128, 0.1);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    z-index: 5;
+}
+
+/* Status Badges Container (New, Price Reduced) */
+.mld-status-badges {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    gap: 6px;
+    z-index: 5;
+}
+
+/* New Listing Badge */
+.mld-new-listing-badge {
+    background: #22c55e;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Price Reduced Badge */
+.mld-price-reduced-badge {
+    background: #ef4444;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Property Highlights (Pool, Waterfront, etc.) */
+.mld-card-highlights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: var(--ds-space-2, 8px);
+}
+
+.mld-highlight-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    background: color-mix(in srgb, var(--highlight-color, #6b7280) 15%, white);
+    border: 1px solid color-mix(in srgb, var(--highlight-color, #6b7280) 30%, white);
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--highlight-color, #6b7280);
+}
+
+.mld-highlight-icon {
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+}
+
+/* Highlight Icons (SVG backgrounds) */
+.mld-icon-pool::before {
+    content: '💧';
+    font-size: 10px;
+}
+
+.mld-icon-waterfront::before {
+    content: '🌊';
+    font-size: 10px;
+}
+
+.mld-icon-view::before {
+    content: '⛰️';
+    font-size: 10px;
+}
+
+.mld-icon-garage::before {
+    content: '🚗';
+    font-size: 10px;
+}
+
+.mld-icon-fireplace::before {
+    content: '🔥';
+    font-size: 10px;
+}
+
+/* Share Button */
+.bme-share-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    padding: 0;
+}
+
+.bme-share-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+    background: rgba(8, 145, 178, 0.1);
+}
+
+.bme-share-btn svg {
+    width: 14px;
+    height: 14px;
+    fill: #6b7280;
+    transition: fill 0.15s ease;
+}
+
+.bme-share-btn:hover svg {
+    fill: #0891B2;
+}
+
+/* Share button copied state */
+.bme-share-btn.copied {
+    background: rgba(34, 197, 94, 0.9);
+}
+
+.bme-share-btn.copied svg {
+    fill: white;
+}
+
+/* Agent Badge Photo */
+.mld-agent-badge-photo {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 6px;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Updated Agent Badge Styling */
+.mld-from-agent-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(139, 92, 246, 0.9);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    z-index: 10;
+}
+
+/* v6.65.0: Exclusive Listing Badge (TOP-LEFT golden badge) */
+.mld-exclusive-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgb(217, 166, 33);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 12;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.mld-exclusive-badge svg {
+    flex-shrink: 0;
+}
+
+/* When both exclusive and agent badges exist, shift agent badge down */
+.mld-card-simple-image .mld-exclusive-badge + .mld-from-agent-badge {
+    top: 42px;
+}
+
+/* Responsive adjustments for new elements */
+@media (max-width: 768px) {
+    .mld-card-price-row {
+        flex-direction: column;
+        gap: 2px;
+        align-items: flex-start;
+    }
+
+    .mld-card-monthly-estimate {
+        font-size: var(--ds-text-xs, 12px);
+    }
+
+    .mld-address-line {
+        font-size: var(--ds-text-sm, 14px);
+    }
+
+    .mld-card-mls-number {
+        font-size: 11px;
+    }
+
+    .mld-property-type-badge,
+    .mld-new-listing-badge,
+    .mld-price-reduced-badge {
+        font-size: 11px;
+        padding: 3px 8px;
+    }
+
+    .mld-highlight-chip {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+
+    .mld-from-agent-badge {
+        font-size: 11px;
+        padding: 3px 8px;
+    }
+
+    .mld-agent-badge-photo {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+/* ==========================================================================
+   View Mode Toggle (v6.57.0 - iOS alignment)
+   Card / Grid / Compact modes
+   ========================================================================== */
+
+/* View Mode Toggle Container */
+.mld-view-mode-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--ds-surface-subtle, #f3f4f6);
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.mld-view-mode-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--ds-text-muted, #6b7280);
+}
+
+.mld-view-mode-btn:hover {
+    background: var(--ds-surface-muted, #e5e7eb);
+    color: var(--ds-text-secondary, #374151);
+}
+
+.mld-view-mode-btn.active {
+    background: var(--ds-white, #fff);
+    color: var(--ds-teal, #0891B2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mld-view-mode-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+/* ==========================================================================
+   Grid View Mode (2 columns, smaller cards)
+   ========================================================================== */
+
+.mld-cards-grid.mld-view-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.mld-view-grid .mld-listing-card-simple {
+    border-radius: 10px;
+}
+
+.mld-view-grid .mld-card-simple-image {
+    aspect-ratio: 16/10;
+}
+
+.mld-view-grid .mld-card-simple-details {
+    padding: 10px 12px;
+}
+
+.mld-view-grid .mld-card-simple-price {
+    font-size: var(--ds-text-lg, 18px);
+    margin-bottom: 4px;
+}
+
+.mld-view-grid .mld-card-price-row {
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-start;
+}
+
+.mld-view-grid .mld-card-monthly-estimate {
+    font-size: 11px;
+}
+
+.mld-view-grid .mld-address-line {
+    font-size: var(--ds-text-sm, 14px);
+}
+
+.mld-view-grid .mld-card-mls-number {
+    font-size: 10px;
+    margin-bottom: 4px;
+}
+
+.mld-view-grid .mld-card-simple-specs {
+    font-size: 11px;
+    gap: 4px;
+}
+
+/* Hide some elements in grid view for density */
+.mld-view-grid .mld-card-dom,
+.mld-view-grid .mld-card-highlights,
+.mld-view-grid .bme-card-school-info {
+    display: none;
+}
+
+.mld-view-grid .mld-property-type-badge,
+.mld-view-grid .mld-new-listing-badge,
+.mld-view-grid .mld-price-reduced-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+}
+
+.mld-view-grid .mld-from-agent-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+}
+
+.mld-view-grid .mld-agent-badge-photo {
+    width: 16px;
+    height: 16px;
+}
+
+/* Action buttons smaller in grid view */
+.mld-view-grid .mld-simple-card-actions .bme-favorite-btn,
+.mld-view-grid .mld-simple-card-actions .bme-hide-btn,
+.mld-view-grid .mld-simple-card-actions .bme-share-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+}
+
+.mld-view-grid .mld-simple-card-actions .bme-favorite-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.mld-view-grid .mld-simple-card-actions .bme-hide-btn svg,
+.mld-view-grid .mld-simple-card-actions .bme-share-btn svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* ==========================================================================
+   Compact View Mode (horizontal rows)
+   ========================================================================== */
+
+.mld-cards-grid.mld-view-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mld-view-compact .mld-listing-card-simple {
+    display: flex;
+    flex-direction: row;
+    border-radius: 10px;
+    height: auto;
+    min-height: 100px;
+}
+
+.mld-view-compact .mld-card-simple-image {
+    flex: 0 0 140px;
+    width: 140px;
+    aspect-ratio: auto;
+    height: 100%;
+    min-height: 100px;
+    border-radius: 10px 0 0 10px;
+}
+
+.mld-view-compact .mld-card-simple-image img,
+.mld-view-compact .mld-card-simple-image .mld-card-image {
+    border-radius: 10px 0 0 10px;
+}
+
+.mld-view-compact .mld-card-simple-details {
+    flex: 1;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0; /* Enable text truncation */
+}
+
+.mld-view-compact .mld-card-price-row {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.mld-view-compact .mld-card-simple-price {
+    font-size: var(--ds-text-lg, 18px);
+    margin-bottom: 0;
+}
+
+.mld-view-compact .mld-card-monthly-estimate {
+    font-size: 12px;
+}
+
+.mld-view-compact .mld-card-simple-address {
+    margin-bottom: 4px;
+}
+
+.mld-view-compact .mld-address-line {
+    font-size: var(--ds-text-sm, 14px);
+}
+
+.mld-view-compact .mld-card-mls-number {
+    display: none;
+}
+
+.mld-view-compact .mld-card-simple-specs {
+    font-size: 12px;
+}
+
+/* Hide extra elements in compact view */
+.mld-view-compact .mld-card-dom,
+.mld-view-compact .mld-card-highlights,
+.mld-view-compact .bme-card-school-info {
+    display: none;
+}
+
+/* Badges in compact view */
+.mld-view-compact .mld-property-type-badge {
+    position: static;
+    display: inline-block;
+    margin-top: 4px;
+    background: var(--ds-surface-subtle, #f3f4f6);
+    color: var(--ds-text-muted, #6b7280);
+    font-size: 10px;
+    padding: 2px 6px;
+}
+
+.mld-view-compact .mld-status-badges {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    bottom: auto;
+}
+
+.mld-view-compact .mld-new-listing-badge,
+.mld-view-compact .mld-price-reduced-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+}
+
+.mld-view-compact .mld-from-agent-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    font-size: 9px;
+    padding: 2px 6px;
+}
+
+.mld-view-compact .mld-agent-badge-photo {
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+}
+
+/* Action buttons in compact view - vertical on right side */
+.mld-view-compact .mld-simple-card-actions {
+    position: absolute;
+    top: auto;
+    bottom: 6px;
+    right: 6px;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mld-view-compact .mld-simple-card-actions .bme-favorite-btn,
+.mld-view-compact .mld-simple-card-actions .bme-hide-btn,
+.mld-view-compact .mld-simple-card-actions .bme-share-btn {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    min-height: 26px;
+}
+
+.mld-view-compact .mld-simple-card-actions .bme-favorite-btn svg {
+    width: 13px;
+    height: 13px;
+}
+
+.mld-view-compact .mld-simple-card-actions .bme-hide-btn svg,
+.mld-view-compact .mld-simple-card-actions .bme-share-btn svg {
+    width: 11px;
+    height: 11px;
+}
+
+/* ==========================================================================
+   View Mode Responsive Adjustments
+   ========================================================================== */
+
+/* Tablet - Grid view becomes single column */
+@media (max-width: 768px) {
+    .mld-cards-grid.mld-view-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mld-view-compact .mld-card-simple-image {
+        flex: 0 0 120px;
+        width: 120px;
+    }
+
+    .mld-view-compact .mld-card-simple-details {
+        padding: 8px 10px;
+    }
+
+    .mld-view-compact .mld-card-simple-price {
+        font-size: var(--ds-text-base, 16px);
+    }
+
+    .mld-view-compact .mld-card-price-row {
+        flex-direction: column;
+        gap: 0;
+        align-items: flex-start;
+    }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+    .mld-view-compact .mld-card-simple-image {
+        flex: 0 0 100px;
+        width: 100px;
+    }
+
+    .mld-view-compact .mld-listing-card-simple {
+        min-height: 90px;
+    }
+}

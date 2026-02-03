@@ -1,0 +1,515 @@
+/**
+ * MLD Map Module V2 Styles
+ * Styles for map components and controls
+ * Updated to use design system tokens
+ *
+ * @package MLS_Listings_Display
+ * @version 7.0.0
+ */
+
+/* ========================================
+   Map Container
+   ======================================== */
+.mld-map-container {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  position: relative;
+  border-radius: var(--ds-radius-xl, 12px);
+  overflow: hidden;
+  background: var(--ds-off-white, #f3f4f6);
+}
+
+/* ========================================
+   Map Popup / Info Window
+   ======================================== */
+.mld-map-popup {
+  min-width: 280px;
+  max-width: 320px;
+}
+
+.mld-map-popup img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: var(--ds-radius-lg, 8px) var(--ds-radius-lg, 8px) 0 0;
+  margin: -14px -14px 12px -14px;
+}
+
+.mld-popup-content {
+  padding: 0;
+}
+
+.mld-map-popup h4 {
+  font-size: var(--ds-text-lg, 18px);
+  font-weight: 600;
+  color: var(--ds-text-primary, #000);
+  margin: 0 0 var(--ds-space-2, 8px) 0;
+  line-height: 1.3;
+}
+
+.mld-map-popup .price {
+  font-size: var(--ds-text-2xl, 24px);
+  font-weight: 700;
+  color: var(--ds-teal, #0891B2);
+  margin: 0 0 var(--ds-space-2, 8px) 0;
+}
+
+.mld-map-popup .details {
+  font-size: var(--ds-text-sm, 14px);
+  color: var(--ds-text-muted, #6b7280);
+  margin: 0 0 var(--ds-space-3, 12px) 0;
+  line-height: 1.5;
+}
+
+.mld-popup-link {
+  display: inline-block;
+  padding: var(--ds-space-2, 8px) var(--ds-space-4, 16px);
+  background: linear-gradient(135deg, var(--ds-teal, #0891B2) 0%, var(--ds-teal-hover, #0E7490) 100%);
+  color: var(--ds-white, white);
+  text-decoration: none;
+  border-radius: var(--ds-radius-lg, 8px);
+  font-size: var(--ds-text-sm, 14px);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.mld-popup-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+}
+
+/* POI Popup */
+.mld-map-popup.poi {
+  min-width: 200px;
+}
+
+.mld-map-popup.poi h4 {
+  font-size: var(--ds-text-base, 16px);
+  margin-bottom: 4px;
+}
+
+.mld-map-popup.poi p {
+  font-size: var(--ds-text-sm, 14px);
+  color: var(--ds-text-muted, #6b7280);
+  margin: 0;
+}
+
+.mld-map-popup.poi .rating {
+  color: var(--ds-warning, #f59e0b);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* ========================================
+   Google Maps Customization
+   ======================================== */
+.gm-style .gm-style-iw-c {
+  padding: 14px !important;
+  border-radius: var(--ds-radius-xl, 12px) !important;
+  box-shadow: var(--ds-shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.15)) !important;
+}
+
+.gm-style .gm-style-iw-t::after {
+  top: -2px !important;
+}
+
+.gm-style .gm-style-iw-d {
+  overflow: hidden !important;
+}
+
+.gm-ui-hover-effect {
+  width: 32px !important;
+  height: 32px !important;
+  top: 2px !important;
+  right: 2px !important;
+}
+
+.gm-ui-hover-effect img {
+  width: 16px !important;
+  height: 16px !important;
+  margin: 8px !important;
+}
+
+/* ========================================
+   Mapbox Markers
+   ======================================== */
+.mld-mapbox-marker {
+  cursor: pointer;
+}
+
+.mld-marker-property {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.mld-marker-property::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid currentColor;
+}
+
+.mld-marker-poi {
+  width: 40px;
+  height: 40px;
+  background: var(--ds-white, white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: var(--ds-shadow-md, 0 2px 8px rgba(0, 0, 0, 0.15));
+  border: 2px solid var(--ds-border, #e5e7eb);
+}
+
+/* Mapbox Popup */
+.mapboxgl-popup-content {
+  padding: 0 !important;
+  border-radius: var(--ds-radius-xl, 12px) !important;
+  box-shadow: var(--ds-shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.15)) !important;
+}
+
+.mapboxgl-popup-close-button {
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  padding: 0;
+  color: var(--ds-text-muted, #6b7280);
+  right: 4px;
+  top: 4px;
+}
+
+.mapboxgl-popup-close-button:hover {
+  background: var(--ds-off-white, #f3f4f6);
+  color: var(--ds-text-primary, #000);
+  border-radius: var(--ds-radius-lg, 8px);
+}
+
+/* ========================================
+   Commute Control
+   ======================================== */
+.mld-map-commute-control {
+  margin: 16px;
+}
+
+.mld-commute-panel {
+  background: var(--ds-white, white);
+  border-radius: var(--ds-radius-xl, 12px);
+  padding: var(--ds-space-5, 20px);
+  box-shadow: var(--ds-shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.1));
+  width: 300px;
+}
+
+.mld-commute-panel h4 {
+  font-size: var(--ds-text-base, 16px);
+  font-weight: 600;
+  color: var(--ds-text-primary, #000);
+  margin: 0 0 var(--ds-space-3, 12px) 0;
+}
+
+.mld-commute-destination {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.mld-commute-destination input {
+  flex: 1;
+  padding: var(--ds-space-2, 8px) var(--ds-space-3, 12px);
+  border: 1px solid var(--ds-border-strong, #d1d5db);
+  border-radius: var(--ds-radius-lg, 8px);
+  font-size: var(--ds-text-sm, 14px);
+}
+
+.mld-commute-destination button {
+  padding: var(--ds-space-2, 8px) var(--ds-space-4, 16px);
+  background: linear-gradient(135deg, var(--ds-teal, #0891B2) 0%, var(--ds-teal-hover, #0E7490) 100%);
+  color: var(--ds-white, white);
+  border: none;
+  border-radius: var(--ds-radius-lg, 8px);
+  font-size: var(--ds-text-sm, 14px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mld-commute-destination button:hover {
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+}
+
+.mld-commute-results {
+  font-size: 14px;
+}
+
+.mld-commute-time {
+  padding: var(--ds-space-3, 12px);
+  background: var(--ds-surface-subtle, #f9fafb);
+  border-radius: var(--ds-radius-lg, 8px);
+  line-height: 1.6;
+}
+
+.mld-commute-time strong {
+  color: var(--ds-text-primary, #000);
+}
+
+/* ========================================
+   Map Legend
+   ======================================== */
+.mld-map-legend {
+  position: absolute;
+  bottom: var(--ds-space-4, 16px);
+  left: var(--ds-space-4, 16px);
+  background: var(--ds-white, white);
+  border-radius: var(--ds-radius-xl, 12px);
+  padding: var(--ds-space-4, 16px);
+  box-shadow: var(--ds-shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.1));
+  font-size: var(--ds-text-sm, 14px);
+}
+
+.mld-legend-title {
+  font-weight: 600;
+  color: var(--ds-text-primary, #000);
+  margin-bottom: var(--ds-space-3, 12px);
+}
+
+.mld-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mld-legend-item:last-child {
+  margin-bottom: 0;
+}
+
+.mld-legend-marker {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mld-legend-marker.property {
+  background: var(--ds-teal, #0891B2);
+  position: relative;
+}
+
+.mld-legend-marker.property::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 6px solid var(--ds-teal, #0891B2);
+}
+
+.mld-legend-marker.poi {
+  background: var(--ds-white, white);
+  border: 2px solid var(--ds-border, #e5e7eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--ds-text-xs, 12px);
+}
+
+.mld-legend-label {
+  color: var(--ds-text-muted, #6b7280);
+}
+
+/* ========================================
+   Map Controls
+   ======================================== */
+.mld-map-controls {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mld-map-control-btn {
+  width: 40px;
+  height: 40px;
+  background: var(--ds-white, white);
+  border: none;
+  border-radius: var(--ds-radius-lg, 8px);
+  box-shadow: var(--ds-shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.1));
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.mld-map-control-btn:hover {
+  box-shadow: var(--ds-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.15));
+  transform: translateY(-1px);
+}
+
+.mld-map-control-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: var(--ds-text-secondary, #374151);
+  stroke-width: 2;
+}
+
+/* ========================================
+   Drawing Tools
+   ======================================== */
+.mld-map-drawing-info {
+  position: absolute;
+  top: var(--ds-space-4, 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ds-dark-gray, #1f2937);
+  color: var(--ds-white, white);
+  padding: var(--ds-space-2, 8px) var(--ds-space-4, 16px);
+  border-radius: var(--ds-radius-full, 20px);
+  font-size: var(--ds-text-sm, 14px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.mld-map-drawing-info.show {
+  opacity: 1;
+}
+
+/* ========================================
+   Mobile Responsive
+   ======================================== */
+@media (max-width: 768px) {
+  .mld-map-popup {
+    min-width: 240px;
+    max-width: 280px;
+  }
+  
+  .mld-map-popup img {
+    height: 140px;
+  }
+  
+  .mld-map-popup h4 {
+    font-size: 16px;
+  }
+  
+  .mld-map-popup .price {
+    font-size: 20px;
+  }
+  
+  .mld-commute-panel {
+    width: calc(100vw - 32px);
+    max-width: 300px;
+  }
+  
+  .mld-map-legend {
+    font-size: 12px;
+    padding: 12px;
+  }
+}
+
+/* ========================================
+   Loading and Error States (v5.0)
+   ======================================== */
+.mld-map-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: var(--ds-space-4, 16px) var(--ds-space-6, 24px);
+  border-radius: var(--ds-radius-lg, 8px);
+  box-shadow: var(--ds-shadow-lg, 0 2px 12px rgba(0, 0, 0, 0.15));
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3, 12px);
+  font-size: var(--ds-text-sm, 14px);
+  color: var(--ds-text-secondary, #374151);
+}
+
+.mld-loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--ds-border, #e5e7eb);
+  border-top-color: var(--ds-teal, #0891B2);
+  border-radius: 50%;
+  animation: mld-spin 0.8s linear infinite;
+}
+
+@keyframes mld-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mld-map-error {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ds-red, #DC2626);
+  color: var(--ds-white, white);
+  padding: var(--ds-space-3, 12px) 40px var(--ds-space-3, 12px) var(--ds-space-4, 16px);
+  border-radius: var(--ds-radius-md, 6px);
+  z-index: 1000;
+  font-size: var(--ds-text-sm, 14px);
+  box-shadow: var(--ds-shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.2));
+  max-width: calc(100% - 32px);
+  text-align: center;
+}
+
+.mld-error-dismiss {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+.mld-error-dismiss:hover {
+  opacity: 1;
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+@media print {
+  .mld-map-controls,
+  .mld-map-commute-control,
+  .mld-map-drawing-info,
+  .mld-map-loading,
+  .mld-map-error {
+    display: none !important;
+  }
+}

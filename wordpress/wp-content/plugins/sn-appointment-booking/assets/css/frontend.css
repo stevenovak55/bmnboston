@@ -1,0 +1,1184 @@
+/**
+ * SNAB Frontend Styles - Comprehensive Redesign
+ *
+ * Modern, attractive booking widget with excellent legibility.
+ *
+ * @package SN_Appointment_Booking
+ * @since 1.3.0
+ */
+
+/* ==========================================================================
+   CSS Custom Properties - Inline for maximum compatibility
+   ========================================================================== */
+
+.snab-booking-widget {
+    /* Primary Colors */
+    --snab-primary: #1e73be;
+    --snab-primary-dark: #155a96;
+    --snab-primary-light: #e3f0fb;
+    --snab-primary-rgb: 30, 115, 190;
+
+    /* Accent Colors */
+    --snab-accent: #0891b2;
+    --snab-accent-dark: #0e7490;
+    --snab-accent-light: #cffafe;
+
+    /* Neutral Colors */
+    --snab-gray-50: #f9fafb;
+    --snab-gray-100: #f3f4f6;
+    --snab-gray-200: #e5e7eb;
+    --snab-gray-300: #d1d5db;
+    --snab-gray-400: #9ca3af;
+    --snab-gray-500: #6b7280;
+    --snab-gray-600: #4b5563;
+    --snab-gray-700: #374151;
+    --snab-gray-800: #1f2937;
+    --snab-gray-900: #111827;
+
+    /* Status Colors */
+    --snab-success: #10b981;
+    --snab-success-light: #d1fae5;
+    --snab-error: #ef4444;
+    --snab-error-light: #fee2e2;
+
+    /* Shadows */
+    --snab-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --snab-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    --snab-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --snab-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --snab-shadow-primary: 0 4px 14px 0 rgba(30, 115, 190, 0.3);
+    --snab-shadow-accent: 0 4px 14px 0 rgba(8, 145, 178, 0.3);
+}
+
+/* ==========================================================================
+   Widget Container
+   ========================================================================== */
+
+.snab-booking-widget {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--snab-gray-800);
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: var(--snab-shadow-lg);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.snab-booking-widget * {
+    box-sizing: border-box;
+}
+
+/* ==========================================================================
+   Widget Title
+   ========================================================================== */
+
+.snab-widget-title {
+    margin: 0;
+    padding: 24px 24px 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--snab-gray-900);
+    text-align: center;
+}
+
+/* ==========================================================================
+   Steps Container
+   ========================================================================== */
+
+.snab-step {
+    display: none;
+    padding: 24px;
+    animation: snabSlideIn 0.4s ease-out;
+}
+
+.snab-step.active {
+    display: block;
+}
+
+@keyframes snabSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ==========================================================================
+   Step Header
+   ========================================================================== */
+
+.snab-step-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 24px;
+    padding: 0 0 16px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--snab-gray-900);
+    border-bottom: 3px solid var(--snab-primary);
+}
+
+.snab-back-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background: var(--snab-gray-100);
+    border: 2px solid var(--snab-gray-200);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--snab-gray-600);
+}
+
+.snab-back-btn:hover {
+    background: var(--snab-primary);
+    border-color: var(--snab-primary);
+    color: #fff;
+    transform: translateX(-2px);
+}
+
+.snab-back-btn .dashicons {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+/* ==========================================================================
+   Appointment Type Selection - Card Style
+   ========================================================================== */
+
+.snab-type-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.snab-type-option {
+    display: flex;
+    align-items: stretch;
+    gap: 16px;
+    padding: 20px;
+    background: var(--snab-gray-50);
+    border: 2px solid var(--snab-gray-200);
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.snab-type-option::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background: linear-gradient(135deg, var(--snab-primary-light) 0%, transparent 100%);
+    transition: width 0.3s ease;
+    z-index: 0;
+}
+
+.snab-type-option:hover {
+    border-color: var(--snab-primary);
+    box-shadow: var(--snab-shadow-md);
+    transform: translateY(-2px);
+}
+
+.snab-type-option:hover::before {
+    width: 100%;
+}
+
+.snab-type-option.selected {
+    background: var(--snab-primary-light);
+    border-color: var(--snab-primary);
+    box-shadow: var(--snab-shadow-primary);
+}
+
+.snab-type-option.selected::before {
+    width: 100%;
+}
+
+.snab-type-color {
+    flex-shrink: 0;
+    width: 8px;
+    min-height: 60px;
+    border-radius: 4px;
+    z-index: 1;
+}
+
+.snab-type-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 1;
+    flex: 1;
+}
+
+.snab-type-name {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--snab-gray-900);
+    line-height: 1.3;
+}
+
+.snab-type-duration {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--snab-primary);
+    background: rgba(30, 115, 190, 0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    width: fit-content;
+}
+
+.snab-type-duration::before {
+    content: '';
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231e73be'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+.snab-type-description {
+    font-size: 0.9rem;
+    color: var(--snab-gray-600);
+    line-height: 1.5;
+    margin-top: 4px;
+}
+
+/* ==========================================================================
+   Selected Type/Date Badge
+   ========================================================================== */
+
+.snab-selected-type,
+.snab-selected-date {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, var(--snab-primary-light) 0%, var(--snab-gray-50) 100%);
+    border: 1px solid var(--snab-primary);
+    border-left: 4px solid var(--snab-primary);
+    border-radius: 8px;
+}
+
+.snab-type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, var(--snab-primary) 0%, var(--snab-primary-dark) 100%);
+    border-radius: 20px;
+    box-shadow: var(--snab-shadow-sm);
+}
+
+.snab-date-text {
+    font-weight: 600;
+    color: var(--snab-gray-800);
+}
+
+/* ==========================================================================
+   Calendar
+   ========================================================================== */
+
+.snab-calendar-container {
+    background: #fff;
+    border: 2px solid var(--snab-gray-200);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--snab-shadow);
+}
+
+.snab-calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--snab-gray-50) 0%, var(--snab-gray-100) 100%);
+    border-bottom: 1px solid var(--snab-gray-200);
+}
+
+.snab-calendar-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--snab-gray-800);
+}
+
+.snab-calendar-nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background: #fff;
+    border: 2px solid var(--snab-gray-200);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--snab-gray-600);
+}
+
+.snab-calendar-nav:hover:not(:disabled) {
+    background: var(--snab-primary);
+    border-color: var(--snab-primary);
+    color: #fff;
+    box-shadow: var(--snab-shadow-primary);
+}
+
+.snab-calendar-nav:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.snab-calendar-nav .dashicons {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.snab-calendar-grid {
+    padding: 20px;
+}
+
+.snab-calendar-week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+}
+
+.snab-calendar-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 8px;
+    min-height: 80px;
+    background: var(--snab-gray-100);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.snab-calendar-day.available {
+    background: #fff;
+    border-color: var(--snab-gray-200);
+    cursor: pointer;
+}
+
+.snab-calendar-day.available:hover {
+    border-color: var(--snab-primary);
+    background: var(--snab-primary-light);
+    box-shadow: var(--snab-shadow-md);
+    transform: translateY(-3px);
+}
+
+.snab-calendar-day.selected {
+    background: linear-gradient(135deg, var(--snab-primary) 0%, var(--snab-primary-dark) 100%);
+    border-color: var(--snab-primary);
+    color: #fff;
+    box-shadow: var(--snab-shadow-primary);
+    transform: translateY(-3px);
+}
+
+.snab-calendar-day.today {
+    position: relative;
+}
+
+.snab-calendar-day.today::after {
+    content: 'Today';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--snab-accent);
+    background: var(--snab-accent-light);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.snab-calendar-day.selected.today::after {
+    color: var(--snab-primary);
+    background: #fff;
+}
+
+.snab-calendar-day.past,
+.snab-calendar-day.unavailable {
+    opacity: 0.35;
+    cursor: not-allowed;
+    background: var(--snab-gray-100);
+}
+
+.snab-day-name {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: inherit;
+    opacity: 0.7;
+    margin-bottom: 4px;
+}
+
+.snab-day-number {
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.snab-slots-count {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--snab-success);
+    background: var(--snab-success-light);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-top: 6px;
+}
+
+.snab-calendar-day.selected .snab-slots-count {
+    color: var(--snab-primary-dark);
+    background: #fff;
+}
+
+.snab-calendar-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 60px 20px;
+    color: var(--snab-gray-500);
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   Time Slots - FIXED LEGIBILITY
+   ========================================================================== */
+
+.snab-time-slots {
+    min-height: 120px;
+}
+
+.snab-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 12px;
+}
+
+.snab-time-slot {
+    padding: 14px 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    /* CRITICAL: Dark text on light background for legibility */
+    color: var(--snab-gray-800);
+    background: var(--snab-gray-50);
+    border: 2px solid var(--snab-gray-300);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.snab-time-slot:hover {
+    color: var(--snab-primary);
+    background: var(--snab-primary-light);
+    border-color: var(--snab-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--snab-shadow-md);
+}
+
+.snab-time-slot.selected {
+    color: #fff;
+    background: linear-gradient(135deg, var(--snab-primary) 0%, var(--snab-primary-dark) 100%);
+    border-color: var(--snab-primary);
+    box-shadow: var(--snab-shadow-primary);
+    transform: translateY(-2px);
+}
+
+.snab-slots-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 60px 20px;
+    color: var(--snab-gray-500);
+    font-weight: 500;
+}
+
+.snab-no-slots {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--snab-gray-500);
+    background: var(--snab-gray-50);
+    border: 2px dashed var(--snab-gray-300);
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   Booking Form
+   ========================================================================== */
+
+.snab-booking-summary {
+    margin-bottom: 24px;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--snab-primary-light) 0%, var(--snab-accent-light) 100%);
+    border: 2px solid var(--snab-primary);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.snab-summary-item {
+    margin: 8px 0;
+    font-weight: 500;
+    color: var(--snab-gray-800);
+}
+
+.snab-summary-item strong {
+    color: var(--snab-gray-900);
+}
+
+.snab-duration {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--snab-primary);
+    background: #fff;
+    border-radius: 20px;
+}
+
+.snab-booking-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.snab-form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.snab-form-row label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--snab-gray-700);
+}
+
+.snab-form-row label .required {
+    color: var(--snab-error);
+    margin-left: 2px;
+}
+
+.snab-form-row input,
+.snab-form-row textarea,
+.snab-form-row select {
+    padding: 14px 16px;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--snab-gray-800);
+    background: #fff;
+    border: 2px solid var(--snab-gray-300);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.snab-form-row input:focus,
+.snab-form-row textarea:focus,
+.snab-form-row select:focus {
+    outline: none;
+    border-color: var(--snab-primary);
+    box-shadow: 0 0 0 4px rgba(30, 115, 190, 0.15);
+}
+
+.snab-form-row input::placeholder,
+.snab-form-row textarea::placeholder {
+    color: var(--snab-gray-400);
+}
+
+.snab-form-row textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.snab-form-actions {
+    margin-top: 8px;
+}
+
+.snab-submit-btn {
+    width: 100%;
+    padding: 18px 32px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-family: inherit;
+    color: #fff;
+    background: linear-gradient(135deg, var(--snab-accent) 0%, var(--snab-accent-dark) 100%);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-transform: none;
+    letter-spacing: 0.5px;
+}
+
+.snab-submit-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--snab-accent-dark) 0%, #0c5a70 100%);
+    transform: translateY(-2px);
+    box-shadow: var(--snab-shadow-accent);
+}
+
+.snab-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.snab-form-error {
+    padding: 14px 18px;
+    color: var(--snab-error);
+    background: var(--snab-error-light);
+    border: 2px solid var(--snab-error);
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   Confirmation Screen
+   ========================================================================== */
+
+.snab-step-confirmation {
+    text-align: center;
+    padding: 40px 24px;
+}
+
+.snab-confirmation-icon {
+    margin-bottom: 24px;
+}
+
+.snab-confirmation-icon .dashicons {
+    font-size: 80px;
+    width: 80px;
+    height: 80px;
+    color: var(--snab-success);
+    background: var(--snab-success-light);
+    border-radius: 50%;
+    padding: 20px;
+    box-sizing: content-box;
+}
+
+.snab-confirmation-title {
+    margin: 0 0 12px;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--snab-gray-900);
+}
+
+.snab-confirmation-message {
+    margin: 0 0 28px;
+    color: var(--snab-gray-600);
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.snab-confirmation-details {
+    padding: 24px;
+    background: linear-gradient(135deg, var(--snab-gray-50) 0%, var(--snab-primary-light) 100%);
+    border: 2px solid var(--snab-gray-200);
+    border-radius: 12px;
+    margin-bottom: 24px;
+    text-align: left;
+}
+
+.snab-confirmation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--snab-gray-200);
+}
+
+.snab-confirmation-item:last-child {
+    border-bottom: none;
+}
+
+.snab-confirmation-item strong {
+    color: var(--snab-gray-600);
+    font-weight: 500;
+}
+
+.snab-confirmation-item span {
+    color: var(--snab-gray-900);
+    font-weight: 600;
+}
+
+.snab-gcal-synced {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 10px 20px;
+    color: var(--snab-success);
+    background: var(--snab-success-light);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.snab-gcal-synced .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.snab-confirmation-actions {
+    margin-top: 24px;
+}
+
+.snab-book-another {
+    padding: 14px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--snab-primary);
+    background: #fff;
+    border: 2px solid var(--snab-primary);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.snab-book-another:hover {
+    background: var(--snab-primary);
+    color: #fff;
+    box-shadow: var(--snab-shadow-primary);
+}
+
+/* ==========================================================================
+   Timezone Notice
+   ========================================================================== */
+
+.snab-timezone-notice {
+    margin-top: 20px;
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    color: var(--snab-gray-500);
+    background: var(--snab-gray-50);
+    border: 1px solid var(--snab-gray-200);
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* ==========================================================================
+   Error & Empty States
+   ========================================================================== */
+
+.snab-error {
+    padding: 24px;
+    text-align: center;
+    color: var(--snab-error);
+    background: var(--snab-error-light);
+    border: 2px solid var(--snab-error);
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.snab-no-types {
+    padding: 40px 24px;
+    text-align: center;
+    color: var(--snab-gray-500);
+    background: var(--snab-gray-50);
+    border: 2px dashed var(--snab-gray-300);
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+
+@media (max-width: 640px) {
+    .snab-booking-widget {
+        margin: 0 12px;
+        border-radius: 12px;
+        font-size: 15px;
+    }
+
+    .snab-step {
+        padding: 20px 16px;
+    }
+
+    .snab-step-title {
+        font-size: 1.1rem;
+    }
+
+    .snab-calendar-week {
+        gap: 6px;
+    }
+
+    .snab-calendar-day {
+        padding: 10px 6px;
+        min-height: 70px;
+        border-radius: 10px;
+    }
+
+    .snab-day-name {
+        font-size: 0.6rem;
+    }
+
+    .snab-day-number {
+        font-size: 1.2rem;
+    }
+
+    .snab-slots-count {
+        display: none;
+    }
+
+    .snab-slots-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .snab-time-slot {
+        padding: 12px 10px;
+        font-size: 0.9rem;
+    }
+
+    .snab-type-option {
+        padding: 16px;
+    }
+
+    .snab-type-name {
+        font-size: 1rem;
+    }
+
+    .snab-confirmation-icon .dashicons {
+        font-size: 60px;
+        width: 60px;
+        height: 60px;
+        padding: 16px;
+    }
+
+    .snab-confirmation-title {
+        font-size: 1.4rem;
+    }
+
+    .snab-submit-btn {
+        padding: 16px 24px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .snab-booking-widget {
+        margin: 0 8px;
+    }
+
+    .snab-step {
+        padding: 16px 12px;
+    }
+
+    .snab-calendar-week {
+        gap: 4px;
+    }
+
+    .snab-calendar-day {
+        padding: 8px 4px;
+        min-height: 60px;
+    }
+
+    .snab-slots-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .snab-back-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .snab-calendar-nav {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+/* ==========================================================================
+   Loading Spinner
+   ========================================================================== */
+
+.snab-booking-widget .spinner {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--snab-gray-200);
+    border-top-color: var(--snab-primary);
+    border-radius: 50%;
+    animation: snabSpin 0.8s linear infinite;
+}
+
+@keyframes snabSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.snab-booking-widget .spinner.is-active {
+    visibility: visible;
+}
+
+/* ==========================================================================
+   Theme Override - High Specificity
+   ========================================================================== */
+
+/* Ensure our styles win over theme styles */
+div.snab-booking-widget,
+.snab-booking-widget {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+div.snab-booking-widget button,
+.snab-booking-widget button {
+    font-family: inherit !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+}
+
+div.snab-booking-widget .snab-time-slot,
+.snab-booking-widget button.snab-time-slot {
+    color: var(--snab-gray-800) !important;
+    background: var(--snab-gray-50) !important;
+    border: 2px solid var(--snab-gray-300) !important;
+}
+
+div.snab-booking-widget .snab-time-slot:hover,
+.snab-booking-widget button.snab-time-slot:hover {
+    color: var(--snab-primary) !important;
+    background: var(--snab-primary-light) !important;
+    border-color: var(--snab-primary) !important;
+}
+
+div.snab-booking-widget .snab-time-slot.selected,
+.snab-booking-widget button.snab-time-slot.selected {
+    color: #fff !important;
+    background: linear-gradient(135deg, var(--snab-primary) 0%, var(--snab-primary-dark) 100%) !important;
+    border-color: var(--snab-primary) !important;
+}
+
+div.snab-booking-widget .snab-type-option,
+.snab-booking-widget button.snab-type-option {
+    background: var(--snab-gray-50) !important;
+    border: 2px solid var(--snab-gray-200) !important;
+    text-align: left !important;
+}
+
+div.snab-booking-widget .snab-type-option:hover,
+.snab-booking-widget button.snab-type-option:hover {
+    border-color: var(--snab-primary) !important;
+}
+
+div.snab-booking-widget .snab-type-option.selected,
+.snab-booking-widget button.snab-type-option.selected {
+    background: var(--snab-primary-light) !important;
+    border-color: var(--snab-primary) !important;
+}
+
+div.snab-booking-widget .snab-submit-btn,
+.snab-booking-widget button.snab-submit-btn {
+    color: #fff !important;
+    background: linear-gradient(135deg, var(--snab-accent) 0%, var(--snab-accent-dark) 100%) !important;
+}
+
+div.snab-booking-widget input,
+div.snab-booking-widget textarea,
+div.snab-booking-widget select {
+    color: var(--snab-gray-800) !important;
+    background: #fff !important;
+}
+
+/* ==========================================================================
+   Staff Selection Step (v1.6.0)
+   ========================================================================== */
+
+.snab-step-staff .snab-selected-type {
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: var(--snab-primary-light);
+    border: 1px solid var(--snab-primary);
+    border-radius: 8px;
+    font-weight: 500;
+    color: var(--snab-gray-800);
+}
+
+.snab-staff-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.snab-staff-option {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    padding: 16px;
+    font-family: inherit;
+    font-size: 1rem;
+    text-align: left;
+    color: var(--snab-gray-800);
+    background: var(--snab-gray-50);
+    border: 2px solid var(--snab-gray-200);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.snab-staff-option:hover {
+    background: var(--snab-primary-light);
+    border-color: var(--snab-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--snab-shadow-md);
+}
+
+.snab-staff-option.selected {
+    background: var(--snab-primary-light);
+    border-color: var(--snab-primary);
+    box-shadow: var(--snab-shadow-primary);
+}
+
+.snab-staff-avatar {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--snab-gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.snab-staff-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.snab-staff-initials {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--snab-gray-600);
+    background: var(--snab-gray-200);
+}
+
+.snab-staff-any-icon {
+    background: var(--snab-primary-light);
+    color: var(--snab-primary);
+}
+
+.snab-staff-any-icon .dashicons {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+}
+
+.snab-staff-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.snab-staff-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--snab-gray-900);
+}
+
+.snab-staff-title {
+    font-size: 0.9rem;
+    color: var(--snab-primary);
+    font-weight: 500;
+}
+
+.snab-staff-description,
+.snab-staff-bio {
+    font-size: 0.85rem;
+    color: var(--snab-gray-500);
+    line-height: 1.4;
+}
+
+/* Any Available option styling */
+.snab-any-staff {
+    background: linear-gradient(135deg, var(--snab-gray-50) 0%, var(--snab-primary-light) 100%);
+    border-style: dashed;
+}
+
+.snab-any-staff:hover {
+    border-style: solid;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .snab-staff-option {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .snab-staff-avatar {
+        width: 48px;
+        height: 48px;
+    }
+
+    .snab-staff-name {
+        font-size: 1rem;
+    }
+}
+
+/* Staff selection - Theme override fixes */
+div.snab-booking-widget .snab-staff-option,
+.snab-booking-widget button.snab-staff-option {
+    background: var(--snab-gray-50) !important;
+    border: 2px solid var(--snab-gray-200) !important;
+    text-align: left !important;
+}
+
+div.snab-booking-widget .snab-staff-option:hover,
+.snab-booking-widget button.snab-staff-option:hover {
+    background: var(--snab-primary-light) !important;
+    border-color: var(--snab-primary) !important;
+}
+
+div.snab-booking-widget .snab-staff-option.selected,
+.snab-booking-widget button.snab-staff-option.selected {
+    background: var(--snab-primary-light) !important;
+    border-color: var(--snab-primary) !important;
+}

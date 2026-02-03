@@ -1,0 +1,700 @@
+/**
+ * MLD Card Generator - Admin Styles
+ *
+ * Styles for the [mld_listing_cards] shortcode generator admin UI.
+ *
+ * @package MLS_Listings_Display
+ * @since 6.11.21
+ */
+
+/* ==========================================================================
+   Layout
+   ========================================================================== */
+
+.mld-card-generator-wrap {
+    max-width: 1400px;
+    margin: 20px 0;
+}
+
+.mld-generator-intro {
+    margin-bottom: 30px;
+}
+
+.mld-generator-intro h2 {
+    margin: 0 0 10px;
+    font-size: 23px;
+    font-weight: 400;
+}
+
+.mld-generator-intro p {
+    color: #666;
+    font-size: 14px;
+    margin: 0;
+}
+
+.mld-generator-container {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 30px;
+    align-items: start;
+}
+
+@media (max-width: 1200px) {
+    .mld-generator-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
+   Filter Panel
+   ========================================================================== */
+
+.mld-generator-filters {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 0;
+}
+
+/* Accordion */
+.mld-accordion-section {
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.mld-accordion-section:last-of-type {
+    border-bottom: none;
+}
+
+.mld-accordion-header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 15px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2327;
+    transition: background 0.2s;
+}
+
+.mld-accordion-header:hover {
+    background: #f6f7f7;
+}
+
+.mld-accordion-title {
+    flex: 1;
+}
+
+.mld-filter-badge {
+    background: #0073aa;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-right: 10px;
+}
+
+.mld-accordion-icon {
+    color: #999;
+    transition: transform 0.2s;
+}
+
+.mld-accordion-icon.rotated {
+    transform: rotate(180deg);
+}
+
+.mld-accordion-content {
+    padding: 0 20px 20px;
+}
+
+/* Fields */
+.mld-field {
+    margin-bottom: 18px;
+}
+
+.mld-field:last-child {
+    margin-bottom: 0;
+}
+
+.mld-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #1d2327;
+}
+
+.mld-field input[type="text"],
+.mld-field input[type="number"],
+.mld-field select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.mld-field input:focus,
+.mld-field select:focus {
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+    outline: none;
+}
+
+.mld-field-hint {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: #757575;
+}
+
+.mld-field-hint strong {
+    color: #2271b1;
+}
+
+/* Field divider for OR sections */
+.mld-field-divider {
+    text-align: center;
+    margin: 15px 0;
+    color: #999;
+    font-size: 12px;
+}
+
+.mld-field-divider span {
+    background: #fff;
+    padding: 0 10px;
+}
+
+/* Row layout for side-by-side fields */
+.mld-field-row {
+    display: flex;
+    gap: 15px;
+}
+
+.mld-field-half {
+    flex: 1;
+}
+
+.mld-field-half label {
+    font-size: 12px;
+}
+
+/* Checkbox Group */
+.mld-checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.mld-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 15px;
+}
+
+.mld-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 400;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.mld-checkbox-label input {
+    margin: 0;
+}
+
+.mld-checkbox-single {
+    padding: 8px 0;
+}
+
+/* Radio Group */
+.mld-radio-group {
+    display: flex;
+    gap: 20px;
+}
+
+.mld-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 400;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.mld-radio-label input {
+    margin: 0;
+}
+
+/* Chip Buttons (Beds) */
+.mld-chip-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mld-chip {
+    padding: 6px 14px;
+    background: #f0f0f1;
+    border: 1px solid #c3c4c7;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mld-chip:hover {
+    background: #e5e5e5;
+}
+
+.mld-chip.active {
+    background: #0073aa;
+    border-color: #0073aa;
+    color: #fff;
+}
+
+/* Generate Button */
+#mld-generate-shortcode {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: calc(100% - 40px);
+    margin: 20px;
+    padding: 12px 20px;
+    font-size: 14px;
+}
+
+#mld-generate-shortcode .dashicons {
+    font-size: 18px;
+    line-height: 1;
+}
+
+/* ==========================================================================
+   Output Panel
+   ========================================================================== */
+
+.mld-generator-output {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.mld-output-section,
+.mld-preview-section,
+.mld-tips-section {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.mld-output-section h3,
+.mld-preview-section h3,
+.mld-tips-section h4 {
+    margin: 0 0 15px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+/* Shortcode Box */
+.mld-shortcode-box {
+    background: #2c3338;
+    border-radius: 4px;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    overflow-x: auto;
+}
+
+.mld-shortcode-box code {
+    display: block;
+    color: #50fa7b;
+    font-family: Consolas, Monaco, 'Andale Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+/* Output Actions */
+.mld-output-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.mld-output-actions .button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mld-output-actions .dashicons {
+    font-size: 16px;
+    line-height: 1.2;
+}
+
+/* Notice */
+.mld-notice {
+    margin-top: 15px;
+    padding: 10px 15px;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.mld-notice.success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.mld-notice.error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.mld-notice.info {
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+}
+
+/* ==========================================================================
+   Preview Section
+   ========================================================================== */
+
+.mld-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.mld-preview-header h3 {
+    margin: 0;
+}
+
+/* Toggle Switch */
+.mld-toggle {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.mld-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.mld-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.mld-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.mld-toggle input:checked + .mld-toggle-slider {
+    background-color: #0073aa;
+}
+
+.mld-toggle input:checked + .mld-toggle-slider:before {
+    transform: translateX(20px);
+}
+
+/* Preview Container */
+#mld-preview-container {
+    border-top: 1px solid #e5e5e5;
+    padding-top: 15px;
+}
+
+.mld-preview-count {
+    font-size: 13px;
+    color: #666;
+    margin: 0 0 15px;
+}
+
+/* Preview Grid */
+.mld-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+@media (max-width: 1400px) {
+    .mld-preview-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Preview Card */
+.mld-preview-card {
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.mld-preview-image {
+    position: relative;
+    aspect-ratio: 4/3;
+    overflow: hidden;
+}
+
+.mld-preview-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mld-preview-price {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.mld-preview-status {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.mld-status-active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.mld-status-under-agreement {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.mld-status-sold {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.mld-preview-details {
+    padding: 12px;
+}
+
+.mld-preview-specs {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 6px;
+}
+
+.mld-preview-specs span {
+    display: flex;
+    align-items: center;
+}
+
+.mld-preview-address {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d2327;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mld-preview-city {
+    font-size: 12px;
+    color: #666;
+}
+
+/* Preview States */
+.mld-preview-loading,
+.mld-preview-empty,
+.mld-preview-error {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.mld-preview-loading .spinner {
+    float: none;
+    margin: 0 auto 10px;
+}
+
+.mld-preview-error {
+    color: #dc3232;
+}
+
+.mld-preview-disclaimer {
+    grid-column: 1 / -1;
+    font-size: 12px;
+    color: #757575;
+    margin: 15px 0 0;
+    padding-top: 15px;
+    border-top: 1px solid #e5e5e5;
+}
+
+/* ==========================================================================
+   Tips Section
+   ========================================================================== */
+
+.mld-tips-section ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.mld-tips-section li {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.mld-tips-section li:last-child {
+    margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Multi-Select Dropdown
+   ========================================================================== */
+
+.mld-multiselect-wrapper {
+    position: relative;
+}
+
+.mld-multiselect-selected {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 38px;
+    padding: 6px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    align-items: center;
+    transition: border-color 0.2s;
+}
+
+.mld-multiselect-selected:hover {
+    border-color: #0073aa;
+}
+
+.mld-multiselect-placeholder {
+    color: #757575;
+    font-size: 14px;
+}
+
+.mld-multiselect-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    background: #f0f0f1;
+    border: 1px solid #c3c4c7;
+    border-radius: 3px;
+    font-size: 12px;
+    color: #1d2327;
+}
+
+.mld-multiselect-count {
+    font-size: 13px;
+    color: #0073aa;
+    font-weight: 600;
+}
+
+.mld-multiselect-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 4px;
+    background: #fff;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    max-height: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+.mld-multiselect-search {
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    border-bottom: 1px solid #e5e5e5;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.mld-multiselect-search:focus {
+    box-shadow: none;
+}
+
+.mld-multiselect-options {
+    overflow-y: auto;
+    max-height: 240px;
+    padding: 8px 0;
+}
+
+.mld-multiselect-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #1d2327;
+    transition: background 0.15s;
+}
+
+.mld-multiselect-option:hover {
+    background: #f6f7f7;
+}
+
+.mld-multiselect-option input[type="checkbox"] {
+    margin: 0;
+}
+
+.mld-multiselect-empty {
+    padding: 20px;
+    text-align: center;
+    color: #757575;
+    font-size: 13px;
+}

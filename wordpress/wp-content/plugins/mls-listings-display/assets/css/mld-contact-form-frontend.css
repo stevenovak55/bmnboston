@@ -1,0 +1,1187 @@
+/**
+ * MLD Contact Form - Frontend Styles
+ *
+ * Modern, mobile-responsive contact form styles using CSS variables
+ * for Customizer integration.
+ *
+ * @package MLS_Listings_Display
+ * @since 6.21.0
+ */
+
+/* ==========================================================================
+   CSS Custom Properties (Defaults - overridden by Customizer)
+   ========================================================================== */
+
+:root {
+    --mld-cf-bg-color: #ffffff;
+    --mld-cf-text-color: #1f2937;
+    --mld-cf-label-color: #374151;
+    --mld-cf-border-color: #e5e7eb;
+    --mld-cf-focus-color: #0891B2;
+    --mld-cf-button-bg: #0891B2;
+    --mld-cf-button-hover-bg: #0E7490;
+    --mld-cf-button-text: #ffffff;
+    --mld-cf-error-color: #DC2626;
+    --mld-cf-success-color: #10B981;
+    --mld-cf-font-family: inherit;
+    --mld-cf-label-size: 14px;
+    --mld-cf-input-size: 14px;
+    --mld-cf-button-size: 16px;
+    --mld-cf-label-weight: 600;
+    --mld-cf-form-padding: 24px;
+    --mld-cf-field-gap: 16px;
+    --mld-cf-input-padding-v: 12px;
+    --mld-cf-input-padding-h: 14px;
+    --mld-cf-button-radius: 6px;
+    --mld-cf-form-radius: 8px;
+}
+
+/* ==========================================================================
+   Form Wrapper & Container
+   ========================================================================== */
+
+.mld-contact-form-wrapper {
+    font-family: var(--mld-cf-font-family);
+    color: var(--mld-cf-text-color);
+    max-width: 100%;
+}
+
+.mld-contact-form {
+    background: var(--mld-cf-bg-color);
+    border-radius: var(--mld-cf-form-radius);
+    padding: var(--mld-cf-form-padding);
+    position: relative;
+}
+
+/* Optional border and shadow (controlled by Customizer) */
+.mld-contact-form.mld-cf-has-border {
+    border: 1px solid var(--mld-cf-border-color);
+}
+
+.mld-contact-form.mld-cf-shadow-small {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mld-contact-form.mld-cf-shadow-medium {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.mld-contact-form.mld-cf-shadow-large {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* ==========================================================================
+   Fields Container
+   ========================================================================== */
+
+.mld-cf-fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mld-cf-field-gap);
+}
+
+/* Row for half-width fields */
+.mld-cf-row {
+    display: flex;
+    gap: var(--mld-cf-field-gap);
+}
+
+/* ==========================================================================
+   Field Styles
+   ========================================================================== */
+
+.mld-cf-field {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.mld-cf-field-full {
+    width: 100%;
+}
+
+.mld-cf-field-half {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Labels */
+.mld-cf-field > label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: var(--mld-cf-label-size);
+    font-weight: var(--mld-cf-label-weight);
+    color: var(--mld-cf-label-color);
+    line-height: 1.4;
+}
+
+.mld-cf-required {
+    color: var(--mld-cf-error-color);
+    margin-left: 2px;
+}
+
+/* ==========================================================================
+   Input Styles (text, email, phone, date, select, textarea)
+   ========================================================================== */
+
+.mld-cf-field input[type="text"],
+.mld-cf-field input[type="email"],
+.mld-cf-field input[type="tel"],
+.mld-cf-field input[type="date"],
+.mld-cf-field select,
+.mld-cf-field textarea {
+    width: 100%;
+    padding: var(--mld-cf-input-padding-v) var(--mld-cf-input-padding-h);
+    font-size: var(--mld-cf-input-size);
+    font-family: var(--mld-cf-font-family);
+    color: var(--mld-cf-text-color);
+    background-color: var(--mld-cf-bg-color);
+    border: 1px solid var(--mld-cf-border-color);
+    border-radius: var(--mld-cf-button-radius);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    line-height: 1.5;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* Focus state */
+.mld-cf-field input:focus,
+.mld-cf-field select:focus,
+.mld-cf-field textarea:focus {
+    outline: none;
+    border-color: var(--mld-cf-focus-color);
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.15);
+}
+
+/* Error state */
+.mld-cf-field.has-error input,
+.mld-cf-field.has-error select,
+.mld-cf-field.has-error textarea {
+    border-color: var(--mld-cf-error-color);
+}
+
+.mld-cf-field.has-error input:focus,
+.mld-cf-field.has-error select:focus,
+.mld-cf-field.has-error textarea:focus {
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+}
+
+/* Placeholder */
+.mld-cf-field input::placeholder,
+.mld-cf-field textarea::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+}
+
+/* Textarea specific */
+.mld-cf-field textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* Select dropdown arrow */
+.mld-cf-field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M2.5 4.5l3.5 3.5 3.5-3.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+    cursor: pointer;
+}
+
+/* Date input */
+.mld-cf-field input[type="date"] {
+    cursor: pointer;
+}
+
+.mld-cf-field input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+}
+
+/* ==========================================================================
+   Checkbox & Radio Styles
+   ========================================================================== */
+
+.mld-cf-checkbox-group,
+.mld-cf-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mld-cf-checkbox-label,
+.mld-cf-radio-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    font-size: var(--mld-cf-input-size);
+    line-height: 1.4;
+}
+
+.mld-cf-checkbox-label input,
+.mld-cf-radio-label input {
+    margin: 0;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    cursor: pointer;
+    accent-color: var(--mld-cf-focus-color);
+}
+
+.mld-cf-checkbox-label span,
+.mld-cf-radio-label span {
+    padding-top: 1px;
+}
+
+/* ==========================================================================
+   Error Messages
+   ========================================================================== */
+
+.mld-cf-field-error {
+    font-size: 12px;
+    color: var(--mld-cf-error-color);
+    margin-top: 4px;
+    min-height: 0;
+    overflow: hidden;
+    transition: min-height 0.2s ease;
+}
+
+.mld-cf-field-error:empty {
+    display: none;
+}
+
+/* Form-level error */
+.mld-cf-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: var(--mld-cf-button-radius);
+    padding: 12px 16px;
+    color: var(--mld-cf-error-color);
+    font-size: 14px;
+    margin-bottom: var(--mld-cf-field-gap);
+}
+
+/* ==========================================================================
+   New Field Types (v6.22.0)
+   ========================================================================== */
+
+/* Section Field */
+.mld-cf-section {
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--mld-cf-border-color);
+}
+
+.mld-cf-section:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+.mld-cf-section-title {
+    margin: 0 0 4px 0;
+    font-size: 18px;
+    font-weight: var(--mld-cf-label-weight);
+    color: var(--mld-cf-text-color);
+    line-height: 1.4;
+}
+
+.mld-cf-section-description {
+    margin: 0;
+    font-size: 14px;
+    color: var(--mld-cf-label-color);
+    opacity: 0.8;
+}
+
+/* Paragraph Field */
+.mld-cf-paragraph {
+    padding: 8px 0;
+}
+
+.mld-cf-paragraph-content {
+    font-size: var(--mld-cf-input-size);
+    color: var(--mld-cf-text-color);
+    line-height: 1.6;
+}
+
+.mld-cf-paragraph-content p {
+    margin: 0 0 8px 0;
+}
+
+.mld-cf-paragraph-content p:last-child {
+    margin-bottom: 0;
+}
+
+.mld-cf-paragraph-content a {
+    color: var(--mld-cf-focus-color);
+    text-decoration: underline;
+}
+
+/* Currency Field */
+.mld-cf-currency-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.mld-cf-currency-symbol {
+    position: absolute;
+    left: var(--mld-cf-input-padding-h);
+    font-size: var(--mld-cf-input-size);
+    color: var(--mld-cf-label-color);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.mld-cf-currency-wrapper input {
+    padding-left: calc(var(--mld-cf-input-padding-h) + 16px);
+}
+
+/* Number Field - Use native spinner */
+.mld-cf-field input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.mld-cf-field input[type="number"]::-webkit-outer-spin-button,
+.mld-cf-field input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* URL Field - Subtle icon hint */
+.mld-cf-field input[type="url"] {
+    padding-left: calc(var(--mld-cf-input-padding-h) + 4px);
+}
+
+/* Hidden Field Wrapper (for conditional logic) */
+.mld-cf-hidden-wrapper {
+    display: none;
+}
+
+/* ==========================================================================
+   Conditional Logic Transitions (v6.22.0)
+   ========================================================================== */
+
+/* Hidden field state */
+.mld-cf-field.mld-cf-hidden,
+.mld-cf-section.mld-cf-hidden,
+.mld-cf-paragraph.mld-cf-hidden,
+.mld-cf-hidden-wrapper.mld-cf-hidden {
+    display: none;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    transition: opacity 0.2s ease, max-height 0.2s ease;
+}
+
+/* Visible field state (for transition) */
+.mld-cf-field:not(.mld-cf-hidden),
+.mld-cf-section:not(.mld-cf-hidden),
+.mld-cf-paragraph:not(.mld-cf-hidden) {
+    opacity: 1;
+    max-height: 500px; /* Large enough for most fields */
+    transition: opacity 0.2s ease, max-height 0.2s ease;
+}
+
+/* ==========================================================================
+   Submit Button
+   ========================================================================== */
+
+.mld-cf-submit-wrapper {
+    margin-top: var(--mld-cf-field-gap);
+}
+
+.mld-cf-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: var(--mld-cf-input-padding-v) 24px;
+    font-size: var(--mld-cf-button-size);
+    font-weight: 600;
+    font-family: var(--mld-cf-font-family);
+    color: var(--mld-cf-button-text);
+    background-color: var(--mld-cf-button-bg);
+    border: none;
+    border-radius: var(--mld-cf-button-radius);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    line-height: 1.5;
+    min-width: 140px;
+}
+
+.mld-cf-submit:hover {
+    background-color: var(--mld-cf-button-hover-bg);
+}
+
+.mld-cf-submit:active {
+    transform: scale(0.98);
+}
+
+.mld-cf-submit:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.3);
+}
+
+/* Disabled/submitting state */
+.mld-cf-submit:disabled,
+.mld-cf-submit.submitting {
+    opacity: 0.7;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Loading spinner */
+.mld-cf-submit .mld-cf-spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: mld-cf-spin 0.8s linear infinite;
+}
+
+.mld-cf-submit.submitting .mld-cf-spinner {
+    display: inline-block;
+}
+
+@keyframes mld-cf-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ==========================================================================
+   Status Messages
+   ========================================================================== */
+
+.mld-cf-status {
+    margin-top: var(--mld-cf-field-gap);
+    padding: 0;
+    border-radius: var(--mld-cf-button-radius);
+    font-size: 14px;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.mld-cf-status.visible {
+    opacity: 1;
+    transform: translateY(0);
+    padding: 12px 16px;
+}
+
+.mld-cf-status.success {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: var(--mld-cf-success-color);
+}
+
+.mld-cf-status.error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: var(--mld-cf-error-color);
+}
+
+/* ==========================================================================
+   Honeypot (Hidden)
+   ========================================================================== */
+
+.mld-cf-hp {
+    position: absolute !important;
+    left: -9999px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* ==========================================================================
+   Layout Variations
+   ========================================================================== */
+
+/* Horizontal layout (inline form) */
+.mld-contact-form.mld-cf-layout-horizontal .mld-cf-fields {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.mld-contact-form.mld-cf-layout-horizontal .mld-cf-field {
+    flex: 1 1 200px;
+}
+
+.mld-contact-form.mld-cf-layout-horizontal .mld-cf-submit-wrapper {
+    margin-top: 0;
+    margin-left: auto;
+}
+
+/* Compact layout */
+.mld-contact-form.mld-cf-layout-compact {
+    padding: calc(var(--mld-cf-form-padding) * 0.75);
+}
+
+.mld-contact-form.mld-cf-layout-compact .mld-cf-fields {
+    gap: calc(var(--mld-cf-field-gap) * 0.75);
+}
+
+.mld-contact-form.mld-cf-layout-compact .mld-cf-field > label {
+    font-size: calc(var(--mld-cf-label-size) - 1px);
+}
+
+.mld-contact-form.mld-cf-layout-compact .mld-cf-field input,
+.mld-contact-form.mld-cf-layout-compact .mld-cf-field select,
+.mld-contact-form.mld-cf-layout-compact .mld-cf-field textarea {
+    padding: calc(var(--mld-cf-input-padding-v) * 0.75) calc(var(--mld-cf-input-padding-h) * 0.75);
+}
+
+/* ==========================================================================
+   Mobile Responsive
+   ========================================================================== */
+
+@media screen and (max-width: 600px) {
+    .mld-contact-form {
+        padding: calc(var(--mld-cf-form-padding) * 0.75);
+    }
+
+    .mld-cf-row {
+        flex-direction: column;
+    }
+
+    .mld-cf-field-half {
+        width: 100%;
+    }
+
+    .mld-cf-submit {
+        width: 100%;
+    }
+
+    /* Horizontal layout becomes vertical on mobile */
+    .mld-contact-form.mld-cf-layout-horizontal .mld-cf-fields {
+        flex-direction: column;
+    }
+
+    .mld-contact-form.mld-cf-layout-horizontal .mld-cf-field {
+        width: 100%;
+    }
+
+    .mld-contact-form.mld-cf-layout-horizontal .mld-cf-submit-wrapper {
+        margin-left: 0;
+        margin-top: var(--mld-cf-field-gap);
+    }
+}
+
+/* ==========================================================================
+   Dark Mode Support (optional)
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+    .mld-contact-form.mld-cf-dark-auto {
+        --mld-cf-bg-color: #1f2937;
+        --mld-cf-text-color: #f3f4f6;
+        --mld-cf-label-color: #d1d5db;
+        --mld-cf-border-color: #374151;
+    }
+
+    .mld-contact-form.mld-cf-dark-auto input::placeholder,
+    .mld-contact-form.mld-cf-dark-auto textarea::placeholder {
+        color: #6b7280;
+    }
+}
+
+/* ==========================================================================
+   Accessibility
+   ========================================================================== */
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    .mld-cf-field input,
+    .mld-cf-field select,
+    .mld-cf-field textarea,
+    .mld-cf-submit,
+    .mld-cf-status,
+    .mld-cf-spinner {
+        transition: none;
+        animation: none;
+    }
+}
+
+/* High contrast mode support */
+@media (forced-colors: active) {
+    .mld-cf-field input,
+    .mld-cf-field select,
+    .mld-cf-field textarea {
+        border: 2px solid CanvasText;
+    }
+
+    .mld-cf-submit {
+        border: 2px solid ButtonText;
+    }
+}
+
+/* Focus visible for keyboard navigation */
+.mld-cf-field input:focus-visible,
+.mld-cf-field select:focus-visible,
+.mld-cf-field textarea:focus-visible,
+.mld-cf-submit:focus-visible {
+    outline: 2px solid var(--mld-cf-focus-color);
+    outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
+
+@media print {
+    .mld-contact-form {
+        border: 1px solid #000;
+        box-shadow: none;
+    }
+
+    .mld-cf-submit {
+        display: none;
+    }
+}
+
+/* ==========================================================================
+   Multi-Step Forms (v6.23.0)
+   ========================================================================== */
+
+/* Progress Indicator - Numbered Steps */
+.mld-cf-progress {
+    margin-bottom: 24px;
+}
+
+.mld-cf-progress[data-type="steps"] {
+    padding: 0;
+}
+
+.mld-cf-progress-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+}
+
+.mld-cf-step-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    cursor: default;
+}
+
+.mld-cf-step-indicator.completed {
+    cursor: pointer;
+}
+
+.mld-cf-step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 600;
+    background: #e5e7eb;
+    color: #6b7280;
+    transition: all 0.3s ease;
+}
+
+.mld-cf-step-indicator.completed .mld-cf-step-number {
+    background: var(--mld-cf-accent-color, #0891B2);
+    color: #fff;
+}
+
+.mld-cf-step-indicator.current .mld-cf-step-number {
+    background: var(--mld-cf-accent-color, #0891B2);
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.2);
+}
+
+.mld-cf-step-check {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.mld-cf-step-title {
+    font-size: 12px;
+    color: #6b7280;
+    text-align: center;
+    max-width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mld-cf-step-indicator.current .mld-cf-step-title {
+    color: var(--mld-cf-accent-color, #0891B2);
+    font-weight: 500;
+}
+
+.mld-cf-step-indicator.completed .mld-cf-step-title {
+    color: var(--mld-cf-accent-color, #0891B2);
+}
+
+.mld-cf-step-connector {
+    width: 60px;
+    height: 3px;
+    background: #e5e7eb;
+    margin: 0 8px;
+    transition: background 0.3s ease;
+}
+
+.mld-cf-step-connector.completed {
+    background: var(--mld-cf-accent-color, #0891B2);
+}
+
+/* Progress Indicator - Bar Style */
+.mld-cf-progress[data-type="bar"] {
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 16px 20px;
+}
+
+.mld-cf-progress-bar-wrapper {
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.mld-cf-progress-bar {
+    height: 100%;
+    background: var(--mld-cf-accent-color, #0891B2);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+.mld-cf-progress-text {
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.mld-cf-progress-text strong {
+    color: #1f2937;
+}
+
+/* Step Containers */
+.mld-cf-step {
+    display: none;
+}
+
+.mld-cf-step.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Step Animation Classes */
+.mld-cf-step.slide-in-right {
+    animation: slideInRight 0.3s ease forwards;
+}
+
+.mld-cf-step.slide-in-left {
+    animation: slideInLeft 0.3s ease forwards;
+}
+
+.mld-cf-step.slide-out-right {
+    animation: slideOutRight 0.3s ease forwards;
+}
+
+.mld-cf-step.slide-out-left {
+    animation: slideOutLeft 0.3s ease forwards;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+}
+
+@keyframes slideOutLeft {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+}
+
+/* Step shake animation for validation error */
+.mld-cf-step.shake {
+    animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Step Navigation Buttons */
+.mld-cf-step-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.mld-cf-prev-step,
+.mld-cf-next-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.mld-cf-prev-step {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.mld-cf-prev-step:hover {
+    background: #e5e7eb;
+    color: #1f2937;
+}
+
+.mld-cf-next-step {
+    background: var(--mld-cf-accent-color, #0891B2);
+    color: #fff;
+}
+
+.mld-cf-next-step:hover {
+    background: #0e7490;
+}
+
+.mld-cf-nav-arrow {
+    font-size: 14px;
+}
+
+.mld-cf-nav-placeholder {
+    width: 100px;
+}
+
+/* Submit button in last step */
+.mld-cf-step-navigation .mld-cf-submit {
+    padding: 12px 32px;
+}
+
+/* Reduce motion preference for multi-step */
+@media (prefers-reduced-motion: reduce) {
+    .mld-cf-step,
+    .mld-cf-step.slide-in-right,
+    .mld-cf-step.slide-in-left,
+    .mld-cf-step.slide-out-right,
+    .mld-cf-step.slide-out-left,
+    .mld-cf-step.shake,
+    .mld-cf-progress-bar,
+    .mld-cf-step-number,
+    .mld-cf-step-connector {
+        animation: none;
+        transition: none;
+    }
+
+    .mld-cf-step.active {
+        display: block;
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Mobile responsive for multi-step */
+@media (max-width: 600px) {
+    .mld-cf-progress-steps {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .mld-cf-step-connector {
+        display: none;
+    }
+
+    .mld-cf-step-indicator {
+        flex: 0 0 auto;
+    }
+
+    .mld-cf-step-number {
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+    }
+
+    .mld-cf-step-title {
+        font-size: 11px;
+        max-width: 70px;
+    }
+
+    .mld-cf-step-navigation {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .mld-cf-prev-step,
+    .mld-cf-next-step,
+    .mld-cf-step-navigation .mld-cf-submit {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .mld-cf-nav-placeholder {
+        display: none;
+    }
+}
+
+/* ==========================================================================
+   File Upload Field (v6.24.0)
+   ========================================================================== */
+
+.mld-cf-file-upload-wrapper {
+    width: 100%;
+}
+
+.mld-cf-dropzone {
+    border: 2px dashed var(--mld-cf-border-color, #e5e7eb);
+    border-radius: 8px;
+    padding: 32px 20px;
+    text-align: center;
+    background: #f9fafb;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.mld-cf-dropzone:hover,
+.mld-cf-dropzone-active {
+    border-color: var(--mld-cf-focus-color, #0891B2);
+    background: #f0fdfa;
+}
+
+.mld-cf-dropzone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.mld-cf-dropzone-icon {
+    font-size: 36px;
+    color: #9ca3af;
+}
+
+.mld-cf-dropzone-active .mld-cf-dropzone-icon {
+    color: var(--mld-cf-focus-color, #0891B2);
+}
+
+.mld-cf-dropzone-text {
+    margin: 0;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.mld-cf-dropzone-browse {
+    background: var(--mld-cf-button-bg, #0891B2);
+    color: var(--mld-cf-button-text, #fff);
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.mld-cf-dropzone-browse:hover {
+    background: var(--mld-cf-button-hover-bg, #0E7490);
+}
+
+.mld-cf-dropzone-info {
+    margin: 12px 0 0;
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.mld-cf-file-input {
+    display: none !important;
+}
+
+.mld-cf-file-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mld-cf-file-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.mld-cf-file-item-complete {
+    border-color: #10B981;
+    background: #f0fdf4;
+}
+
+.mld-cf-file-item-error {
+    border-color: #ef4444;
+    background: #fef2f2;
+}
+
+.mld-cf-file-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.mld-cf-file-icon .dashicons {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: #6b7280;
+}
+
+.mld-cf-file-thumbnail {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.mld-cf-file-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.mld-cf-file-name {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mld-cf-file-size {
+    display: block;
+    font-size: 12px;
+    color: #9ca3af;
+    margin-top: 2px;
+}
+
+.mld-cf-file-progress {
+    margin-top: 8px;
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.mld-cf-file-progress-bar {
+    height: 100%;
+    background: var(--mld-cf-focus-color, #0891B2);
+    transition: width 0.2s ease;
+}
+
+.mld-cf-file-error {
+    display: block;
+    font-size: 12px;
+    color: #ef4444;
+    margin-top: 4px;
+}
+
+.mld-cf-file-remove {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #9ca3af;
+    transition: color 0.2s;
+}
+
+.mld-cf-file-remove:hover {
+    color: #ef4444;
+}
+
+.mld-cf-file-remove .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+    .mld-cf-dropzone {
+        padding: 24px 16px;
+    }
+
+    .mld-cf-file-item {
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .mld-cf-file-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .mld-cf-file-thumbnail {
+        width: 32px;
+        height: 32px;
+    }
+}

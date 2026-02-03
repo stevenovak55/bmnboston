@@ -1,0 +1,206 @@
+/**
+ * MLD CMA Sessions Admin Styles
+ *
+ * @package MLS_Listings_Display
+ * @subpackage Admin
+ * @since 6.17.0
+ */
+
+/* Page Container */
+.mld-cma-sessions-admin {
+    margin-top: 20px;
+}
+
+.mld-cma-sessions-admin .description {
+    color: #646970;
+    margin-bottom: 20px;
+}
+
+/* Filter Form */
+.mld-cma-filter-form {
+    margin: 20px 0;
+    clear: both;
+}
+
+.mld-cma-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.mld-cma-filters select {
+    min-width: 200px;
+}
+
+.mld-cma-filters input[type="search"] {
+    min-width: 250px;
+    padding: 4px 8px;
+}
+
+/* Table Styles */
+.mld-cma-sessions-table {
+    margin-top: 10px;
+}
+
+.mld-cma-sessions-table th a.sortable {
+    color: inherit;
+    text-decoration: none;
+}
+
+.mld-cma-sessions-table th a.sortable:hover {
+    color: #2271b1;
+}
+
+.mld-cma-sessions-table .column-id {
+    width: 50px;
+}
+
+.mld-cma-sessions-table .column-type {
+    width: 100px;
+}
+
+.mld-cma-sessions-table .column-value {
+    width: 100px;
+}
+
+.mld-cma-sessions-table .column-actions {
+    width: 150px;
+}
+
+.mld-cma-sessions-table .column-created small,
+.mld-cma-sessions-table .column-user small,
+.mld-cma-sessions-table .column-property small {
+    color: #646970;
+    display: block;
+}
+
+.mld-cma-sessions-table .column-name small.description {
+    color: #646970;
+    font-style: italic;
+}
+
+.mld-cma-no-items {
+    text-align: center;
+    color: #646970;
+    padding: 20px !important;
+}
+
+/* Badges */
+.mld-cma-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 3px;
+}
+
+.mld-cma-badge-standalone {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.mld-cma-badge-property {
+    background: #dcfce7;
+    color: #166534;
+}
+
+/* Actions */
+.mld-cma-sessions-table .column-actions .button {
+    margin-right: 5px;
+}
+
+.mld-cma-sessions-table .column-actions .button:last-child {
+    margin-right: 0;
+}
+
+.mld-assign-session-btn {
+    font-size: 12px;
+    color: #2271b1;
+    cursor: pointer;
+}
+
+.mld-assign-session-btn:hover {
+    color: #135e96;
+    text-decoration: underline;
+}
+
+/* Modal */
+.mld-admin-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mld-admin-modal-content {
+    background: #fff;
+    border-radius: 4px;
+    padding: 20px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.mld-admin-modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.mld-admin-modal-content p {
+    margin-bottom: 15px;
+    color: #646970;
+}
+
+.mld-admin-modal-content select {
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.mld-admin-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+/* Pagination */
+.mld-cma-sessions-admin .tablenav-pages {
+    margin-top: 10px;
+}
+
+.mld-cma-sessions-admin .tablenav-pages .displaying-num {
+    margin-right: 10px;
+}
+
+/* Row highlighting */
+.mld-cma-sessions-table tr.deleting {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .mld-cma-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mld-cma-filters select,
+    .mld-cma-filters input[type="search"] {
+        min-width: 100%;
+    }
+
+    .mld-cma-sessions-table .column-type,
+    .mld-cma-sessions-table .column-value,
+    .mld-cma-sessions-table .column-id {
+        display: none;
+    }
+}

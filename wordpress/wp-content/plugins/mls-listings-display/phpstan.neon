@@ -1,0 +1,40 @@
+parameters:
+    level: 5
+    paths:
+        - src
+        - includes
+    excludePaths:
+        - tests
+        - includes/class-mld-wp-cli-cleanup.php
+        - includes/instant-notifications/class-mld-buddyboss-notification.php
+
+    # WordPress specifics
+    bootstrapFiles:
+        - vendor/autoload.php
+
+    # Ignore common WordPress patterns
+    ignoreErrors:
+        # WordPress/external constants and classes
+        - identifier: constant.notFound
+        - identifier: class.notFound
+        - identifier: method.notFound
+        - identifier: staticMethod.notFound
+        # WordPress global functions (catch-all)
+        - '#Call to an undefined function#'
+        - '#Function .* not found#'
+        # WordPress database patterns
+        - '#Access to an undefined property wpdb::#'
+        - '#Variable \$wpdb might not be defined#'
+        # WordPress object crates
+        - '#Access to an undefined property .+::\$#'
+
+    # Common WordPress classes
+    universalObjectCratesClasses:
+        - WP_Error
+        - wpdb
+        - WP_Query
+        - WP_Post
+        - WP_User
+
+    # Report unmatched ignored errors (set to true when cleaning up)
+    reportUnmatchedIgnoredErrors: false

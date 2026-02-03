@@ -1,0 +1,783 @@
+/**
+ * MLD Standalone CMA Styles
+ *
+ * Styles for the standalone CMA entry form and view pages.
+ *
+ * @package MLS_Listings_Display
+ * @subpackage CMA
+ * @since 6.17.0
+ */
+
+/* ==========================================================================
+   Variables
+   ========================================================================== */
+:root {
+    --scma-primary: #2563eb;
+    --scma-primary-hover: #1d4ed8;
+    --scma-secondary: #64748b;
+    --scma-success: #16a34a;
+    --scma-error: #dc2626;
+    --scma-warning: #f59e0b;
+    --scma-bg: #f8fafc;
+    --scma-card-bg: #ffffff;
+    --scma-border: #e2e8f0;
+    --scma-text: #1e293b;
+    --scma-text-muted: #64748b;
+    --scma-radius: 8px;
+    --scma-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --scma-shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* ==========================================================================
+   Base Wrapper
+   ========================================================================== */
+.mld-standalone-cma-wrapper {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--scma-text);
+    line-height: 1.5;
+    background: var(--scma-bg);
+    min-height: 100vh;
+    padding-bottom: 3rem;
+}
+
+.mld-scma-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* ==========================================================================
+   Header (New Page)
+   ========================================================================== */
+.mld-scma-header {
+    text-align: center;
+    padding: 2rem 1rem;
+    background: linear-gradient(135deg, var(--scma-primary), #1e40af);
+    color: white;
+    margin-bottom: 2rem;
+}
+
+.mld-scma-header h1 {
+    margin: 0 0 0.5rem;
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.mld-scma-subtitle {
+    margin: 0;
+    opacity: 0.9;
+}
+
+/* ==========================================================================
+   Form Styles
+   ========================================================================== */
+.mld-scma-form-wrapper {
+    background: var(--scma-card-bg);
+    border-radius: var(--scma-radius);
+    box-shadow: var(--scma-shadow-lg);
+    padding: 2rem;
+}
+
+.mld-scma-form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--scma-border);
+}
+
+.mld-scma-form-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 1rem;
+}
+
+.mld-scma-form-section h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+    color: var(--scma-text);
+}
+
+.mld-scma-form-section .section-description {
+    font-size: 0.875rem;
+    color: var(--scma-text-muted);
+    margin: 0 0 1.25rem;
+}
+
+/* Field Groups */
+.mld-scma-field-group {
+    margin-bottom: 1rem;
+}
+
+.mld-scma-field-group label {
+    display: block;
+    font-weight: 500;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    color: var(--scma-text);
+}
+
+.mld-scma-field-group label .required {
+    color: var(--scma-error);
+}
+
+.mld-scma-field-group .field-hint {
+    font-size: 0.75rem;
+    color: var(--scma-text-muted);
+    margin: 0.25rem 0 0;
+}
+
+/* Field Rows */
+.mld-scma-field-row {
+    display: grid;
+    gap: 1rem;
+}
+
+.mld-scma-field-row-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.mld-scma-field-row-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 600px) {
+    .mld-scma-field-row-2,
+    .mld-scma-field-row-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.mld-scma-field-large {
+    max-width: 400px;
+}
+
+/* Inputs */
+.mld-scma-input,
+.mld-scma-select,
+.mld-scma-textarea {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    font-size: 1rem;
+    border: 1px solid var(--scma-border);
+    border-radius: var(--scma-radius);
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.mld-scma-input:focus,
+.mld-scma-select:focus,
+.mld-scma-textarea:focus {
+    outline: none;
+    border-color: var(--scma-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.mld-scma-address-input {
+    font-size: 1.125rem;
+    padding: 0.75rem 1rem;
+}
+
+.mld-scma-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Price Input */
+.mld-scma-price-input-wrapper {
+    position: relative;
+}
+
+.mld-scma-price-input-wrapper .price-prefix {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--scma-text-muted);
+    font-weight: 500;
+}
+
+.mld-scma-price-input-wrapper .mld-scma-input {
+    padding-left: 1.75rem;
+}
+
+/* Checkboxes */
+.mld-scma-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    padding-top: 0.5rem;
+}
+
+.mld-scma-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-weight: 400;
+}
+
+.mld-scma-checkbox-label input[type="checkbox"] {
+    width: 1.125rem;
+    height: 1.125rem;
+    cursor: pointer;
+}
+
+.mld-scma-checkbox-label .checkbox-text {
+    font-size: 0.9375rem;
+}
+
+/* Manual Entry */
+.mld-scma-manual-entry {
+    background: #f8fafc;
+    border: 1px solid var(--scma-border);
+    border-radius: var(--scma-radius);
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.mld-scma-manual-entry .manual-entry-note {
+    font-size: 0.875rem;
+    color: var(--scma-text-muted);
+    margin: 0 0 1rem;
+}
+
+/* Address Status */
+.mld-scma-address-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--scma-radius);
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.mld-scma-address-status.status-success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.mld-scma-address-status.status-error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.mld-scma-address-status .status-icon {
+    font-weight: bold;
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+.mld-scma-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: var(--scma-radius);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.mld-scma-btn-primary {
+    background: var(--scma-primary);
+    color: white;
+}
+
+.mld-scma-btn-primary:hover:not(:disabled) {
+    background: var(--scma-primary-hover);
+}
+
+.mld-scma-btn-secondary {
+    background: #e2e8f0;
+    color: var(--scma-text);
+}
+
+.mld-scma-btn-secondary:hover:not(:disabled) {
+    background: #cbd5e1;
+}
+
+.mld-scma-btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.mld-scma-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Form Actions */
+.mld-scma-form-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding-top: 1rem;
+}
+
+/* Form Error */
+.mld-scma-form-error {
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 0.75rem 1rem;
+    border-radius: var(--scma-radius);
+    margin-top: 1rem;
+    font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   Login Notice (New Page)
+   ========================================================================== */
+.mld-scma-login-notice {
+    display: flex;
+    gap: 1rem;
+    background: var(--scma-card-bg);
+    border: 1px solid #fbbf24;
+    border-radius: var(--scma-radius);
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+.mld-scma-login-notice .notice-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.mld-scma-login-notice .notice-content {
+    flex: 1;
+}
+
+.mld-scma-login-notice .notice-content strong {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.mld-scma-login-notice .notice-content p {
+    margin: 0 0 0.5rem;
+    font-size: 0.875rem;
+    color: var(--scma-text-muted);
+}
+
+.mld-scma-login-notice .notice-content ul {
+    margin: 0 0 0.75rem;
+    padding-left: 1.25rem;
+    font-size: 0.875rem;
+    color: var(--scma-text-muted);
+}
+
+.mld-scma-login-notice .mld-scma-login-link {
+    color: var(--scma-primary);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.mld-scma-login-notice .mld-scma-login-link:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   View Page Header
+   ========================================================================== */
+.mld-scma-view-header {
+    background: linear-gradient(135deg, var(--scma-primary), #1e40af);
+    color: white;
+    padding: 2rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.mld-scma-view-header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.mld-scma-badge-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.mld-scma-type-badge,
+.mld-scma-owner-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 9999px;
+}
+
+.mld-scma-type-badge {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.mld-scma-owner-badge {
+    background: var(--scma-success);
+}
+
+.mld-scma-address {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem;
+}
+
+.mld-scma-location {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 1.125rem;
+}
+
+.mld-scma-header-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+
+/* ==========================================================================
+   Summary Section (View Page)
+   ========================================================================== */
+.mld-scma-summary-section {
+    padding: 0 1rem;
+    margin-bottom: 2rem;
+}
+
+.mld-scma-summary-card {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: var(--scma-card-bg);
+    border-radius: var(--scma-radius);
+    box-shadow: var(--scma-shadow-lg);
+    padding: 1.5rem;
+}
+
+.mld-scma-stats-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    justify-content: center;
+}
+
+.mld-scma-stat {
+    text-align: center;
+    min-width: 80px;
+}
+
+.mld-scma-stat .stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--scma-text);
+}
+
+.mld-scma-stat .stat-label {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--scma-text-muted);
+}
+
+.mld-scma-stat-price .stat-value {
+    color: var(--scma-primary);
+}
+
+.mld-scma-details-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--scma-border);
+}
+
+.mld-scma-detail {
+    font-size: 0.9375rem;
+    color: var(--scma-text-muted);
+}
+
+.mld-scma-detail strong {
+    color: var(--scma-text);
+}
+
+.mld-scma-detail-feature {
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   Claim Banner
+   ========================================================================== */
+.mld-scma-claim-banner {
+    max-width: 1200px;
+    margin: 0 auto 2rem;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border-radius: var(--scma-radius);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.mld-scma-claim-banner .claim-content strong {
+    display: block;
+    color: #92400e;
+}
+
+.mld-scma-claim-banner .claim-content p {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    color: #a16207;
+}
+
+.mld-scma-login-banner {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+}
+
+.mld-scma-login-banner .claim-content strong {
+    color: #1e40af;
+}
+
+.mld-scma-login-banner .claim-content p {
+    color: #1d4ed8;
+}
+
+/* ==========================================================================
+   Content Sections (View Page)
+   ========================================================================== */
+.mld-scma-map-section,
+.mld-scma-cma-section,
+.mld-scma-analytics-section {
+    max-width: 1200px;
+    margin: 0 auto 2rem;
+    padding: 0 1rem;
+}
+
+.mld-scma-map-section h2,
+.mld-scma-cma-section h2,
+.mld-scma-analytics-section h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    color: var(--scma-text);
+}
+
+.mld-scma-map {
+    width: 100%;
+    height: 350px;
+    border-radius: var(--scma-radius);
+    background: #e2e8f0;
+}
+
+/* ==========================================================================
+   Footer (View Page)
+   ========================================================================== */
+.mld-scma-footer {
+    max-width: 1200px;
+    margin: 2rem auto 0;
+    padding: 1.5rem 1rem;
+    border-top: 1px solid var(--scma-border);
+}
+
+.mld-scma-meta {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.875rem;
+    color: var(--scma-text-muted);
+    margin-bottom: 1rem;
+}
+
+.mld-scma-share-url {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.mld-scma-share-url label {
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.mld-scma-share-url input {
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--scma-border);
+    border-radius: var(--scma-radius);
+    font-size: 0.875rem;
+    background: #f8fafc;
+}
+
+/* ==========================================================================
+   Modals
+   ========================================================================== */
+.mld-scma-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.mld-scma-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.mld-scma-modal-content {
+    position: relative;
+    background: white;
+    border-radius: var(--scma-radius);
+    box-shadow: var(--scma-shadow-lg);
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow: auto;
+}
+
+.mld-scma-modal-small {
+    max-width: 400px;
+}
+
+.mld-scma-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--scma-border);
+}
+
+.mld-scma-modal-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.mld-scma-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--scma-text-muted);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.mld-scma-modal-close:hover {
+    color: var(--scma-text);
+}
+
+.mld-scma-modal-body {
+    padding: 1.25rem;
+}
+
+.mld-scma-modal-body p {
+    margin: 0 0 1rem;
+    font-size: 0.9375rem;
+    color: var(--scma-text-muted);
+}
+
+.mld-scma-modal-body .share-note {
+    font-size: 0.8125rem;
+    color: var(--scma-text-muted);
+    margin-top: 1rem;
+}
+
+.mld-scma-modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.mld-scma-share-input-wrapper {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.mld-scma-share-input-wrapper input {
+    flex: 1;
+}
+
+/* ==========================================================================
+   Error Display
+   ========================================================================== */
+.mld-scma-error {
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 1rem;
+    border-radius: var(--scma-radius);
+    text-align: center;
+}
+
+/* ==========================================================================
+   My CMAs List Badge
+   ========================================================================== */
+.mld-cma-standalone-badge {
+    display: inline-block;
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 9999px;
+    margin-left: 0.5rem;
+}
+
+/* ==========================================================================
+   Responsive Adjustments
+   ========================================================================== */
+@media (max-width: 768px) {
+    .mld-scma-header h1,
+    .mld-scma-address {
+        font-size: 1.5rem;
+    }
+
+    .mld-scma-form-wrapper {
+        padding: 1.25rem;
+    }
+
+    .mld-scma-stats-grid {
+        gap: 1rem;
+    }
+
+    .mld-scma-stat .stat-value {
+        font-size: 1.25rem;
+    }
+
+    .mld-scma-claim-banner {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .mld-scma-footer {
+        text-align: center;
+    }
+
+    .mld-scma-meta {
+        justify-content: center;
+    }
+
+    .mld-scma-share-url {
+        flex-direction: column;
+    }
+
+    .mld-scma-share-url input {
+        max-width: 100%;
+    }
+}

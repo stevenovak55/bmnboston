@@ -1,0 +1,391 @@
+/**
+ * Facts & Features V2 - Modern, Clean Design
+ * Updated to use design system tokens
+ *
+ * @package MLS_Listings_Display
+ * @version 6.13.15
+ */
+
+/* ========================================
+   Property Highlights (Tag System)
+   ======================================== */
+.mld-property-highlights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ds-space-2, 8px);
+    margin-bottom: var(--ds-space-8, 32px);
+    padding-bottom: var(--ds-space-6, 24px);
+    border-bottom: 1px solid var(--ds-border, #e5e7eb);
+}
+
+.mld-highlight-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--ds-space-2, 8px) var(--ds-space-4, 16px);
+    border-radius: var(--ds-radius-full, 9999px);
+    font-size: var(--ds-text-sm, 14px);
+    font-weight: 500;
+    line-height: 1.2;
+    transition: all 0.2s ease;
+    cursor: default;
+}
+
+/* Highlight variants - Using design system colors */
+.highlight-premium {
+    background: linear-gradient(135deg, var(--ds-teal, #0891B2) 0%, var(--ds-teal-hover, #0E7490) 100%);
+    color: var(--ds-white, white);
+}
+
+.highlight-standard {
+    background: var(--ds-surface-subtle, #f9fafb);
+    color: var(--ds-text-secondary, #374151);
+    border: 1px solid var(--ds-border, #e5e7eb);
+}
+
+.highlight-new {
+    background: var(--ds-success, #10b981);
+    color: var(--ds-white, white);
+}
+
+/* ========================================
+   Main Facts Grid Layout
+   ======================================== */
+.mld-facts-main-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--ds-space-6, 24px);
+    margin-top: var(--ds-space-6, 24px);
+}
+
+/* Section Styling */
+.mld-facts-section {
+    background: var(--ds-white, #ffffff);
+    border-radius: var(--ds-radius-lg, 8px);
+    padding: var(--ds-space-6, 24px);
+    position: relative;
+    border: 1px solid var(--ds-border, #e5e7eb);
+    box-shadow: var(--ds-shadow-xs, 0 1px 3px rgba(0, 0, 0, 0.05));
+}
+
+/* Full width section for important content */
+.mld-facts-span-full {
+    grid-column: 1 / -1;
+}
+
+/* Two column layout for fact items in Home Facts section */
+.mld-facts-home .mld-facts-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0 40px;
+}
+
+@media (max-width: 1024px) {
+    .mld-facts-home .mld-facts-list {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+}
+
+.mld-facts-section-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ds-text-primary, #000);
+    margin: 0 0 var(--ds-space-5, 20px) 0;
+    padding-bottom: var(--ds-space-3, 12px);
+    border-bottom: 2px solid var(--ds-teal, #0891B2);
+}
+
+/* Facts List */
+.mld-facts-list {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Individual Fact Row */
+.mld-fact-row {
+    padding: var(--ds-space-3, 12px) 0;
+    border-bottom: 1px solid var(--ds-border-light, #f5f5f5);
+    transition: all 0.15s ease;
+}
+
+.mld-fact-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.mld-fact-row:first-child {
+    padding-top: 0;
+}
+
+.mld-fact-row:hover {
+    background: var(--ds-surface-subtle, #f9fafb);
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+    border-radius: var(--ds-radius-md, 6px);
+}
+
+.mld-fact-content {
+    display: grid;
+    grid-template-columns: 140px 2fr;
+    gap: var(--ds-space-5, 20px);
+    align-items: flex-start;
+}
+
+.mld-fact-label {
+    font-size: var(--ds-text-sm, 14px);
+    color: var(--ds-text-muted, #6b7280);
+    font-weight: 400;
+    line-height: 1.6;
+}
+
+.mld-fact-value {
+    font-size: var(--ds-text-sm, 14px);
+    color: var(--ds-text-primary, #000);
+    font-weight: 500;
+    line-height: 1.6;
+    word-break: break-word;
+}
+
+/* No data state */
+.mld-no-data {
+    font-size: var(--ds-text-sm, 14px);
+    color: var(--ds-text-tertiary, #9ca3af);
+    font-style: italic;
+    padding: var(--ds-space-3, 12px) 0;
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+/* Large Desktop (1400px+) */
+@media (min-width: 1400px) {
+    .mld-facts-main-grid {
+        max-width: 1400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
+    .mld-facts-main-grid {
+        grid-template-columns: 1fr;
+        gap: var(--ds-space-5, 20px);
+    }
+
+    .mld-facts-section {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+}
+
+/* Mobile (< 768px) */
+@media (max-width: 767px) {
+    .mld-facts-main-grid {
+        grid-template-columns: 1fr;
+        gap: var(--ds-space-5, 20px);
+    }
+
+    .mld-facts-main-grid.mld-facts-mobile {
+        gap: var(--ds-space-4, 16px);
+    }
+
+    .mld-property-highlights {
+        gap: var(--ds-space-2, 6px);
+        margin-bottom: var(--ds-space-6, 24px);
+        padding-bottom: var(--ds-space-4, 16px);
+    }
+
+    .mld-highlight-tag {
+        font-size: var(--ds-text-sm, 13px);
+        padding: var(--ds-space-2, 6px) var(--ds-space-3, 12px);
+    }
+
+    .mld-facts-section {
+        max-width: 100%;
+        margin: 0;
+        background: var(--ds-white, #ffffff);
+        padding: var(--ds-space-4, 16px);
+        border-radius: var(--ds-radius-lg, 8px);
+        border: 1px solid var(--ds-border, #e5e7eb);
+    }
+
+    .mld-facts-section-title {
+        font-size: var(--ds-text-base, 16px);
+        padding-bottom: var(--ds-space-3, 10px);
+        margin-bottom: var(--ds-space-4, 16px);
+    }
+
+    .mld-fact-row {
+        padding: var(--ds-space-3, 10px) 0;
+    }
+
+    .mld-fact-content {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: var(--ds-space-3, 12px);
+        align-items: center;
+    }
+
+
+    .mld-fact-label {
+        font-size: var(--ds-text-sm, 13px);
+    }
+
+    .mld-fact-value {
+        font-size: var(--ds-text-sm, 13px);
+    }
+}
+
+/* ========================================
+   Animation & Interactions
+   ======================================== */
+.mld-facts-section {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Smooth hover effects */
+.mld-fact-row {
+    position: relative;
+}
+
+.mld-fact-row::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    right: -8px;
+    top: 0;
+    bottom: 0;
+    background: transparent;
+    border-radius: var(--ds-radius-md, 6px);
+    transition: background 0.15s ease;
+    z-index: -1;
+}
+
+.mld-fact-row:hover::before {
+    background: var(--ds-surface-subtle, #f9fafb);
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+@media print {
+    .mld-property-highlights {
+        page-break-inside: avoid;
+    }
+
+    .mld-facts-section {
+        page-break-inside: avoid;
+        border: 1px solid var(--ds-border, #e5e7eb);
+        padding: var(--ds-space-3, 12px);
+    }
+
+    .mld-highlight-tag {
+        border: 1px solid var(--ds-border-strong, #d1d5db);
+        background: var(--ds-white, white) !important;
+        color: var(--ds-text-secondary, #374151) !important;
+    }
+}
+
+/* ========================================
+   Expanded Details (Show More Pattern)
+   ======================================== */
+.mld-facts-expandable {
+    max-height: 300px;
+    overflow: hidden;
+    position: relative;
+    transition: max-height 0.3s ease;
+}
+
+.mld-facts-expandable.expanded {
+    max-height: none;
+}
+
+.mld-facts-expand-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ds-space-2, 6px);
+    margin-top: var(--ds-space-3, 12px);
+    padding: var(--ds-space-2, 8px) var(--ds-space-4, 16px);
+    background: var(--ds-white, white);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-md, 6px);
+    font-size: var(--ds-text-sm, 14px);
+    font-weight: 500;
+    color: var(--ds-text-secondary, #4b5563);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mld-facts-expand-btn:hover {
+    background: var(--ds-surface-subtle, #f9fafb);
+    border-color: var(--ds-border-strong, #d1d5db);
+}
+
+.mld-facts-expand-btn svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+}
+
+.mld-facts-expand-btn.expanded svg {
+    transform: rotate(180deg);
+}
+
+/* ========================================
+   Custom Scrollbar for Long Lists
+   ======================================== */
+.mld-facts-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.mld-facts-list::-webkit-scrollbar-track {
+    background: var(--ds-surface-subtle, #f9fafb);
+    border-radius: 3px;
+}
+
+.mld-facts-list::-webkit-scrollbar-thumb {
+    background: var(--ds-border-strong, #d1d5db);
+    border-radius: 3px;
+}
+
+.mld-facts-list::-webkit-scrollbar-thumb:hover {
+    background: var(--ds-text-tertiary, #9ca3af);
+}
+
+/* ========================================
+   Dark Mode Support - DISABLED v6.13.15
+   Light theme enforced regardless of device settings
+   ======================================== */
+/* Dark mode overrides intentionally removed */
+
+/* ========================================
+   Reduced Motion Support
+   ======================================== */
+@media (prefers-reduced-motion: reduce) {
+    .mld-facts-section {
+        animation: none;
+    }
+
+    .mld-fact-row,
+    .mld-fact-row::before,
+    .mld-facts-expandable,
+    .mld-facts-expand-btn,
+    .mld-facts-expand-btn svg {
+        transition: none;
+    }
+}

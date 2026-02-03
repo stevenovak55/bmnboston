@@ -1,0 +1,9 @@
+{
+    "version": "0.6.39",
+    "db_version": "0.6.38",
+    "last_updated": "2026-01-21",
+    "phase": "7",
+    "phase_name": "School Research Platform",
+    "status": "in_development",
+    "notes": "Fix: School district pages 404 - rewrite rules now register on all requests including admin"
+}

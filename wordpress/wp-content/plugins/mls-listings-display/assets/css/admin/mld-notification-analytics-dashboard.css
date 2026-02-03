@@ -1,0 +1,353 @@
+/**
+ * MLD Notification Analytics Dashboard Styles
+ *
+ * @package MLS_Listings_Display
+ * @subpackage Notifications
+ * @since 6.48.0
+ */
+
+/* Main container */
+.mld-notification-analytics-wrap {
+    max-width: 1400px;
+    margin-right: 20px;
+}
+
+.mld-notification-analytics-wrap h1 {
+    margin-bottom: 5px;
+}
+
+.mld-notification-analytics-wrap > .description {
+    margin-bottom: 20px;
+    color: #646970;
+}
+
+/* Controls bar */
+.mld-na-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    padding: 15px 20px;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.mld-na-time-range {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mld-na-time-range label {
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.mld-na-time-range select {
+    min-width: 150px;
+}
+
+.mld-na-refresh {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.mld-na-refresh .button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mld-na-refresh .button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+#mld-na-last-updated {
+    font-size: 12px;
+    color: #646970;
+}
+
+/* Summary cards */
+.mld-na-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 1200px) {
+    .mld-na-summary-cards {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .mld-na-summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.mld-na-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: box-shadow 0.2s;
+}
+
+.mld-na-card:hover {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.mld-na-card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.mld-na-card-icon .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: #fff;
+}
+
+.mld-na-card-sent .mld-na-card-icon {
+    background: #2271b1;
+}
+
+.mld-na-card-delivered .mld-na-card-icon {
+    background: #00a32a;
+}
+
+.mld-na-card-failed .mld-na-card-icon {
+    background: #d63638;
+}
+
+.mld-na-card-opened .mld-na-card-icon {
+    background: #dba617;
+}
+
+.mld-na-card-clicked .mld-na-card-icon {
+    background: #72aee6;
+}
+
+.mld-na-card-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.mld-na-card-value {
+    font-size: 28px;
+    font-weight: 600;
+    color: #1d2327;
+    line-height: 1.2;
+}
+
+.mld-na-card-label {
+    font-size: 13px;
+    color: #646970;
+    margin-top: 2px;
+}
+
+.mld-na-card-rate {
+    font-size: 12px;
+    color: #50575e;
+    margin-top: 5px;
+    padding: 2px 8px;
+    background: #f0f0f1;
+    border-radius: 10px;
+    display: inline-block;
+}
+
+/* Charts row */
+.mld-na-charts-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 1000px) {
+    .mld-na-charts-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.mld-na-chart-container {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.mld-na-chart-container h3 {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    color: #1d2327;
+}
+
+.mld-na-chart-trend {
+    min-height: 350px;
+}
+
+.mld-na-chart-trend canvas {
+    height: 280px !important;
+}
+
+.mld-na-chart-type {
+    min-height: 350px;
+}
+
+.mld-na-chart-type canvas {
+    height: 280px !important;
+}
+
+/* Tables row */
+.mld-na-tables-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 1000px) {
+    .mld-na-tables-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.mld-na-table-container {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    overflow-x: auto;
+}
+
+.mld-na-table-container h3 {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    color: #1d2327;
+}
+
+.mld-na-table-container table {
+    margin: 0;
+}
+
+.mld-na-table-container th {
+    background: #f6f7f7;
+    font-weight: 600;
+}
+
+.mld-na-table-container td,
+.mld-na-table-container th {
+    padding: 10px 12px;
+    text-align: left;
+}
+
+.mld-na-table-container td:not(:first-child),
+.mld-na-table-container th:not(:first-child) {
+    text-align: right;
+}
+
+.mld-na-loading,
+.mld-na-empty {
+    text-align: center !important;
+    color: #646970;
+    padding: 20px !important;
+}
+
+/* Type badges */
+.mld-na-type-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    background: #f0f0f1;
+    color: #1d2327;
+}
+
+.mld-na-type-price_change {
+    background: #e7f5ea;
+    color: #00a32a;
+}
+
+.mld-na-type-status_change {
+    background: #fcf0e3;
+    color: #996800;
+}
+
+.mld-na-type-new_listing {
+    background: #e7f1fd;
+    color: #2271b1;
+}
+
+.mld-na-type-open_house {
+    background: #fce8e8;
+    color: #d63638;
+}
+
+.mld-na-type-open_house_reminder {
+    background: #fce8e8;
+    color: #d63638;
+}
+
+.mld-na-type-saved_search {
+    background: #f0e6f6;
+    color: #6c3b9f;
+}
+
+/* Info box */
+.mld-na-info-box {
+    background: #f6f7f7;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.mld-na-info-box h4 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #1d2327;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mld-na-info-box h4 .dashicons {
+    color: #2271b1;
+}
+
+.mld-na-info-box ul {
+    margin: 0 0 10px 20px;
+    padding: 0;
+}
+
+.mld-na-info-box li {
+    margin-bottom: 5px;
+    color: #50575e;
+}
+
+.mld-na-info-box li strong {
+    color: #1d2327;
+}
+
+.mld-na-note {
+    margin: 0;
+    font-size: 12px;
+    color: #646970;
+    font-style: italic;
+}

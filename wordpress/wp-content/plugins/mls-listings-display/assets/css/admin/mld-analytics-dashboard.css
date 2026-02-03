@@ -1,0 +1,1319 @@
+/**
+ * MLD Analytics Dashboard Styles
+ *
+ * @package MLS_Listings_Display
+ * @since 6.39.0
+ */
+
+/* Dashboard Container */
+.mld-analytics-dashboard {
+    max-width: 1600px;
+    margin: 20px auto;
+}
+
+.mld-analytics-dashboard h1 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.mld-analytics-dashboard h1 .dashicons {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+}
+
+/* Platform Filter */
+.mld-platform-filter {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+}
+
+.mld-platform-filter label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.mld-platform-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.mld-platform-web {
+    background: #e7f3ff;
+    color: #2271b1;
+}
+
+.mld-platform-ios {
+    background: #e7f7e7;
+    color: #00a32a;
+}
+
+.mld-last-updated {
+    margin-left: auto;
+    color: #646970;
+    font-size: 13px;
+}
+
+/* Real-time Panel */
+.mld-realtime-panel {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #2271b1 0%, #135e96 100%);
+    color: #fff;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.mld-realtime-count {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 100px;
+}
+
+.mld-realtime-count span:first-child {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.mld-realtime-label {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-top: 4px;
+}
+
+.mld-realtime-breakdown {
+    display: flex;
+    gap: 20px;
+    padding-left: 30px;
+    border-left: 1px solid rgba(255,255,255,0.3);
+}
+
+.mld-realtime-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.mld-platform-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.mld-dot-web {
+    background: #72aee6;
+}
+
+.mld-dot-ios {
+    background: #68de7c;
+}
+
+.mld-realtime-pages {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-left: 30px;
+    border-left: 1px solid rgba(255,255,255,0.3);
+}
+
+.mld-current-page {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.mld-no-activity {
+    opacity: 0.7;
+    font-style: italic;
+}
+
+/* Stats Cards Row */
+.mld-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.mld-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+}
+
+.mld-stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: #f0f6fc;
+    border-radius: 8px;
+}
+
+.mld-stat-icon .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: #2271b1;
+}
+
+.mld-stat-content {
+    flex: 1;
+}
+
+.mld-stat-value {
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: #1d2327;
+}
+
+.mld-stat-label {
+    font-size: 13px;
+    color: #646970;
+    margin-top: 2px;
+}
+
+.mld-stat-change {
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+.mld-stat-change.positive {
+    color: #00a32a;
+}
+
+.mld-stat-change.negative {
+    color: #d63638;
+}
+
+/* Dashboard Grid */
+.mld-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+/* Cards */
+.mld-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.mld-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.mld-card-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.mld-card-body {
+    padding: 20px;
+}
+
+/* Chart card - spans 2 columns */
+.mld-card-chart {
+    grid-column: span 2;
+}
+
+.mld-card-chart .mld-card-body {
+    height: 320px;
+}
+
+/* Activity stream - Enhanced */
+.mld-card-activity .mld-card-body {
+    height: 450px;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.mld-activity-stream {
+    padding: 0;
+}
+
+/* Activity item - base styles */
+.mld-activity-item {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e8e8e8;
+    font-size: 13px;
+    transition: background 0.15s ease;
+}
+
+.mld-activity-item:hover {
+    background: #f8fafc;
+}
+
+.mld-activity-item:last-child {
+    border-bottom: none;
+}
+
+/* Activity header */
+.mld-activity-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.mld-platform-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.mld-platform-badge.mld-dot-web {
+    background: #e7f3ff;
+    color: #2271b1;
+}
+
+.mld-platform-badge.mld-dot-ios {
+    background: #e7f7e7;
+    color: #00a32a;
+}
+
+.mld-event-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #50575e;
+    font-weight: 500;
+}
+
+.mld-event-label .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+
+/* Event type colors */
+.mld-event-property_view .dashicons,
+.mld-event-property_click .dashicons {
+    color: #2271b1;
+}
+
+.mld-event-contact_click .dashicons,
+.mld-event-contact_submit .dashicons {
+    color: #00a32a;
+}
+
+.mld-event-schedule_click .dashicons {
+    color: #8b5cf6;
+}
+
+.mld-event-favorite_add .dashicons {
+    color: #ef4444;
+}
+
+.mld-event-search .dashicons {
+    color: #f59e0b;
+}
+
+.mld-activity-header .mld-activity-time {
+    margin-left: auto;
+    color: #8c8f94;
+    font-size: 11px;
+}
+
+/* Activity body */
+.mld-activity-body {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+/* Property photo thumbnail */
+.mld-activity-photo {
+    flex-shrink: 0;
+    width: 60px;
+    height: 45px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #f0f0f1;
+}
+
+.mld-activity-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Property details */
+.mld-activity-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.mld-property-address {
+    font-weight: 600;
+    color: #1d2327;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mld-property-price {
+    color: #00a32a;
+    font-weight: 600;
+    font-size: 14px;
+    margin-top: 2px;
+}
+
+.mld-property-meta {
+    color: #646970;
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+/* Search activity */
+.mld-search-info {
+    flex: 1;
+}
+
+.mld-search-query {
+    color: #1d2327;
+    font-weight: 500;
+}
+
+.mld-search-results {
+    color: #646970;
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+/* Generic activity */
+.mld-activity-context {
+    color: #50575e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mld-scroll-depth,
+.mld-time-spent {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #f0f6fc;
+    border-radius: 4px;
+    color: #2271b1;
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+/* Activity footer - visitor info */
+.mld-activity-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed #e8e8e8;
+    font-size: 11px;
+    color: #8c8f94;
+}
+
+.mld-visitor-location {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mld-visitor-location::before {
+    content: '📍';
+    font-size: 10px;
+}
+
+.mld-activity-footer .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    color: #a7aaad;
+}
+
+/* Property activity specific */
+.mld-activity-property {
+    background: linear-gradient(135deg, #fafbfc 0%, #fff 100%);
+}
+
+.mld-activity-property:hover {
+    background: linear-gradient(135deg, #f0f6fc 0%, #fff 100%);
+}
+
+/* Search activity specific */
+.mld-activity-search {
+    background: linear-gradient(135deg, #fffbeb 0%, #fff 100%);
+}
+
+.mld-activity-search:hover {
+    background: linear-gradient(135deg, #fef3c7 0%, #fff 100%);
+}
+
+/* Contact/conversion activity */
+.mld-activity-item:has(.mld-event-contact_submit),
+.mld-activity-item:has(.mld-event-schedule_click) {
+    background: linear-gradient(135deg, #ecfdf5 0%, #fff 100%);
+    border-left: 3px solid #00a32a;
+}
+
+.mld-loading {
+    padding: 20px;
+    text-align: center;
+    color: #646970;
+}
+
+/* Data Tables */
+.mld-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.mld-data-table th {
+    text-align: left;
+    padding: 10px 12px;
+    background: #f9f9f9;
+    font-weight: 600;
+    color: #1d2327;
+    border-bottom: 1px solid #c3c4c7;
+}
+
+.mld-data-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f0f0f1;
+    color: #50575e;
+}
+
+.mld-data-table tr:last-child td {
+    border-bottom: none;
+}
+
+.mld-data-table.mld-compact td,
+.mld-data-table.mld-compact th {
+    padding: 8px 10px;
+}
+
+.mld-no-data {
+    text-align: center;
+    color: #8c8f94;
+    padding: 20px !important;
+}
+
+/* Sources Card */
+.mld-card-sources .mld-card-body {
+    display: flex;
+    gap: 20px;
+}
+
+.mld-sources-chart-container {
+    width: 180px;
+    height: 180px;
+    flex-shrink: 0;
+}
+
+.mld-card-sources .mld-data-table {
+    flex: 1;
+}
+
+/* Geo Tabs */
+.mld-geo-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.mld-geo-tab {
+    padding: 6px 14px;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.mld-geo-tab:hover {
+    background: #f9f9f9;
+}
+
+.mld-geo-tab.active {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: #fff;
+}
+
+/* Device Charts */
+.mld-device-charts {
+    display: flex;
+    gap: 30px;
+}
+
+.mld-device-chart {
+    flex: 1;
+    text-align: center;
+}
+
+.mld-device-chart h4 {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: #646970;
+}
+
+.mld-device-chart canvas {
+    max-height: 180px;
+}
+
+/* Platform Stats */
+.mld-platform-stats {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.mld-platform-stat {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #f9f9f9;
+    border-radius: 6px;
+}
+
+.mld-platform-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+}
+
+.mld-platform-icon.mld-platform-web {
+    background: #e7f3ff;
+}
+
+.mld-platform-icon.mld-platform-ios {
+    background: #e7f7e7;
+}
+
+.mld-platform-icon .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.mld-platform-name {
+    font-size: 12px;
+    color: #646970;
+}
+
+.mld-platform-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.mld-card-platforms canvas {
+    max-height: 150px;
+}
+
+/* Date Range Select */
+.mld-date-range select {
+    padding: 4px 8px;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+/* Button Icons */
+.mld-btn-icon {
+    padding: 4px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #646970;
+    border-radius: 4px;
+}
+
+.mld-btn-icon:hover {
+    background: #f0f0f1;
+    color: #1d2327;
+}
+
+/* Database Stats Footer */
+.mld-db-stats {
+    display: flex;
+    gap: 24px;
+    padding: 12px 16px;
+    background: #f9f9f9;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #646970;
+}
+
+.mld-db-stat strong {
+    color: #50575e;
+}
+
+/* Top Properties Table */
+.mld-property-row .mld-property-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+}
+
+.mld-property-thumb {
+    width: 50px;
+    height: 38px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.mld-property-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.mld-property-link {
+    display: block;
+    color: #2271b1;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mld-property-link:hover {
+    color: #135e96;
+    text-decoration: underline;
+}
+
+.mld-property-meta {
+    font-size: 11px;
+    color: #646970;
+    margin-top: 2px;
+}
+
+.mld-property-price {
+    font-weight: 600;
+    color: #00a32a;
+}
+
+.mld-views-cell,
+.mld-viewers-cell {
+    text-align: center;
+    font-weight: 500;
+}
+
+#mld-top-properties th:first-child,
+#mld-top-properties td:first-child {
+    width: 60%;
+}
+
+#mld-top-properties th:not(:first-child),
+#mld-top-properties td:not(:first-child) {
+    width: 20%;
+    text-align: center;
+}
+
+/* Top Pages Table */
+.mld-page-link {
+    color: #2271b1;
+    text-decoration: none;
+}
+
+.mld-page-link:hover {
+    color: #135e96;
+    text-decoration: underline;
+}
+
+.mld-page-type {
+    color: #50575e;
+    font-weight: 500;
+}
+
+.mld-invalid-path {
+    color: #d63638;
+    font-style: italic;
+    font-size: 12px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .mld-dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mld-card-chart {
+        grid-column: span 2;
+    }
+
+    .mld-stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 782px) {
+    .mld-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mld-card-chart {
+        grid-column: span 1;
+    }
+
+    .mld-stats-row {
+        grid-template-columns: 1fr;
+    }
+
+    .mld-realtime-panel {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .mld-realtime-breakdown,
+    .mld-realtime-pages {
+        padding-left: 0;
+        border-left: none;
+        padding-top: 16px;
+        border-top: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .mld-platform-filter {
+        flex-wrap: wrap;
+    }
+
+    .mld-device-charts {
+        flex-direction: column;
+    }
+
+    .mld-platform-stats {
+        flex-direction: column;
+    }
+
+    .mld-card-sources .mld-card-body {
+        flex-direction: column;
+    }
+
+    .mld-sources-chart-container {
+        width: 100%;
+        height: 200px;
+    }
+}
+
+/* ========================================
+   v6.47.0: Enhanced Activity Stream Styles
+   ======================================== */
+
+/* Activity Controls */
+.mld-activity-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #f9f9f9;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.mld-activity-controls .mld-select {
+    padding: 6px 10px;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    font-size: 13px;
+    background: #fff;
+}
+
+.mld-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #50575e;
+    cursor: pointer;
+}
+
+.mld-checkbox-label input[type="checkbox"] {
+    margin: 0;
+}
+
+/* Activity Subheader (event + visitor info row) */
+.mld-activity-subheader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 6px;
+    padding-top: 6px;
+}
+
+.mld-visitor-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #8c8f94;
+}
+
+.mld-visitor-info .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+
+/* User Badges */
+.mld-user-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+.mld-user-badge .dashicons {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+}
+
+.mld-user-logged-in {
+    background: #e7f7e7;
+    color: #00a32a;
+}
+
+.mld-user-anonymous {
+    background: #f0f0f1;
+    color: #646970;
+}
+
+/* Returning visitor badge */
+.mld-returning-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: #fff3cd;
+    color: #856404;
+    margin-left: 6px;
+}
+
+/* Source Badge */
+.mld-source-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    background: #f0f6fc;
+    color: #2271b1;
+    margin-left: 8px;
+}
+
+.mld-source-badge .dashicons {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+}
+
+/* Source Icons */
+.mld-source-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.mld-source-google {
+    background: #4285f4;
+    color: #fff;
+}
+
+.mld-source-bing {
+    background: #00809d;
+    color: #fff;
+}
+
+.mld-source-facebook {
+    background: #1877f2;
+    color: #fff;
+}
+
+.mld-source-instagram {
+    background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+    color: #fff;
+}
+
+.mld-source-twitter {
+    background: #000;
+    color: #fff;
+}
+
+.mld-source-linkedin {
+    background: #0077b5;
+    color: #fff;
+}
+
+.mld-source-zillow {
+    background: #006aff;
+    color: #fff;
+}
+
+.mld-source-realtor {
+    background: #d92228;
+    color: #fff;
+}
+
+/* Activity Pagination */
+.mld-activity-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: #f9f9f9;
+    border-top: 1px solid #e8e8e8;
+}
+
+.mld-pagination-info {
+    font-size: 12px;
+    color: #646970;
+}
+
+.mld-pagination-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.mld-btn-pagination {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.mld-btn-pagination:hover:not(:disabled) {
+    background: #f0f0f1;
+    border-color: #8c8f94;
+}
+
+.mld-btn-pagination:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.mld-btn-pagination .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+
+/* View Journey Link */
+.mld-view-journey {
+    color: #2271b1;
+    font-size: 11px;
+    text-decoration: none;
+}
+
+.mld-view-journey:hover {
+    color: #135e96;
+    text-decoration: underline;
+}
+
+/* ========================================
+   v6.47.0: Session Journey Side Panel
+   ======================================== */
+
+.mld-side-panel {
+    position: fixed;
+    top: 32px; /* WordPress admin bar height */
+    right: 0;
+    width: 400px;
+    height: calc(100vh - 32px);
+    background: #fff;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+    z-index: 100000;
+    display: flex;
+    flex-direction: column;
+    animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+.mld-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: #2271b1;
+    color: #fff;
+}
+
+.mld-panel-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.mld-close-panel {
+    padding: 4px;
+    border: none;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.mld-close-panel:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.mld-close-panel .dashicons {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.mld-panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+}
+
+/* Journey Header */
+.mld-journey-header {
+    padding: 16px 20px;
+    background: #f9f9f9;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.mld-journey-user {
+    margin-bottom: 10px;
+}
+
+.mld-journey-user .mld-user-badge {
+    margin-left: 0;
+    font-size: 13px;
+    padding: 4px 12px;
+}
+
+.mld-user-email {
+    font-size: 12px;
+    color: #646970;
+    margin-top: 4px;
+    padding-left: 2px;
+}
+
+.mld-journey-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12px;
+    color: #50575e;
+}
+
+.mld-journey-location,
+.mld-journey-device {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mld-journey-location .dashicons,
+.mld-journey-device .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    color: #8c8f94;
+}
+
+.mld-journey-source {
+    margin-top: 10px;
+}
+
+.mld-journey-source .mld-source-badge {
+    margin-left: 0;
+}
+
+/* Journey Timeline */
+.mld-timeline {
+    padding: 20px;
+}
+
+.mld-timeline-item {
+    display: flex;
+    gap: 14px;
+    position: relative;
+    padding-bottom: 20px;
+}
+
+.mld-timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 28px;
+    bottom: 0;
+    width: 2px;
+    background: #e8e8e8;
+}
+
+.mld-timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.mld-timeline-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: #f0f6fc;
+    border: 2px solid #2271b1;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.mld-timeline-marker .dashicons {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+    color: #2271b1;
+}
+
+.mld-timeline-current .mld-timeline-marker {
+    background: #2271b1;
+}
+
+.mld-timeline-current .mld-timeline-marker .dashicons {
+    color: #fff;
+}
+
+.mld-timeline-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.mld-timeline-time {
+    font-size: 11px;
+    color: #8c8f94;
+    margin-bottom: 2px;
+}
+
+.mld-timeline-event {
+    font-weight: 600;
+    color: #1d2327;
+    font-size: 13px;
+}
+
+.mld-timeline-detail {
+    font-size: 12px;
+    color: #50575e;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mld-timeline-meta {
+    font-size: 11px;
+    color: #8c8f94;
+    margin-top: 4px;
+}
+
+/* Error state */
+.mld-error {
+    padding: 20px;
+    text-align: center;
+    color: #d63638;
+}
+
+/* Responsive Side Panel */
+@media (max-width: 600px) {
+    .mld-side-panel {
+        width: 100%;
+    }
+}
+
+@media (max-width: 782px) {
+    .mld-activity-controls {
+        flex-wrap: wrap;
+    }
+
+    .mld-activity-pagination {
+        flex-direction: column;
+        gap: 10px;
+    }
+}

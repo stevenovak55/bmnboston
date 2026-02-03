@@ -1,0 +1,183 @@
+/**
+ * MLS Search Form Styles
+ * Updated to use design system tokens
+ *
+ * @package MLS_Listings_Display
+ * @version 7.0.0
+ */
+
+.mld-search-form-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.mld-search-form {
+    background: var(--ds-white, #fff);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-lg, 8px);
+    padding: var(--ds-space-5, 20px);
+    box-shadow: var(--ds-shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Horizontal Layout */
+.mld-search-horizontal .mld-search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-end;
+}
+
+.mld-search-horizontal .mld-search-field {
+    flex: 1;
+    min-width: 200px;
+}
+
+.mld-search-horizontal .mld-search-submit {
+    flex: 0 0 auto;
+}
+
+/* Vertical Layout */
+.mld-search-vertical .mld-search-field {
+    margin-bottom: 20px;
+}
+
+/* Compact Layout */
+.mld-search-compact .mld-search-form {
+    display: flex;
+    gap: 10px;
+    padding: 15px;
+}
+
+.mld-search-compact .mld-search-field {
+    flex: 1;
+}
+
+.mld-search-compact label {
+    display: none;
+}
+
+/* Form Fields */
+.mld-search-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: var(--ds-text-primary, #000);
+    font-size: var(--ds-text-sm, 14px);
+}
+
+.mld-search-field input[type="text"],
+.mld-search-field input[type="number"],
+.mld-search-field select {
+    width: 100%;
+    padding: var(--ds-space-2, 10px) var(--ds-space-3, 12px);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-md, 4px);
+    font-size: var(--ds-text-sm, 14px);
+    transition: border-color 0.3s;
+}
+
+.mld-search-field input:focus,
+.mld-search-field select:focus {
+    outline: none;
+    border-color: var(--ds-teal, #0891B2);
+    box-shadow: 0 0 0 1px var(--ds-teal, #0891B2);
+}
+
+/* Price Range */
+.mld-price-inputs {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.mld-price-inputs input {
+    flex: 1;
+}
+
+.mld-price-separator {
+    flex: 0 0 auto;
+    color: var(--ds-text-muted, #6b7280);
+}
+
+/* Beds & Baths */
+.mld-beds-baths-inputs {
+    display: flex;
+    gap: 10px;
+}
+
+.mld-beds-baths-inputs select {
+    flex: 1;
+}
+
+/* Submit Button */
+.mld-search-button {
+    background: linear-gradient(135deg, var(--ds-teal, #0891B2) 0%, var(--ds-teal-hover, #0E7490) 100%);
+    color: var(--ds-white, white);
+    border: none;
+    padding: var(--ds-space-3, 12px) var(--ds-space-6, 24px);
+    border-radius: var(--ds-radius-md, 4px);
+    font-size: var(--ds-text-base, 16px);
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-2, 8px);
+    transition: all 0.3s;
+}
+
+.mld-search-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+}
+
+.mld-search-button .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+/* Advanced Search Link */
+.mld-search-advanced {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.mld-advanced-search-link {
+    color: var(--ds-teal, #0891B2);
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mld-advanced-search-link:hover {
+    color: var(--ds-teal-hover, #0E7490);
+    text-decoration: underline;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .mld-search-horizontal .mld-search-form {
+        flex-direction: column;
+    }
+
+    .mld-search-horizontal .mld-search-field {
+        width: 100%;
+    }
+
+    .mld-price-inputs,
+    .mld-beds-baths-inputs {
+        flex-direction: column;
+    }
+
+    .mld-price-separator {
+        display: none;
+    }
+
+    .mld-search-button {
+        width: 100%;
+        justify-content: center;
+    }
+}

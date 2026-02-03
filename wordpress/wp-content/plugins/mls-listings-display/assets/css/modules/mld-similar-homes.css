@@ -1,0 +1,1016 @@
+/**
+ * MLD Similar Homes Module Styles
+ * Modern property carousel/grid display
+ * Updated to use design system tokens
+ *
+ * @package MLS_Listings_Display
+ * @version 7.0.0
+ */
+
+/* ========================================
+   Container Styles
+   ======================================== */
+.mld-similar-homes {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ========================================
+   Status Filters
+   ======================================== */
+.mld-sh-status-filters {
+  background: var(--ds-surface-subtle, #f9fafb);
+  border-radius: var(--ds-radius-xl, 12px);
+  padding: var(--ds-space-5, 20px);
+  margin-bottom: var(--ds-space-6, 24px);
+  border: 1px solid var(--ds-border, #e5e7eb);
+}
+
+.mld-sh-filter-title {
+  font-size: var(--ds-text-base, 16px);
+  font-weight: 600;
+  color: var(--ds-text-primary, #000);
+  margin: 0 0 var(--ds-space-4, 16px) 0;
+}
+
+.mld-sh-status-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.mld-sh-status-label {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2, 8px);
+  font-size: var(--ds-text-sm, 14px);
+  color: var(--ds-text-secondary, #374151);
+  cursor: pointer;
+  user-select: none;
+}
+
+.mld-sh-status-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.mld-sh-apply-filters-btn {
+  padding: var(--ds-space-2, 10px) var(--ds-space-5, 20px);
+  background: linear-gradient(135deg, var(--ds-teal, #0891B2) 0%, var(--ds-teal-hover, #0E7490) 100%);
+  color: var(--ds-white, white);
+  border: none;
+  border-radius: var(--ds-radius-md, 6px);
+  font-size: var(--ds-text-sm, 14px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mld-sh-apply-filters-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+}
+
+.mld-sh-apply-filters-btn:active {
+  transform: translateY(0);
+}
+
+/* ========================================
+   Market Statistics
+   ======================================== */
+.mld-sh-market-stats {
+  background: var(--ds-surface-subtle, #f9fafb);
+  border-radius: var(--ds-radius-xl, 12px);
+  padding: var(--ds-space-6, 24px);
+  margin-bottom: var(--ds-space-8, 32px);
+  border: 1px solid var(--ds-border, #e5e7eb);
+}
+
+.mld-sh-stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.mld-sh-stats-controls {
+  display: flex;
+  gap: 12px;
+}
+
+.mld-sh-select-all-btn,
+.mld-sh-deselect-all-btn {
+  padding: 6px 16px;
+  background: var(--ds-white, white);
+  border: 1px solid var(--ds-border, #e5e7eb);
+  border-radius: var(--ds-radius-md, 6px);
+  font-size: var(--ds-text-sm, 14px);
+  font-weight: 500;
+  color: var(--ds-text-secondary, #374151);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mld-sh-select-all-btn:hover:not(:disabled),
+.mld-sh-deselect-all-btn:hover:not(:disabled) {
+  background: var(--ds-off-white, #f3f4f6);
+  border-color: var(--ds-border-strong, #d1d5db);
+}
+
+.mld-sh-select-all-btn:disabled,
+.mld-sh-deselect-all-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mld-sh-stats-title {
+  font-size: var(--ds-text-lg, 18px);
+  font-weight: 600;
+  color: var(--ds-text-primary, #000);
+  margin: 0 0 4px 0;
+}
+
+.mld-sh-stats-subtitle {
+  font-size: var(--ds-text-sm, 14px);
+  color: var(--ds-text-muted, #6b7280);
+  margin: 0 0 var(--ds-space-5, 20px) 0;
+}
+
+.mld-sh-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.mld-sh-stat-card {
+  background: var(--ds-white, white);
+  border-radius: var(--ds-radius-lg, 8px);
+  padding: var(--ds-space-4, 16px);
+  text-align: center;
+  border: 1px solid var(--ds-border, #e5e7eb);
+}
+
+.mld-sh-stat-value {
+  font-size: var(--ds-text-2xl, 24px);
+  font-weight: 700;
+  color: var(--ds-text-primary, #000);
+  margin-bottom: 4px;
+}
+
+.mld-sh-stat-label {
+  font-size: var(--ds-text-sm, 14px);
+  color: var(--ds-text-muted, #6b7280);
+  margin-bottom: 4px;
+}
+
+.mld-sh-stat-range {
+  font-size: var(--ds-text-xs, 12px);
+  color: var(--ds-text-tertiary, #9ca3af);
+  margin-top: 4px;
+}
+
+/* Empty Stats State */
+.mld-sh-stats-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6B7280;
+}
+
+.mld-sh-stats-empty p {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+  color: #374151;
+}
+
+.mld-sh-stats-empty small {
+  font-size: 14px;
+  color: #9CA3AF;
+}
+
+/* ========================================
+   Subject Property Card
+   ======================================== */
+.mld-sh-subject-property {
+  margin-bottom: 24px;
+}
+
+.mld-sh-subject-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 16px 0;
+}
+
+.mld-sh-subject-card {
+  background: var(--ds-white, white);
+  border: 2px solid var(--ds-teal, #0891B2);
+  border-radius: var(--ds-radius-xl, 12px);
+  overflow: hidden;
+  display: flex;
+  gap: var(--ds-space-5, 20px);
+}
+
+.mld-sh-subject-image {
+  width: 180px;
+  height: 180px;
+  flex-shrink: 0;
+  background: var(--ds-off-white, #f3f4f6);
+}
+
+.mld-sh-subject-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mld-sh-subject-details {
+  flex: 1;
+  padding: 20px 24px 20px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.mld-sh-subject-price-section {
+  margin-bottom: 4px;
+}
+
+.mld-sh-subject-price {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ds-text-primary, #000);
+  margin-bottom: 2px;
+}
+
+.mld-sh-market-comparison {
+  font-size: 14px;
+  color: #6B7280;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.mld-sh-avg-label {
+  font-weight: 500;
+}
+
+.mld-sh-subject-address {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.mld-sh-subject-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+  color: #4B5563;
+  margin-bottom: 8px;
+}
+
+.mld-sh-subject-stats span:not(:last-child)::after {
+  content: '•';
+  margin-left: 12px;
+  color: #D1D5DB;
+}
+
+.mld-sh-subject-comparisons {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #E5E7EB;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mld-sh-comparison-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.mld-sh-metric-label {
+  font-weight: 600;
+  color: #374151;
+  min-width: 120px;
+}
+
+.mld-sh-metric-value {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mld-sh-subject-value {
+  font-weight: 600;
+  color: #111827;
+}
+
+.mld-sh-avg-value {
+  color: #6B7280;
+  font-size: 13px;
+}
+
+.mld-sh-inline-diff {
+  font-weight: 600;
+  font-size: 13px;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.mld-sh-inline-diff.above {
+  color: var(--ds-red, #DC2626);
+  background: #fee2e2;
+}
+
+.mld-sh-inline-diff.below {
+  color: var(--ds-success, #10b981);
+  background: #d1fae5;
+}
+
+.mld-sh-inline-diff.better {
+  color: var(--ds-success, #10b981);
+  background: #d1fae5;
+}
+
+.mld-sh-inline-diff.worse {
+  color: var(--ds-red, #DC2626);
+  background: #fee2e2;
+}
+
+.mld-sh-inline-diff.equal {
+  color: var(--ds-text-muted, #6b7280);
+  background: var(--ds-off-white, #f3f4f6);
+  font-style: italic;
+}
+
+/* Subject property extra details */
+.mld-sh-subject-details-extra {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #E5E7EB;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  font-size: 14px;
+}
+
+.mld-sh-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mld-sh-detail-label {
+  font-weight: 600;
+  color: #6B7280;
+  min-width: fit-content;
+}
+
+.mld-sh-detail-value {
+  color: #374151;
+  font-weight: 500;
+}
+
+.mld-sh-detail-item.mld-sh-waterfront {
+  grid-column: span 2;
+  color: #0EA5E9;
+  font-weight: 600;
+}
+
+.mld-sh-detail-item.mld-sh-waterfront .mld-sh-detail-label {
+  font-size: 16px;
+}
+
+.mld-sh-detail-item.mld-sh-waterfront .mld-sh-detail-value {
+  color: #0EA5E9;
+}
+
+
+/* ========================================
+   Grid Layout
+   ======================================== */
+.mld-sh-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+/* ========================================
+   Pagination
+   ======================================== */
+.mld-sh-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #E5E7EB;
+}
+
+.mld-sh-pagination-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mld-sh-pagination-btn:hover:not(:disabled) {
+  background: #F9FAFB;
+  border-color: #D1D5DB;
+}
+
+.mld-sh-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mld-sh-pagination-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.mld-sh-page-info {
+  font-size: 14px;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+/* ========================================
+   Property Card
+   ======================================== */
+.mld-sh-property-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.mld-sh-property-card {
+  background: white;
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+  border-bottom: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.mld-sh-property-wrapper:hover .mld-sh-property-card {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.mld-sh-property-wrapper .mld-sh-property-card.selected {
+  border-color: #3B82F6;
+  border-width: 2px;
+}
+
+.mld-sh-property-wrapper .mld-sh-property-card.selected + .mld-sh-card-footer {
+  border-color: #3B82F6;
+  border-width: 2px;
+  border-top-width: 0;
+}
+
+/* Card Footer */
+.mld-sh-card-footer {
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.mld-sh-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.mld-sh-property-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--ds-teal, #0891B2);
+}
+
+.mld-sh-checkbox-label {
+  color: #4B5563;
+  font-weight: 500;
+  user-select: none;
+}
+
+.mld-sh-similarity-score {
+  color: var(--ds-success, #10b981);
+  font-weight: 600;
+  font-size: var(--ds-text-xs, 12px);
+  background: #d1fae5;
+  padding: 2px 8px;
+  border-radius: var(--ds-radius-xl, 12px);
+  white-space: nowrap;
+}
+
+/* Remove Button */
+.mld-sh-remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mld-sh-remove-btn:hover {
+  background: white;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.mld-sh-remove-icon {
+  font-size: 20px;
+  line-height: 1;
+  color: var(--ds-red, #DC2626);
+  font-weight: 400;
+  display: block;
+}
+
+.mld-sh-property-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+/* Property Image */
+.mld-sh-property-image {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background: #F3F4F6;
+}
+
+.mld-sh-property-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.mld-sh-property-card:hover .mld-sh-property-image img {
+  transform: scale(1.05);
+}
+
+.mld-sh-no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #D1D5DB;
+}
+
+/* Status Badge */
+.mld-sh-status-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+}
+
+.mld-sh-status-badge.new {
+  background: #10B981;
+}
+
+.mld-sh-status-badge.price-drop {
+  background: #EF4444;
+}
+
+.mld-sh-status-badge.pending {
+  background: #F59E0B;
+}
+
+.mld-sh-status-badge.sold {
+  background: #6B7280;
+}
+
+/* Price Tag */
+.mld-sh-price-tag {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  backdrop-filter: blur(8px);
+}
+
+/* Property Details */
+.mld-sh-property-details {
+  padding: 16px;
+}
+
+.mld-sh-property-stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #4B5563;
+}
+
+.mld-sh-property-stats span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mld-sh-property-stats span:not(:last-child)::after {
+  content: '•';
+  margin-left: 12px;
+  color: #D1D5DB;
+}
+
+.mld-sh-property-address {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mld-sh-property-city {
+  font-size: 14px;
+  color: #6B7280;
+  margin-bottom: 4px;
+}
+
+.mld-sh-property-distance {
+  font-size: 13px;
+  color: #9CA3AF;
+  font-style: italic;
+}
+
+.mld-sh-property-sold-date {
+  font-size: 13px;
+  color: #059669;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+/* ========================================
+   Loading State
+   ======================================== */
+.mld-similar-homes-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: #6B7280;
+}
+
+.mld-sh-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--ds-border, #e5e7eb);
+  border-top-color: var(--ds-teal, #0891B2);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: var(--ds-space-4, 16px);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.mld-similar-homes-loading p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* ========================================
+   Error State
+   ======================================== */
+.mld-similar-homes-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--ds-red, #DC2626);
+}
+
+.mld-similar-homes-error svg {
+  margin-bottom: 12px;
+}
+
+.mld-similar-homes-error p {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.mld-similar-homes-error small {
+  color: #6B7280;
+  font-size: 14px;
+}
+
+/* ========================================
+   Empty State
+   ======================================== */
+.mld-similar-homes-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+  color: #9CA3AF;
+}
+
+.mld-similar-homes-empty svg {
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.mld-similar-homes-empty p {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #6B7280;
+}
+
+.mld-similar-homes-empty small {
+  font-size: 14px;
+  color: #9CA3AF;
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+@media (max-width: 1200px) {
+  .mld-sh-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .mld-sh-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  
+  .mld-sh-comparison-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .mld-sh-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .mld-sh-property-image {
+    height: 180px;
+  }
+  
+  .mld-sh-property-details {
+    padding: 12px;
+  }
+  
+  .mld-sh-property-stats {
+    font-size: 13px;
+  }
+  
+  .mld-sh-property-address {
+    font-size: 14px;
+  }
+  
+  .mld-sh-price-tag {
+    font-size: 16px;
+    padding: 4px 10px;
+  }
+  
+  .mld-sh-pagination {
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  
+  .mld-sh-pagination-btn {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+  
+  .mld-sh-market-stats {
+    padding: 16px;
+  }
+  
+  .mld-sh-stats-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .mld-sh-stats-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .mld-sh-select-all-btn,
+  .mld-sh-deselect-all-btn {
+    font-size: 13px;
+    padding: 4px 12px;
+  }
+  
+  .mld-sh-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .mld-sh-stat-card {
+    padding: 12px;
+  }
+  
+  .mld-sh-stat-value {
+    font-size: 20px;
+  }
+  
+  .mld-sh-card-footer {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  
+  .mld-sh-checkbox-wrapper {
+    font-size: 12px;
+  }
+  
+  .mld-sh-checkbox-label {
+    font-size: 12px;
+  }
+  
+  .mld-sh-similarity-score {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+  
+  .mld-sh-remove-btn {
+    width: 24px;
+    height: 24px;
+    top: 6px;
+    right: 6px;
+  }
+  
+  .mld-sh-remove-icon {
+    font-size: 18px;
+  }
+  
+  /* Subject property card mobile */
+  .mld-sh-subject-card {
+    flex-direction: column;
+  }
+  
+  .mld-sh-subject-image {
+    width: 100%;
+    height: 200px;
+  }
+  
+  .mld-sh-subject-details {
+    padding: 16px;
+  }
+  
+  .mld-sh-subject-price-section {
+    margin-bottom: 8px;
+  }
+  
+  .mld-sh-subject-price {
+    font-size: 22px;
+  }
+  
+  .mld-sh-market-comparison {
+    font-size: 13px;
+    flex-wrap: wrap;
+  }
+  
+  .mld-sh-subject-address {
+    font-size: 14px;
+  }
+  
+  .mld-sh-subject-comparisons {
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+  
+  .mld-sh-comparison-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .mld-sh-metric-label {
+    min-width: auto;
+    font-size: 13px;
+  }
+  
+  .mld-sh-metric-value {
+    font-size: 13px;
+  }
+  
+  .mld-sh-inline-diff {
+    font-size: 12px;
+    padding: 0 4px;
+  }
+  
+  .mld-sh-subject-details-extra {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    font-size: 13px;
+  }
+  
+  .mld-sh-detail-item {
+    justify-content: space-between;
+  }
+  
+  /* Comparison section mobile */
+  .mld-sh-comparison-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .mld-sh-comparison-value {
+    font-size: 18px;
+  }
+  
+  .mld-sh-comparison-diff {
+    display: block;
+    margin-left: 0;
+    margin-top: 4px;
+  }
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+@media print {
+  .mld-sh-nav-btn {
+    display: none;
+  }
+  
+  .mld-sh-carousel-track {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    transform: none !important;
+  }
+  
+  .mld-sh-carousel .mld-sh-property-card {
+    flex: none;
+    margin: 0;
+  }
+  
+  .mld-sh-property-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+}

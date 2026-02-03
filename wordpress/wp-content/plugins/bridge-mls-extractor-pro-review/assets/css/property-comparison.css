@@ -1,0 +1,552 @@
+/**
+ * BME Property Comparison Styles
+ * Updated to use design system tokens
+ *
+ * @package Bridge_MLS_Extractor_Pro
+ * @version 4.0.11
+ */
+
+/* Floating Comparison Widget */
+.bme-comparison-widget {
+    position: fixed;
+    z-index: 9999;
+    background: var(--ds-white, white);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-lg, 8px);
+    box-shadow: var(--ds-shadow-xl, 0 4px 20px rgba(0,0,0,0.15));
+    min-width: 300px;
+    max-width: 400px;
+    transition: all 0.3s ease;
+}
+
+.bme-comparison-widget.bottom-right {
+    bottom: 20px;
+    right: 20px;
+}
+
+.bme-comparison-widget.bottom-left {
+    bottom: 20px;
+    left: 20px;
+}
+
+.bme-comparison-widget.top-right {
+    top: 20px;
+    right: 20px;
+}
+
+.bme-comparison-widget.top-left {
+    top: 20px;
+    left: 20px;
+}
+
+.bme-comparison-widget.collapsed {
+    min-height: auto;
+}
+
+.bme-widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--ds-space-4, 15px);
+    background: linear-gradient(135deg, var(--ds-teal, #0891B2) 0%, var(--ds-teal-hover, #0E7490) 100%);
+    color: var(--ds-white, white);
+    border-radius: var(--ds-radius-lg, 8px) var(--ds-radius-lg, 8px) 0 0;
+    cursor: pointer;
+}
+
+.bme-widget-title {
+    font-weight: 600;
+    font-size: var(--ds-text-sm, 14px);
+}
+
+.bme-widget-count {
+    font-size: var(--ds-text-xs, 12px);
+    opacity: 0.9;
+}
+
+.bme-widget-toggle {
+    background: none;
+    border: none;
+    color: var(--ds-white, white);
+    cursor: pointer;
+    padding: var(--ds-space-1, 5px);
+    border-radius: var(--ds-radius-sm, 4px);
+    transition: background-color 0.3s ease;
+}
+
+.bme-widget-toggle:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.bme-widget-content {
+    padding: var(--ds-space-4, 15px);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.bme-widget-properties {
+    margin-bottom: var(--ds-space-4, 15px);
+}
+
+.bme-widget-property {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-3, 10px);
+    padding: var(--ds-space-2, 8px) 0;
+    border-bottom: 1px solid var(--ds-border-light, #f0f0f0);
+}
+
+.bme-widget-property:last-child {
+    border-bottom: none;
+}
+
+.bme-widget-property img {
+    width: 50px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: var(--ds-radius-md, 6px);
+    background: var(--ds-off-white, #f5f5f5);
+}
+
+.bme-widget-property-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.bme-widget-price {
+    font-weight: 600;
+    color: var(--ds-teal, #0891B2);
+    font-size: var(--ds-text-sm, 14px);
+}
+
+.bme-widget-address {
+    font-size: var(--ds-text-xs, 12px);
+    color: var(--ds-text-muted, #6b7280);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bme-widget-remove {
+    background: var(--ds-red, #DC2626);
+    color: var(--ds-white, white);
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.bme-widget-remove:hover {
+    background: #B91C1C;
+    transform: scale(1.1);
+}
+
+.bme-widget-actions {
+    display: flex;
+    gap: var(--ds-space-2, 8px);
+}
+
+.bme-widget-actions .bme-btn {
+    flex: 1;
+    padding: var(--ds-space-2, 8px) var(--ds-space-3, 12px);
+    font-size: var(--ds-text-xs, 12px);
+    text-align: center;
+}
+
+.bme-widget-empty {
+    text-align: center;
+    color: var(--ds-text-muted, #6b7280);
+    font-style: italic;
+    margin: var(--ds-space-3, 10px) 0;
+}
+
+/* Main Comparison Container */
+.bme-comparison-container {
+    background: var(--ds-white, white);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-lg, 8px);
+    padding: var(--ds-space-5, 20px);
+    margin: var(--ds-space-5, 20px) 0;
+}
+
+.bme-comparison-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ds-space-5, 20px);
+    padding-bottom: var(--ds-space-4, 15px);
+    border-bottom: 2px solid var(--ds-border, #e5e7eb);
+}
+
+.bme-comparison-header h3 {
+    margin: 0;
+    color: var(--ds-text-primary, #000);
+    font-size: var(--ds-text-2xl, 24px);
+    font-weight: 600;
+}
+
+.bme-no-comparison {
+    text-align: center;
+    padding: var(--ds-space-15, 60px) var(--ds-space-5, 20px);
+    color: var(--ds-text-muted, #6b7280);
+}
+
+.bme-no-comparison h3 {
+    color: var(--ds-text-primary, #000);
+    margin-bottom: var(--ds-space-5, 20px);
+}
+
+.bme-no-comparison p {
+    margin-bottom: var(--ds-space-4, 15px);
+    font-size: var(--ds-text-base, 16px);
+}
+
+.bme-no-comparison a {
+    color: var(--ds-teal, #0891B2);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.bme-no-comparison a:hover {
+    text-decoration: underline;
+}
+
+/* Comparison Table */
+.bme-comparison-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-lg, 8px);
+}
+
+.bme-comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--ds-white, white);
+}
+
+.bme-comparison-table th,
+.bme-comparison-table td {
+    padding: var(--ds-space-4, 15px);
+    text-align: left;
+    border-bottom: 1px solid var(--ds-border-light, #f0f0f0);
+    vertical-align: top;
+}
+
+.bme-comparison-table th {
+    background: var(--ds-surface-subtle, #f9fafb);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.bme-comparison-feature {
+    background: var(--ds-surface-subtle, #f9fafb);
+    min-width: 150px;
+    font-weight: 600;
+    position: sticky;
+    left: 0;
+    z-index: 11;
+    border-right: 1px solid var(--ds-border, #e5e7eb);
+}
+
+.bme-comparison-property {
+    min-width: 250px;
+    max-width: 300px;
+}
+
+.bme-property-header {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-space-3, 10px);
+}
+
+.bme-property-image {
+    width: 100%;
+    height: 120px;
+    overflow: hidden;
+    border-radius: var(--ds-radius-md, 6px);
+    background: var(--ds-off-white, #f5f5f5);
+}
+
+.bme-property-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.bme-property-info {
+    text-align: center;
+}
+
+.bme-property-price {
+    font-size: var(--ds-text-lg, 18px);
+    font-weight: 700;
+    color: var(--ds-teal, #0891B2);
+    margin-bottom: var(--ds-space-1, 5px);
+}
+
+.bme-property-address {
+    font-size: var(--ds-text-sm, 14px);
+    color: var(--ds-text-primary, #000);
+    margin-bottom: var(--ds-space-1, 5px);
+    line-height: 1.3;
+}
+
+.bme-property-mls {
+    font-size: var(--ds-text-xs, 12px);
+    color: var(--ds-text-muted, #6b7280);
+}
+
+.bme-remove-property {
+    position: absolute;
+    top: var(--ds-space-1, 5px);
+    right: var(--ds-space-1, 5px);
+    background: rgba(220, 38, 38, 0.9);
+    color: var(--ds-white, white);
+    border: none;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    opacity: 0;
+}
+
+.bme-property-header:hover .bme-remove-property {
+    opacity: 1;
+}
+
+.bme-remove-property:hover {
+    background: var(--ds-red, #DC2626);
+    transform: scale(1.1);
+}
+
+.bme-feature-label {
+    background: var(--ds-surface-subtle, #f9fafb);
+    font-weight: 600;
+    color: var(--ds-text-primary, #000);
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    border-right: 1px solid var(--ds-border, #e5e7eb);
+}
+
+.bme-feature-value {
+    color: var(--ds-text-secondary, #374151);
+    font-size: var(--ds-text-sm, 14px);
+}
+
+/* Compare Button States */
+.bme-compare-btn {
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bme-compare-btn:hover {
+    background: var(--ds-white, white);
+    transform: scale(1.1);
+}
+
+.bme-compare-btn.active {
+    background: var(--ds-teal, #0891B2);
+    color: var(--ds-white, white);
+}
+
+.bme-compare-btn.active:hover {
+    background: var(--ds-teal-hover, #0E7490);
+}
+
+/* Notification */
+.bme-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    padding: var(--ds-space-3, 12px) var(--ds-space-5, 20px);
+    border-radius: var(--ds-radius-md, 6px);
+    color: var(--ds-white, white);
+    font-size: var(--ds-text-sm, 14px);
+    font-weight: 600;
+    display: none;
+    box-shadow: var(--ds-shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.15));
+}
+
+.bme-notification.success {
+    background: var(--ds-success, #10b981);
+}
+
+.bme-notification.error {
+    background: var(--ds-red, #DC2626);
+}
+
+/* Buttons */
+.bme-btn {
+    display: inline-block;
+    padding: var(--ds-space-3, 10px) var(--ds-space-5, 20px);
+    border: none;
+    border-radius: var(--ds-radius-md, 6px);
+    cursor: pointer;
+    font-size: var(--ds-text-sm, 14px);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.bme-btn-primary {
+    background: linear-gradient(135deg, var(--ds-teal, #0891B2) 0%, var(--ds-teal-hover, #0E7490) 100%);
+    color: var(--ds-white, white);
+    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+}
+
+.bme-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.4);
+    color: var(--ds-white, white);
+}
+
+.bme-btn-secondary {
+    background: var(--ds-surface-subtle, #f9fafb);
+    color: var(--ds-text-primary, #000);
+    border: 1px solid var(--ds-border, #e5e7eb);
+}
+
+.bme-btn-secondary:hover {
+    background: var(--ds-border, #e5e7eb);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .bme-comparison-widget {
+        min-width: 250px;
+        max-width: 300px;
+    }
+
+    .bme-comparison-table th,
+    .bme-comparison-table td {
+        padding: var(--ds-space-3, 10px);
+    }
+
+    .bme-comparison-property {
+        min-width: 200px;
+        max-width: 250px;
+    }
+}
+
+@media (max-width: 768px) {
+    .bme-comparison-widget {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        min-width: auto;
+    }
+
+    .bme-comparison-widget.bottom-left,
+    .bme-comparison-widget.top-left,
+    .bme-comparison-widget.top-right {
+        left: 10px;
+        right: 10px;
+    }
+
+    .bme-comparison-header {
+        flex-direction: column;
+        gap: var(--ds-space-4, 15px);
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .bme-comparison-table-wrapper {
+        border-radius: 0;
+        margin: 0 -20px;
+    }
+
+    .bme-comparison-container {
+        padding: var(--ds-space-4, 15px);
+        margin: var(--ds-space-4, 15px) 0;
+        border-radius: 0;
+    }
+
+    .bme-feature-label {
+        position: static;
+        font-size: var(--ds-text-sm, 13px);
+    }
+
+    .bme-comparison-property {
+        min-width: 180px;
+        max-width: 200px;
+    }
+}
+
+@media (max-width: 480px) {
+    .bme-widget-actions {
+        flex-direction: column;
+    }
+
+    .bme-property-image {
+        height: 100px;
+    }
+
+    .bme-comparison-table th,
+    .bme-comparison-table td {
+        padding: var(--ds-space-2, 8px);
+        font-size: var(--ds-text-xs, 12px);
+    }
+
+    .bme-comparison-property {
+        min-width: 150px;
+        max-width: 180px;
+    }
+
+    .bme-property-price {
+        font-size: var(--ds-text-base, 16px);
+    }
+
+    .bme-property-address {
+        font-size: var(--ds-text-sm, 13px);
+    }
+}
+
+/* Print Styles */
+@media print {
+    .bme-comparison-widget,
+    .bme-remove-property,
+    .bme-widget-remove,
+    #bme-print-comparison {
+        display: none !important;
+    }
+
+    .bme-comparison-table {
+        font-size: var(--ds-text-xs, 12px);
+    }
+
+    .bme-comparison-table th,
+    .bme-comparison-table td {
+        padding: var(--ds-space-2, 6px);
+        border: 1px solid var(--ds-black, #000);
+    }
+
+    .bme-property-image {
+        height: 80px;
+    }
+}

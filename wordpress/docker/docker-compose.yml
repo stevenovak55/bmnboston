@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # WordPress Container
+  wordpress:
+    image: wordpress:6.4
+    container_name: bmnboston_wordpress
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress_dev_password
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DEBUG: 1
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_DEBUG', true);
+        define('WP_DEBUG_LOG', true);
+        define('WP_DEBUG_DISPLAY', true);
+        define('SCRIPT_DEBUG', true);
+        define('WP_ENVIRONMENT_TYPE', 'development');
+        define('DISALLOW_FILE_EDIT', false);
+    volumes:
+      - wordpress_data:/var/www/html
+      - ../wp-content/plugins:/var/www/html/wp-content/plugins
+      - ../wp-content/themes:/var/www/html/wp-content/themes
+      - ../wp-content/uploads:/var/www/html/wp-content/uploads
+      - ./config/php.ini:/usr/local/etc/php/conf.d/custom.ini
+      - ./config/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+    depends_on:
+      - db
+    networks:
+      - bmnboston_network
+
+  # MySQL Database Container
+  db:
+    image: mysql:8.0
+    container_name: bmnboston_mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress_dev_password
+      MYSQL_ROOT_PASSWORD: root_dev_password
+    volumes:
+      - db_data:/var/lib/mysql
+      - ../database/schema:/docker-entrypoint-initdb.d
+    command: '--default-authentication-plugin=mysql_native_password'
+    networks:
+      - bmnboston_network
+
+  # phpMyAdmin Container
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: bmnboston_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: root_dev_password
+      UPLOAD_LIMIT: 100M
+    depends_on:
+      - db
+    networks:
+      - bmnboston_network
+
+  # Mailhog for Email Testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: bmnboston_mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - bmnboston_network
+
+volumes:
+  wordpress_data:
+    name: bmnboston_wordpress_data
+  db_data:
+    name: bmnboston_db_data
+
+networks:
+  bmnboston_network:
+    name: bmnboston_network
+    driver: bridge

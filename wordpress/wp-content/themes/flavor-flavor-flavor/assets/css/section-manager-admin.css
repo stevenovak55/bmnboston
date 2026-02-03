@@ -1,0 +1,431 @@
+/**
+ * Homepage Section Manager - Admin Styles
+ *
+ * @package flavor_flavor_flavor
+ * @version 1.2.3
+ */
+
+/* ==========================================================================
+   Section Manager Container
+   ========================================================================== */
+
+.bne-section-manager {
+    max-width: 900px;
+}
+
+.bne-section-manager__intro {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-left: 4px solid #2271b1;
+    padding: 12px 16px;
+    margin: 20px 0;
+}
+
+.bne-section-manager__intro p {
+    margin: 0 0 8px;
+}
+
+.bne-section-manager__intro p:last-child {
+    margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Section List
+   ========================================================================== */
+
+.bne-sections-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+}
+
+.bne-section-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f1;
+    background: #fff;
+    transition: background-color 0.15s ease;
+}
+
+.bne-section-item:last-child {
+    border-bottom: none;
+}
+
+.bne-section-item:hover {
+    background: #f9f9f9;
+}
+
+.bne-section-item--disabled {
+    opacity: 0.6;
+}
+
+.bne-section-item--disabled .bne-section-item__name {
+    text-decoration: line-through;
+    color: #787c82;
+}
+
+/* Drag Handle */
+.bne-section-item__drag {
+    cursor: grab;
+    color: #c3c4c7;
+    transition: color 0.15s ease;
+}
+
+.bne-section-item__drag:hover {
+    color: #2271b1;
+}
+
+.bne-section-item__drag .dashicons {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+/* Drag Placeholder */
+.bne-section-item--placeholder {
+    height: 56px;
+    background: #f0f6fc;
+    border: 2px dashed #2271b1;
+    border-radius: 4px;
+}
+
+/* ==========================================================================
+   Toggle Switch
+   ========================================================================== */
+
+.bne-toggle {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+}
+
+.bne-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.bne-toggle__slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #c3c4c7;
+    transition: 0.2s;
+    border-radius: 20px;
+}
+
+.bne-toggle__slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.2s;
+    border-radius: 50%;
+}
+
+.bne-toggle input:checked + .bne-toggle__slider {
+    background-color: #2271b1;
+}
+
+.bne-toggle input:focus + .bne-toggle__slider {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2271b1;
+}
+
+.bne-toggle input:checked + .bne-toggle__slider:before {
+    transform: translateX(16px);
+}
+
+/* ==========================================================================
+   Section Info
+   ========================================================================== */
+
+.bne-section-item__info {
+    flex: 1;
+    min-width: 0;
+}
+
+.bne-section-item__name {
+    display: block;
+    font-weight: 600;
+    color: #1d2327;
+    margin-bottom: 2px;
+}
+
+.bne-section-item__description {
+    display: block;
+    font-size: 12px;
+    color: #787c82;
+}
+
+/* Badges */
+.bne-section-item__badge {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    margin-right: 6px;
+    vertical-align: middle;
+    background: #dcdcde;
+    color: #50575e;
+}
+
+.bne-section-item--custom .bne-section-item__badge {
+    background: #d63638;
+    color: #fff;
+}
+
+.bne-section-item__badge--override {
+    background: #dba617;
+    color: #fff;
+}
+
+/* ==========================================================================
+   Section Actions
+   ========================================================================== */
+
+.bne-section-item__actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.bne-section-item__actions .button-link-delete {
+    color: #d63638;
+}
+
+.bne-section-item__actions .button-link-delete:hover {
+    color: #a00;
+}
+
+/* ==========================================================================
+   Form Actions
+   ========================================================================== */
+
+.bne-section-manager__actions {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.bne-save-status {
+    font-size: 13px;
+    font-style: italic;
+}
+
+.bne-save-status.success {
+    color: #00a32a;
+}
+
+.bne-save-status.error {
+    color: #d63638;
+}
+
+/* ==========================================================================
+   Modal
+   ========================================================================== */
+
+.bne-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bne-modal__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.bne-modal__container {
+    position: relative;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+}
+
+.bne-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #dcdcde;
+}
+
+.bne-modal__title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.bne-modal__close {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #787c82;
+    transition: color 0.15s ease;
+}
+
+.bne-modal__close:hover {
+    color: #1d2327;
+}
+
+.bne-modal__close .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.bne-modal__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.bne-modal__field {
+    margin-bottom: 20px;
+}
+
+.bne-modal__field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.bne-modal__field input[type="text"],
+.bne-modal__field textarea {
+    width: 100%;
+}
+
+.bne-modal__field textarea {
+    font-family: Consolas, Monaco, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    tab-size: 2;
+    resize: vertical;
+    min-height: 300px;
+}
+
+.bne-modal__field .description {
+    margin-top: 8px;
+    color: #787c82;
+    font-size: 12px;
+}
+
+.bne-modal__tips {
+    background: #f0f6fc;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-top: 20px;
+}
+
+.bne-modal__tips h4 {
+    margin: 0 0 8px;
+    font-size: 13px;
+}
+
+.bne-modal__tips ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.bne-modal__tips li {
+    font-size: 12px;
+    color: #50575e;
+    margin-bottom: 4px;
+}
+
+.bne-modal__tips code {
+    background: #fff;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+.bne-modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-top: 1px solid #dcdcde;
+    background: #f6f7f7;
+    border-radius: 0 0 8px 8px;
+}
+
+.bne-modal__footer-left,
+.bne-modal__footer-right {
+    display: flex;
+    gap: 8px;
+}
+
+/* Modal open state */
+body.modal-open {
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media screen and (max-width: 782px) {
+    .bne-section-item {
+        flex-wrap: wrap;
+    }
+
+    .bne-section-item__info {
+        order: -1;
+        flex-basis: calc(100% - 80px);
+    }
+
+    .bne-section-item__actions {
+        flex-basis: 100%;
+        margin-top: 8px;
+        padding-left: 32px;
+    }
+
+    .bne-modal__container {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .bne-modal__footer {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .bne-modal__footer-left,
+    .bne-modal__footer-right {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}

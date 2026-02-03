@@ -1,0 +1,474 @@
+/*
+ Theme Name:   BMN Real Estate Child Theme
+ Theme URI:    https://steve-novak.com
+ Description:  Custom real estate homepage theme for Steven Novak - BMN Boston Real Estate
+ Author:       Steven Novak
+ Author URI:   https://steve-novak.com
+ Template:     generatepress
+ Version:      1.5.9
+ License:      GNU General Public License v2 or later
+ License URI:  http://www.gnu.org/licenses/gpl-2.0.html
+ Text Domain:  flavor-flavor-flavor
+*/
+
+/* ==========================================================================
+   CSS Variables - Design Tokens
+   Version: 1.3.2 - Phase 3: Dynamic Neighborhood Filters
+   ========================================================================== */
+
+:root {
+    /* Brand Colors */
+    --bne-primary-blue: #4a60a1;
+    --bne-primary-blue-dark: #3a4d8a;
+    --bne-primary-blue-light: #6b80b8;
+    --bne-primary-blue-50: rgba(74, 96, 161, 0.05);
+    --bne-primary-blue-100: rgba(74, 96, 161, 0.1);
+    --bne-primary-blue-200: rgba(74, 96, 161, 0.2);
+    --bne-beige: #decdd2;
+    --bne-beige-light: #f5eff0;
+    --bne-beige-dark: #c4b0b6;
+    --bne-dark-gray: #282c1c;
+    --bne-white: #ffffff;
+    --bne-light-gray: #f5f5f5;
+    --bne-medium-gray: #6b7280;
+    --bne-border-gray: #e5e7eb;
+
+    /* Extended Neutral Palette */
+    --bne-gray-50: #f9fafb;
+    --bne-gray-100: #f3f4f6;
+    --bne-gray-200: #e5e7eb;
+    --bne-gray-300: #d1d5db;
+    --bne-gray-400: #9ca3af;
+    --bne-gray-500: #6b7280;
+    --bne-gray-600: #4b5563;
+    --bne-gray-700: #374151;
+    --bne-gray-800: #1f2937;
+    --bne-gray-900: #111827;
+
+    /* Dark Hero Colors */
+    --bne-dark-blue: #0f172a;
+    --bne-dark-blue-mid: #1e293b;
+    --bne-dark-teal: #134e4a;
+    --bne-dark-teal-light: #115e59;
+    --bne-accent-teal: #2dd4bf;
+    --bne-accent-blue: #60a5fa;
+
+    /* Autocomplete Badge Colors */
+    --bne-badge-city: var(--bne-primary-blue);
+    --bne-badge-neighborhood: #10b981;
+    --bne-badge-zip: #f59e0b;
+    --bne-badge-address: #8b5cf6;
+    --bne-badge-mls: #ef4444;
+
+    /* Gradients */
+    --bne-gradient-primary: linear-gradient(135deg, var(--bne-primary-blue) 0%, var(--bne-primary-blue-dark) 100%);
+    --bne-gradient-hero: linear-gradient(135deg, #0a0a0f 0%, #0d1117 30%, #1a1f2e 60%, #1e2a3a 80%, #243442 100%);
+    --bne-gradient-accent: linear-gradient(135deg, var(--bne-beige-light) 0%, var(--bne-beige) 100%);
+    --bne-gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+
+    /* Glass-morphism Design Tokens */
+    --bne-glass-bg: rgba(255, 255, 255, 0.7);
+    --bne-glass-bg-dark: rgba(15, 23, 42, 0.7);
+    --bne-glass-bg-light: rgba(255, 255, 255, 0.85);
+    --bne-glass-bg-hero: rgba(255, 255, 255, 0.1);
+    --bne-glass-border: rgba(255, 255, 255, 0.2);
+    --bne-glass-border-dark: rgba(255, 255, 255, 0.1);
+    --bne-glass-blur: blur(10px);
+    --bne-glass-blur-subtle: blur(8px);
+    --bne-glass-blur-strong: blur(16px);
+    --bne-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+
+    /* Typography - Fluid Scaling with clamp() */
+    --bne-font-primary: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --bne-font-size-xs: clamp(0.6875rem, 0.65rem + 0.19vw, 0.75rem);
+    --bne-font-size-sm: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+    --bne-font-size-base: clamp(0.875rem, 0.8rem + 0.38vw, 1rem);
+    --bne-font-size-lg: clamp(1rem, 0.9rem + 0.5vw, 1.125rem);
+    --bne-font-size-xl: clamp(1.125rem, 1rem + 0.63vw, 1.25rem);
+    --bne-font-size-2xl: clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem);
+    --bne-font-size-3xl: clamp(1.5rem, 1.25rem + 1.25vw, 1.875rem);
+    --bne-font-size-4xl: clamp(1.75rem, 1.4rem + 1.75vw, 2.5rem);
+    --bne-font-size-5xl: clamp(2rem, 1.5rem + 2.5vw, 3.25rem);
+    --bne-font-size-6xl: clamp(2.5rem, 2rem + 2.5vw, 4rem);
+    --bne-font-size-7xl: clamp(3rem, 2.5rem + 2.5vw, 5rem);
+
+    /* Font Weights */
+    --bne-font-light: 300;
+    --bne-font-regular: 400;
+    --bne-font-medium: 500;
+    --bne-font-semibold: 600;
+    --bne-font-bold: 700;
+    --bne-font-black: 900;
+
+    /* Letter Spacing */
+    --bne-tracking-tighter: -0.05em;
+    --bne-tracking-tight: -0.025em;
+    --bne-tracking-normal: 0;
+    --bne-tracking-wide: 0.025em;
+    --bne-tracking-wider: 0.05em;
+    --bne-tracking-widest: 0.1em;
+
+    /* Line Heights */
+    --bne-leading-none: 1;
+    --bne-leading-tight: 1.2;
+    --bne-leading-snug: 1.35;
+    --bne-leading-normal: 1.6;
+    --bne-leading-relaxed: 1.75;
+
+    /* Spacing */
+    --bne-space-1: 4px;
+    --bne-space-2: 8px;
+    --bne-space-3: 12px;
+    --bne-space-4: 16px;
+    --bne-space-5: 20px;
+    --bne-space-6: 24px;
+    --bne-space-8: 32px;
+    --bne-space-10: 40px;
+    --bne-space-12: 48px;
+    --bne-space-16: 64px;
+    --bne-space-20: 80px;
+
+    /* Border Radius */
+    --bne-radius-sm: 4px;
+    --bne-radius-md: 6px;
+    --bne-radius-lg: 8px;
+    --bne-radius-xl: 12px;
+    --bne-radius-2xl: 16px;
+    --bne-radius-3xl: 24px;
+    --bne-radius-full: 9999px;
+
+    /* Shadows - Enhanced with colored variants */
+    --bne-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --bne-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
+    --bne-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.08);
+    --bne-shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.1);
+    --bne-shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.12);
+    --bne-shadow-2xl: 0 24px 48px rgba(0, 0, 0, 0.16);
+    --bne-shadow-primary: 0 8px 24px rgba(74, 96, 161, 0.25);
+    --bne-shadow-primary-lg: 0 16px 40px rgba(74, 96, 161, 0.3);
+    --bne-shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+
+    /* Animation Timing Functions */
+    --bne-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --bne-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --bne-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* Animation Durations */
+    --bne-duration-fast: 150ms;
+    --bne-duration-normal: 300ms;
+    --bne-duration-slow: 500ms;
+    --bne-duration-slower: 700ms;
+
+    /* Transitions - Enhanced with easing */
+    --bne-transition-fast: var(--bne-duration-fast) var(--bne-ease-out);
+    --bne-transition-normal: var(--bne-duration-normal) var(--bne-ease-out);
+    --bne-transition-slow: var(--bne-duration-slow) var(--bne-ease-out);
+
+    /* Layout */
+    --bne-header-height: 70px;
+    --bne-header-height-scrolled: 58px;
+    --bne-container-max: 1200px;
+    --bne-container-padding: clamp(1rem, 0.5rem + 2vw, 1.5rem);
+
+    /* Z-index Scale */
+    --bne-z-dropdown: 100;
+    --bne-z-sticky: 200;
+    --bne-z-fixed: 500;
+    --bne-z-overlay: 1000;
+    --bne-z-drawer: 1001;
+    --bne-z-modal: 1100;
+    --bne-z-tooltip: 1200;
+}
+
+/* ==========================================================================
+   Base Styles
+   ========================================================================== */
+
+body {
+    font-family: var(--bne-font-primary);
+    font-size: var(--bne-font-size-base);
+    line-height: 1.6;
+    color: var(--bne-dark-gray);
+    background-color: var(--bne-white);
+}
+
+/* Container */
+.bne-container {
+    max-width: var(--bne-container-max);
+    margin: 0 auto;
+    padding: 0 var(--bne-container-padding);
+}
+
+/* Section Styles */
+.bne-section {
+    padding: var(--bne-space-16) 0;
+}
+
+.bne-section--alt {
+    background-color: var(--bne-light-gray);
+}
+
+.bne-section--beige {
+    background-color: var(--bne-beige-light);
+}
+
+.bne-section-title {
+    font-size: var(--bne-font-size-4xl);
+    font-weight: var(--bne-font-bold);
+    letter-spacing: var(--bne-tracking-tight);
+    line-height: var(--bne-leading-tight);
+    text-align: center;
+    margin-bottom: var(--bne-space-4);
+    color: var(--bne-dark-gray);
+}
+
+@media (min-width: 768px) {
+    .bne-section-title {
+        font-size: var(--bne-font-size-5xl);
+    }
+}
+
+.bne-section-subtitle {
+    font-size: var(--bne-font-size-lg);
+    text-align: center;
+    color: var(--bne-medium-gray);
+    margin-top: 0;
+    margin-bottom: var(--bne-space-10);
+}
+
+/* ==========================================================================
+   Buttons - Enhanced with gradients and motion
+   ========================================================================== */
+
+.bne-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--bne-space-2);
+    padding: var(--bne-space-3) var(--bne-space-6);
+    font-size: var(--bne-font-size-base);
+    font-weight: var(--bne-font-medium);
+    border-radius: var(--bne-radius-lg);
+    cursor: pointer;
+    transition: all var(--bne-transition-fast);
+    text-decoration: none;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.bne-btn--primary {
+    background: var(--bne-gradient-primary);
+    color: var(--bne-white);
+    box-shadow: var(--bne-shadow-primary);
+}
+
+.bne-btn--primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--bne-shadow-primary-lg);
+    color: var(--bne-white);
+}
+
+.bne-btn--primary:active {
+    transform: translateY(0);
+    box-shadow: var(--bne-shadow-sm);
+}
+
+.bne-btn--outline {
+    background-color: transparent;
+    color: var(--bne-primary-blue);
+    border: 2px solid var(--bne-primary-blue);
+    position: relative;
+    z-index: 1;
+}
+
+.bne-btn--outline::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--bne-primary-blue);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--bne-transition-normal);
+    z-index: -1;
+}
+
+.bne-btn--outline:hover {
+    color: var(--bne-white);
+}
+
+.bne-btn--outline:hover::before {
+    transform: scaleX(1);
+}
+
+.bne-btn--lg {
+    padding: var(--bne-space-4) var(--bne-space-10);
+    font-size: var(--bne-font-size-lg);
+    border-radius: var(--bne-radius-xl);
+}
+
+/* ==========================================================================
+   Cards - Enhanced with hover lift and shadows
+   ========================================================================== */
+
+.bne-card {
+    background: var(--bne-white);
+    border-radius: var(--bne-radius-xl);
+    box-shadow: var(--bne-shadow-md);
+    overflow: hidden;
+    transition: transform var(--bne-transition-normal), box-shadow var(--bne-transition-normal);
+}
+
+/* Only apply hover effects on devices that support hover */
+@media (hover: hover) and (pointer: fine) {
+    .bne-card:hover {
+        box-shadow: var(--bne-shadow-xl);
+        transform: translateY(-8px);
+    }
+}
+
+/* Touch devices - use active states instead */
+@media (hover: none) and (pointer: coarse) {
+    .bne-card:active {
+        transform: scale(0.98);
+        opacity: 0.95;
+    }
+}
+
+.bne-card__image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.bne-card__content {
+    padding: var(--bne-space-5);
+}
+
+.bne-card__title {
+    font-size: var(--bne-font-size-xl);
+    font-weight: var(--bne-font-semibold);
+    margin-bottom: var(--bne-space-2);
+    color: var(--bne-dark-gray);
+    letter-spacing: var(--bne-tracking-tight);
+}
+
+.bne-card__text {
+    font-size: var(--bne-font-size-sm);
+    color: var(--bne-medium-gray);
+    line-height: var(--bne-leading-normal);
+}
+
+/* Glass card variant */
+.bne-glass-card {
+    background: var(--bne-glass-bg);
+    backdrop-filter: var(--bne-glass-blur);
+    -webkit-backdrop-filter: var(--bne-glass-blur);
+    border: 1px solid var(--bne-glass-border);
+    border-radius: var(--bne-radius-xl);
+    box-shadow: var(--bne-glass-shadow);
+}
+
+/* Fallback for browsers without backdrop-filter */
+@supports not (backdrop-filter: blur(10px)) {
+    .bne-glass-card {
+        background: rgba(255, 255, 255, 0.96); /* Standardized fallback opacity */
+    }
+}
+
+/* ==========================================================================
+   Grid Layouts
+   ========================================================================== */
+
+.bne-grid {
+    display: grid;
+    gap: var(--bne-space-6);
+}
+
+.bne-grid--2 {
+    grid-template-columns: repeat(1, 1fr);
+}
+
+.bne-grid--3 {
+    grid-template-columns: repeat(1, 1fr);
+}
+
+.bne-grid--4 {
+    grid-template-columns: repeat(1, 1fr);
+}
+
+.bne-grid--6 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+@media (min-width: 640px) {
+    .bne-grid--2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bne-grid--3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bne-grid--4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bne-grid--6 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .bne-grid--3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .bne-grid--4 {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .bne-grid--6 {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+/* ==========================================================================
+   Extra Small Phone Overrides (480px and below) - v1.2.6
+   ========================================================================== */
+
+@media (max-width: 480px) {
+    :root {
+        --bne-container-padding: 12px; /* Tighter padding on small phones */
+    }
+
+    /* Compact section styling */
+    .bne-section {
+        padding: var(--bne-space-6) 0; /* 24px on very small phones */
+    }
+
+    /* Ensure all grids collapse to single column */
+    .bne-grid--2,
+    .bne-grid--3,
+    .bne-grid--4,
+    .bne-grid--6 {
+        grid-template-columns: 1fr;
+        gap: var(--bne-space-3);
+    }
+}
+
+/* ==========================================================================
+   Page Entry Meta - Hide date/author on pages (v1.4.8)
+   ========================================================================== */
+
+/* Hide entry meta (date/author byline) on pages only */
+.page .entry-meta,
+.page .post-meta,
+.page .posted-on,
+.page .byline {
+    display: none !important;
+}
+
+/* ==========================================================================
+   Homepage-specific styles are in assets/css/homepage.css
+   ========================================================================== */

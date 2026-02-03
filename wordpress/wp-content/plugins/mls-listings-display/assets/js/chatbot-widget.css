@@ -1,0 +1,1022 @@
+/**
+ * MLS Chatbot Widget Styles
+ * Updated to use design system tokens with dark/teal theme
+ *
+ * @package MLS_Listings_Display
+ * @since 6.6.0
+ * @version 7.0.2
+ */
+
+/* ===========================
+   Chat Widget Container
+   =========================== */
+
+.mld-chatbot-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 999999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* ===========================
+   Chat Bubble - Teal accent
+   =========================== */
+
+.mld-chat-bubble {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--ds-teal, #0891B2) 0%, var(--ds-teal-hover, #0E7490) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(8, 145, 178, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.mld-chat-bubble svg {
+    width: 28px;
+    height: 28px;
+    color: var(--ds-white, white);
+}
+
+.mld-chat-bubble:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(8, 145, 178, 0.5);
+}
+
+.mld-chat-bubble-hidden {
+    opacity: 0;
+    transform: scale(0);
+    pointer-events: none;
+}
+
+.mld-chat-bubble-bounce {
+    animation: mld-bounce 0.6s ease-in-out;
+}
+
+@keyframes mld-bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+/* ===========================
+   Notification Badge
+   =========================== */
+
+.mld-chat-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--ds-red, #DC2626);
+    color: var(--ds-white, white);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--ds-text-xs, 12px);
+    font-weight: 600;
+    border: 2px solid var(--ds-white, white);
+    animation: mld-pulse 2s infinite;
+}
+
+@keyframes mld-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* ===========================
+   Chat Window
+   =========================== */
+
+.mld-chat-window {
+    width: 380px;
+    height: 600px;
+    background: var(--ds-white, white);
+    border-radius: var(--ds-radius-2xl, 16px);
+    box-shadow: var(--ds-shadow-xl, 0 10px 40px rgba(0, 0, 0, 0.15));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: mld-slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes mld-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ===========================
+   Chat Header - Dark gradient theme
+   =========================== */
+
+.mld-chat-header {
+    background: linear-gradient(135deg, var(--ds-dark-gray, #1f2937) 0%, var(--ds-black, #000000) 100%);
+    color: var(--ds-white, white);
+    padding: var(--ds-space-5, 20px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mld-chat-header-info {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-3, 12px);
+}
+
+.mld-chat-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--ds-teal, #0891B2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mld-chat-avatar svg {
+    width: 24px;
+    height: 24px;
+    color: var(--ds-white, white);
+}
+
+.mld-chat-header-text h3 {
+    margin: 0;
+    font-size: var(--ds-text-lg, 16px);
+    font-weight: 600;
+}
+
+.mld-chat-status {
+    font-size: var(--ds-text-xs, 12px);
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mld-chat-status::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: var(--ds-success, #10b981);
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.mld-chat-close {
+    background: transparent;
+    border: none;
+    color: var(--ds-white, white);
+    cursor: pointer;
+    padding: var(--ds-space-2, 8px);
+    border-radius: var(--ds-radius-lg, 8px);
+    transition: background 0.2s;
+}
+
+.mld-chat-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.mld-chat-close svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
+/* ===========================
+   Messages Container
+   =========================== */
+
+.mld-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--ds-space-5, 20px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-space-4, 16px);
+    background: var(--ds-surface-subtle, #f9fafb);
+}
+
+.mld-chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.mld-chat-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.mld-chat-messages::-webkit-scrollbar-thumb {
+    background: var(--ds-border-strong, #d1d5db);
+    border-radius: 3px;
+}
+
+.mld-chat-messages::-webkit-scrollbar-thumb:hover {
+    background: var(--ds-text-tertiary, #9ca3af);
+}
+
+/* ===========================
+   Chat Messages
+   =========================== */
+
+.mld-chat-message {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: mld-message-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes mld-message-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mld-message-content {
+    max-width: 85%;
+    padding: var(--ds-space-3, 12px) var(--ds-space-4, 16px);
+    border-radius: var(--ds-radius-2xl, 16px);
+    position: relative;
+}
+
+.mld-message-content p {
+    margin: 0;
+    font-size: var(--ds-text-sm, 14px);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Clickable links in chat messages (v6.27.5) */
+.mld-chat-link {
+    color: var(--ds-teal, #0891B2);
+    text-decoration: underline;
+    word-break: break-all;
+    transition: color 0.2s;
+}
+
+.mld-chat-link:hover {
+    color: var(--ds-teal-hover, #0E7490);
+}
+
+/* Links in user messages should be lighter */
+.mld-user-message .mld-chat-link {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.mld-user-message .mld-chat-link:hover {
+    color: var(--ds-white, white);
+}
+
+/* Numbered list items styling (v6.27.5) */
+.mld-list-item {
+    display: block;
+    margin: var(--ds-space-2, 8px) 0;
+}
+
+.mld-message-time {
+    font-size: 11px;
+    color: var(--ds-text-tertiary, #9ca3af);
+    padding: 0 var(--ds-space-2, 8px);
+}
+
+/* Bot Messages */
+.mld-bot-message .mld-message-content {
+    background: var(--ds-white, white);
+    color: var(--ds-text-secondary, #1f2937);
+    align-self: flex-start;
+    border: 1px solid var(--ds-border, #e5e7eb);
+    box-shadow: var(--ds-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+}
+
+.mld-bot-message .mld-message-time {
+    align-self: flex-start;
+}
+
+/* User Messages - Teal theme */
+.mld-user-message .mld-message-content {
+    background: linear-gradient(135deg, var(--ds-teal, #0891B2) 0%, var(--ds-teal-hover, #0E7490) 100%);
+    color: var(--ds-white, white);
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+.mld-user-message .mld-message-time {
+    align-self: flex-end;
+    text-align: right;
+}
+
+/* Error Messages */
+.mld-message-error .mld-message-content {
+    background: rgba(220, 38, 38, 0.1);
+    color: var(--ds-red, #DC2626);
+    border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+/* Fallback Badge */
+.mld-fallback-badge {
+    display: inline-block;
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--ds-warning, #F59E0B);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--ds-radius-full, 9999px);
+    margin-top: var(--ds-space-2, 8px);
+    text-transform: uppercase;
+}
+
+/* ===========================
+   Typing Indicator
+   =========================== */
+
+.mld-typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: var(--ds-space-3, 12px) var(--ds-space-4, 16px);
+    background: var(--ds-white, white);
+    border-radius: var(--ds-radius-2xl, 16px);
+    max-width: 60px;
+    align-self: flex-start;
+    margin: 0 var(--ds-space-5, 20px) var(--ds-space-4, 16px) var(--ds-space-5, 20px);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    box-shadow: var(--ds-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+}
+
+.mld-typing-indicator span {
+    width: 8px;
+    height: 8px;
+    background: var(--ds-teal, #0891B2);
+    border-radius: 50%;
+    animation: mld-typing-pulse 1.4s infinite;
+}
+
+.mld-typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.mld-typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes mld-typing-pulse {
+    0%, 60%, 100% {
+        opacity: 0.3;
+        transform: scale(0.8);
+    }
+    30% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ===========================
+   Input Area
+   =========================== */
+
+.mld-chat-input-container {
+    display: flex;
+    gap: var(--ds-space-2, 8px);
+    padding: var(--ds-space-4, 16px);
+    background: var(--ds-white, white);
+    border-top: 1px solid var(--ds-border, #e5e7eb);
+    align-items: flex-end;
+}
+
+.mld-chat-input {
+    flex: 1;
+    border: 1px solid var(--ds-border-strong, #d1d5db);
+    border-radius: var(--ds-radius-xl, 12px);
+    padding: var(--ds-space-3, 12px) var(--ds-space-4, 16px);
+    font-size: var(--ds-text-sm, 14px);
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.mld-chat-input:focus {
+    border-color: var(--ds-teal, #0891B2);
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+}
+
+.mld-chat-input::placeholder {
+    color: var(--ds-text-tertiary, #9ca3af);
+}
+
+/* Send Button - Teal */
+.mld-chat-send {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--ds-teal, #0891B2) 0%, var(--ds-teal-hover, #0E7490) 100%);
+    border: none;
+    border-radius: var(--ds-radius-xl, 12px);
+    color: var(--ds-white, white);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+}
+
+.mld-chat-send:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.4);
+}
+
+.mld-chat-send:active {
+    transform: scale(0.95);
+}
+
+.mld-chat-send svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* ===========================
+   Footer
+   =========================== */
+
+.mld-chat-footer {
+    padding: var(--ds-space-2, 8px) var(--ds-space-4, 16px);
+    text-align: center;
+    font-size: 11px;
+    color: var(--ds-text-tertiary, #9ca3af);
+    background: var(--ds-surface-subtle, #f9fafb);
+    border-top: 1px solid var(--ds-border, #e5e7eb);
+}
+
+/* ===========================
+   Mobile Responsive
+   =========================== */
+
+@media (max-width: 480px) {
+    .mld-chatbot-widget {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+    }
+
+    .mld-chat-window {
+        width: 100%;
+        /* FULL SCREEN on mobile - uses dynamic viewport height */
+        height: 100dvh;
+        height: 100vh; /* Fallback for older browsers */
+        max-height: none;
+        min-height: 280px;
+        border-radius: 0; /* No border radius for full screen */
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        /* Smooth height transitions for keyboard */
+        transition: height 0.25s ease-out;
+        /* Account for iOS safe areas */
+        padding-top: env(safe-area-inset-top, 0);
+        padding-bottom: env(safe-area-inset-bottom, 0);
+        box-sizing: border-box;
+    }
+
+    /* Keyboard open state - shrink to fit above keyboard */
+    .mld-chat-window.mld-keyboard-open {
+        /* Height set dynamically by JS based on visual viewport */
+        /* Bottom stays at 0, height shrinks to available space */
+        top: auto;
+        bottom: 0;
+        /* Remove top padding when keyboard is open */
+        padding-top: 0;
+    }
+
+    .mld-chat-bubble {
+        position: fixed;
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        right: 16px;
+    }
+
+    /* Compact header on mobile */
+    .mld-chat-header {
+        padding: var(--ds-space-3, 12px) var(--ds-space-4, 16px);
+    }
+
+    .mld-chat-avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    .mld-chat-avatar svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .mld-chat-header-text h3 {
+        font-size: var(--ds-text-base, 14px);
+    }
+
+    /* Compact messages area */
+    .mld-chat-messages {
+        padding: var(--ds-space-3, 12px);
+        gap: var(--ds-space-3, 12px);
+        /* Allow messages to scroll properly with keyboard */
+        flex: 1;
+        min-height: 0;
+        /* Smooth iOS scrolling */
+        -webkit-overflow-scrolling: touch;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    /* Compact input area */
+    .mld-chat-input-container {
+        padding: var(--ds-space-3, 12px);
+        flex-shrink: 0;
+        /* Add safe area padding for home indicator */
+        padding-bottom: calc(var(--ds-space-3, 12px) + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* IMPORTANT: 16px font-size prevents iOS zoom on focus */
+    .mld-chat-input {
+        font-size: 16px !important; /* Must be 16px+ to prevent iOS auto-zoom */
+        -webkit-text-size-adjust: 100%; /* Prevent text size adjustment */
+        padding: var(--ds-space-2, 8px) var(--ds-space-3, 12px);
+        border-radius: var(--ds-radius-lg, 8px);
+        /* Prevent zoom on double-tap */
+        touch-action: manipulation;
+    }
+
+    .mld-chat-send {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Hide footer on mobile to save space */
+    .mld-chat-footer {
+        display: none;
+    }
+
+    /* Prevent any zoom on touch interactions */
+    .mld-chatbot-widget * {
+        touch-action: manipulation;
+    }
+}
+
+@media (max-width: 360px) {
+    .mld-chat-bubble {
+        width: 50px;
+        height: 50px;
+    }
+
+    .mld-chat-bubble svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    /* Still full screen on small devices */
+    .mld-chat-window {
+        height: 100dvh;
+        height: 100vh;
+        max-height: none;
+    }
+}
+
+/* ===========================
+   Modern Viewport Units Support
+   Progressive enhancement for keyboard handling
+   =========================== */
+
+/* Modern browsers with dvh support - full screen chatbot */
+@supports (height: 100dvh) {
+    @media (max-width: 480px) {
+        .mld-chat-window {
+            /* Full screen using dynamic viewport */
+            height: 100dvh;
+            max-height: none;
+        }
+
+        .mld-chat-window.mld-keyboard-open {
+            /* JS sets height dynamically based on visualViewport */
+        }
+    }
+}
+
+/* iOS Safari specific fixes using -webkit-fill-available (iOS 14.x support) */
+@supports (-webkit-touch-callout: none) {
+    @media (max-width: 480px) {
+        .mld-chat-window {
+            /* iOS-specific: full screen */
+            height: -webkit-fill-available;
+            max-height: -webkit-fill-available;
+        }
+
+        .mld-chat-window.mld-keyboard-open {
+            /* Height set by JS when keyboard opens */
+        }
+    }
+}
+
+/* ===========================
+   Dark Mode Support
+   =========================== */
+
+@media (prefers-color-scheme: dark) {
+    .mld-chat-window {
+        background: var(--ds-dark-gray, #1f2937);
+    }
+
+    .mld-chat-messages {
+        background: var(--ds-black, #111827);
+    }
+
+    .mld-bot-message .mld-message-content {
+        background: #374151;
+        color: var(--ds-off-white, #f3f4f6);
+        border-color: #4b5563;
+    }
+
+    .mld-chat-input-container {
+        background: var(--ds-dark-gray, #1f2937);
+        border-top-color: #374151;
+    }
+
+    .mld-chat-input {
+        background: #374151;
+        border-color: #4b5563;
+        color: var(--ds-off-white, #f3f4f6);
+    }
+
+    .mld-chat-input::placeholder {
+        color: var(--ds-text-muted, #6b7280);
+    }
+
+    .mld-chat-footer {
+        background: var(--ds-black, #111827);
+        border-top-color: #374151;
+    }
+
+    .mld-typing-indicator {
+        background: #374151;
+        border-color: #4b5563;
+    }
+
+    /* Dark mode link colors (v6.27.5) */
+    .mld-bot-message .mld-chat-link {
+        color: #22d3ee; /* Lighter teal for dark mode */
+    }
+
+    .mld-bot-message .mld-chat-link:hover {
+        color: #67e8f9;
+    }
+}
+
+/* ===========================
+   Accessibility
+   =========================== */
+
+.mld-chat-bubble:focus,
+.mld-chat-close:focus,
+.mld-chat-send:focus {
+    outline: 2px solid var(--ds-teal, #0891B2);
+    outline-offset: 2px;
+}
+
+.mld-chat-input:focus {
+    outline: none;
+    border-color: var(--ds-teal, #0891B2);
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .mld-chat-bubble,
+    .mld-chat-window,
+    .mld-chat-message,
+    .mld-message-content {
+        animation: none;
+        transition: none;
+    }
+}
+
+/* ===========================
+   Lead Capture Gate Modal (v6.27.0)
+   =========================== */
+
+.mld-chat-lead-gate {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: mld-slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mld-lead-gate-content {
+    width: 380px;
+    background: var(--ds-white, white);
+    border-radius: var(--ds-radius-2xl, 16px);
+    box-shadow: var(--ds-shadow-xl, 0 10px 40px rgba(0, 0, 0, 0.15));
+    overflow: hidden;
+    position: relative;
+}
+
+/* Header - Dark gradient theme */
+.mld-lead-gate-header {
+    background: linear-gradient(135deg, var(--ds-dark-gray, #1f2937) 0%, var(--ds-black, #000000) 100%);
+    color: var(--ds-white, white);
+    padding: var(--ds-space-6, 24px);
+    text-align: center;
+}
+
+.mld-lead-gate-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--ds-teal, #0891B2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--ds-space-4, 16px);
+}
+
+.mld-lead-gate-icon svg {
+    width: 32px;
+    height: 32px;
+    color: var(--ds-white, white);
+}
+
+.mld-lead-gate-header h3 {
+    margin: 0 0 var(--ds-space-2, 8px) 0;
+    font-size: var(--ds-text-xl, 20px);
+    font-weight: 600;
+    color: var(--ds-white, white);
+}
+
+.mld-lead-gate-header p {
+    margin: 0;
+    font-size: var(--ds-text-sm, 14px);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Form */
+.mld-lead-gate-form {
+    padding: var(--ds-space-5, 20px);
+    background: var(--ds-white, white);
+}
+
+.mld-form-group {
+    margin-bottom: var(--ds-space-4, 16px);
+}
+
+.mld-form-group label {
+    display: block;
+    font-size: var(--ds-text-sm, 14px);
+    font-weight: 500;
+    color: var(--ds-text-secondary, #374151);
+    margin-bottom: var(--ds-space-1, 4px);
+}
+
+.mld-required {
+    color: var(--ds-red, #DC2626);
+}
+
+.mld-form-group input {
+    width: 100%;
+    padding: var(--ds-space-3, 12px);
+    border: 1px solid var(--ds-border-strong, #d1d5db);
+    border-radius: var(--ds-radius-lg, 8px);
+    font-size: var(--ds-text-base, 16px);
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: var(--ds-white, white);
+    color: var(--ds-text-secondary, #1f2937);
+    box-sizing: border-box;
+}
+
+.mld-form-group input:focus {
+    outline: none;
+    border-color: var(--ds-teal, #0891B2);
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+}
+
+.mld-form-group input::placeholder {
+    color: var(--ds-text-tertiary, #9ca3af);
+}
+
+.mld-field-error {
+    display: none;
+    font-size: var(--ds-text-xs, 12px);
+    color: var(--ds-red, #DC2626);
+    margin-top: var(--ds-space-1, 4px);
+}
+
+/* Contact hint */
+.mld-contact-hint {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-2, 8px);
+    padding: var(--ds-space-3, 12px);
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: var(--ds-radius-lg, 8px);
+    margin-bottom: var(--ds-space-4, 16px);
+    font-size: var(--ds-text-xs, 12px);
+    color: var(--ds-warning-dark, #92400E);
+}
+
+.mld-contact-hint svg {
+    flex-shrink: 0;
+    color: var(--ds-warning, #F59E0B);
+}
+
+.mld-contact-hint.mld-hint-satisfied {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--ds-success-dark, #065F46);
+}
+
+.mld-contact-hint.mld-hint-satisfied svg {
+    color: var(--ds-success, #10b981);
+}
+
+/* Submit button - Teal theme */
+.mld-lead-submit {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ds-space-2, 8px);
+    padding: var(--ds-space-3, 12px) var(--ds-space-4, 16px);
+    background: linear-gradient(135deg, var(--ds-teal, #0891B2) 0%, var(--ds-teal-hover, #0E7490) 100%);
+    color: var(--ds-white, white);
+    border: none;
+    border-radius: var(--ds-radius-xl, 12px);
+    font-size: var(--ds-text-base, 16px);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+}
+
+.mld-lead-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.4);
+}
+
+.mld-lead-submit:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.mld-lead-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.mld-lead-submit svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Close button */
+.mld-lead-gate-close {
+    position: absolute;
+    top: var(--ds-space-3, 12px);
+    right: var(--ds-space-3, 12px);
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    padding: var(--ds-space-2, 8px);
+    border-radius: var(--ds-radius-lg, 8px);
+    transition: all 0.2s;
+}
+
+.mld-lead-gate-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--ds-white, white);
+}
+
+.mld-lead-gate-close svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
+/* ===========================
+   Lead Gate Mobile Responsive
+   =========================== */
+
+@media (max-width: 480px) {
+    .mld-chat-lead-gate {
+        bottom: 0;
+        right: 0;
+        left: 0;
+        top: 0;
+    }
+
+    .mld-lead-gate-content {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .mld-lead-gate-header {
+        padding: var(--ds-space-5, 20px);
+        padding-top: calc(var(--ds-space-5, 20px) + env(safe-area-inset-top, 0));
+    }
+
+    .mld-lead-gate-form {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: var(--ds-space-4, 16px);
+    }
+
+    .mld-lead-submit {
+        margin-top: auto;
+        margin-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    /* Prevent iOS zoom on input focus */
+    .mld-form-group input {
+        font-size: 16px !important;
+    }
+
+    /* Touch action for mobile */
+    .mld-lead-gate-content * {
+        touch-action: manipulation;
+    }
+}
+
+/* ===========================
+   Lead Gate Dark Mode
+   =========================== */
+
+@media (prefers-color-scheme: dark) {
+    .mld-lead-gate-content {
+        background: var(--ds-dark-gray, #1f2937);
+    }
+
+    .mld-lead-gate-form {
+        background: var(--ds-dark-gray, #1f2937);
+    }
+
+    .mld-form-group label {
+        color: var(--ds-off-white, #f3f4f6);
+    }
+
+    .mld-form-group input {
+        background: #374151;
+        border-color: #4b5563;
+        color: var(--ds-off-white, #f3f4f6);
+    }
+
+    .mld-form-group input::placeholder {
+        color: var(--ds-text-muted, #6b7280);
+    }
+
+    .mld-contact-hint {
+        background: rgba(245, 158, 11, 0.15);
+    }
+
+    .mld-contact-hint.mld-hint-satisfied {
+        background: rgba(16, 185, 129, 0.15);
+    }
+}
+
+/* ===========================
+   Lead Gate Accessibility
+   =========================== */
+
+.mld-lead-submit:focus,
+.mld-lead-gate-close:focus {
+    outline: 2px solid var(--ds-teal, #0891B2);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mld-chat-lead-gate {
+        animation: none;
+    }
+}

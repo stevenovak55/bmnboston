@@ -1,0 +1,1188 @@
+/**
+ * Property Page Market Analytics Styles
+ *
+ * Styles for the market analytics section on property detail pages.
+ *
+ * @package    MLS_Listings_Display
+ * @version    6.12.8
+ */
+
+/* ==========================================================================
+   Section Container
+   ========================================================================== */
+
+.mld-market-analytics-section {
+    background: var(--ds-surface-subtle, #f9fafb);
+    padding: 32px 0;
+    border-top: 1px solid var(--ds-border, #e5e7eb);
+}
+
+.mld-property-analytics-wrapper {
+    position: relative;
+}
+
+/* ==========================================================================
+   City Context Banner
+   ========================================================================== */
+
+.mld-market-city-banner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, var(--ds-teal, #0891B2) 0%, #0E7490 100%);
+    border-radius: 12px;
+    color: #fff;
+    margin-bottom: 24px;
+}
+
+.mld-market-city-banner__icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+}
+
+.mld-market-city-banner__text {
+    flex: 1;
+}
+
+.mld-market-city-banner__title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+    color: #fff;
+}
+
+.mld-market-city-banner__subtitle {
+    font-size: 14px;
+    opacity: 0.9;
+    margin: 4px 0 0;
+}
+
+/* ==========================================================================
+   Tab Navigation
+   ========================================================================== */
+
+.mld-market-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 8px;
+    background: var(--ds-surface, #fff);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 24px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.mld-market-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.mld-market-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ds-text-secondary, #6b7280);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.mld-market-tab:hover {
+    background: var(--ds-surface-subtle, #f9fafb);
+    color: var(--ds-teal, #0891B2);
+}
+
+.mld-market-tab:focus {
+    outline: 2px solid var(--ds-teal, #0891B2);
+    outline-offset: 2px;
+}
+
+.mld-market-tab.active {
+    background: var(--ds-teal, #0891B2);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+}
+
+.mld-market-tab .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.mld-tab-label {
+    display: inline;
+}
+
+/* ==========================================================================
+   Metrics Grid
+   ========================================================================== */
+
+.mld-market-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.mld-market-metric-card {
+    background: var(--ds-surface, #fff);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-align: center;
+}
+
+.mld-market-metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.mld-metric-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: var(--ds-teal, #0891B2);
+    margin-bottom: 12px;
+    display: block;
+}
+
+.mld-metric-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--ds-text-primary, #1f2937);
+    line-height: 1.2;
+}
+
+.mld-metric-label {
+    font-size: 14px;
+    color: var(--ds-text-secondary, #6b7280);
+    margin-top: 4px;
+}
+
+.mld-metric-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    margin-top: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.mld-metric-trend.trend-up {
+    color: var(--ds-success, #10b981);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.mld-metric-trend.trend-down {
+    color: var(--ds-red, #DC2626);
+    background: rgba(220, 38, 38, 0.1);
+}
+
+.mld-metric-classification {
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.mld-metric-classification.mld-heat-hot {
+    color: #dc2626;
+    background: rgba(220, 38, 38, 0.1);
+}
+
+.mld-metric-classification.mld-heat-balanced {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.mld-metric-classification.mld-heat-cold {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+/* ==========================================================================
+   Market Heat Gauge
+   ========================================================================== */
+
+.mld-market-heat-gauge {
+    background: var(--ds-surface, #fff);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.mld-heat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.mld-heat-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ds-text-secondary, #6b7280);
+}
+
+.mld-heat-value {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.mld-heat-value.mld-heat-hot {
+    color: #dc2626;
+}
+
+.mld-heat-value.mld-heat-balanced {
+    color: #f59e0b;
+}
+
+.mld-heat-value.mld-heat-cold {
+    color: #3b82f6;
+}
+
+.mld-heat-bar {
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(to right, #3b82f6 0%, #22c55e 33%, #eab308 66%, #ef4444 100%);
+    position: relative;
+    margin: 12px 0;
+}
+
+.mld-heat-marker {
+    position: absolute;
+    width: 6px;
+    height: 20px;
+    background: #1f2937;
+    border-radius: 3px;
+    top: -4px;
+    transform: translateX(-50%);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.mld-heat-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ds-text-secondary, #6b7280);
+}
+
+/* ==========================================================================
+   Tab Panels
+   ========================================================================== */
+
+.mld-market-tab-panels {
+    min-height: 200px;
+}
+
+.mld-market-tab-panel {
+    display: none;
+    background: var(--ds-surface, #fff);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.mld-market-tab-panel.active {
+    display: block;
+}
+
+.mld-market-tab-panel h4 {
+    margin: 0 0 16px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ds-text-primary, #1f2937);
+}
+
+/* ==========================================================================
+   Data Tables
+   ========================================================================== */
+
+.mld-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.mld-data-table th,
+.mld-data-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--ds-border, #e5e7eb);
+}
+
+.mld-data-table th {
+    font-weight: 600;
+    color: var(--ds-text-secondary, #6b7280);
+    background: var(--ds-surface-subtle, #f9fafb);
+}
+
+.mld-data-table tr:hover td {
+    background: var(--ds-surface-subtle, #f9fafb);
+}
+
+.mld-data-table .positive {
+    color: var(--ds-success, #10b981);
+}
+
+.mld-data-table .negative {
+    color: var(--ds-red, #DC2626);
+}
+
+/* ==========================================================================
+   Chart Container
+   ========================================================================== */
+
+.mld-chart-container {
+    position: relative;
+    margin-bottom: 24px;
+}
+
+/* ==========================================================================
+   Supply & Demand Grid
+   ========================================================================== */
+
+.mld-supply-demand-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.mld-sd-metric {
+    text-align: center;
+    padding: 16px;
+    background: var(--ds-surface-subtle, #f9fafb);
+    border-radius: 8px;
+}
+
+.mld-sd-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--ds-teal, #0891B2);
+}
+
+.mld-sd-label {
+    display: block;
+    font-size: 12px;
+    color: var(--ds-text-secondary, #6b7280);
+    margin-top: 4px;
+}
+
+/* ==========================================================================
+   DOM Distribution Bars
+   ========================================================================== */
+
+.mld-dom-distribution {
+    margin-bottom: 24px;
+}
+
+.mld-dom-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.mld-dom-label {
+    width: 80px;
+    font-size: 12px;
+    color: var(--ds-text-secondary, #6b7280);
+}
+
+.mld-dom-bar-bg {
+    flex: 1;
+    height: 8px;
+    background: var(--ds-border, #e5e7eb);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.mld-dom-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.mld-dom-pct {
+    width: 80px;
+    font-size: 12px;
+    color: var(--ds-text-secondary, #6b7280);
+    text-align: right;
+}
+
+/* ==========================================================================
+   YoY Grid
+   ========================================================================== */
+
+.mld-yoy-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.mld-yoy-metric {
+    text-align: center;
+    padding: 24px;
+    background: var(--ds-surface-subtle, #f9fafb);
+    border-radius: 12px;
+}
+
+.mld-yoy-value {
+    display: block;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.mld-yoy-value.positive {
+    color: var(--ds-success, #10b981);
+}
+
+.mld-yoy-value.negative {
+    color: var(--ds-red, #DC2626);
+}
+
+.mld-yoy-label {
+    display: block;
+    font-size: 14px;
+    color: var(--ds-text-secondary, #6b7280);
+    margin-top: 8px;
+}
+
+/* ==========================================================================
+   Comparison Controls
+   ========================================================================== */
+
+.mld-comparison-controls {
+    margin-bottom: 24px;
+}
+
+.mld-comparison-controls label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.mld-city-select {
+    width: 100%;
+    max-width: 400px;
+    padding: 8px;
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.mld-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.mld-btn-primary {
+    background: var(--ds-teal, #0891B2);
+    color: #fff;
+}
+
+.mld-btn-primary:hover {
+    background: #0E7490;
+}
+
+/* ==========================================================================
+   Loading & Error States
+   ========================================================================== */
+
+.mld-panel-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 40px;
+    color: var(--ds-text-secondary, #6b7280);
+}
+
+.mld-spinner {
+    animation: mld-spin 1s linear infinite;
+}
+
+@keyframes mld-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.mld-panel-error,
+.mld-analytics-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 40px;
+    color: var(--ds-red, #DC2626);
+    text-align: center;
+}
+
+.mld-no-data {
+    text-align: center;
+    color: var(--ds-text-secondary, #6b7280);
+    padding: 24px;
+}
+
+.mld-warning {
+    color: var(--ds-warning, #f59e0b);
+}
+
+.mld-feature-note {
+    font-size: 13px;
+    color: var(--ds-text-secondary, #6b7280);
+    margin-bottom: 16px;
+}
+
+/* ==========================================================================
+   Skeleton Loading
+   ========================================================================== */
+
+.mld-analytics-skeleton {
+    animation: mld-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes mld-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.mld-skeleton-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.mld-skeleton-tab {
+    width: 120px;
+    height: 44px;
+    background: #e5e7eb;
+    border-radius: 8px;
+}
+
+.mld-skeleton-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.mld-skeleton-metric-card {
+    height: 140px;
+    background: #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.mld-skeleton-line {
+    background: #d1d5db;
+    border-radius: 4px;
+}
+
+.mld-skeleton-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+}
+
+.mld-skeleton-value {
+    width: 80%;
+    height: 28px;
+}
+
+.mld-skeleton-label {
+    width: 60%;
+    height: 14px;
+}
+
+/* ==========================================================================
+   Mobile Lite Version
+   ========================================================================== */
+
+.mld-analytics-lite .mld-market-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.mld-analytics-lite .mld-metric-value {
+    font-size: 22px;
+}
+
+.mld-analytics-lite .mld-skeleton-metrics {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.mld-mobile-expand {
+    margin-top: 24px;
+}
+
+.mld-mobile-expand-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 16px;
+    background: var(--ds-teal, #0891B2);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.mld-mobile-expand-btn:hover {
+    background: #0E7490;
+    color: #fff;
+}
+
+/* ==========================================================================
+   Responsive Adjustments
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+    .mld-market-metrics-grid,
+    .mld-skeleton-metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mld-supply-demand-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mld-yoy-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .mld-market-city-banner {
+        flex-direction: column;
+        text-align: center;
+        padding: 16px;
+    }
+
+    .mld-market-city-banner__title {
+        font-size: 20px;
+    }
+
+    .mld-market-tab {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+
+    .mld-tab-label {
+        display: none;
+    }
+
+    .mld-market-tab .dashicons {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+    }
+
+    .mld-market-tab-panel {
+        padding: 16px;
+    }
+
+    .mld-supply-demand-grid,
+    .mld-yoy-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .mld-data-table {
+        font-size: 12px;
+    }
+
+    .mld-data-table th,
+    .mld-data-table td {
+        padding: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mld-market-metrics-grid,
+    .mld-skeleton-metrics,
+    .mld-supply-demand-grid,
+    .mld-yoy-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mld-market-tabs {
+        margin-left: -16px;
+        margin-right: -16px;
+        padding: 8px 16px;
+        border-radius: 0;
+    }
+
+    .mld-metric-value {
+        font-size: 24px;
+    }
+
+    .mld-dom-bar-container {
+        flex-wrap: wrap;
+    }
+
+    .mld-dom-label,
+    .mld-dom-pct {
+        width: 100%;
+        text-align: left;
+    }
+
+    .mld-dom-bar-bg {
+        width: 100%;
+    }
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
+
+@media print {
+    .mld-market-analytics-section {
+        background: #fff;
+        padding: 24px 0;
+    }
+
+    .mld-market-tabs,
+    .mld-mobile-expand,
+    .mld-comparison-controls button {
+        display: none;
+    }
+
+    .mld-market-metric-card,
+    .mld-market-tab-panel {
+        box-shadow: none;
+        border: 1px solid #e5e7eb;
+    }
+
+    .mld-market-tab-panel {
+        display: block !important;
+        page-break-inside: avoid;
+    }
+}
+
+/* ==========================================================================
+   Market Conditions Analysis Section (v6.18.0)
+   ========================================================================== */
+
+.mld-market-conditions {
+    background: var(--ds-surface, #fff);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.mld-mc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #2c5aa0 0%, #1e4278 100%);
+    color: #fff;
+}
+
+.mld-mc-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.mld-mc-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    color: #fff;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.mld-mc-toggle:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.mld-mc-toggle .toggle-icon {
+    transition: transform 0.2s ease;
+}
+
+.mld-mc-toggle[aria-expanded="false"] .toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.mld-mc-content {
+    padding: 1.5rem;
+}
+
+/* Market Health Indicator */
+.mld-mc-health-indicator {
+    background: #f8fafc;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.mld-mc-health-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.mld-mc-health-label {
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.mld-mc-health-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.mld-mc-health-summary {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: #4b5563;
+}
+
+/* Metrics Grid */
+.mld-mc-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.mld-mc-metric-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: box-shadow 0.2s ease;
+}
+
+.mld-mc-metric-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.mld-mc-metric-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.mld-mc-metric-content {
+    flex: 1;
+}
+
+.mld-mc-metric-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.mld-mc-metric-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.mld-mc-metric-value.positive {
+    color: #059669;
+}
+
+.mld-mc-metric-value.negative {
+    color: #dc2626;
+}
+
+.mld-mc-metric-subtext {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+/* Trends Section */
+.mld-mc-trends {
+    margin-bottom: 1.5rem;
+}
+
+.mld-mc-trends h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.mld-mc-trend-charts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.mld-mc-sparkline-container {
+    flex: 1;
+    min-width: 180px;
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.mld-mc-sparkline-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+    margin-bottom: 8px;
+}
+
+.mld-mc-sparkline {
+    display: block;
+    margin: 0 auto 8px;
+}
+
+.mld-mc-sparkline-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c5aa0;
+}
+
+.mld-mc-sparkline-empty {
+    color: #9ca3af;
+    font-size: 0.875rem;
+    font-style: italic;
+}
+
+/* Market Factors */
+.mld-mc-factors {
+    background: #f0f9ff;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+}
+
+.mld-mc-factors h4 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #1e40af;
+    margin: 0 0 12px 0;
+}
+
+.mld-mc-factors ul {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.mld-mc-factors li {
+    font-size: 0.9375rem;
+    color: #1e40af;
+    margin-bottom: 4px;
+}
+
+.mld-mc-factors li:last-child {
+    margin-bottom: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .mld-mc-header {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+    }
+
+    .mld-mc-toggle {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .mld-mc-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mld-mc-trend-charts {
+        flex-direction: column;
+    }
+
+    .mld-mc-sparkline-container {
+        min-width: 100%;
+    }
+}
+
+/* Print styles for market conditions */
+@media print {
+    .mld-market-conditions {
+        box-shadow: none;
+        border: 1px solid #e5e7eb;
+        page-break-inside: avoid;
+    }
+
+    .mld-mc-toggle {
+        display: none;
+    }
+
+    .mld-mc-content {
+        display: block !important;
+    }
+}
+
+/* ==========================================================================
+   Weight Controls for Weighted Averaging (v6.19.0)
+   ========================================================================== */
+
+.mld-weight-controls {
+    transition: all 0.2s ease;
+}
+
+.mld-weight-controls:hover {
+    border-color: #2c5aa0;
+}
+
+.mld-weight-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid #ced4da;
+    background: #fff;
+    color: #495057;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-width: 28px;
+    text-align: center;
+}
+
+.mld-weight-btn:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.mld-weight-btn.active {
+    background: #2c5aa0;
+    border-color: #2c5aa0;
+    color: #fff;
+}
+
+.mld-weight-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.25);
+}
+
+.mld-weight-reset-btn {
+    padding: 0.25rem 0.4rem;
+    font-size: 0.7rem;
+    border: 1px solid #ced4da;
+    background: #fff;
+    color: #6c757d;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.mld-weight-reset-btn:hover:not(:disabled) {
+    background: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
+}
+
+.mld-weight-reset-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Weighted comparison display in summary */
+.mld-weighted-comparison {
+    margin-top: 1rem;
+    padding: 0.8rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    font-size: 0.85rem;
+}
+
+.mld-weighted-comparison > div:first-child {
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+    color: #2c5aa0;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 0.4rem;
+}
+
+.mld-weighted-value {
+    color: #2c5aa0;
+}
+
+.mld-weight-difference {
+    font-weight: 600;
+}
+
+/* Responsive weight controls */
+@media (max-width: 480px) {
+    .mld-weight-btn {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.65rem;
+        min-width: 24px;
+    }
+
+    .mld-weight-buttons {
+        gap: 0.2rem !important;
+    }
+}
+
+/* Print styles for weight controls */
+@media print {
+    .mld-weight-controls {
+        background: #f8f9fa !important;
+        border: 1px solid #dee2e6 !important;
+    }
+
+    .mld-weight-btn,
+    .mld-weight-reset-btn {
+        display: none;
+    }
+
+    .mld-weight-value {
+        font-weight: 700;
+    }
+}

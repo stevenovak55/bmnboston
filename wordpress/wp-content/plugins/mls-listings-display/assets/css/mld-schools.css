@@ -1,0 +1,1817 @@
+/**
+ * MLD Schools Section Styles
+ * Matches iOS NearbySchoolsSection
+ *
+ * @package MLS_Listings_Display
+ * @since 6.30.0
+ */
+
+/* ========================================
+   CSS Variables
+   ======================================== */
+:root {
+    /* Grade Colors */
+    --mld-grade-a: #22c55e;
+    --mld-grade-b: #3b82f6;
+    --mld-grade-c: #eab308;
+    --mld-grade-d: #f97316;
+    --mld-grade-f: #ef4444;
+
+    /* Level Colors */
+    --mld-level-elementary: #22c55e;
+    --mld-level-middle: #3b82f6;
+    --mld-level-high: #a855f7;
+
+    /* UI Colors */
+    --mld-teal: #0891b2;
+    --mld-teal-light: rgba(8, 145, 178, 0.1);
+    --mld-text-primary: #1e293b;
+    --mld-text-secondary: #64748b;
+    --mld-text-muted: #94a3b8;
+    --mld-border: #e2e8f0;
+    --mld-bg-light: #f8fafc;
+    --mld-bg-card: #ffffff;
+}
+
+/* ========================================
+   Schools Section Container
+   ======================================== */
+.mld-schools-section {
+    margin-top: 30px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.mld-schools-heading {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--mld-text-primary);
+}
+
+.mld-schools-heading svg {
+    width: 24px;
+    height: 24px;
+    color: var(--mld-teal);
+}
+
+/* ========================================
+   District Card
+   ======================================== */
+.mld-district-card {
+    background: linear-gradient(135deg, var(--mld-bg-light) 0%, #f1f5f9 100%);
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    border-left: 4px solid var(--mld-teal);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.mld-district-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--mld-teal-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.mld-district-icon svg {
+    width: 22px;
+    height: 22px;
+    color: var(--mld-teal);
+}
+
+.mld-district-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.mld-district-label {
+    font-size: 11px;
+    color: var(--mld-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.mld-district-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--mld-text-primary);
+}
+
+.mld-district-type {
+    display: inline-block;
+    font-size: 11px;
+    color: var(--mld-text-secondary);
+    background: rgba(100, 116, 139, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+}
+
+.mld-district-ranking {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mld-district-grade {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+}
+
+/* ========================================
+   College Outcomes Section
+   ======================================== */
+.mld-district-outcomes {
+    background: rgba(147, 51, 234, 0.05);
+    padding: 14px 18px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+
+.mld-outcomes-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.mld-outcomes-icon {
+    font-size: 14px;
+}
+
+.mld-outcomes-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--mld-text-secondary);
+}
+
+.mld-outcomes-year {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--mld-text-muted);
+}
+
+.mld-outcomes-main {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.mld-outcomes-pct {
+    font-size: 22px;
+    font-weight: 700;
+    color: #9333ea;
+}
+
+.mld-outcomes-label {
+    font-size: 14px;
+    color: var(--mld-text-secondary);
+}
+
+.mld-outcomes-breakdown {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.mld-outcome-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 60px;
+}
+
+.mld-outcome-pill .mld-pill-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pill-color, #9333ea);
+}
+
+.mld-outcome-pill .mld-pill-label {
+    font-size: 10px;
+    color: var(--mld-text-muted);
+}
+
+/* ========================================
+   Discipline Data Section
+   ======================================== */
+.mld-district-discipline {
+    padding: 14px 18px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+
+.mld-district-discipline.mld-discipline-low {
+    background: rgba(34, 197, 94, 0.05);
+}
+
+.mld-district-discipline.mld-discipline-avg {
+    background: rgba(249, 115, 22, 0.05);
+}
+
+.mld-discipline-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.mld-discipline-icon {
+    font-size: 14px;
+}
+
+.mld-discipline-low .mld-discipline-icon {
+    color: var(--mld-grade-a);
+}
+
+.mld-discipline-avg .mld-discipline-icon {
+    color: var(--mld-grade-d);
+}
+
+.mld-discipline-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--mld-text-secondary);
+}
+
+.mld-discipline-year {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--mld-text-muted);
+}
+
+.mld-discipline-main {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.mld-discipline-rate {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.mld-discipline-low .mld-discipline-rate {
+    color: var(--mld-grade-a);
+}
+
+.mld-discipline-avg .mld-discipline-rate {
+    color: var(--mld-grade-d);
+}
+
+.mld-discipline-summary {
+    font-size: 14px;
+    color: var(--mld-text-secondary);
+}
+
+.mld-discipline-breakdown {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.mld-discipline-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 60px;
+}
+
+.mld-discipline-pill .mld-pill-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pill-color, #f97316);
+}
+
+.mld-discipline-pill .mld-pill-label {
+    font-size: 10px;
+    color: var(--mld-text-muted);
+}
+
+.mld-discipline-comparison {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+}
+
+.mld-discipline-low .mld-discipline-comparison .mld-comparison-icon {
+    color: var(--mld-grade-a);
+}
+
+.mld-discipline-avg .mld-discipline-comparison .mld-comparison-icon {
+    color: var(--mld-grade-d);
+}
+
+.mld-comparison-text {
+    color: var(--mld-text-secondary);
+}
+
+/* ========================================
+   School Level Sections
+   ======================================== */
+.mld-schools-levels {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.mld-school-level {
+    margin-bottom: 0;
+}
+
+.mld-level-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.mld-level-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mld-level-icon svg {
+    width: 16px;
+    height: 16px;
+    color: white;
+}
+
+.mld-level-icon.elementary { background: var(--mld-level-elementary); }
+.mld-level-icon.middle { background: var(--mld-level-middle); }
+.mld-level-icon.high { background: var(--mld-level-high); }
+
+.mld-level-title {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.mld-level-title.elementary { color: var(--mld-level-elementary); }
+.mld-level-title.middle { color: var(--mld-level-middle); }
+.mld-level-title.high { color: var(--mld-level-high); }
+
+.mld-level-count {
+    font-size: 12px;
+    color: var(--mld-text-muted);
+    margin-left: auto;
+}
+
+/* ========================================
+   School Cards
+   ======================================== */
+.mld-school-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mld-school-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px;
+    background: var(--mld-bg-card);
+    border: 1px solid var(--mld-border);
+    border-radius: 12px;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.mld-school-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* ========================================
+   Grade Badge
+   ======================================== */
+.mld-grade-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.mld-grade-badge span {
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+}
+
+.mld-grade-badge.grade-a,
+.mld-grade-badge.grade-a-plus,
+.mld-grade-badge.grade-a-minus { background-color: var(--mld-grade-a); }
+
+.mld-grade-badge.grade-b,
+.mld-grade-badge.grade-b-plus,
+.mld-grade-badge.grade-b-minus { background-color: var(--mld-grade-b); }
+
+.mld-grade-badge.grade-c,
+.mld-grade-badge.grade-c-plus,
+.mld-grade-badge.grade-c-minus { background-color: var(--mld-grade-c); }
+
+.mld-grade-badge.grade-d,
+.mld-grade-badge.grade-d-plus,
+.mld-grade-badge.grade-d-minus { background-color: var(--mld-grade-d); }
+
+.mld-grade-badge.grade-f { background-color: var(--mld-grade-f); }
+
+.mld-grade-badge.no-grade {
+    background-color: #e2e8f0;
+}
+
+.mld-grade-badge.no-grade svg {
+    width: 20px;
+    height: 20px;
+    color: var(--mld-text-secondary);
+}
+
+/* ========================================
+   School Info
+   ======================================== */
+.mld-school-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.mld-school-name-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.mld-school-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--mld-text-primary);
+    line-height: 1.3;
+}
+
+/* ========================================
+   Percentile Context Badge
+   ======================================== */
+.mld-percentile-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 9999px;
+}
+
+.mld-percentile-badge.grade-a,
+.mld-percentile-badge.grade-a-plus,
+.mld-percentile-badge.grade-a-minus {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--mld-grade-a);
+}
+
+.mld-percentile-badge.grade-b,
+.mld-percentile-badge.grade-b-plus,
+.mld-percentile-badge.grade-b-minus {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--mld-grade-b);
+}
+
+.mld-percentile-badge.grade-c,
+.mld-percentile-badge.grade-c-plus,
+.mld-percentile-badge.grade-c-minus {
+    background: rgba(234, 179, 8, 0.15);
+    color: #a16207;
+}
+
+.mld-percentile-badge.grade-d,
+.mld-percentile-badge.grade-d-plus,
+.mld-percentile-badge.grade-d-minus {
+    background: rgba(249, 115, 22, 0.15);
+    color: var(--mld-grade-d);
+}
+
+.mld-percentile-badge.grade-f {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--mld-grade-f);
+}
+
+/* ========================================
+   School Stats Row
+   ======================================== */
+.mld-school-stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 14px;
+    font-size: 13px;
+    color: var(--mld-text-secondary);
+    margin-bottom: 4px;
+}
+
+.mld-school-stats svg {
+    width: 14px;
+    height: 14px;
+    vertical-align: -2px;
+    margin-right: 4px;
+    opacity: 0.7;
+}
+
+.mld-stat-item {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.mld-stat-separator {
+    color: var(--mld-border);
+}
+
+.mld-state-rank {
+    font-weight: 600;
+    color: var(--mld-text-primary);
+}
+
+.mld-composite-score {
+    font-weight: 600;
+}
+
+/* ========================================
+   Trend Indicator
+   ======================================== */
+.mld-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+.mld-trend svg {
+    width: 14px;
+    height: 14px;
+}
+
+.mld-trend.up {
+    color: var(--mld-grade-a);
+}
+
+.mld-trend.down {
+    color: var(--mld-grade-f);
+}
+
+.mld-trend.stable {
+    color: var(--mld-text-muted);
+}
+
+/* ========================================
+   Benchmark Comparison
+   ======================================== */
+.mld-benchmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.mld-benchmark.above {
+    color: var(--mld-grade-a);
+}
+
+.mld-benchmark.below {
+    color: var(--mld-grade-d);
+}
+
+.mld-benchmark svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* ========================================
+   Data Completeness
+   ======================================== */
+.mld-data-completeness {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    margin-top: 4px;
+    padding: 2px 0;
+}
+
+.mld-data-completeness svg {
+    width: 13px;
+    height: 13px;
+}
+
+.mld-data-completeness.comprehensive {
+    color: var(--mld-grade-a);
+}
+
+.mld-data-completeness.good {
+    color: var(--mld-grade-b);
+}
+
+.mld-data-completeness.limited {
+    color: var(--mld-grade-d);
+}
+
+/* ========================================
+   Limited Data Warning
+   ======================================== */
+.mld-limited-data-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--mld-grade-d);
+    margin-top: 6px;
+    padding: 8px 10px;
+    background: rgba(249, 115, 22, 0.08);
+    border-radius: 6px;
+    line-height: 1.4;
+}
+
+.mld-limited-data-note svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* ========================================
+   Demographics Row
+   ======================================== */
+.mld-demographics {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+    font-size: 12px;
+    color: var(--mld-text-secondary);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--mld-border);
+}
+
+.mld-demographics svg {
+    width: 13px;
+    height: 13px;
+    vertical-align: -2px;
+    margin-right: 4px;
+    opacity: 0.7;
+}
+
+.mld-demo-item {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.mld-diversity {
+    color: var(--mld-level-high);
+    font-weight: 500;
+}
+
+/* ========================================
+   Sports Row (MIAA data)
+   ======================================== */
+.mld-sports-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--mld-text-secondary);
+    margin-top: 6px;
+}
+
+.mld-sports-row.strong-athletics {
+    color: var(--mld-teal);
+}
+
+.mld-sports-icon {
+    display: inline-flex;
+    align-items: center;
+}
+
+.mld-sports-icon svg {
+    width: 12px;
+    height: 12px;
+    opacity: 0.8;
+}
+
+.mld-sports-row.strong-athletics .mld-sports-icon svg {
+    opacity: 1;
+}
+
+.mld-sports-text {
+    font-weight: 400;
+}
+
+.mld-sports-row.strong-athletics .mld-sports-text {
+    font-weight: 500;
+}
+
+/* ========================================
+   Highlight Chips
+   ======================================== */
+.mld-highlights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.mld-highlight-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 9999px;
+    white-space: nowrap;
+}
+
+.mld-highlight-chip svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* Highlight Type Colors */
+.mld-highlight-chip.ap,
+.mld-highlight-chip.masscore {
+    background: rgba(168, 85, 247, 0.12);
+    color: var(--mld-level-high);
+}
+
+.mld-highlight-chip.ratio,
+.mld-highlight-chip.resources,
+.mld-highlight-chip.improving {
+    background: rgba(34, 197, 94, 0.12);
+    color: var(--mld-grade-a);
+}
+
+.mld-highlight-chip.diversity {
+    background: rgba(249, 115, 22, 0.12);
+    color: var(--mld-grade-d);
+}
+
+.mld-highlight-chip.cte,
+.mld-highlight-chip.innovation {
+    background: rgba(59, 130, 246, 0.12);
+    color: var(--mld-grade-b);
+}
+
+.mld-highlight-chip.early_college {
+    background: rgba(99, 102, 241, 0.12);
+    color: #4f46e5;
+}
+
+.mld-highlight-chip.graduation,
+.mld-highlight-chip.attendance {
+    background: rgba(20, 184, 166, 0.12);
+    color: #0d9488;
+}
+
+.mld-highlight-chip.default {
+    background: rgba(100, 116, 139, 0.1);
+    color: var(--mld-text-secondary);
+}
+
+/* ========================================
+   Glossary Links Section
+   ======================================== */
+.mld-glossary-section {
+    padding-top: 20px;
+    margin-top: 24px;
+    border-top: 1px solid var(--mld-border);
+}
+
+.mld-glossary-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--mld-text-secondary);
+    margin-bottom: 12px;
+}
+
+.mld-glossary-title svg {
+    width: 14px;
+    height: 14px;
+    color: var(--mld-teal);
+}
+
+.mld-glossary-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mld-glossary-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 7px 14px;
+    background: var(--mld-teal-light);
+    color: var(--mld-teal);
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    border: none;
+    text-decoration: none;
+}
+
+.mld-glossary-chip:hover {
+    background: rgba(8, 145, 178, 0.18);
+    transform: translateY(-1px);
+}
+
+.mld-glossary-chip:active {
+    transform: translateY(0);
+}
+
+.mld-glossary-chip svg {
+    width: 13px;
+    height: 13px;
+}
+
+/* ========================================
+   Glossary Tooltip
+   ======================================== */
+.mld-glossary-tooltip {
+    position: fixed;
+    max-width: 300px;
+    padding: 14px 18px;
+    background: white;
+    border: 1px solid var(--mld-border);
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
+    z-index: 10000;
+    font-size: 13px;
+    line-height: 1.5;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.mld-glossary-tooltip.visible {
+    opacity: 1;
+}
+
+.mld-glossary-tooltip-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--mld-text-primary);
+    margin-bottom: 4px;
+}
+
+.mld-glossary-tooltip-desc {
+    color: var(--mld-text-secondary);
+    font-size: 12px;
+}
+
+.mld-glossary-tooltip-more {
+    display: block;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--mld-teal);
+    font-weight: 500;
+}
+
+/* ========================================
+   Glossary Modal
+   ======================================== */
+.mld-glossary-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 100000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.mld-glossary-modal.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mld-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.mld-modal-content {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) translateY(20px) !important;
+    background: white;
+    border-radius: 16px;
+    max-width: 500px;
+    width: calc(100% - 40px);
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 28px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease;
+    z-index: 100001 !important;
+}
+
+.mld-glossary-modal.visible .mld-modal-content {
+    transform: translate(-50%, -50%) translateY(0) !important;
+}
+
+.mld-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: var(--mld-bg-light);
+    border-radius: 50%;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--mld-text-secondary);
+    transition: background 0.15s ease;
+}
+
+.mld-modal-close:hover {
+    background: var(--mld-border);
+}
+
+.mld-modal-term {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--mld-text-primary);
+    margin-bottom: 4px;
+    padding-right: 40px;
+}
+
+.mld-modal-fullname {
+    font-size: 14px;
+    color: var(--mld-text-secondary);
+    margin-bottom: 20px;
+}
+
+.mld-modal-section {
+    margin-bottom: 20px;
+}
+
+.mld-modal-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--mld-teal);
+    margin-bottom: 10px;
+}
+
+.mld-modal-section-title svg {
+    width: 18px;
+    height: 18px;
+}
+
+.mld-modal-description {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--mld-text-primary);
+}
+
+.mld-parent-tip {
+    padding: 16px 18px;
+    background: rgba(249, 115, 22, 0.08);
+    border-radius: 10px;
+    border-left: 3px solid var(--mld-grade-d);
+}
+
+.mld-parent-tip-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--mld-grade-d);
+    margin-bottom: 8px;
+}
+
+.mld-parent-tip-label svg {
+    width: 16px;
+    height: 16px;
+}
+
+.mld-parent-tip-text {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--mld-text-primary);
+}
+
+/* ========================================
+   Schools Footer
+   ======================================== */
+.mld-schools-footer {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--mld-border);
+    font-size: 12px;
+    color: var(--mld-text-muted);
+    text-align: center;
+}
+
+/* ========================================
+   Unavailable State
+   ======================================== */
+.mld-schools-unavailable {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--mld-text-secondary);
+    background: var(--mld-bg-light);
+    border-radius: 12px;
+}
+
+.mld-schools-unavailable svg {
+    width: 48px;
+    height: 48px;
+    color: var(--mld-text-muted);
+    margin-bottom: 12px;
+}
+
+/* ========================================
+   Responsive Styles
+   ======================================== */
+@media (max-width: 768px) {
+    .mld-schools-section {
+        margin-top: 20px;
+    }
+
+    .mld-schools-heading {
+        font-size: 18px;
+        margin-bottom: 20px;
+    }
+
+    .mld-district-card {
+        padding: 14px 16px;
+    }
+
+    .mld-district-icon {
+        width: 38px;
+        height: 38px;
+    }
+
+    .mld-district-name {
+        font-size: 15px;
+    }
+
+    .mld-school-card {
+        padding: 14px;
+        gap: 12px;
+    }
+
+    .mld-grade-badge {
+        width: 36px;
+        height: 36px;
+    }
+
+    .mld-grade-badge span {
+        font-size: 14px;
+    }
+
+    .mld-school-name {
+        font-size: 14px;
+    }
+
+    .mld-school-stats {
+        font-size: 12px;
+        gap: 3px 10px;
+    }
+
+    .mld-demographics {
+        font-size: 11px;
+        gap: 3px 10px;
+    }
+
+    /* Horizontal scroll for highlights on mobile */
+    .mld-highlights {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 4px;
+        margin-right: -14px;
+        padding-right: 14px;
+    }
+
+    .mld-highlights::-webkit-scrollbar {
+        display: none;
+    }
+
+    .mld-highlight-chip {
+        flex-shrink: 0;
+    }
+
+    /* Modal adjustments */
+    .mld-glossary-modal {
+        padding: 16px;
+    }
+
+    .mld-modal-content {
+        padding: 24px 20px;
+        max-height: 85vh;
+    }
+
+    .mld-modal-term {
+        font-size: 20px;
+    }
+
+    /* Glossary chips scroll on mobile */
+    .mld-glossary-chips {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        margin-right: -16px;
+        padding-right: 16px;
+    }
+
+    .mld-glossary-chips::-webkit-scrollbar {
+        display: none;
+    }
+
+    .mld-glossary-chip {
+        flex-shrink: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .mld-school-stats {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .mld-stat-separator {
+        display: none;
+    }
+
+    .mld-percentile-badge {
+        margin-top: 4px;
+    }
+
+    .mld-school-name-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+@media print {
+    .mld-glossary-modal,
+    .mld-glossary-tooltip,
+    .mld-comparison-modal,
+    .mld-trends-modal {
+        display: none !important;
+    }
+
+    .mld-school-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}
+
+/* ========================================
+   School Compare & Trends (v6.54.0)
+   ======================================== */
+
+/* School card actions (checkbox + trends button) */
+.mld-school-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 2;
+}
+
+.mld-school-card {
+    position: relative;
+}
+
+/* Comparison checkbox */
+.mld-compare-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.mld-compare-checkbox input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.mld-compare-checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--mld-border);
+    border-radius: 4px;
+    background: white;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mld-compare-checkbox:hover .mld-compare-checkmark {
+    border-color: var(--mld-teal);
+}
+
+.mld-compare-checkbox input:checked + .mld-compare-checkmark {
+    background: var(--mld-teal);
+    border-color: var(--mld-teal);
+}
+
+.mld-compare-checkbox input:checked + .mld-compare-checkmark::after {
+    content: '';
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    margin-bottom: 2px;
+}
+
+/* Selected card state */
+.mld-school-card.mld-selected {
+    outline: 2px solid var(--mld-teal);
+    outline-offset: -2px;
+}
+
+/* Trends button */
+.mld-trends-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: var(--mld-bg-light);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.mld-trends-btn:hover {
+    background: var(--mld-teal-light);
+}
+
+.mld-trends-btn svg {
+    width: 16px;
+    height: 16px;
+    color: var(--mld-teal);
+}
+
+/* Compare Schools floating bar */
+.mld-compare-schools-bar {
+    position: sticky;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    background: var(--mld-bg-card);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 20px;
+    z-index: 100;
+    border: 1px solid var(--mld-border);
+}
+
+.mld-compare-count {
+    font-size: 14px;
+    color: var(--mld-text-secondary);
+    font-weight: 500;
+}
+
+.mld-compare-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--mld-teal);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.mld-compare-btn:hover:not(:disabled) {
+    background: #0e7490;
+}
+
+.mld-compare-btn:disabled {
+    background: var(--mld-text-muted);
+    cursor: not-allowed;
+}
+
+.mld-compare-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.mld-compare-clear {
+    padding: 8px 12px;
+    background: transparent;
+    color: var(--mld-text-secondary);
+    border: 1px solid var(--mld-border);
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.mld-compare-clear:hover {
+    background: var(--mld-bg-light);
+    color: var(--mld-text-primary);
+}
+
+/* ========================================
+   Comparison Modal
+   ======================================== */
+.mld-comparison-modal,
+.mld-trends-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.mld-comparison-modal.visible,
+.mld-trends-modal.visible {
+    display: flex;
+}
+
+.mld-comparison-modal .mld-modal-overlay,
+.mld-trends-modal .mld-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.mld-comparison-content,
+.mld-trends-content {
+    position: relative;
+    background: var(--mld-bg-card);
+    border-radius: 16px;
+    width: 95%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.mld-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--mld-border);
+    background: var(--mld-bg-light);
+}
+
+.mld-modal-header .mld-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--mld-text-primary);
+}
+
+.mld-modal-header .mld-modal-title svg {
+    color: var(--mld-teal);
+}
+
+.mld-comparison-modal .mld-modal-close,
+.mld-trends-modal .mld-modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    font-size: 24px;
+    color: var(--mld-text-secondary);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mld-comparison-modal .mld-modal-close:hover,
+.mld-trends-modal .mld-modal-close:hover {
+    background: var(--mld-border);
+    color: var(--mld-text-primary);
+}
+
+/* Loading & Error states */
+.mld-comparison-loading,
+.mld-trends-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    gap: 16px;
+    color: var(--mld-text-secondary);
+}
+
+.mld-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--mld-border);
+    border-top-color: var(--mld-teal);
+    border-radius: 50%;
+    animation: mld-spin 0.8s linear infinite;
+}
+
+@keyframes mld-spin {
+    to { transform: rotate(360deg); }
+}
+
+.mld-comparison-error,
+.mld-trends-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    gap: 12px;
+    color: var(--mld-text-secondary);
+    text-align: center;
+}
+
+.mld-comparison-error svg,
+.mld-trends-error svg {
+    color: #f97316;
+}
+
+.mld-retry-btn {
+    margin-top: 8px;
+    padding: 8px 20px;
+    background: var(--mld-teal);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.mld-retry-btn:hover {
+    background: #0e7490;
+}
+
+/* Comparison table */
+.mld-comparison-body {
+    overflow: auto;
+    flex: 1;
+}
+
+.mld-comparison-table-wrapper {
+    overflow-x: auto;
+    padding: 16px;
+}
+
+.mld-comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.mld-comparison-table th,
+.mld-comparison-table td {
+    padding: 10px 12px;
+    text-align: center;
+    border-bottom: 1px solid var(--mld-border);
+}
+
+.mld-comparison-table th:first-child,
+.mld-comparison-table td:first-child {
+    text-align: left;
+    position: sticky;
+    left: 0;
+    background: var(--mld-bg-card);
+    z-index: 1;
+}
+
+.mld-comparison-label {
+    font-weight: 500;
+    color: var(--mld-text-secondary);
+    font-size: 13px;
+    min-width: 120px;
+}
+
+.mld-comparison-section td {
+    background: var(--mld-bg-light) !important;
+    font-weight: 600;
+    color: var(--mld-text-primary);
+    font-size: 13px;
+    padding: 8px 12px;
+}
+
+.mld-comparison-value {
+    font-size: 14px;
+    color: var(--mld-text-primary);
+}
+
+.mld-comparison-school-header {
+    min-width: 140px;
+    padding: 12px 8px;
+    vertical-align: top;
+}
+
+.mld-school-header-icon {
+    margin-bottom: 6px;
+}
+
+.mld-school-header-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--mld-text-primary);
+    line-height: 1.3;
+    margin-bottom: 4px;
+}
+
+.mld-school-header-level {
+    font-size: 11px;
+    color: var(--mld-text-secondary);
+}
+
+.mld-grade-badge-small {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.mld-grade-na,
+.mld-score-na {
+    color: var(--mld-text-muted);
+    font-style: italic;
+}
+
+/* ========================================
+   Trends Modal
+   ======================================== */
+.mld-trends-body {
+    overflow-y: auto;
+    flex: 1;
+    padding: 16px;
+}
+
+.mld-subject-filter {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.mld-subject-btn {
+    padding: 8px 16px;
+    border: 1px solid var(--mld-border);
+    background: var(--mld-bg-card);
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--mld-text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.mld-subject-btn:hover {
+    border-color: var(--mld-teal);
+    color: var(--mld-teal);
+}
+
+.mld-subject-btn.active {
+    background: var(--mld-teal);
+    border-color: var(--mld-teal);
+    color: white;
+}
+
+.mld-trends-charts {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.mld-trend-card {
+    background: var(--mld-bg-light);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.mld-trend-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.mld-trend-subject {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.mld-trend-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.mld-trend-chart-container {
+    height: 200px;
+    margin-bottom: 16px;
+}
+
+.mld-trend-table {
+    overflow-x: auto;
+}
+
+.mld-trend-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.mld-trend-table th,
+.mld-trend-table td {
+    padding: 8px 12px;
+    text-align: center;
+    border-bottom: 1px solid var(--mld-border);
+}
+
+.mld-trend-table th {
+    background: var(--mld-bg-card);
+    font-weight: 600;
+    color: var(--mld-text-secondary);
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.mld-trend-table td {
+    color: var(--mld-text-primary);
+}
+
+.mld-no-trends {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: var(--mld-text-secondary);
+    gap: 12px;
+}
+
+/* Toast notification */
+.mld-toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(30, 41, 59, 0.95);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 10001;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.mld-toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ========================================
+   Responsive adjustments
+   ======================================== */
+@media (max-width: 768px) {
+    .mld-comparison-content,
+    .mld-trends-content {
+        width: 100%;
+        max-width: none;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+    }
+
+    .mld-comparison-school-header {
+        min-width: 100px;
+    }
+
+    .mld-compare-schools-bar {
+        border-radius: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin-top: 0;
+    }
+
+    .mld-subject-filter {
+        justify-content: center;
+    }
+
+    .mld-trend-chart-container {
+        height: 160px;
+    }
+}

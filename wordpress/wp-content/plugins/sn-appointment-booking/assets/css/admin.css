@@ -1,0 +1,1243 @@
+/**
+ * SN Appointment Booking - Admin Styles
+ *
+ * @package SN_Appointment_Booking
+ * @since 1.0.0
+ */
+
+/* General Admin Wrap */
+.snab-admin-wrap {
+    max-width: 1200px;
+}
+
+.snab-admin-wrap h1 {
+    margin-bottom: 20px;
+}
+
+/* Dashboard */
+.snab-dashboard {
+    margin-top: 20px;
+}
+
+/* Stats Grid */
+.snab-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.snab-stat-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+}
+
+.snab-stat-number {
+    font-size: 36px;
+    font-weight: 600;
+    color: #1d2327;
+    line-height: 1.2;
+}
+
+.snab-stat-label {
+    font-size: 13px;
+    color: #646970;
+    margin-top: 5px;
+}
+
+/* Sections */
+.snab-section {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.snab-section h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+/* No Data Message */
+.snab-no-data {
+    color: #646970;
+    font-style: italic;
+}
+
+/* Type Badge */
+.snab-type-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 3px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Status Indicators */
+.snab-status-active {
+    color: #00a32a;
+    font-weight: 500;
+}
+
+.snab-status-inactive {
+    color: #d63638;
+    font-weight: 500;
+}
+
+/* Quick Links */
+.snab-quick-links {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Version Info */
+.snab-version-info {
+    background: #f6f7f7;
+    border-color: #dcdcde;
+}
+
+.snab-version-info p {
+    margin: 0;
+    font-size: 12px;
+    color: #646970;
+}
+
+/* Tables */
+.snab-admin-wrap .wp-list-table {
+    margin-top: 0;
+}
+
+.snab-admin-wrap .wp-list-table th {
+    font-weight: 600;
+}
+
+/* Form Elements */
+.snab-form-row {
+    margin-bottom: 20px;
+}
+
+.snab-form-row label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.snab-form-row input[type="text"],
+.snab-form-row input[type="email"],
+.snab-form-row input[type="number"],
+.snab-form-row select,
+.snab-form-row textarea {
+    width: 100%;
+    max-width: 400px;
+}
+
+.snab-form-row .description {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #646970;
+}
+
+/* Buttons */
+.snab-admin-wrap .button-primary {
+    margin-right: 10px;
+}
+
+/* Color Picker Preview */
+.snab-color-preview {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    vertical-align: middle;
+    margin-left: 5px;
+    border: 1px solid #dcdcde;
+}
+
+/* Time Picker */
+.snab-time-picker {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.snab-time-picker input {
+    width: 100px;
+}
+
+/* Calendar Preview */
+.snab-calendar-preview {
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 15px;
+    background: #f6f7f7;
+}
+
+/* Availability Grid */
+.snab-availability-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.snab-day-column {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.snab-day-header {
+    font-weight: 600;
+    text-align: center;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .snab-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .snab-availability-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .snab-quick-links {
+        flex-direction: column;
+    }
+
+    .snab-quick-links .button {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* Notices */
+.snab-admin-wrap .notice {
+    margin: 15px 0;
+}
+
+/* Loading State */
+.snab-loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.snab-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0073aa;
+    border-radius: 50%;
+    animation: snab-spin 1s linear infinite;
+}
+
+@keyframes snab-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ================================
+   Types Management Page Styles
+   ================================ */
+
+/* Types Table */
+.snab-types-table .column-order {
+    width: 40px;
+    text-align: center;
+}
+
+.snab-types-table .snab-drag-handle {
+    cursor: move;
+    color: #c3c4c7;
+    vertical-align: middle;
+}
+
+.snab-types-table .snab-drag-handle:hover {
+    color: #2271b1;
+}
+
+.snab-types-table .snab-sort-order {
+    display: none;
+}
+
+.snab-types-table .snab-type-slug {
+    font-size: 12px;
+    color: #646970;
+    font-style: italic;
+}
+
+.snab-types-table .snab-type-description {
+    font-size: 12px;
+    color: #646970;
+    margin-top: 4px;
+}
+
+/* Buffer Badges */
+.snab-buffer-badge {
+    display: inline-block;
+    background: #f0f0f1;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    margin: 1px 2px;
+}
+
+.snab-no-buffer {
+    color: #646970;
+    font-style: italic;
+}
+
+/* Color Swatch */
+.snab-color-swatch {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    border: 1px solid #c3c4c7;
+    vertical-align: middle;
+}
+
+/* Status Toggle */
+.snab-toggle-status {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 20px;
+    transition: color 0.2s;
+}
+
+.snab-toggle-status.is-active {
+    color: #00a32a;
+}
+
+.snab-toggle-status.is-active:hover {
+    color: #007017;
+}
+
+.snab-toggle-status.is-inactive {
+    color: #d63638;
+}
+
+.snab-toggle-status.is-inactive:hover {
+    color: #b32d2e;
+}
+
+.snab-toggle-status:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Sortable Placeholder */
+.snab-sortable-placeholder {
+    background: #f6f7f7;
+    border: 2px dashed #c3c4c7;
+    height: 50px;
+}
+
+/* No Types Message */
+.snab-no-types td {
+    text-align: center;
+    color: #646970;
+    font-style: italic;
+    padding: 30px 20px;
+}
+
+/* ================================
+   Modal Styles
+   ================================ */
+
+.snab-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.snab-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.snab-modal-content {
+    position: relative;
+    background: #fff;
+    border-radius: 4px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+}
+
+.snab-modal-small .snab-modal-content {
+    max-width: 400px;
+}
+
+.snab-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #dcdcde;
+    background: #f6f7f7;
+}
+
+.snab-modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.snab-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #646970;
+    padding: 0;
+    line-height: 1;
+}
+
+.snab-modal-close:hover {
+    color: #1d2327;
+}
+
+.snab-modal-body {
+    padding: 20px;
+}
+
+.snab-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 15px 20px;
+    border-top: 1px solid #dcdcde;
+    background: #f6f7f7;
+}
+
+/* Delete Warning */
+.snab-delete-warning {
+    color: #d63638;
+    background: #fcf0f1;
+    padding: 10px 15px;
+    border-radius: 4px;
+    border: 1px solid #d63638;
+    margin-top: 15px;
+}
+
+/* ================================
+   Form Enhancements
+   ================================ */
+
+.snab-form-row-inline {
+    display: flex;
+    gap: 20px;
+}
+
+.snab-form-row-inline > div {
+    flex: 1;
+}
+
+.snab-form-row-inline input {
+    width: 100%;
+}
+
+.snab-form-row-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.snab-form-row-checkboxes label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: normal;
+}
+
+.snab-form-row-checkboxes input[type="checkbox"] {
+    margin: 0;
+}
+
+.snab-form-row .required {
+    color: #d63638;
+}
+
+/* Color Picker */
+.snab-color-picker-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.snab-color-picker-wrap input[type="color"] {
+    width: 50px;
+    height: 35px;
+    padding: 0;
+    border: 1px solid #c3c4c7;
+    cursor: pointer;
+}
+
+.snab-color-picker-wrap input[type="text"] {
+    width: 90px;
+    font-family: monospace;
+}
+
+.snab-color-preview-large {
+    display: inline-block;
+    width: 35px;
+    height: 35px;
+    border-radius: 4px;
+    border: 1px solid #c3c4c7;
+}
+
+/* Button with Spinner */
+#snab-save-type-btn {
+    position: relative;
+    min-width: 100px;
+}
+
+#snab-save-type-btn .snab-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Delete Button Styling */
+.button-link-delete {
+    color: #d63638 !important;
+    border-color: #d63638 !important;
+}
+
+.button-link-delete:hover {
+    background: #d63638 !important;
+    color: #fff !important;
+}
+
+/* ================================
+   Responsive Adjustments
+   ================================ */
+
+@media screen and (max-width: 782px) {
+    .snab-form-row-inline {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .snab-modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .snab-types-table .column-buffer,
+    .snab-types-table .column-actions {
+        display: none;
+    }
+
+    .snab-color-picker-wrap {
+        flex-wrap: wrap;
+    }
+}
+
+/* Loading Overlay */
+.snab-loading-active::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.7);
+    z-index: 100099;
+    cursor: wait;
+}
+
+/* ================================
+   Availability Page Styles
+   ================================ */
+
+/* Tab Navigation */
+.snab-availability-tabs {
+    margin-bottom: 20px;
+}
+
+.snab-availability-tabs .nav-tab {
+    position: relative;
+}
+
+.snab-badge {
+    display: inline-block;
+    background: #2271b1;
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+/* Tab Content */
+.snab-tab-content {
+    display: none;
+}
+
+.snab-tab-content.snab-tab-active {
+    display: block;
+}
+
+/* Weekly Schedule Grid */
+.snab-weekly-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.snab-day-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 15px;
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+}
+
+.snab-day-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 150px;
+}
+
+.snab-day-name {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.snab-day-times {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.snab-day-times.snab-disabled {
+    opacity: 0.4;
+}
+
+.snab-day-times input[type="time"] {
+    width: 130px;
+    padding: 6px 10px;
+}
+
+.snab-time-separator {
+    color: #646970;
+}
+
+.snab-day-status {
+    min-width: 100px;
+    text-align: right;
+}
+
+.snab-available {
+    color: #00a32a;
+    font-weight: 500;
+}
+
+.snab-unavailable {
+    color: #d63638;
+    font-weight: 500;
+}
+
+/* Toggle Switch */
+.snab-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.snab-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.snab-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #c3c4c7;
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.snab-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.snab-toggle-switch input:checked + .snab-toggle-slider {
+    background-color: #00a32a;
+}
+
+.snab-toggle-switch input:checked + .snab-toggle-slider:before {
+    transform: translateX(20px);
+}
+
+/* Form Actions */
+.snab-form-actions {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #dcdcde;
+}
+
+/* Override and Blocked Rows */
+.snab-override-row,
+.snab-blocked-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.snab-override-date,
+.snab-blocked-date {
+    min-width: 180px;
+}
+
+.snab-override-date strong,
+.snab-blocked-date strong {
+    display: block;
+}
+
+.snab-override-day,
+.snab-blocked-day {
+    font-size: 12px;
+    color: #646970;
+}
+
+.snab-override-hours,
+.snab-blocked-hours {
+    flex: 1;
+    font-size: 14px;
+}
+
+.snab-override-actions,
+.snab-blocked-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Closed Badge */
+.snab-closed-badge {
+    display: inline-block;
+    background: #d63638;
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Section Headers with Buttons */
+.snab-section h2 {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.snab-section h2 .button {
+    font-size: 13px;
+    padding: 4px 12px;
+    height: auto;
+}
+
+/* Availability Responsive */
+@media screen and (max-width: 782px) {
+    .snab-day-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .snab-day-toggle {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .snab-day-times {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .snab-day-times input[type="time"] {
+        width: 45%;
+    }
+
+    .snab-day-status {
+        width: 100%;
+        text-align: left;
+    }
+
+    .snab-override-row,
+    .snab-blocked-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .snab-override-date,
+    .snab-blocked-date,
+    .snab-override-hours,
+    .snab-blocked-hours {
+        min-width: auto;
+    }
+
+    .snab-override-actions,
+    .snab-blocked-actions {
+        width: 100%;
+    }
+
+    .snab-override-actions .button,
+    .snab-blocked-actions .button {
+        flex: 1;
+    }
+}
+
+/* ================================
+   Appointments Page Styles
+   ================================ */
+
+/* Filters Form */
+.snab-filters-form {
+    margin: 15px 0;
+}
+
+.snab-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.snab-filters select,
+.snab-filters input[type="date"],
+.snab-filters input[type="search"] {
+    padding: 5px 10px;
+    height: 32px;
+}
+
+.snab-filters input[type="date"] {
+    width: 150px;
+}
+
+.snab-filters input[type="search"] {
+    width: 200px;
+}
+
+/* Appointments Table */
+.snab-appointments-table .column-date {
+    width: 150px;
+}
+
+.snab-appointments-table .column-type {
+    width: 150px;
+}
+
+.snab-appointments-table .column-client {
+    width: 200px;
+}
+
+.snab-appointments-table .column-status {
+    width: 100px;
+}
+
+.snab-appointments-table .column-gcal {
+    width: 80px;
+    text-align: center;
+}
+
+.snab-appointments-table .column-actions {
+    width: 200px;
+}
+
+.snab-appointments-table .snab-time {
+    color: #646970;
+    font-size: 12px;
+}
+
+.snab-appointments-table .snab-no-items {
+    text-align: center;
+    padding: 30px 20px;
+    color: #646970;
+    font-style: italic;
+}
+
+/* Past Appointment Row */
+.snab-past-appointment {
+    opacity: 0.7;
+}
+
+/* Status Badges */
+.snab-status {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.snab-status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.snab-status-confirmed {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+.snab-status-completed {
+    background: #cfe2ff;
+    color: #084298;
+}
+
+.snab-status-cancelled {
+    background: #f8d7da;
+    color: #842029;
+}
+
+.snab-status-no_show {
+    background: #e2e3e5;
+    color: #41464b;
+}
+
+/* Status Select in Modal */
+.snab-status-select {
+    margin-left: 10px;
+    font-size: 12px;
+    padding: 2px 5px;
+}
+
+/* Modal Large */
+.snab-modal-large {
+    max-width: 800px;
+}
+
+/* Modal Loading */
+.snab-modal-loading {
+    text-align: center;
+    padding: 40px;
+}
+
+.snab-modal-loading .spinner {
+    float: none;
+    margin: 0 auto;
+}
+
+/* Detail Grid */
+.snab-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.snab-detail-section {
+    margin-bottom: 20px;
+}
+
+.snab-detail-section h3 {
+    margin: 0 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dcdcde;
+    font-size: 14px;
+    color: #1d2327;
+}
+
+/* Detail Table */
+.snab-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.snab-detail-table th,
+.snab-detail-table td {
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.snab-detail-table th {
+    width: 120px;
+    font-weight: 600;
+    color: #646970;
+    font-size: 12px;
+}
+
+.snab-detail-table td {
+    color: #1d2327;
+}
+
+.snab-detail-table a {
+    text-decoration: none;
+}
+
+.snab-detail-table a:hover {
+    text-decoration: underline;
+}
+
+/* Notifications Table in Modal */
+.snab-notifications-table {
+    font-size: 12px;
+}
+
+.snab-notifications-table thead th {
+    background: #f6f7f7;
+    font-weight: 600;
+}
+
+/* Admin Notes Section */
+.snab-admin-notes-section textarea {
+    width: 100%;
+    min-height: 80px;
+    resize: vertical;
+}
+
+.snab-admin-notes-section .button {
+    margin-top: 10px;
+}
+
+.snab-notes-saved {
+    color: #00a32a;
+    margin-left: 10px;
+    font-weight: 500;
+}
+
+/* Cancel Modal */
+#snab-cancel-modal .snab-form-row {
+    margin-bottom: 15px;
+}
+
+#snab-cancel-modal label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+#snab-cancel-modal textarea {
+    width: 100%;
+    min-height: 80px;
+}
+
+#snab-cancel-modal label input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+/* Export Button */
+.snab-export-btn {
+    text-decoration: none !important;
+}
+
+/* Error Message */
+.snab-error {
+    color: #d63638;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Pagination */
+.snab-appointments-table + .tablenav {
+    margin-top: 15px;
+}
+
+.tablenav-pages .paging-input {
+    margin: 0 8px;
+}
+
+/* Responsive Appointments */
+@media screen and (max-width: 782px) {
+    .snab-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .snab-filters select,
+    .snab-filters input[type="date"],
+    .snab-filters input[type="search"] {
+        width: 100%;
+    }
+
+    .snab-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .snab-appointments-table .column-type,
+    .snab-appointments-table .column-gcal {
+        display: none;
+    }
+
+    .snab-appointments-table .column-actions {
+        width: 120px;
+    }
+
+    .snab-appointments-table .button {
+        padding: 2px 8px;
+        font-size: 11px;
+    }
+}
+
+/* ================================
+   Create & Reschedule Modals
+   Added in v1.1.0
+   ================================ */
+
+/* Medium modal size */
+.snab-modal-medium {
+    max-width: 600px;
+}
+
+/* Form grid for create modal */
+.snab-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.snab-form-section h3 {
+    margin: 0 0 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+    color: #1d2327;
+}
+
+.snab-form-row {
+    margin-bottom: 15px;
+}
+
+.snab-form-row label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #1d2327;
+}
+
+.snab-form-row .required {
+    color: #d63638;
+}
+
+.snab-form-row input[type="text"],
+.snab-form-row input[type="email"],
+.snab-form-row input[type="tel"],
+.snab-form-row input[type="date"],
+.snab-form-row select,
+.snab-form-row textarea {
+    width: 100%;
+    max-width: 100%;
+}
+
+.snab-checkbox-row label {
+    font-weight: normal;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.snab-checkbox-row input[type="checkbox"] {
+    margin: 0;
+}
+
+.snab-time-hint {
+    margin-top: 5px;
+    color: #646970;
+    font-style: italic;
+}
+
+/* Reschedule modal current details */
+.snab-reschedule-current {
+    background: #f6f7f7;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.snab-reschedule-current h4 {
+    margin: 0 0 10px;
+    color: #1d2327;
+}
+
+.snab-reschedule-info {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #fcf9e8;
+    border-left: 4px solid #dba617;
+    color: #6e4b00;
+    font-size: 12px;
+}
+
+/* Create button style */
+.snab-create-btn {
+    background: #2271b1 !important;
+    color: #fff !important;
+    border-color: #2271b1 !important;
+}
+
+.snab-create-btn:hover {
+    background: #135e96 !important;
+    border-color: #135e96 !important;
+}
+
+/* Responsive for form grid */
+@media screen and (max-width: 782px) {
+    .snab-form-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .snab-modal-medium,
+    .snab-modal-large {
+        max-width: 95%;
+        margin: 20px auto;
+    }
+}

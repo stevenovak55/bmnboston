@@ -1,0 +1,1249 @@
+/**
+ * MLD Contact Form Builder - Admin Styles
+ *
+ * @package MLS_Listings_Display
+ * @since 6.21.0
+ */
+
+/* ==========================================================================
+   Form Builder Layout
+   ========================================================================== */
+
+.mld-form-builder {
+    display: grid;
+    grid-template-columns: 220px 1fr 300px;
+    gap: 20px;
+    margin-top: 20px;
+    min-height: calc(100vh - 200px);
+}
+
+.mld-builder-sidebar {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 16px;
+}
+
+.mld-builder-sidebar h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.mld-builder-sidebar .description {
+    margin: 0 0 16px;
+    font-size: 12px;
+    color: #646970;
+}
+
+.mld-builder-canvas {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==========================================================================
+   Field Types Panel (Left Sidebar)
+   ========================================================================== */
+
+.mld-field-types-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mld-field-type-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    cursor: grab;
+    transition: all 0.15s ease;
+    font-size: 13px;
+}
+
+.mld-field-type-item:hover {
+    background: #fff;
+    border-color: #2271b1;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mld-field-type-item:active {
+    cursor: grabbing;
+}
+
+.mld-field-type-item .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #2271b1;
+}
+
+.mld-field-type-item.dragging {
+    opacity: 0.5;
+}
+
+/* ==========================================================================
+   Canvas Area (Center)
+   ========================================================================== */
+
+.mld-canvas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #dcdcde;
+    background: #f6f7f7;
+    border-radius: 4px 4px 0 0;
+}
+
+.mld-form-name-input {
+    flex: 1;
+    max-width: 400px;
+}
+
+.mld-form-name {
+    width: 100%;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+}
+
+.mld-form-name:hover,
+.mld-form-name:focus {
+    background: #fff;
+    border-color: #2271b1;
+    outline: none;
+}
+
+.mld-canvas-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.mld-form-status {
+    padding: 4px 8px;
+    font-size: 13px;
+}
+
+.mld-form-canvas-area {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f0f0f1;
+}
+
+.mld-canvas-dropzone {
+    min-height: 300px;
+    background: #fff;
+    border: 2px dashed #dcdcde;
+    border-radius: 4px;
+    padding: 20px;
+    transition: all 0.2s ease;
+}
+
+.mld-canvas-dropzone.drag-over {
+    border-color: #2271b1;
+    background: #f0f6fc;
+}
+
+.mld-canvas-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: #787c82;
+}
+
+.mld-canvas-placeholder .dashicons {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    color: #dcdcde;
+}
+
+.mld-canvas-placeholder p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.mld-canvas-placeholder.hidden {
+    display: none;
+}
+
+.mld-canvas-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-top: 1px solid #dcdcde;
+    background: #f6f7f7;
+    border-radius: 0 0 4px 4px;
+}
+
+.mld-save-status {
+    font-size: 12px;
+    color: #646970;
+}
+
+.mld-save-status.saving {
+    color: #d63638;
+}
+
+.mld-save-status.saved {
+    color: #00a32a;
+}
+
+/* ==========================================================================
+   Fields Container & Field Cards
+   ========================================================================== */
+
+.mld-fields-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mld-field-card {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+
+.mld-field-card:hover {
+    border-color: #2271b1;
+}
+
+.mld-field-card.selected {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.mld-field-card.dragging {
+    opacity: 0.5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.mld-field-card.half-width {
+    width: calc(50% - 6px);
+    display: inline-block;
+    vertical-align: top;
+}
+
+.mld-field-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f6f7f7;
+    border-bottom: 1px solid #dcdcde;
+    border-radius: 3px 3px 0 0;
+    cursor: grab;
+}
+
+.mld-field-card-header:active {
+    cursor: grabbing;
+}
+
+.mld-field-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.mld-field-card-title .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #646970;
+}
+
+.mld-field-card-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.mld-field-card-actions button {
+    padding: 2px 4px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #646970;
+    border-radius: 2px;
+}
+
+.mld-field-card-actions button:hover {
+    background: #dcdcde;
+    color: #1d2327;
+}
+
+.mld-field-card-actions button.delete:hover {
+    background: #d63638;
+    color: #fff;
+}
+
+.mld-field-card-preview {
+    padding: 12px;
+}
+
+.mld-field-card-preview label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #1d2327;
+}
+
+.mld-field-card-preview label .required-indicator {
+    color: #d63638;
+}
+
+.mld-field-card-preview input,
+.mld-field-card-preview textarea,
+.mld-field-card-preview select {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    font-size: 13px;
+    background: #f6f7f7;
+}
+
+.mld-field-card-preview textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+/* Half-width fields in a row */
+.mld-fields-row {
+    display: flex;
+    gap: 12px;
+}
+
+.mld-fields-row .mld-field-card {
+    flex: 1;
+}
+
+/* ==========================================================================
+   Properties Panel (Right Sidebar)
+   ========================================================================== */
+
+.mld-properties-tabs {
+    display: flex;
+    border-bottom: 1px solid #dcdcde;
+    margin: -16px -16px 16px;
+    padding: 0 16px;
+}
+
+.mld-tab-btn {
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 500;
+    color: #646970;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+
+.mld-tab-btn:hover {
+    color: #2271b1;
+}
+
+.mld-tab-btn.active {
+    color: #2271b1;
+    border-bottom-color: #2271b1;
+}
+
+.mld-tab-content {
+    display: none;
+}
+
+.mld-tab-content.active {
+    display: block;
+}
+
+.mld-no-field-selected {
+    text-align: center;
+    padding: 40px 20px;
+    color: #646970;
+}
+
+.mld-no-field-selected .dashicons {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    margin-bottom: 12px;
+    color: #dcdcde;
+}
+
+.mld-settings-group {
+    margin-bottom: 16px;
+}
+
+.mld-settings-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #1d2327;
+}
+
+.mld-settings-group input[type="text"],
+.mld-settings-group input[type="url"],
+.mld-settings-group input[type="email"],
+.mld-settings-group input[type="number"],
+.mld-settings-group select,
+.mld-settings-group textarea {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.mld-settings-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.mld-settings-group .description {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #646970;
+}
+
+.mld-checkbox-label {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    font-weight: normal !important;
+    cursor: pointer;
+}
+
+.mld-checkbox-label input[type="checkbox"] {
+    margin: 0;
+}
+
+/* Field Properties Header */
+.mld-property-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #dcdcde;
+}
+
+.mld-field-type-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    background: #2271b1;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: 3px;
+    text-transform: uppercase;
+}
+
+.mld-remove-field {
+    color: #d63638 !important;
+}
+
+.mld-remove-field:hover {
+    color: #a91e1e !important;
+}
+
+/* Options Editor */
+.mld-options-editor {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #dcdcde;
+}
+
+.mld-options-list {
+    margin-bottom: 10px;
+}
+
+.mld-option-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.mld-option-item input {
+    flex: 1;
+}
+
+.mld-option-item button {
+    padding: 4px 6px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #646970;
+}
+
+.mld-option-item button:hover {
+    color: #d63638;
+}
+
+.mld-add-option {
+    width: 100%;
+}
+
+/* ==========================================================================
+   Notifications Tab
+   ========================================================================== */
+
+#notifications h4 {
+    margin: 0 0 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+#notifications hr {
+    margin: 20px 0;
+    border: none;
+    border-top: 1px solid #dcdcde;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media screen and (max-width: 1200px) {
+    .mld-form-builder {
+        grid-template-columns: 180px 1fr 260px;
+    }
+}
+
+@media screen and (max-width: 960px) {
+    .mld-form-builder {
+        grid-template-columns: 1fr;
+    }
+
+    .mld-builder-sidebar {
+        order: 1;
+    }
+
+    .mld-builder-canvas {
+        order: 0;
+    }
+
+    .mld-field-types-panel {
+        order: 2;
+    }
+
+    .mld-field-types-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .mld-field-type-item {
+        flex: 0 0 calc(25% - 6px);
+    }
+}
+
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+
+.hidden {
+    display: none !important;
+}
+
+.mld-shortcode-display {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    vertical-align: middle;
+}
+
+.mld-shortcode-display code {
+    padding: 4px 8px;
+    background: #f6f7f7;
+    border-radius: 3px;
+}
+
+/* Copy button success state */
+.mld-copy-shortcode.copied {
+    background: #00a32a !important;
+    border-color: #00a32a !important;
+    color: #fff !important;
+}
+
+/* Loading spinner */
+.mld-loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #dcdcde;
+    border-top-color: #2271b1;
+    border-radius: 50%;
+    animation: mld-spin 0.8s linear infinite;
+}
+
+@keyframes mld-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Drag placeholder */
+.mld-drag-placeholder {
+    background: #e7f3ff;
+    border: 2px dashed #2271b1;
+    border-radius: 4px;
+    height: 60px;
+    margin: 6px 0;
+}
+
+/* ==========================================================================
+   Conditional Logic Editor (v6.22.0)
+   ========================================================================== */
+
+.mld-conditional-logic-editor {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #dcdcde;
+}
+
+.mld-conditional-header {
+    margin-bottom: 12px;
+}
+
+.mld-conditional-header .mld-checkbox-label {
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.mld-conditional-body {
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 12px;
+}
+
+.mld-conditional-body.hidden {
+    display: none;
+}
+
+.mld-conditional-action-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+    font-size: 13px;
+}
+
+.mld-conditional-action-row select {
+    margin: 0;
+    padding: 4px 8px;
+    min-width: auto;
+    font-weight: 600;
+}
+
+.mld-conditional-action-row span {
+    color: #50575e;
+}
+
+.mld-conditional-rules {
+    margin-bottom: 10px;
+}
+
+.mld-rule-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 12px;
+    padding-right: 36px; /* Space for remove button */
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+}
+
+.mld-rule-item:last-child {
+    margin-bottom: 0;
+}
+
+.mld-rule-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mld-rule-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #646970;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mld-rule-field,
+.mld-rule-operator,
+.mld-rule-value-wrapper {
+    width: 100%;
+}
+
+.mld-rule-field select,
+.mld-rule-operator select,
+.mld-rule-value {
+    width: 100%;
+}
+
+.mld-rule-value-wrapper.hidden {
+    display: none;
+}
+
+.mld-remove-rule {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #a7aaad;
+    border-radius: 3px;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.mld-remove-rule:hover {
+    color: #d63638;
+    background: #fcf0f1;
+}
+
+.mld-remove-rule .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.mld-add-rule {
+    margin-top: 8px;
+}
+
+.mld-add-rule .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* ==========================================================================
+   New Field Type Previews (v6.22.0)
+   ========================================================================== */
+
+/* Section preview in form builder */
+.mld-section-preview {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d2327;
+    margin: 0;
+    padding: 0 0 4px;
+    border-bottom: 1px solid #dcdcde;
+}
+
+.mld-section-desc-preview {
+    font-size: 12px;
+    color: #646970;
+    margin: 4px 0 0;
+}
+
+/* Paragraph preview */
+.mld-paragraph-preview {
+    font-size: 13px;
+    color: #50575e;
+    padding: 8px;
+    background: #f6f7f7;
+    border-radius: 4px;
+    font-style: italic;
+}
+
+/* Hidden field preview */
+.mld-hidden-preview {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #646970;
+    padding: 8px;
+    background: #f6f7f7;
+    border-radius: 4px;
+    border: 1px dashed #c3c4c7;
+}
+
+.mld-hidden-preview .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Currency preview */
+.mld-currency-preview {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.mld-currency-preview span {
+    position: absolute;
+    left: 10px;
+    color: #646970;
+    font-size: 14px;
+}
+
+.mld-currency-preview input {
+    padding-left: 24px !important;
+}
+
+/* Validation property group */
+.mld-validation-group {
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 12px;
+    margin-top: 8px;
+}
+
+.mld-validation-group > label:first-child {
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.mld-inline-inputs {
+    display: flex;
+    gap: 12px;
+}
+
+.mld-inline-inputs > div {
+    flex: 1;
+}
+
+.mld-inline-inputs label.small {
+    display: block;
+    font-size: 11px;
+    color: #646970;
+    margin-bottom: 4px;
+}
+
+.mld-inline-inputs input {
+    width: 100%;
+}
+
+/* ==========================================================================
+   Multi-Step Settings (v6.23.0)
+   ========================================================================== */
+
+.mld-multistep-settings {
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 16px;
+    margin-top: 12px;
+}
+
+.mld-inline-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.mld-inline-buttons > div {
+    flex: 1;
+}
+
+.mld-inline-buttons label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.mld-inline-buttons input {
+    width: 100%;
+}
+
+/* Steps List */
+.mld-steps-list {
+    margin-bottom: 12px;
+}
+
+.mld-step-item {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 8px;
+}
+
+.mld-step-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.mld-step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: #0073aa;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.mld-step-title {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid #dcdcde;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+.mld-step-title:focus {
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+    outline: none;
+}
+
+.mld-step-description {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #dcdcde;
+    border-radius: 3px;
+    font-size: 12px;
+    color: #646970;
+}
+
+.mld-step-description:focus {
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+    outline: none;
+}
+
+.mld-remove-step {
+    background: none;
+    border: none;
+    color: #a00;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+}
+
+.mld-remove-step:hover {
+    color: #dc3232;
+}
+
+.mld-remove-step .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* ==========================================================================
+   Template Library Modal (v6.24.0)
+   ========================================================================== */
+
+.mld-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mld-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.mld-modal-content {
+    position: relative;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 900px;
+    width: 90%;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.mld-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid #dcdcde;
+}
+
+.mld-modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.mld-modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #646970;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.mld-modal-close:hover {
+    color: #1d2327;
+}
+
+.mld-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.mld-template-filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.mld-template-filter {
+    padding: 8px 16px;
+    border: 1px solid #dcdcde;
+    background: #fff;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mld-template-filter:hover {
+    border-color: #0073aa;
+    color: #0073aa;
+}
+
+.mld-template-filter.active {
+    background: #0073aa;
+    border-color: #0073aa;
+    color: #fff;
+}
+
+.mld-template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.mld-template-loading {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 20px;
+    color: #646970;
+}
+
+.mld-template-loading .spinner {
+    float: none;
+    margin: 0 auto 10px;
+}
+
+.mld-template-card {
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    padding: 20px;
+    background: #f6f7f7;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.2s;
+}
+
+.mld-template-card:hover {
+    border-color: #0073aa;
+    box-shadow: 0 4px 12px rgba(0, 115, 170, 0.15);
+}
+
+.mld-template-icon {
+    width: 48px;
+    height: 48px;
+    background: #0073aa;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mld-template-icon .dashicons {
+    color: #fff;
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.mld-template-info {
+    flex: 1;
+}
+
+.mld-template-name {
+    margin: 0 0 6px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.mld-template-description {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: #646970;
+    line-height: 1.5;
+}
+
+.mld-template-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: #8c8f94;
+}
+
+.mld-template-meta span::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    background: #8c8f94;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.mld-template-meta span:first-child::before {
+    display: none;
+}
+
+.mld-template-badges {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.mld-template-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: 10px;
+}
+
+.mld-badge-multistep {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.mld-badge-system {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.mld-use-template {
+    width: 100%;
+    margin-top: auto;
+}
+
+.mld-template-library-btn {
+    display: inline-flex;
+    align-items: center;
+}
+
+/* ==========================================================================
+   File Upload Field Admin (v6.24.0)
+   ========================================================================== */
+
+.mld-file-config {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mld-file-config label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: #646970;
+}
+
+.mld-file-config input,
+.mld-file-config select {
+    padding: 6px 8px;
+    border: 1px solid #dcdcde;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+.mld-allowed-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mld-allowed-types label {
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.mld-allowed-types input[type="checkbox"] {
+    margin: 0;
+}
+
+/* File field preview in builder (v6.24.0) */
+.mld-file-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: #f6f7f7;
+    border: 1px dashed #dcdcde;
+    border-radius: 4px;
+    color: #646970;
+    font-size: 12px;
+}
+
+.mld-file-preview .dashicons {
+    color: #8c8f94;
+    font-size: 18px;
+}
