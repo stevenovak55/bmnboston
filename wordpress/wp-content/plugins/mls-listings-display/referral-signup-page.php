@@ -85,15 +85,6 @@ $has_agent = !empty($agent_data);
         <div class="mld-signup-form-wrapper">
             <form id="mld-signup-form" class="mld-signup-form" method="post">
 
-                <!-- Honeypot field - bots will auto-fill this, humans never see it -->
-                <div style="position: absolute; left: -9999px; opacity: 0; height: 0; overflow: hidden;" aria-hidden="true">
-                    <label for="mld_signup_website">Website</label>
-                    <input type="text" name="mld_signup_website" id="mld_signup_website" value="" autocomplete="off" tabindex="-1">
-                </div>
-
-                <!-- Timestamp for time-based validation -->
-                <input type="hidden" name="mld_form_ts" id="mld_form_ts" value="<?php echo esc_attr(current_time('timestamp')); ?>">
-
                 <div class="mld-signup-form__row mld-signup-form__row--half">
                     <div class="mld-signup-form__field">
                         <label for="signup-first-name" class="mld-signup-form__label">

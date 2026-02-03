@@ -1,0 +1,1252 @@
+/**
+ * Enhanced Filters CSS for MLS Listings Display
+ * Updated to use design system tokens
+ *
+ * @package MLS_Listings_Display
+ * @since 3.0
+ * @version 6.13.15
+ */
+
+/* ================================
+   Filter Container & Layout
+   ================================ */
+
+.mld-enhanced-filters {
+    background: var(--ds-white, #fff);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-lg, 8px);
+    padding: var(--ds-space-5, 20px);
+    margin-bottom: var(--ds-space-5, 20px);
+    box-shadow: var(--ds-shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.mld-filter-tabs {
+    border-bottom: 1px solid var(--ds-border, #e5e7eb);
+    margin-bottom: var(--ds-space-5, 20px);
+}
+
+.mld-filter-tabs .nav-tab {
+    background: var(--ds-surface-subtle, #f9fafb);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-bottom: none;
+    color: var(--ds-text-muted, #6b7280);
+    cursor: pointer;
+    display: inline-block;
+    font-weight: 600;
+    margin-right: var(--ds-space-1, 5px);
+    padding: var(--ds-space-3, 10px) var(--ds-space-5, 20px);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.mld-filter-tabs .nav-tab:hover {
+    background: var(--ds-off-white, #f0f0f0);
+    color: var(--ds-text-primary, #000);
+}
+
+.mld-filter-tabs .nav-tab.nav-tab-active {
+    background: var(--ds-white, #fff);
+    border-bottom: 1px solid var(--ds-white, #fff);
+    color: var(--ds-teal, #0891B2);
+    margin-bottom: -1px;
+}
+
+.mld-filter-tab-content {
+    display: none;
+    padding: var(--ds-space-5, 20px) 0;
+}
+
+.mld-filter-tab-content.active {
+    display: block;
+}
+
+/* ================================
+   Filter Sections
+   ================================ */
+
+.mld-filter-section {
+    background: var(--ds-surface-subtle, #f9fafb);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-md, 6px);
+    margin-bottom: var(--ds-space-5, 20px);
+    transition: all 0.3s ease;
+}
+
+.mld-filter-section-header {
+    align-items: center;
+    background: linear-gradient(135deg, var(--ds-teal, #0891B2) 0%, var(--ds-teal-hover, #0E7490) 100%);
+    color: var(--ds-white, white);
+    cursor: pointer;
+    display: flex;
+    font-weight: 600;
+    justify-content: space-between;
+    padding: var(--ds-space-4, 15px) var(--ds-space-5, 20px);
+    user-select: none;
+}
+
+.mld-filter-section-header:hover {
+    background: linear-gradient(135deg, var(--ds-teal-hover, #0E7490) 0%, var(--ds-teal, #0891B2) 100%);
+}
+
+.mld-filter-section-toggle {
+    background: none;
+    border: none;
+    color: var(--ds-white, white);
+    font-size: var(--ds-text-lg, 18px);
+    font-weight: bold;
+    padding: 0;
+    width: 20px;
+}
+
+.mld-filter-section-content {
+    max-height: 500px;
+    overflow: hidden;
+    padding: var(--ds-space-5, 20px);
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.mld-filter-section.collapsed .mld-filter-section-content {
+    max-height: 0;
+    padding: 0 var(--ds-space-5, 20px);
+}
+
+/* ================================
+   Form Elements
+   ================================ */
+
+.mld-filter-form {
+    display: grid;
+    gap: var(--ds-space-5, 20px);
+}
+
+.mld-filter-row {
+    display: grid;
+    gap: var(--ds-space-4, 15px);
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.mld-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-space-2, 8px);
+}
+
+.mld-filter-label {
+    color: var(--ds-text-primary, #000);
+    font-size: var(--ds-text-sm, 14px);
+    font-weight: 600;
+    margin-bottom: var(--ds-space-1, 5px);
+}
+
+.mld-filter-input,
+.mld-filter-select,
+.mld-filter-textarea {
+    background: var(--ds-white, #fff);
+    border: 2px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-md, 6px);
+    font-size: var(--ds-text-sm, 14px);
+    padding: var(--ds-space-3, 10px) var(--ds-space-3, 12px);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;
+}
+
+.mld-filter-input:focus,
+.mld-filter-select:focus,
+.mld-filter-textarea:focus {
+    border-color: var(--ds-teal, #0891B2);
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+    outline: none;
+}
+
+/* ================================
+   Range Sliders
+   ================================ */
+
+.mld-range-container {
+    margin-bottom: var(--ds-space-4, 15px);
+}
+
+.mld-range-inputs {
+    display: grid;
+    gap: var(--ds-space-3, 10px);
+    grid-template-columns: 1fr auto 1fr;
+    margin-bottom: var(--ds-space-4, 15px);
+}
+
+.mld-range-inputs .mld-range-separator {
+    align-items: center;
+    display: flex;
+    font-weight: bold;
+    justify-content: center;
+}
+
+.mld-range-min,
+.mld-range-max {
+    text-align: center;
+}
+
+.mld-range-slider {
+    height: 40px;
+    margin: var(--ds-space-4, 15px) 0;
+}
+
+.mld-range-display {
+    background: var(--ds-off-white, #f0f0f0);
+    border-radius: var(--ds-radius-md, 6px);
+    color: var(--ds-text-muted, #6b7280);
+    font-size: var(--ds-text-sm, 13px);
+    font-weight: 600;
+    padding: var(--ds-space-2, 8px) var(--ds-space-3, 12px);
+    text-align: center;
+}
+
+/* noUiSlider customization - Teal theme */
+.noUi-target {
+    background: var(--ds-border, #e5e7eb);
+    border: none;
+    border-radius: var(--ds-radius-full, 9999px);
+    box-shadow: none;
+}
+
+.noUi-connect {
+    background: linear-gradient(90deg, var(--ds-teal, #0891B2), var(--ds-teal-hover, #0E7490));
+}
+
+.noUi-handle {
+    background: var(--ds-white, #fff);
+    border: 3px solid var(--ds-teal, #0891B2);
+    border-radius: 50%;
+    box-shadow: var(--ds-shadow-sm, 0 2px 6px rgba(0, 0, 0, 0.2));
+    height: 20px;
+    width: 20px;
+}
+
+.noUi-handle:before,
+.noUi-handle:after {
+    display: none;
+}
+
+.noUi-tooltip {
+    background: var(--ds-dark-gray, #1f2937);
+    border: none;
+    border-radius: var(--ds-radius-md, 6px);
+    color: var(--ds-white, white);
+    font-size: var(--ds-text-xs, 12px);
+    padding: 4px 8px;
+}
+
+/* ================================
+   Checkboxes and Multi-select
+   ================================ */
+
+.mld-checkbox-group {
+    display: grid;
+    gap: var(--ds-space-3, 10px);
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.mld-checkbox-item {
+    align-items: center;
+    display: flex;
+    gap: var(--ds-space-2, 8px);
+}
+
+.mld-checkbox-item input[type="checkbox"] {
+    accent-color: var(--ds-teal, #0891B2);
+    height: 16px;
+    width: 16px;
+}
+
+.mld-checkbox-item label {
+    cursor: pointer;
+    font-size: var(--ds-text-sm, 14px);
+    user-select: none;
+}
+
+/* ================================
+   Map Container
+   ================================ */
+
+.mld-map-container {
+    background: var(--ds-off-white, #f0f0f0);
+    border: 2px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-lg, 8px);
+    height: 400px;
+    margin: var(--ds-space-4, 15px) 0;
+    position: relative;
+}
+
+.mld-map-controls {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: var(--ds-radius-md, 6px);
+    box-shadow: var(--ds-shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.1));
+    padding: var(--ds-space-3, 10px);
+    position: absolute;
+    right: var(--ds-space-3, 10px);
+    top: var(--ds-space-3, 10px);
+    z-index: 1000;
+}
+
+.mld-drawing-control {
+    background: var(--ds-teal, #0891B2);
+    border: none;
+    border-radius: var(--ds-radius-md, 6px);
+    color: var(--ds-white, white);
+    cursor: pointer;
+    font-size: var(--ds-text-xs, 12px);
+    margin: 2px;
+    padding: var(--ds-space-2, 6px) var(--ds-space-3, 10px);
+    transition: background-color 0.3s ease;
+}
+
+.mld-drawing-control:hover {
+    background: var(--ds-teal-hover, #0E7490);
+}
+
+.mld-drawing-control.active {
+    background: var(--ds-teal-hover, #0E7490);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.mld-clear-drawings {
+    background: var(--ds-red, #DC2626);
+    border: none;
+    border-radius: var(--ds-radius-md, 6px);
+    color: var(--ds-white, white);
+    cursor: pointer;
+    font-size: var(--ds-text-xs, 12px);
+    margin-top: var(--ds-space-1, 5px);
+    padding: var(--ds-space-2, 6px) var(--ds-space-3, 10px);
+    width: 100%;
+}
+
+.mld-clear-drawings:hover {
+    background: #B91C1C;
+}
+
+.mld-map-notice {
+    align-items: center;
+    color: var(--ds-text-muted, #6b7280);
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    text-align: center;
+}
+
+/* ================================
+   Exclusion Fields
+   ================================ */
+
+.mld-exclusion-container {
+    background: rgba(220, 38, 38, 0.05);
+    border: 1px solid rgba(220, 38, 38, 0.2);
+    border-radius: var(--ds-radius-md, 6px);
+    padding: var(--ds-space-4, 15px);
+}
+
+.mld-keyword-exclusions,
+.mld-address-exclusions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-space-3, 10px);
+}
+
+.mld-keyword-item,
+.mld-address-item {
+    align-items: center;
+    display: flex;
+    gap: var(--ds-space-3, 10px);
+}
+
+.mld-keyword-input,
+.mld-address-input {
+    flex: 1;
+}
+
+.mld-remove-keyword,
+.mld-remove-address {
+    background: var(--ds-red, #DC2626);
+    border: none;
+    border-radius: 50%;
+    color: var(--ds-white, white);
+    cursor: pointer;
+    font-size: var(--ds-text-sm, 14px);
+    height: 30px;
+    line-height: 1;
+    width: 30px;
+}
+
+.mld-remove-keyword:hover,
+.mld-remove-address:hover {
+    background: #B91C1C;
+}
+
+.mld-add-keyword,
+.mld-add-address {
+    background: var(--ds-teal, #0891B2);
+    border: none;
+    border-radius: var(--ds-radius-md, 6px);
+    color: var(--ds-white, white);
+    cursor: pointer;
+    font-size: var(--ds-text-sm, 13px);
+    margin-top: var(--ds-space-3, 10px);
+    padding: var(--ds-space-2, 8px) var(--ds-space-4, 15px);
+}
+
+.mld-add-keyword:hover,
+.mld-add-address:hover {
+    background: var(--ds-teal-hover, #0E7490);
+}
+
+/* ================================
+   Filter Presets
+   ================================ */
+
+.mld-filter-presets {
+    background: var(--ds-surface-subtle, #f9fafb);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-md, 6px);
+    margin-bottom: var(--ds-space-5, 20px);
+    padding: var(--ds-space-4, 15px);
+}
+
+.mld-preset-cards {
+    display: grid;
+    gap: var(--ds-space-4, 15px);
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    margin-top: var(--ds-space-4, 15px);
+}
+
+.mld-preset-card {
+    background: var(--ds-white, white);
+    border: 2px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-md, 6px);
+    cursor: pointer;
+    padding: var(--ds-space-4, 15px);
+    transition: all 0.3s ease;
+}
+
+.mld-preset-card:hover {
+    border-color: var(--ds-teal, #0891B2);
+    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.1);
+    transform: translateY(-2px);
+}
+
+.mld-preset-card.selected {
+    background: rgba(8, 145, 178, 0.05);
+    border-color: var(--ds-teal, #0891B2);
+}
+
+.mld-preset-name {
+    color: var(--ds-text-primary, #000);
+    font-size: var(--ds-text-base, 16px);
+    font-weight: 600;
+    margin-bottom: var(--ds-space-1, 5px);
+}
+
+.mld-preset-description {
+    color: var(--ds-text-muted, #6b7280);
+    font-size: var(--ds-text-sm, 13px);
+    line-height: 1.4;
+}
+
+.mld-filter-preset-select {
+    width: 100%;
+}
+
+/* ================================
+   Filter Summary & Count
+   ================================ */
+
+.mld-filter-summary {
+    background: rgba(8, 145, 178, 0.1);
+    border: 1px solid rgba(8, 145, 178, 0.3);
+    border-radius: var(--ds-radius-md, 6px);
+    color: var(--ds-teal-hover, #0E7490);
+    display: none;
+    font-size: var(--ds-text-sm, 13px);
+    margin-bottom: var(--ds-space-4, 15px);
+    padding: var(--ds-space-3, 10px) var(--ds-space-4, 15px);
+}
+
+.mld-filter-count {
+    background: var(--ds-success, #10b981);
+    border-radius: var(--ds-radius-md, 6px);
+    color: var(--ds-white, white);
+    display: inline-block;
+    font-size: var(--ds-text-sm, 14px);
+    font-weight: 600;
+    padding: var(--ds-space-2, 8px) var(--ds-space-4, 15px);
+}
+
+/* ================================
+   Action Buttons
+   ================================ */
+
+.mld-filter-actions {
+    border-top: 1px solid var(--ds-border, #e5e7eb);
+    display: flex;
+    gap: var(--ds-space-3, 10px);
+    justify-content: space-between;
+    margin-top: var(--ds-space-5, 20px);
+    padding-top: var(--ds-space-5, 20px);
+}
+
+.mld-filter-actions .button-group {
+    display: flex;
+    gap: var(--ds-space-3, 10px);
+}
+
+.mld-apply-filters {
+    background: linear-gradient(135deg, var(--ds-teal, #0891B2) 0%, var(--ds-teal-hover, #0E7490) 100%);
+    border: none;
+    border-radius: var(--ds-radius-md, 6px);
+    color: var(--ds-white, white);
+    cursor: pointer;
+    font-size: var(--ds-text-base, 16px);
+    font-weight: 600;
+    padding: var(--ds-space-3, 12px) var(--ds-space-6, 25px);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+}
+
+.mld-apply-filters:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.4);
+}
+
+.mld-clear-filters {
+    background: var(--ds-text-muted, #6b7280);
+    border: none;
+    border-radius: var(--ds-radius-md, 6px);
+    color: var(--ds-white, white);
+    cursor: pointer;
+    font-size: var(--ds-text-sm, 14px);
+    padding: var(--ds-space-3, 10px) var(--ds-space-5, 20px);
+}
+
+.mld-clear-filters:hover {
+    background: var(--ds-text-secondary, #374151);
+}
+
+.mld-save-preset {
+    background: var(--ds-success, #10b981);
+    border: none;
+    border-radius: var(--ds-radius-md, 6px);
+    color: var(--ds-white, white);
+    cursor: pointer;
+    font-size: var(--ds-text-sm, 14px);
+    padding: var(--ds-space-3, 10px) var(--ds-space-5, 20px);
+}
+
+.mld-save-preset:hover {
+    background: #059669;
+}
+
+.mld-toggle-advanced {
+    background: none;
+    border: 1px solid var(--ds-teal, #0891B2);
+    border-radius: var(--ds-radius-md, 6px);
+    color: var(--ds-teal, #0891B2);
+    cursor: pointer;
+    font-size: var(--ds-text-sm, 14px);
+    padding: var(--ds-space-3, 10px) var(--ds-space-5, 20px);
+}
+
+.mld-toggle-advanced:hover {
+    background: var(--ds-teal, #0891B2);
+    color: var(--ds-white, white);
+}
+
+/* ================================
+   Advanced Filters
+   ================================ */
+
+.mld-advanced-filters {
+    border-top: 2px solid var(--ds-border, #e5e7eb);
+    margin-top: var(--ds-space-5, 20px);
+    padding-top: var(--ds-space-5, 20px);
+    transition: all 0.3s ease;
+}
+
+.mld-advanced-filters.hidden {
+    display: none;
+}
+
+/* ================================
+   Modal Styles
+   ================================ */
+
+.mld-modal-overlay {
+    align-items: center;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 999999;
+}
+
+.mld-modal {
+    background: var(--ds-white, white);
+    border-radius: var(--ds-radius-lg, 8px);
+    box-shadow: var(--ds-shadow-xl, 0 10px 30px rgba(0, 0, 0, 0.3));
+    max-height: 90vh;
+    max-width: 500px;
+    overflow: hidden;
+    width: 90%;
+}
+
+.mld-modal-header {
+    align-items: center;
+    background: linear-gradient(135deg, var(--ds-dark-gray, #1f2937) 0%, var(--ds-black, #000000) 100%);
+    color: var(--ds-white, white);
+    display: flex;
+    justify-content: space-between;
+    padding: var(--ds-space-4, 15px) var(--ds-space-5, 20px);
+}
+
+.mld-modal-header h3 {
+    margin: 0;
+}
+
+.mld-modal-close {
+    background: none;
+    border: none;
+    color: var(--ds-white, white);
+    cursor: pointer;
+    font-size: var(--ds-text-2xl, 24px);
+    line-height: 1;
+    padding: 0;
+}
+
+.mld-modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: var(--ds-space-5, 20px);
+}
+
+.mld-modal-footer {
+    border-top: 1px solid var(--ds-border, #e5e7eb);
+    display: flex;
+    gap: var(--ds-space-3, 10px);
+    justify-content: flex-end;
+    padding: var(--ds-space-4, 15px) var(--ds-space-5, 20px);
+}
+
+/* ================================
+   Autocomplete Styles
+   ================================ */
+
+.ui-autocomplete {
+    background: var(--ds-white, white);
+    border: 1px solid var(--ds-border, #e5e7eb);
+    border-radius: var(--ds-radius-md, 6px);
+    box-shadow: var(--ds-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.ui-menu-item {
+    border-bottom: 1px solid var(--ds-border-light, #f0f0f0);
+    padding: 0;
+}
+
+.ui-menu-item:last-child {
+    border-bottom: none;
+}
+
+.ui-menu-item-wrapper {
+    cursor: pointer;
+    padding: var(--ds-space-3, 10px) var(--ds-space-4, 15px);
+    transition: background-color 0.2s ease;
+}
+
+.ui-menu-item-wrapper:hover,
+.ui-menu-item-wrapper.ui-state-active {
+    background: rgba(8, 145, 178, 0.1);
+    color: var(--ds-teal, #0891B2);
+}
+
+/* ================================
+   Messages & Notifications
+   ================================ */
+
+.mld-filter-message {
+    margin-bottom: var(--ds-space-5, 20px);
+}
+
+.mld-filter-message .notice {
+    border-left: 4px solid var(--ds-teal, #0891B2);
+    margin: 0;
+    padding: var(--ds-space-3, 12px) var(--ds-space-4, 15px);
+}
+
+.mld-filter-message .notice-success {
+    background: rgba(16, 185, 129, 0.1);
+    border-left-color: var(--ds-success, #10b981);
+    color: #065f46;
+}
+
+.mld-filter-message .notice-error {
+    background: rgba(220, 38, 38, 0.1);
+    border-left-color: var(--ds-red, #DC2626);
+    color: #991b1b;
+}
+
+/* ================================
+   Responsive Design
+   ================================ */
+
+@media (max-width: 768px) {
+    .mld-enhanced-filters {
+        padding: var(--ds-space-4, 15px);
+    }
+
+    .mld-filter-tabs .nav-tab {
+        font-size: var(--ds-text-sm, 13px);
+        padding: var(--ds-space-2, 8px) var(--ds-space-4, 15px);
+    }
+
+    .mld-filter-row {
+        grid-template-columns: 1fr;
+    }
+
+    .mld-range-inputs {
+        grid-template-columns: 1fr;
+        gap: var(--ds-space-1, 5px);
+    }
+
+    .mld-range-inputs .mld-range-separator {
+        display: none;
+    }
+
+    .mld-checkbox-group {
+        grid-template-columns: 1fr;
+        max-height: 150px;
+    }
+
+    .mld-preset-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .mld-filter-actions {
+        flex-direction: column;
+    }
+
+    .mld-filter-actions .button-group {
+        justify-content: center;
+    }
+
+    .mld-map-container {
+        height: 250px;
+    }
+
+    .mld-modal {
+        margin: var(--ds-space-5, 20px);
+        width: calc(100% - 40px);
+    }
+}
+
+@media (max-width: 480px) {
+    .mld-enhanced-filters {
+        padding: var(--ds-space-3, 10px);
+    }
+
+    .mld-filter-section-content {
+        padding: var(--ds-space-4, 15px);
+    }
+
+    .mld-filter-tabs .nav-tab {
+        display: block;
+        margin-bottom: var(--ds-space-1, 5px);
+        margin-right: 0;
+        text-align: center;
+        width: 100%;
+    }
+
+    .mld-apply-filters,
+    .mld-clear-filters,
+    .mld-save-preset,
+    .mld-toggle-advanced {
+        width: 100%;
+    }
+
+    .mld-keyword-item,
+    .mld-address-item {
+        flex-direction: column;
+        gap: var(--ds-space-1, 5px);
+    }
+
+    .mld-remove-keyword,
+    .mld-remove-address {
+        align-self: flex-end;
+    }
+}
+
+/* ================================
+   Loading States
+   ================================ */
+
+.mld-filter-loading {
+    align-items: center;
+    display: flex;
+    gap: var(--ds-space-3, 10px);
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.mld-filter-loading::before {
+    animation: spin 1s linear infinite;
+    border: 2px solid var(--ds-border, #e5e7eb);
+    border-left-color: var(--ds-teal, #0891B2);
+    border-radius: 50%;
+    content: '';
+    height: 16px;
+    width: 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ================================
+   Accessibility
+   ================================ */
+
+.mld-enhanced-filters *:focus {
+    outline: 2px solid var(--ds-teal, #0891B2);
+    outline-offset: 2px;
+}
+
+.mld-enhanced-filters button:focus,
+.mld-enhanced-filters input:focus,
+.mld-enhanced-filters select:focus,
+.mld-enhanced-filters textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.3);
+}
+
+/* Screen reader only text */
+.sr-only {
+    border: 0;
+    clip: rect(1px, 1px, 1px, 1px);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .mld-enhanced-filters {
+        border: 2px solid;
+    }
+
+    .mld-filter-input:focus,
+    .mld-filter-select:focus,
+    .mld-filter-textarea:focus {
+        border: 3px solid;
+    }
+
+    .noUi-connect {
+        background: currentColor;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ================================
+   Dark Mode Support - DISABLED v6.13.15
+   Light theme enforced regardless of device settings
+   ================================ */
+/* Dark mode overrides intentionally removed */
+
+/* ================================
+   School Quality Filters (v6.30.3)
+   iOS-matching toggle design
+   ================================ */
+
+#bme-school-quality-group .bme-section-icon {
+    vertical-align: middle;
+    margin-right: 6px;
+    opacity: 0.7;
+}
+
+#bme-school-quality-group .bme-filter-header label {
+    display: flex;
+    align-items: center;
+}
+
+.bme-school-description {
+    font-size: 13px;
+    color: #666;
+    margin: 0 0 16px 0;
+    padding: 0;
+    line-height: 1.4;
+}
+
+/* v6.30.6 - Improved school filter section styling */
+.bme-school-level-section {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.bme-school-level-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #22c55e;
+    margin-bottom: 14px;
+}
+
+.bme-school-level-header svg {
+    fill: #22c55e;
+    flex-shrink: 0;
+}
+
+.bme-school-divider {
+    height: 1px;
+    background-color: #e5e7eb;
+    margin: 20px 0;
+}
+
+/* v6.30.9 - Robust school toggle styling */
+.bme-school-toggles {
+    display: block !important;
+}
+
+/* Each toggle row on its own line */
+.bme-school-toggles .bme-toggle-switch {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 12px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.bme-school-toggles .bme-toggle-switch:last-child {
+    margin-bottom: 0;
+}
+
+/* Hide the actual checkbox */
+.bme-toggle-switch input[type="checkbox"] {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+/* iOS-style toggle slider */
+.bme-toggle-slider {
+    position: relative;
+    display: inline-block;
+    width: 51px;
+    min-width: 51px;
+    height: 31px;
+    background-color: #e5e7eb;
+    border-radius: 31px;
+    transition: background-color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.bme-toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 27px;
+    height: 27px;
+    left: 2px;
+    top: 2px;
+    background-color: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease;
+}
+
+.bme-toggle-switch input:checked + .bme-toggle-slider {
+    background-color: #22c55e;
+}
+
+.bme-toggle-switch input:checked + .bme-toggle-slider::before {
+    transform: translateX(20px);
+}
+
+.bme-toggle-switch input:focus + .bme-toggle-slider {
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3);
+}
+
+/* Toggle label - stays on same line as toggle */
+.bme-toggle-label {
+    display: inline;
+    font-size: 14px;
+    color: #333;
+    line-height: 1.4;
+    flex: 1;
+    min-width: 0;
+}
+
+/* School filter chips */
+.bme-filter-tag.school-filter {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+}
+
+/* v6.30.6 - District Rating Picker (iOS-style segmented control) */
+.bme-district-rating-section {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.bme-district-rating-picker {
+    display: flex;
+    gap: 0;
+    background: #e5e7eb;
+    border-radius: 8px;
+    padding: 4px;
+    margin-top: 10px;
+}
+
+.bme-district-grade-btn {
+    flex: 1;
+    padding: 10px 6px;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    text-align: center;
+    min-width: 0;
+}
+
+.bme-district-grade-btn:hover {
+    color: #333;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.bme-district-grade-btn.active {
+    background: white;
+    color: #22c55e;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* Mobile adjustments for school filters */
+@media screen and (max-width: 768px) {
+    .bme-school-level-header {
+        font-size: 13px;
+    }
+
+    .bme-toggle-slider {
+        width: 44px;
+        height: 26px;
+    }
+
+    .bme-toggle-slider::before {
+        width: 22px;
+        height: 22px;
+    }
+
+    .bme-toggle-switch input:checked + .bme-toggle-slider::before {
+        transform: translateX(18px);
+    }
+
+    .bme-toggle-label {
+        font-size: 13px;
+        margin-left: 10px;
+    }
+}
+
+/* ================================
+   Quick Filter Presets (v6.58.0)
+   Horizontal chip buttons matching iOS app
+   ================================ */
+
+.mld-quick-filter-presets {
+    display: flex;
+    gap: 8px;
+    padding: 12px 0;
+    margin: 0 0 16px 0;
+    background: transparent;
+    border-bottom: 1px solid var(--ds-border, #e5e7eb);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+.mld-quick-filter-presets::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.mld-quick-preset-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--ds-white, #ffffff);
+    border: 1.5px solid var(--ds-border, #e5e7eb);
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ds-text-secondary, #4b5563);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.mld-quick-preset-chip:hover {
+    background: var(--ds-surface-subtle, #f3f4f6);
+    border-color: var(--ds-teal, #0891b2);
+    color: var(--ds-teal, #0891b2);
+}
+
+.mld-quick-preset-chip:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.2);
+}
+
+.mld-quick-preset-chip.active {
+    background: var(--ds-teal, #0891b2);
+    border-color: var(--ds-teal, #0891b2);
+    color: var(--ds-white, #ffffff);
+}
+
+.mld-quick-preset-chip.active:hover {
+    background: var(--ds-teal-hover, #0e7490);
+    border-color: var(--ds-teal-hover, #0e7490);
+    color: var(--ds-white, #ffffff);
+}
+
+.mld-preset-icon {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.mld-preset-label {
+    line-height: 1.2;
+}
+
+/* Mobile-specific adjustments */
+@media screen and (max-width: 768px) {
+    .mld-quick-filter-presets {
+        padding: 6px 10px;
+        gap: 6px;
+    }
+
+    .mld-quick-preset-chip {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .mld-preset-icon {
+        font-size: 12px;
+    }
+}
+
+/* ================================
+   Listing Type Toggle (v6.59.0)
+   iOS-matching pill button design
+   ================================ */
+
+#mld-listing-type-group {
+    margin-bottom: 16px;
+}
+
+#mld-listing-type-group > label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ds-text-primary, #1f2937);
+    margin-bottom: 8px;
+}
+
+.mld-listing-type-toggle {
+    display: flex;
+    gap: 0;
+    background: var(--ds-surface-subtle, #f3f4f6);
+    border-radius: 12px;
+    padding: 4px;
+    width: 100%;
+    max-width: 280px;
+}
+
+.mld-listing-type-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ds-text-secondary, #4b5563);
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.mld-listing-type-btn:hover:not(.active) {
+    color: var(--ds-text-primary, #1f2937);
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.mld-listing-type-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.2);
+}
+
+.mld-listing-type-btn.active {
+    background: var(--ds-teal, #0891b2);
+    color: var(--ds-white, #ffffff);
+    box-shadow: 0 2px 4px rgba(8, 145, 178, 0.25);
+}
+
+.mld-listing-type-btn.active:hover {
+    background: var(--ds-teal-hover, #0e7490);
+}
+
+/* Mobile adjustments */
+@media screen and (max-width: 768px) {
+    .mld-listing-type-toggle {
+        max-width: 100%;
+    }
+
+    .mld-listing-type-btn {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+}

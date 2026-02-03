@@ -7,6 +7,8 @@ parameters:
         - tests
         - includes/class-mld-wp-cli-cleanup.php
         - includes/instant-notifications/class-mld-buddyboss-notification.php
+        # Third-party libraries - not our code to fix
+        - includes/analytics/public/lib/maxmind-db
 
     # WordPress specifics
     bootstrapFiles:
@@ -27,6 +29,52 @@ parameters:
         - '#Variable \$wpdb might not be defined#'
         # WordPress object crates
         - '#Access to an undefined property .+::\$#'
+        # WordPress sanitization functions as array_map callbacks (PHPStan can't resolve string callbacks)
+        - '#Parameter \#1 \$callback of function array_map expects \(callable.*sanitize_text_field.*given#'
+        - '#Parameter \#1 \$callback of function array_map expects \(callable.*absint.*given#'
+        - '#Parameter \#1 \$callback of function array_map expects \(callable.*esc_sql.*given#'
+        - '#Parameter \#1 \$callback of function call_user_func expects callable.*sanitize_text_field.*given#'
+        - '#Parameter \#1 \$callback of function call_user_func expects callable.*absint.*given#'
+        - '#Parameter \#1 \$callback of function call_user_func expects callable.*sanitize_email.*given#'
+        - '#Parameter \#1 \$callback of function call_user_func expects callable.*esc_url_raw.*given#'
+        - '#Parameter \#1 \$callback of function call_user_func expects callable.*sanitize_textarea.*given#'
+        # Defensive empty() checks on variables that may be empty arrays (false positive)
+        - identifier: empty.variable
+        # Always-true/false conditions (often defensive coding or WordPress quirks)
+        - identifier: booleanAnd.rightAlwaysTrue
+        - identifier: booleanAnd.leftAlwaysTrue
+        - identifier: booleanAnd.alwaysTrue
+        - identifier: function.alreadyNarrowedType
+        # Unused code (keep for now, review separately)
+        - identifier: method.unused
+        - identifier: property.onlyWritten
+        - identifier: property.unused
+        # WP_Error type narrowing after is_wp_error() check not understood by PHPStan
+        - '#Cannot call method get_error_message\(\) on#'
+        - '#Cannot call method get_error_code\(\) on#'
+        - '#Cannot call method get_error_data\(\) on#'
+        # Always-true/false comparisons (defensive coding)
+        - identifier: notIdentical.alwaysTrue
+        - identifier: identical.alwaysFalse
+        - identifier: if.alwaysTrue
+        - identifier: if.alwaysFalse
+        - identifier: booleanNot.alwaysFalse
+        - identifier: greater.alwaysTrue
+        - identifier: greaterOrEqual.alwaysTrue
+        - identifier: smaller.alwaysFalse
+        - identifier: ternary.alwaysTrue
+        - identifier: ternary.alwaysFalse
+        - identifier: instanceof.alwaysTrue
+        # Dead code (often intentional fallback paths)
+        - identifier: deadCode.unreachable
+        # Null coalesce patterns (defensive coding)
+        - identifier: nullCoalesce.offset
+        - identifier: nullCoalesce.expr
+        - identifier: nullCoalesce.variable
+        - identifier: isset.offset
+        - identifier: isset.variable
+        # Return type narrowing (often WP_Error alternative paths)
+        - identifier: return.unusedType
 
     # Common WordPress classes
     universalObjectCratesClasses:

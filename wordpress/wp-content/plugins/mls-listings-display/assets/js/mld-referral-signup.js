@@ -52,6 +52,18 @@
             $submitText.hide();
             $submitLoading.show();
 
+            // Bot protection: Check honeypot (should be empty)
+            var honeypotValue = $form.find('input[name="mld_signup_website"]').val();
+            if (honeypotValue && honeypotValue.length > 0) {
+                // Bot detected - show fake success and do nothing
+                $submitLoading.html('<svg class="mld-spinner" viewBox="0 0 24 24" style="color: #059669;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"></circle></svg> ' + (config.strings?.success || 'Account created! Redirecting...'));
+                setTimeout(function() {
+                    // Just reload page - no actual registration
+                    window.location.reload();
+                }, 2000);
+                return;
+            }
+
             // Collect form data
             var formData = {
                 action: 'mld_referral_register',
@@ -61,7 +73,9 @@
                 first_name: $('#signup-first-name').val(),
                 last_name: $('#signup-last-name').val(),
                 phone: $('#signup-phone').val(),
-                referral_code: $form.find('input[name="referral_code"]').val()
+                referral_code: $form.find('input[name="referral_code"]').val(),
+                mld_signup_website: honeypotValue,
+                mld_form_ts: $form.find('input[name="mld_form_ts"]').val()
             };
 
             // Submit registration

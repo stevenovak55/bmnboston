@@ -160,7 +160,7 @@ class MapService {
         return [
             'total_listings' => count($listings),
             'average_price' => $count > 0 ? array_sum($prices) / $count : 0,
-            'median_price' => $count > 0 ? $prices[floor($count / 2)] : 0,
+            'median_price' => $count > 0 ? $prices[(int) floor($count / 2)] : 0,
             'min_price' => $count > 0 ? min($prices) : 0,
             'max_price' => $count > 0 ? max($prices) : 0,
             'property_types' => $propertyTypes,
@@ -305,8 +305,8 @@ class MapService {
         $count = count($prices);
 
         return [
-            'low' => $prices[floor($count * 0.33)],
-            'medium' => $prices[floor($count * 0.66)],
+            'low' => $prices[(int) floor($count * 0.33)],
+            'medium' => $prices[(int) floor($count * 0.66)],
             'high' => $prices[$count - 1]
         ];
     }

@@ -202,7 +202,7 @@ class QueryService {
 
         sort($prices);
         $count = count($prices);
-        $median = $count > 0 ? $prices[floor($count / 2)] : 0;
+        $median = $count > 0 ? $prices[(int) floor($count / 2)] : 0;
 
         return [
             'count' => $count,

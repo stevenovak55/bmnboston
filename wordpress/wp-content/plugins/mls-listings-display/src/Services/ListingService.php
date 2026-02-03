@@ -281,7 +281,7 @@ class ListingService {
 
         return [
             'average_price' => $count > 0 ? array_sum($prices) / $count : 0,
-            'median_price' => $count > 0 ? $prices[floor($count / 2)] : 0,
+            'median_price' => $count > 0 ? $prices[(int) floor($count / 2)] : 0,
             'sample_size' => $count,
             'price_percentile' => $this->calculatePricePercentile($listing['ListPrice'], $prices)
         ];

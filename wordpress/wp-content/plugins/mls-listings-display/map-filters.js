@@ -981,15 +981,6 @@ const MLD_Filters = {
     for (const key in tempCombined) {
       if (excludeKeys.includes(key)) continue;
 
-      // Skip price_min/price_max if user didn't explicitly modify them (auto-populated values)
-      if (key === 'price_min' || key === 'price_max') {
-        const inputId = key === 'price_min' ? 'bme-filter-price-min' : 'bme-filter-price-max';
-        const $input = jQuery('#' + inputId);
-        if ($input.length && !$input.data('user-modified')) {
-          continue; // Skip auto-populated price values
-        }
-      }
-
       const value = tempCombined[key];
       const defaultValue = this.getModalDefaults()[key];
 
