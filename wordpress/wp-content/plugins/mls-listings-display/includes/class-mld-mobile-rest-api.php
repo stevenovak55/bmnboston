@@ -6966,12 +6966,15 @@ class MLD_Mobile_REST_API {
                 }
             }
 
-            // Calculate days on market (from list date to close date)
-            if (!empty($comp->close_date) && !empty($comp->list_date)) {
-                $list_ts = strtotime($comp->list_date);
+            // Get days on market - prefer the stored value, fallback to calculation
+            if (!empty($comp->days_on_market) && $comp->days_on_market > 0) {
+                $dom_values[] = (int) $comp->days_on_market;
+            } elseif (!empty($comp->close_date) && !empty($comp->listing_contract_date)) {
+                // Fallback: calculate from listing_contract_date to close_date
+                $list_ts = strtotime($comp->listing_contract_date);
                 $close_ts = strtotime($comp->close_date);
                 if ($list_ts && $close_ts && $close_ts > $list_ts) {
-                    $dom_values[] = ($close_ts - $list_ts) / 86400; // days
+                    $dom_values[] = (int) (($close_ts - $list_ts) / 86400);
                 }
             }
         }
@@ -7049,13 +7052,15 @@ class MLD_Mobile_REST_API {
                 $unparsed_address .= ' #' . $comp->unit_number;
             }
 
-            // Calculate DOM for this comparable
+            // Get DOM for this comparable - prefer stored value, fallback to calculation
             $dom = 0;
-            if (!empty($comp->close_date) && !empty($comp->list_date)) {
-                $list_ts = strtotime($comp->list_date);
+            if (!empty($comp->days_on_market) && $comp->days_on_market > 0) {
+                $dom = (int) $comp->days_on_market;
+            } elseif (!empty($comp->close_date) && !empty($comp->listing_contract_date)) {
+                $list_ts = strtotime($comp->listing_contract_date);
                 $close_ts = strtotime($comp->close_date);
                 if ($list_ts && $close_ts && $close_ts > $list_ts) {
-                    $dom = round(($close_ts - $list_ts) / 86400);
+                    $dom = (int) (($close_ts - $list_ts) / 86400);
                 }
             }
 
