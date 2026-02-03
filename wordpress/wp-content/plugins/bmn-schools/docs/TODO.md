@@ -1,35 +1,37 @@
 # BMN Schools - TODO
 
-**Last Updated:** 2026-01-21
+## Current Sprint: Phase 1 - Foundation
 
-## Status: Phase 1 Complete
+### In Progress
+- [ ] Create all core class files
+  - Status: Main plugin file created, working on includes/
+  - Blocker: None
 
-Phase 1 (Foundation) is **fully implemented** and deployed (v0.6.39).
+### Up Next
+- [ ] Test plugin activation on production server
+- [ ] Verify all 10 tables are created correctly
+- [ ] Implement basic `/schools` endpoint
+- [ ] Create admin dashboard UI
 
-### Completed Features
+### Phase 1 Checklist
 - [x] Plugin directory structure
 - [x] Main plugin file (bmn-schools.php)
 - [x] version.json
-- [x] CLAUDE.md redirect
+- [x] CLAUDE.md
 - [x] Documentation structure (docs/)
-- [x] class-bmn-schools.php (singleton)
-- [x] class-database-manager.php (10 tables)
-- [x] class-activator.php
-- [x] class-deactivator.php
-- [x] class-logger.php
-- [x] class-rest-api.php (161K lines - comprehensive API)
-- [x] class-cache-manager.php
-- [x] class-geocoder.php
-- [x] class-integration.php (MLD plugin integration)
-- [x] class-ranking-calculator.php (77K lines - MCAS scoring)
-- [x] class-school-pages.php (district/school detail pages)
-- [x] Admin dashboard
-- [x] Data providers (NCES, DESE, etc.)
-- [x] Tests
+- [ ] class-bmn-schools.php (singleton)
+- [ ] class-database-manager.php (10 tables)
+- [ ] class-activator.php
+- [ ] class-deactivator.php
+- [ ] class-logger.php
+- [ ] class-rest-api.php
+- [ ] class-admin.php
+- [ ] Admin dashboard view
+- [ ] Test activation/deactivation
 
 ---
 
-## Backlog (All Optional)
+## Backlog
 
 ### Phase 2: Massachusetts Data + History
 - [ ] NCES CCD data importer
@@ -46,14 +48,16 @@ Phase 1 (Foundation) is **fully implemented** and deployed (v0.6.39).
 - [ ] Map overlay support
 
 ### Phase 4: Enhanced Features
-- [ ] School comparison tool
-- [ ] Trend analysis (multi-year)
-- [ ] Advanced autocomplete
+- [ ] Caching layer
+- [ ] Autocomplete search
+- [ ] School comparison
+- [ ] Trend analysis
 
 ### Phase 5: Platform Integration
-- [ ] Enhanced iOS app Swift models
-- [ ] Website template improvements
-- [ ] Map overlays with boundaries
+- [ ] MLS plugin hooks
+- [ ] iOS app Swift models
+- [ ] Website templates
+- [ ] Map overlays
 
 ### Phase 6: Paid Enhancements
 - [ ] SchoolDigger integration
@@ -62,14 +66,8 @@ Phase 1 (Foundation) is **fully implemented** and deployed (v0.6.39).
 
 ---
 
-## Version History
-
-| Version | Date | Changes |
-|---------|------|---------|
-| v0.6.39 | 2026-01-21 | School district 404 fix - rewrite rules register on all requests |
-| v0.6.38 | 2026-01-20 | Grade consistency and lookback bug fixes |
-| v0.6.x | 2025-12 to 2026-01 | Phase 1 implementation |
-
----
-
-*For full version history, see `.context/plugins/bmn-schools/version-history.md`*
+## Completed (Recent)
+- [x] Initial plan created and approved - 2025-12-19
+- [x] Plugin directory structure created - 2025-12-19
+- [x] Main plugin file created - 2025-12-19
+- [x] Documentation files created - 2025-12-19

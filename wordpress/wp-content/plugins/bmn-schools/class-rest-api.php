@@ -42,44 +42,9 @@ class BMN_Schools_REST_API {
     public function __construct() {
         // Load cache manager
         require_once BMN_SCHOOLS_PLUGIN_DIR . 'includes/class-cache-manager.php';
-        $this->cache = new BMN_Schools_Cache_Manager();
+        $this->cache = 'BMN_Schools_Cache_Manager';
 
         $this->register_routes();
-    }
-
-    /**
-     * Check rate limiting for expensive endpoints.
-     *
-     * Returns WP_REST_Response if request should be blocked, false if allowed.
-     *
-     * Note: We intentionally do NOT block bots (Googlebot, etc.) here.
-     * The root cause of server overload was fixed in MLD v6.30.12 by switching
-     * to internal REST dispatch, so property pages no longer make HTTP requests
-     * to this API. Bots crawling the site should work normally.
-     *
-     * @since 0.6.19
-     * @param string $endpoint_name Name of endpoint for rate limit key.
-     * @param int    $max_requests  Max requests per minute (default 60).
-     * @return WP_REST_Response|false Response if blocked, false if allowed.
-     */
-    private function check_rate_limit($endpoint_name = 'default', $max_requests = 60) {
-        // Rate limiting: max requests per minute per IP (generous limit for normal use)
-        $client_ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field($_SERVER['REMOTE_ADDR']) : 'unknown';
-        $rate_limit_key = 'bmn_schools_rate_' . md5($client_ip . '_' . $endpoint_name);
-        $request_count = (int) get_transient($rate_limit_key);
-
-        if ($request_count >= $max_requests) {
-            return new WP_REST_Response([
-                'success' => false,
-                'code' => 'rate_limit_exceeded',
-                'message' => 'Rate limit exceeded. Please wait before making more requests.',
-            ], 429);
-        }
-
-        // Increment counter
-        set_transient($rate_limit_key, $request_count + 1, MINUTE_IN_SECONDS);
-
-        return false; // Not blocked
     }
 
     /**
@@ -285,11 +250,6 @@ class BMN_Schools_REST_API {
                 ],
                 'city' => [
                     'sanitize_callback' => 'sanitize_text_field',
-                ],
-                'district_id' => [
-                    'validate_callback' => function($param) {
-                        return empty($param) || is_numeric($param);
-                    },
                 ],
             ],
         ]);
@@ -619,58 +579,6 @@ class BMN_Schools_REST_API {
             require_once BMN_SCHOOLS_PLUGIN_DIR . 'includes/class-ranking-calculator.php';
             $letter_grade = BMN_Schools_Ranking_Calculator::get_letter_grade_from_percentile($ranking->percentile_rank);
 
-            // Calculate data completeness
-            $components_map = [
-                'mcas' => $ranking->mcas_score,
-                'graduation' => $ranking->graduation_score,
-                'masscore' => $ranking->masscore_score,
-                'attendance' => $ranking->attendance_score,
-                'ap' => $ranking->ap_score,
-                'growth' => $ranking->growth_score,
-                'spending' => $ranking->spending_score,
-                'ratio' => $ranking->ratio_score,
-            ];
-            $components_available = 0;
-            $components_list = [];
-            foreach ($components_map as $name => $value) {
-                if ($value !== null) {
-                    $components_available++;
-                    $components_list[] = $name;
-                }
-            }
-
-            // Determine confidence level - elementary schools have different thresholds
-            $is_elementary = stripos($school->level ?? '', 'Elementary') !== false;
-            $confidence_level = 'limited';
-            $limited_data_note = null;
-
-            if ($is_elementary) {
-                // Elementary: 5 possible components (MCAS, attendance, ratio, growth, spending)
-                if ($components_available >= 5) {
-                    $confidence_level = 'comprehensive';
-                } elseif ($components_available >= 4) {
-                    $confidence_level = 'good';
-                } else {
-                    // Provide specific reason for limited data
-                    $has_mcas = in_array('mcas', $components_list);
-                    $has_growth = in_array('growth', $components_list);
-                    if (!$has_mcas && !$has_growth) {
-                        $limited_data_note = 'No MCAS data available (this school may be private or serve grades below 3)';
-                    } elseif (!$has_growth) {
-                        $limited_data_note = 'Limited historical data for year-over-year comparison';
-                    } else {
-                        $limited_data_note = 'Rating based on limited available metrics';
-                    }
-                }
-            } else {
-                // Middle/High: 8 possible components
-                if ($components_available >= 7) {
-                    $confidence_level = 'comprehensive';
-                } elseif ($components_available >= 5) {
-                    $confidence_level = 'good';
-                }
-            }
-
             $formatted['ranking'] = [
                 'year' => (int) $ranking->year,
                 'category' => $ranking->category,
@@ -690,13 +598,6 @@ class BMN_Schools_REST_API {
                     'growth' => $ranking->growth_score !== null ? round((float) $ranking->growth_score, 1) : null,
                     'spending' => $ranking->spending_score !== null ? round((float) $ranking->spending_score, 1) : null,
                     'ratio' => $ranking->ratio_score !== null ? round((float) $ranking->ratio_score, 1) : null,
-                ],
-                'data_completeness' => [
-                    'components_available' => $components_available,
-                    'components_total' => $is_elementary ? 5 : 8,
-                    'confidence_level' => $confidence_level,
-                    'components' => $components_list,
-                    'limited_data_note' => $limited_data_note,
                 ],
                 'calculated_at' => $ranking->calculated_at,
             ];
@@ -927,18 +828,6 @@ class BMN_Schools_REST_API {
 
         $district->schools = $schools;
 
-        // Parse extra_data JSON and extract college_outcomes and discipline
-        if (!empty($district->extra_data)) {
-            $extra = json_decode($district->extra_data, true);
-            if (isset($extra['college_outcomes'])) {
-                $district->college_outcomes = $extra['college_outcomes'];
-            }
-            if (isset($extra['discipline'])) {
-                $district->discipline = $this->enrich_discipline_with_percentile($extra['discipline']);
-            }
-        }
-        unset($district->extra_data); // Remove raw JSON from response
-
         return new WP_REST_Response([
             'success' => true,
             'data' => $district,
@@ -1000,33 +889,10 @@ class BMN_Schools_REST_API {
      * @return WP_REST_Response Response.
      */
     public function get_district_for_point($request) {
-        // Rate limiting for expensive endpoint
-        $rate_check = $this->check_rate_limit('district_for_point', 30);
-        if ($rate_check) {
-            return $rate_check;
-        }
-
         global $wpdb;
 
         $lat = floatval($request->get_param('lat'));
         $lng = floatval($request->get_param('lng'));
-
-        // PERFORMANCE FIX: Cache by rounded coordinates (3 decimal places = ~100m accuracy)
-        // This dramatically reduces full table scans with point-in-polygon checks
-        $cache_key = 'bmn_district_' . sprintf('%.3f_%.3f', $lat, $lng);
-        $cached = get_transient($cache_key);
-        if ($cached !== false) {
-            // Check if it's a "not found" cache entry
-            if (isset($cached['not_found']) && $cached['not_found']) {
-                return new WP_REST_Response([
-                    'success' => false,
-                    'code' => 'not_found',
-                    'message' => 'No district found containing these coordinates',
-                    'coordinates' => ['latitude' => $lat, 'longitude' => $lng],
-                ], 404);
-            }
-            return new WP_REST_Response($cached, 200);
-        }
 
         $tables = bmn_schools()->get_table_names();
 
@@ -1049,7 +915,7 @@ class BMN_Schools_REST_API {
                     $district->id
                 ));
 
-                $response_data = [
+                return new WP_REST_Response([
                     'success' => true,
                     'data' => [
                         'id' => (int) $district->id,
@@ -1063,18 +929,11 @@ class BMN_Schools_REST_API {
                             'longitude' => $lng,
                         ],
                     ],
-                ];
-
-                // Cache for 1 hour (district boundaries don't change)
-                set_transient($cache_key, $response_data, HOUR_IN_SECONDS);
-
-                return new WP_REST_Response($response_data, 200);
+                ], 200);
             }
         }
 
-        // No district found - cache the "not found" result too
-        set_transient($cache_key, ['not_found' => true], HOUR_IN_SECONDS);
-
+        // No district found
         return new WP_REST_Response([
             'success' => false,
             'code' => 'not_found',
@@ -1179,11 +1038,10 @@ class BMN_Schools_REST_API {
             ];
         }
 
-        // Search districts (exclude duplicates)
+        // Search districts
         $districts = $wpdb->get_results($wpdb->prepare(
             "SELECT id, name, city FROM {$tables['districts']}
              WHERE name LIKE %s
-             AND (type IS NULL OR type NOT IN ('duplicate', 'inactive'))
              ORDER BY name ASC
              LIMIT 3",
             '%' . $wpdb->esc_like($term) . '%'
@@ -1402,502 +1260,6 @@ class BMN_Schools_REST_API {
     }
 
     /**
-     * Determine appropriate display level from grade range.
-     *
-     * Maps 'combined' or 'other' level schools to elementary/middle/high
-     * based on their actual grade ranges.
-     *
-     * Grade mappings:
-     * - Elementary: PK, K, 01-05 (or 06 if no middle grades)
-     * - Middle: 06-08
-     * - High: 09-12
-     *
-     * @since 0.6.13
-     * @param object $school School object with level, grades_low, grades_high.
-     * @return string Level for display grouping: 'elementary', 'middle', 'high', or 'other'.
-     */
-    private function determine_display_level($school) {
-        // If already categorized as elementary/middle/high, use that
-        $level = strtolower($school->level ?? '');
-        if (in_array($level, ['elementary', 'middle', 'high'])) {
-            return $level;
-        }
-
-        // Check school name for level indicators (overrides grade-based logic)
-        // This handles cases like "Swampscott Middle School" with grade range PK-08
-        $name = strtolower($school->name ?? '');
-        if (preg_match('/\b(middle|jr\.|jr |junior)\s*(high\s*)?(school|academy)/i', $name)) {
-            return 'middle';
-        }
-        if (preg_match('/\bhigh\s+(school|academy)/i', $name) && !preg_match('/\bjr\.\s*high/i', $name)) {
-            return 'high';
-        }
-        if (preg_match('/\b(elementary|primary)\s+(school|academy)/i', $name)) {
-            return 'elementary';
-        }
-
-        // For combined/other, determine from grade range
-        $grades_low = strtoupper(trim($school->grades_low ?? ''));
-        $grades_high = strtoupper(trim($school->grades_high ?? ''));
-
-        if (empty($grades_low) && empty($grades_high)) {
-            return 'other';
-        }
-
-        // Convert grade strings to numeric values for comparison
-        // PK=-1, K=0, 01=1, 02=2, ..., 12=12
-        $low_num = $this->grade_to_number($grades_low);
-        $high_num = $this->grade_to_number($grades_high);
-
-        // Determine primary level based on grade range
-        // If spans multiple levels, use the primary one (where most grades fall)
-        if ($high_num <= 5) {
-            // Ends at grade 5 or below = elementary
-            return 'elementary';
-        } elseif ($high_num <= 8) {
-            // Ends at grade 6-8
-            if ($low_num >= 6) {
-                // Starts at 6+ = middle school only
-                return 'middle';
-            } elseif ($low_num <= 0) {
-                // Starts at K or PK and goes to 6-8 = primarily elementary (K-8 school)
-                return 'elementary';
-            } else {
-                // Starts at 1-5 and ends at 6-8 = treat as middle
-                return 'middle';
-            }
-        } else {
-            // Ends at grade 9-12 = high school (or spans to high)
-            if ($low_num >= 9) {
-                return 'high';
-            } elseif ($low_num >= 6) {
-                // 6-12 school = show in high
-                return 'high';
-            } else {
-                // K-12 or similar = show in elementary (parents care most about elementary)
-                return 'elementary';
-            }
-        }
-    }
-
-    /**
-     * Convert grade string to numeric value for comparison.
-     *
-     * @param string $grade Grade string (e.g., 'PK', 'K', '01', '12').
-     * @return int Numeric grade (-1 for PK, 0 for K, 1-12 for grades).
-     */
-    private function grade_to_number($grade) {
-        $grade = strtoupper(trim($grade));
-
-        if ($grade === 'PK' || $grade === 'PRE-K' || $grade === 'P') {
-            return -1;
-        }
-        if ($grade === 'K' || $grade === 'KG') {
-            return 0;
-        }
-
-        // Remove leading zeros and convert to int
-        $num = intval(ltrim($grade, '0'));
-        return min(max($num, 0), 12);
-    }
-
-    /**
-     * Get regional school mapping for a city.
-     *
-     * Massachusetts has many regional school districts and tuition agreements where
-     * students from one town attend schools in another town for certain grade levels.
-     * This method returns the mapping of where students actually attend school.
-     *
-     * @since 0.6.15
-     * @param string $city City name to look up.
-     * @return array|null Array with 'elementary', 'middle', 'high' keys indicating
-     *                    which city's schools to use for each level. null values mean
-     *                    use the city's own schools. Returns null if no mapping exists.
-     */
-    private function get_regional_school_mapping($city) {
-        // Normalize city name
-        $city = strtoupper(trim($city));
-
-        // Comprehensive mapping of Massachusetts regional school arrangements
-        // Format: 'CITY' => ['elementary' => null|'OtherCity', 'middle' => ..., 'high' => ...]
-        // null = use own city's schools, string = look for schools in specified city
-        $mappings = [
-            // === TUITION AGREEMENTS (Town sends students to another town) ===
-
-            // Nahant sends students to Swampscott for grades 7-12
-            'NAHANT' => [
-                'elementary' => null,
-                'middle' => 'SWAMPSCOTT',
-                'high' => 'SWAMPSCOTT',
-            ],
-
-            // === TWO-TOWN REGIONAL DISTRICTS ===
-
-            // Acton-Boxborough Regional (grades 7-12) - Boxborough has K-6, sends to Acton for 7-12
-            'BOXBOROUGH' => [
-                'elementary' => null,
-                'middle' => 'ACTON',
-                'high' => 'ACTON',
-            ],
-
-            // Lincoln-Sudbury Regional (grades 9-12) - Lincoln has K-8, sends to Sudbury for 9-12
-            'LINCOLN' => [
-                'elementary' => null,
-                'middle' => null,
-                'high' => 'SUDBURY',
-            ],
-
-            // Dover-Sherborn Regional (grades 6-12) - Both towns have K-5, regional for 6-12
-            'SHERBORN' => [
-                'elementary' => null,
-                'middle' => 'DOVER',
-                'high' => 'DOVER',
-            ],
-
-            // Hamilton-Wenham Regional (grades 6-12) - Wenham sends to Hamilton
-            'WENHAM' => [
-                'elementary' => null,
-                'middle' => 'HAMILTON',
-                'high' => 'HAMILTON',
-            ],
-
-            // Concord-Carlisle Regional (grades 9-12) - Carlisle has K-8, sends to Concord for 9-12
-            'CARLISLE' => [
-                'elementary' => null,
-                'middle' => null,
-                'high' => 'CONCORD',
-            ],
-
-            // Manchester-Essex Regional (grades 6-12) - Essex sends to Manchester
-            'ESSEX' => [
-                'elementary' => null,
-                'middle' => 'MANCHESTER-BY-THE-SEA',
-                'high' => 'MANCHESTER-BY-THE-SEA',
-            ],
-
-            // Northborough-Southborough Regional (Algonquin HS in Northborough)
-            'SOUTHBOROUGH' => [
-                'elementary' => null,
-                'middle' => null,
-                'high' => 'NORTHBOROUGH',
-            ],
-
-            // Bridgewater-Raynham Regional (grades 9-12)
-            'RAYNHAM' => [
-                'elementary' => null,
-                'middle' => null,
-                'high' => 'BRIDGEWATER',
-            ],
-
-            // Ashburnham-Westminster Regional (HS in Ashburnham)
-            'WESTMINSTER' => [
-                'elementary' => null,
-                'middle' => null,
-                'high' => 'ASHBURNHAM',
-            ],
-
-            // Berlin-Boylston Regional (Tahanto Regional in Boylston)
-            'BERLIN' => [
-                'elementary' => null,
-                'middle' => 'BOYLSTON',
-                'high' => 'BOYLSTON',
-            ],
-
-            // Groton-Dunstable Regional (schools in Groton)
-            'DUNSTABLE' => [
-                'elementary' => null,
-                'middle' => 'GROTON',
-                'high' => 'GROTON',
-            ],
-
-            // Ayer-Shirley Regional (HS in Ayer, MS in Shirley)
-            'SHIRLEY' => [
-                'elementary' => null,
-                'middle' => null, // MS is in Shirley
-                'high' => 'AYER',
-            ],
-            'AYER' => [
-                'elementary' => null,
-                'middle' => 'SHIRLEY', // MS is in Shirley
-                'high' => null, // HS is in Ayer
-            ],
-
-            // Whitman-Hanson Regional (HS in Hanson)
-            'WHITMAN' => [
-                'elementary' => null,
-                'middle' => null,
-                'high' => 'HANSON',
-            ],
-
-            // Dennis-Yarmouth Regional (HS in Yarmouth)
-            'DENNIS' => [
-                'elementary' => null,
-                'middle' => 'YARMOUTH',
-                'high' => 'YARMOUTH',
-            ],
-
-            // Dighton-Rehoboth Regional (HS in Dighton)
-            'REHOBOTH' => [
-                'elementary' => null,
-                'middle' => 'DIGHTON',
-                'high' => 'DIGHTON',
-            ],
-
-            // Somerset-Berkley Regional (HS in Somerset)
-            'BERKLEY' => [
-                'elementary' => null,
-                'middle' => null,
-                'high' => 'SOMERSET',
-            ],
-
-            // === THREE-TOWN REGIONAL DISTRICTS ===
-
-            // King Philip Regional (grades 7-12) - Norfolk, Plainville, Wrentham
-            // Middle school in Norfolk, High school in Wrentham
-            'NORFOLK' => [
-                'elementary' => null,
-                'middle' => null, // MS is in Norfolk
-                'high' => 'WRENTHAM',
-            ],
-            'PLAINVILLE' => [
-                'elementary' => null,
-                'middle' => 'NORFOLK',
-                'high' => 'WRENTHAM',
-            ],
-
-            // Masconomet Regional (grades 7-12) - Boxford, Middleton, Topsfield
-            // School campus in Boxford
-            'MIDDLETON' => [
-                'elementary' => null,
-                'middle' => 'BOXFORD',
-                'high' => 'BOXFORD',
-            ],
-            'TOPSFIELD' => [
-                'elementary' => null,
-                'middle' => 'BOXFORD',
-                'high' => 'BOXFORD',
-            ],
-
-            // Silver Lake Regional (grades 7-12) - Halifax, Kingston, Plympton
-            // Schools in Kingston
-            'HALIFAX' => [
-                'elementary' => null,
-                'middle' => 'KINGSTON',
-                'high' => 'KINGSTON',
-            ],
-            'PLYMPTON' => [
-                'elementary' => null,
-                'middle' => 'KINGSTON',
-                'high' => 'KINGSTON',
-            ],
-
-            // Triton Regional (grades 7-12) - Newbury, Rowley, Salisbury
-            // Schools in Newbury
-            'ROWLEY' => [
-                'elementary' => null,
-                'middle' => 'NEWBURY',
-                'high' => 'NEWBURY',
-            ],
-            'SALISBURY' => [
-                'elementary' => null,
-                'middle' => 'NEWBURY',
-                'high' => 'NEWBURY',
-            ],
-
-            // Pentucket Regional (grades 7-12) - Groveland, Merrimac, West Newbury
-            // Schools in West Newbury
-            'GROVELAND' => [
-                'elementary' => null,
-                'middle' => 'WEST NEWBURY',
-                'high' => 'WEST NEWBURY',
-            ],
-            'MERRIMAC' => [
-                'elementary' => null,
-                'middle' => 'WEST NEWBURY',
-                'high' => 'WEST NEWBURY',
-            ],
-
-            // Nashoba Regional (Bolton, Lancaster, Stow) - HS in Bolton
-            'LANCASTER' => [
-                'elementary' => null,
-                'middle' => null,
-                'high' => 'BOLTON',
-            ],
-            'STOW' => [
-                'elementary' => null,
-                'middle' => null,
-                'high' => 'BOLTON',
-            ],
-
-            // North Middlesex Regional (Ashby, Pepperell, Townsend)
-            'ASHBY' => [
-                'elementary' => null,
-                'middle' => 'TOWNSEND',
-                'high' => 'TOWNSEND',
-            ],
-            'PEPPERELL' => [
-                'elementary' => null,
-                'middle' => 'TOWNSEND',
-                'high' => 'TOWNSEND',
-            ],
-
-            // Nauset Regional (Brewster, Eastham, Orleans, Wellfleet)
-            'BREWSTER' => [
-                'elementary' => null,
-                'middle' => 'ORLEANS',
-                'high' => 'EASTHAM',
-            ],
-            'ORLEANS' => [
-                'elementary' => null,
-                'middle' => null, // MS is in Orleans
-                'high' => 'EASTHAM',
-            ],
-            'WELLFLEET' => [
-                'elementary' => null,
-                'middle' => 'ORLEANS',
-                'high' => 'EASTHAM',
-            ],
-
-            // Wachusett Regional (Holden, Paxton, Princeton, Rutland, Sterling)
-            'PAXTON' => [
-                'elementary' => null,
-                'middle' => 'HOLDEN',
-                'high' => 'HOLDEN',
-            ],
-            'PRINCETON' => [
-                'elementary' => null,
-                'middle' => 'HOLDEN',
-                'high' => 'HOLDEN',
-            ],
-            'RUTLAND' => [
-                'elementary' => null,
-                'middle' => 'HOLDEN',
-                'high' => 'HOLDEN',
-            ],
-            'STERLING' => [
-                'elementary' => null,
-                'middle' => 'HOLDEN',
-                'high' => 'HOLDEN',
-            ],
-
-            // Quabbin Regional (Barre, Hardwick, Hubbardston, New Braintree, Oakham)
-            'HARDWICK' => [
-                'elementary' => null,
-                'middle' => 'BARRE',
-                'high' => 'BARRE',
-            ],
-            'HUBBARDSTON' => [
-                'elementary' => null,
-                'middle' => 'BARRE',
-                'high' => 'BARRE',
-            ],
-            'NEW BRAINTREE' => [
-                'elementary' => null,
-                'middle' => 'BARRE',
-                'high' => 'BARRE',
-            ],
-            'OAKHAM' => [
-                'elementary' => null,
-                'middle' => 'BARRE',
-                'high' => 'BARRE',
-            ],
-
-            // Old Rochester Regional (Marion, Mattapoisett, Rochester) - schools in Mattapoisett
-            'MARION' => [
-                'elementary' => null,
-                'middle' => 'MATTAPOISETT',
-                'high' => 'MATTAPOISETT',
-            ],
-            'ROCHESTER' => [
-                'elementary' => null,
-                'middle' => 'MATTAPOISETT',
-                'high' => 'MATTAPOISETT',
-            ],
-
-            // Monomoy Regional (Chatham, Harwich)
-            'CHATHAM' => [
-                'elementary' => null,
-                'middle' => null, // MS is in Chatham
-                'high' => 'HARWICH',
-            ],
-
-            // === BERKSHIRE COUNTY REGIONAL DISTRICTS ===
-
-            // Hoosac Valley Regional (Adams, Cheshire, Savoy) - schools in Cheshire
-            'SAVOY' => [
-                'elementary' => null, // PK-6 in Savoy
-                'middle' => 'CHESHIRE',
-                'high' => 'CHESHIRE',
-            ],
-            'ADAMS' => [
-                'elementary' => null, // PK-3 in Adams
-                'middle' => 'CHESHIRE',
-                'high' => 'CHESHIRE',
-            ],
-
-            // Mount Greylock Regional (Williamstown, Lanesborough) - schools in Williamstown
-            'LANESBOROUGH' => [
-                'elementary' => null,
-                'middle' => 'WILLIAMSTOWN',
-                'high' => 'WILLIAMSTOWN',
-            ],
-
-            // Southern Berkshire Regional (Sheffield, Monterey, New Marlborough, etc.)
-            'MONTEREY' => [
-                'elementary' => null,
-                'middle' => 'SHEFFIELD',
-                'high' => 'SHEFFIELD',
-            ],
-            'NEW MARLBOROUGH' => [
-                'elementary' => null,
-                'middle' => 'SHEFFIELD',
-                'high' => 'SHEFFIELD',
-            ],
-
-            // Berkshire Hills Regional (Great Barrington, Stockbridge, West Stockbridge)
-            'STOCKBRIDGE' => [
-                'elementary' => null,
-                'middle' => 'GREAT BARRINGTON',
-                'high' => 'GREAT BARRINGTON',
-            ],
-            'WEST STOCKBRIDGE' => [
-                'elementary' => null,
-                'middle' => 'GREAT BARRINGTON',
-                'high' => 'GREAT BARRINGTON',
-            ],
-
-            // Central Berkshire Regional (Becket, Dalton, Hinsdale, Peru, Washington, Windsor)
-            'BECKET' => [
-                'elementary' => null,
-                'middle' => 'DALTON',
-                'high' => 'DALTON',
-            ],
-            'HINSDALE' => [
-                'elementary' => null,
-                'middle' => 'DALTON',
-                'high' => 'DALTON',
-            ],
-            'PERU' => [
-                'elementary' => null,
-                'middle' => 'DALTON',
-                'high' => 'DALTON',
-            ],
-            'WASHINGTON' => [
-                'elementary' => null,
-                'middle' => 'DALTON',
-                'high' => 'DALTON',
-            ],
-            'WINDSOR' => [
-                'elementary' => null,
-                'middle' => 'DALTON',
-                'high' => 'DALTON',
-            ],
-        ];
-
-        return $mappings[$city] ?? null;
-    }
-
-    /**
      * Format category label for display.
      *
      * Converts internal category codes to user-friendly labels.
@@ -1967,489 +1329,6 @@ class BMN_Schools_REST_API {
         }
     }
 
-    // ==========================================================================
-    // BATCH QUERY METHODS (Performance optimization - v0.6.36)
-    // These methods fetch data for multiple schools in a single query
-    // ==========================================================================
-
-    /**
-     * Batch fetch MCAS scores for multiple schools.
-     *
-     * @since 0.6.36
-     * @param array $school_ids Array of school IDs.
-     * @return array Associative array keyed by school_id.
-     */
-    private function batch_get_mcas_scores($school_ids) {
-        if (empty($school_ids)) {
-            return [];
-        }
-
-        global $wpdb;
-        $tables = bmn_schools()->get_table_names();
-
-        $placeholders = implode(',', array_fill(0, count($school_ids), '%d'));
-        $results = $wpdb->get_results($wpdb->prepare(
-            "SELECT school_id, AVG(proficient_or_above_pct) as avg_mcas
-             FROM {$tables['test_scores']} t
-             WHERE school_id IN ({$placeholders})
-             AND year = (SELECT MAX(year) FROM {$tables['test_scores']} WHERE school_id = t.school_id)
-             GROUP BY school_id",
-            ...$school_ids
-        ));
-
-        $mcas_by_school = [];
-        foreach ($results as $row) {
-            $mcas_by_school[(int) $row->school_id] = round((float) $row->avg_mcas, 1);
-        }
-        return $mcas_by_school;
-    }
-
-    /**
-     * Batch fetch rankings for multiple schools.
-     *
-     * @since 0.6.36
-     * @param array $school_ids Array of school IDs.
-     * @return array Associative array keyed by school_id.
-     */
-    private function batch_get_rankings($school_ids) {
-        if (empty($school_ids)) {
-            return [];
-        }
-
-        global $wpdb;
-        $tables = bmn_schools()->get_table_names();
-
-        $placeholders = implode(',', array_fill(0, count($school_ids), '%d'));
-        // Use a subquery to get only the most recent ranking per school
-        $results = $wpdb->get_results($wpdb->prepare(
-            "SELECT r.school_id, r.year, r.category, r.composite_score, r.percentile_rank, r.state_rank,
-                    r.mcas_score, r.graduation_score, r.masscore_score, r.attendance_score,
-                    r.ap_score, r.growth_score, r.spending_score, r.ratio_score
-             FROM {$tables['rankings']} r
-             INNER JOIN (
-                 SELECT school_id, MAX(year) as max_year
-                 FROM {$tables['rankings']}
-                 WHERE school_id IN ({$placeholders})
-                 AND composite_score IS NOT NULL
-                 GROUP BY school_id
-             ) latest ON r.school_id = latest.school_id AND r.year = latest.max_year
-             WHERE r.composite_score IS NOT NULL",
-            ...$school_ids
-        ));
-
-        $rankings_by_school = [];
-        foreach ($results as $row) {
-            $rankings_by_school[(int) $row->school_id] = $row;
-        }
-        return $rankings_by_school;
-    }
-
-    /**
-     * Batch fetch previous year rankings for trend calculation.
-     *
-     * @since 0.6.36
-     * @param array $school_ids Array of school IDs.
-     * @param int $current_year The current ranking year.
-     * @return array Associative array keyed by school_id.
-     */
-    private function batch_get_previous_rankings($school_ids, $current_year) {
-        if (empty($school_ids)) {
-            return [];
-        }
-
-        global $wpdb;
-        $tables = bmn_schools()->get_table_names();
-
-        $placeholders = implode(',', array_fill(0, count($school_ids), '%d'));
-        $params = array_merge($school_ids, [$current_year - 1]);
-        $results = $wpdb->get_results($wpdb->prepare(
-            "SELECT school_id, year, composite_score, percentile_rank, state_rank, category
-             FROM {$tables['rankings']}
-             WHERE school_id IN ({$placeholders})
-             AND year = %d
-             AND composite_score IS NOT NULL",
-            ...$params
-        ));
-
-        $prev_by_school = [];
-        foreach ($results as $row) {
-            $prev_by_school[(int) $row->school_id] = $row;
-        }
-        return $prev_by_school;
-    }
-
-    /**
-     * Batch fetch demographics for multiple schools.
-     *
-     * @since 0.6.36
-     * @param array $school_ids Array of school IDs.
-     * @return array Associative array keyed by school_id.
-     */
-    private function batch_get_demographics($school_ids) {
-        if (empty($school_ids)) {
-            return [];
-        }
-
-        global $wpdb;
-        $tables = bmn_schools()->get_table_names();
-
-        $placeholders = implode(',', array_fill(0, count($school_ids), '%d'));
-        // Use a subquery to get only the most recent demographics per school
-        $results = $wpdb->get_results($wpdb->prepare(
-            "SELECT d.school_id, d.total_students, d.pct_free_reduced_lunch, d.avg_class_size,
-                    d.pct_white, d.pct_black, d.pct_hispanic, d.pct_asian, d.pct_multiracial,
-                    d.pct_english_learner, d.pct_special_ed
-             FROM {$tables['demographics']} d
-             INNER JOIN (
-                 SELECT school_id, MAX(year) as max_year
-                 FROM {$tables['demographics']}
-                 WHERE school_id IN ({$placeholders})
-                 GROUP BY school_id
-             ) latest ON d.school_id = latest.school_id AND d.year = latest.max_year",
-            ...$school_ids
-        ));
-
-        $demo_by_school = [];
-        foreach ($results as $row) {
-            $demo_by_school[(int) $row->school_id] = $row;
-        }
-        return $demo_by_school;
-    }
-
-    /**
-     * Batch fetch discipline data for multiple schools.
-     *
-     * @since 0.6.36
-     * @param array $school_ids Array of school IDs.
-     * @return array Associative array keyed by school_id.
-     */
-    private function batch_get_discipline($school_ids) {
-        if (empty($school_ids)) {
-            return [];
-        }
-
-        global $wpdb;
-        $tables = bmn_schools()->get_table_names();
-
-        if (!isset($tables['discipline'])) {
-            return [];
-        }
-
-        $placeholders = implode(',', array_fill(0, count($school_ids), '%d'));
-        $results = $wpdb->get_results($wpdb->prepare(
-            "SELECT d.school_id, d.year, d.enrollment, d.students_disciplined,
-                    d.in_school_suspension_pct, d.out_of_school_suspension_pct,
-                    d.expulsion_pct, d.discipline_rate
-             FROM {$tables['discipline']} d
-             INNER JOIN (
-                 SELECT school_id, MAX(year) as max_year
-                 FROM {$tables['discipline']}
-                 WHERE school_id IN ({$placeholders})
-                 GROUP BY school_id
-             ) latest ON d.school_id = latest.school_id AND d.year = latest.max_year",
-            ...$school_ids
-        ));
-
-        // Get 25th percentile threshold once for all schools
-        $threshold = $wpdb->get_var(
-            "SELECT discipline_rate FROM {$tables['discipline']}
-             WHERE discipline_rate IS NOT NULL
-             ORDER BY discipline_rate ASC
-             LIMIT 1 OFFSET (SELECT FLOOR(COUNT(*) * 0.25) FROM {$tables['discipline']} WHERE discipline_rate IS NOT NULL)"
-        );
-        $threshold = $threshold !== null ? (float) $threshold : null;
-
-        $disc_by_school = [];
-        foreach ($results as $row) {
-            $is_low = false;
-            if ($threshold !== null && $row->discipline_rate !== null && (float) $row->discipline_rate <= $threshold) {
-                $is_low = true;
-            }
-            $disc_by_school[(int) $row->school_id] = [
-                'year' => (int) $row->year,
-                'enrollment' => $row->enrollment ? (int) $row->enrollment : null,
-                'students_disciplined' => $row->students_disciplined ? (int) $row->students_disciplined : null,
-                'in_school_suspension_pct' => $row->in_school_suspension_pct ? round((float) $row->in_school_suspension_pct, 1) : null,
-                'out_of_school_suspension_pct' => $row->out_of_school_suspension_pct ? round((float) $row->out_of_school_suspension_pct, 1) : null,
-                'expulsion_pct' => $row->expulsion_pct ? round((float) $row->expulsion_pct, 1) : null,
-                'discipline_rate' => $row->discipline_rate ? round((float) $row->discipline_rate, 1) : null,
-                'is_low_discipline' => $is_low,
-            ];
-        }
-        return $disc_by_school;
-    }
-
-    /**
-     * Batch fetch sports data for multiple schools.
-     *
-     * @since 0.6.36
-     * @param array $school_ids Array of school IDs.
-     * @return array Associative array keyed by school_id.
-     */
-    private function batch_get_sports($school_ids) {
-        if (empty($school_ids)) {
-            return [];
-        }
-
-        global $wpdb;
-        $tables = bmn_schools()->get_table_names();
-
-        if (!isset($tables['sports'])) {
-            return [];
-        }
-
-        $placeholders = implode(',', array_fill(0, count($school_ids), '%d'));
-        // Get all sports for the most recent year per school
-        $results = $wpdb->get_results($wpdb->prepare(
-            "SELECT s.school_id, s.sport, s.gender, s.participants
-             FROM {$tables['sports']} s
-             INNER JOIN (
-                 SELECT school_id, MAX(year) as max_year
-                 FROM {$tables['sports']}
-                 WHERE school_id IN ({$placeholders})
-                 GROUP BY school_id
-             ) latest ON s.school_id = latest.school_id AND s.year = latest.max_year
-             ORDER BY s.school_id, s.sport, s.gender",
-            ...$school_ids
-        ));
-
-        // Group by school_id
-        $sports_by_school = [];
-        foreach ($results as $row) {
-            $sid = (int) $row->school_id;
-            if (!isset($sports_by_school[$sid])) {
-                $sports_by_school[$sid] = [];
-            }
-            $sports_by_school[$sid][] = $row;
-        }
-
-        // Format each school's sports data
-        $formatted = [];
-        foreach ($sports_by_school as $sid => $sports) {
-            $sports_list = [];
-            $total_boys = 0;
-            $total_girls = 0;
-
-            foreach ($sports as $sport) {
-                $sports_list[] = [
-                    'sport' => $sport->sport,
-                    'gender' => $sport->gender,
-                    'participants' => (int) $sport->participants,
-                ];
-                if ($sport->gender === 'Boys') {
-                    $total_boys += (int) $sport->participants;
-                } else {
-                    $total_girls += (int) $sport->participants;
-                }
-            }
-
-            $unique_sports = count(array_unique(array_column($sports_list, 'sport')));
-            $formatted[$sid] = [
-                'sports_count' => $unique_sports,
-                'total_participants' => $total_boys + $total_girls,
-                'boys_participants' => $total_boys,
-                'girls_participants' => $total_girls,
-                'sports' => $sports_list,
-            ];
-        }
-
-        return $formatted;
-    }
-
-    // ==========================================================================
-    // END BATCH QUERY METHODS
-    // ==========================================================================
-
-    /**
-     * Get discipline data for a school.
-     *
-     * Returns suspension, expulsion, and other discipline metrics from DESE SSDR.
-     *
-     * @since 0.6.22
-     * @param int $school_id School ID.
-     * @return array|null Discipline data or null if not available.
-     */
-    private function get_school_discipline($school_id) {
-        global $wpdb;
-        $tables = bmn_schools()->get_table_names();
-
-        // Check if discipline table exists
-        if (!isset($tables['discipline'])) {
-            return null;
-        }
-
-        $discipline = $wpdb->get_row($wpdb->prepare(
-            "SELECT year, enrollment, students_disciplined,
-                    in_school_suspension_pct, out_of_school_suspension_pct,
-                    expulsion_pct, removed_to_alternate_pct, emergency_removal_pct,
-                    school_based_arrest_pct, law_enforcement_referral_pct, discipline_rate
-             FROM {$tables['discipline']}
-             WHERE school_id = %d
-             ORDER BY year DESC
-             LIMIT 1",
-            $school_id
-        ));
-
-        if (!$discipline) {
-            return null;
-        }
-
-        // Determine if this is a "low discipline rate" school (bottom 25%)
-        $is_low_discipline = false;
-        if ($discipline->discipline_rate !== null) {
-            // Get the 25th percentile threshold
-            $threshold = $wpdb->get_var(
-                "SELECT discipline_rate FROM {$tables['discipline']}
-                 WHERE discipline_rate IS NOT NULL
-                 ORDER BY discipline_rate ASC
-                 LIMIT 1 OFFSET (SELECT FLOOR(COUNT(*) * 0.25) FROM {$tables['discipline']} WHERE discipline_rate IS NOT NULL)"
-            );
-            if ($threshold !== null && $discipline->discipline_rate <= (float) $threshold) {
-                $is_low_discipline = true;
-            }
-        }
-
-        return [
-            'year' => (int) $discipline->year,
-            'enrollment' => $discipline->enrollment ? (int) $discipline->enrollment : null,
-            'students_disciplined' => $discipline->students_disciplined ? (int) $discipline->students_disciplined : null,
-            'in_school_suspension_pct' => $discipline->in_school_suspension_pct ? round((float) $discipline->in_school_suspension_pct, 1) : null,
-            'out_of_school_suspension_pct' => $discipline->out_of_school_suspension_pct ? round((float) $discipline->out_of_school_suspension_pct, 1) : null,
-            'expulsion_pct' => $discipline->expulsion_pct ? round((float) $discipline->expulsion_pct, 1) : null,
-            'discipline_rate' => $discipline->discipline_rate ? round((float) $discipline->discipline_rate, 1) : null,
-            'is_low_discipline' => $is_low_discipline,
-        ];
-    }
-
-    /**
-     * Enrich discipline data with percentile ranking.
-     *
-     * Calculates the percentile based on discipline_rate compared to all districts
-     * and adds percentile and percentile_label fields.
-     *
-     * @since 0.6.24
-     * @param array $discipline Discipline data from extra_data.
-     * @return array Enriched discipline data with percentile info.
-     */
-    private function enrich_discipline_with_percentile($discipline) {
-        if (empty($discipline) || !isset($discipline['discipline_rate'])) {
-            return $discipline;
-        }
-
-        global $wpdb;
-        $tables = bmn_schools()->get_table_names();
-        $rate = (float) $discipline['discipline_rate'];
-
-        // Get all district discipline rates for percentile calculation
-        // Use static cache to avoid repeated queries
-        static $all_rates = null;
-        if ($all_rates === null) {
-            $results = $wpdb->get_col(
-                "SELECT JSON_EXTRACT(extra_data, '$.discipline.discipline_rate') as rate
-                 FROM {$tables['districts']}
-                 WHERE extra_data IS NOT NULL
-                 AND JSON_EXTRACT(extra_data, '$.discipline.discipline_rate') IS NOT NULL
-                 ORDER BY rate ASC"
-            );
-            $all_rates = array_map('floatval', array_filter($results, function($r) {
-                return $r !== null && $r !== 'null';
-            }));
-        }
-
-        if (empty($all_rates)) {
-            return $discipline;
-        }
-
-        // Calculate percentile (lower rate = better = lower percentile number)
-        $count_below = 0;
-        foreach ($all_rates as $r) {
-            if ($r < $rate) {
-                $count_below++;
-            }
-        }
-        $percentile = round(($count_below / count($all_rates)) * 100);
-
-        // Determine percentile label (lower percentile = lower discipline = better)
-        if ($percentile <= 25) {
-            $percentile_label = 'Very Low (Safest)';
-        } elseif ($percentile <= 50) {
-            $percentile_label = 'Low';
-        } elseif ($percentile <= 75) {
-            $percentile_label = 'Average';
-        } else {
-            $percentile_label = 'Above Average';
-        }
-
-        // Add percentile info to discipline data
-        $discipline['percentile'] = $percentile;
-        $discipline['percentile_label'] = $percentile_label;
-
-        return $discipline;
-    }
-
-    /**
-     * Get sports data for a school.
-     *
-     * Returns list of sports programs with participation counts for high schools.
-     * Sports data is only available for high schools from MIAA.
-     *
-     * @since 0.6.24
-     * @param int $school_id School ID.
-     * @return array|null Sports data or null if not available.
-     */
-    private function get_school_sports($school_id) {
-        global $wpdb;
-        $tables = bmn_schools()->get_table_names();
-
-        // Check if sports table exists
-        if (!isset($tables['sports'])) {
-            return null;
-        }
-
-        // Get sports data for the most recent year
-        $sports = $wpdb->get_results($wpdb->prepare(
-            "SELECT sport, gender, participants
-             FROM {$tables['sports']}
-             WHERE school_id = %d
-             AND year = (SELECT MAX(year) FROM {$tables['sports']} WHERE school_id = %d)
-             ORDER BY sport ASC, gender ASC",
-            $school_id, $school_id
-        ));
-
-        if (empty($sports)) {
-            return null;
-        }
-
-        // Format sports data
-        $sports_list = [];
-        $total_boys = 0;
-        $total_girls = 0;
-
-        foreach ($sports as $sport) {
-            $sports_list[] = [
-                'sport' => $sport->sport,
-                'gender' => $sport->gender,
-                'participants' => (int) $sport->participants,
-            ];
-            if ($sport->gender === 'Boys') {
-                $total_boys += (int) $sport->participants;
-            } else {
-                $total_girls += (int) $sport->participants;
-            }
-        }
-
-        // Count unique sports (ignoring gender)
-        $unique_sports = count(array_unique(array_column($sports_list, 'sport')));
-
-        return [
-            'sports_count' => $unique_sports,
-            'total_participants' => $total_boys + $total_girls,
-            'boys_participants' => $total_boys,
-            'girls_participants' => $total_girls,
-            'sports' => $sports_list,
-        ];
-    }
-
     /**
      * Get total count of schools in a category for the current year.
      *
@@ -2464,36 +1343,27 @@ class BMN_Schools_REST_API {
         global $wpdb;
         $tables = bmn_schools()->get_table_names();
 
-        // PERFORMANCE FIX: Use transient cache instead of static (persists across requests)
-        // Category totals change only when rankings are recalculated (rarely)
+        // Cache key for category totals (recalculates if not cached)
         static $category_totals = null;
 
         if ($category_totals === null) {
-            // Try transient cache first
-            $category_totals = get_transient('bmn_category_totals');
-
-            if ($category_totals === false) {
-                $category_totals = [];
-                // Get the most recent year
-                $current_year = $wpdb->get_var(
-                    "SELECT MAX(year) FROM {$tables['rankings']} WHERE composite_score IS NOT NULL"
-                );
-                // Count by category for the current year only
-                $results = $wpdb->get_results($wpdb->prepare(
-                    "SELECT category, COUNT(*) as total
-                     FROM {$tables['rankings']}
-                     WHERE category IS NOT NULL
-                     AND composite_score IS NOT NULL
-                     AND year = %d
-                     GROUP BY category",
-                    $current_year
-                ));
-                foreach ($results as $row) {
-                    $category_totals[$row->category] = (int) $row->total;
-                }
-
-                // Cache for 1 hour (invalidated on ranking recalculation)
-                set_transient('bmn_category_totals', $category_totals, HOUR_IN_SECONDS);
+            $category_totals = [];
+            // Get the most recent year
+            $current_year = $wpdb->get_var(
+                "SELECT MAX(year) FROM {$tables['rankings']} WHERE composite_score IS NOT NULL"
+            );
+            // Count by category for the current year only
+            $results = $wpdb->get_results($wpdb->prepare(
+                "SELECT category, COUNT(*) as total
+                 FROM {$tables['rankings']}
+                 WHERE category IS NOT NULL
+                 AND composite_score IS NOT NULL
+                 AND year = %d
+                 GROUP BY category",
+                $current_year
+            ));
+            foreach ($results as $row) {
+                $category_totals[$row->category] = (int) $row->total;
             }
         }
 
@@ -3050,7 +1920,6 @@ class BMN_Schools_REST_API {
         $lng = floatval($request->get_param('lng'));
         $radius = floatval($request->get_param('radius'));
         $city = $request->get_param('city');
-        $district_id = $request->get_param('district_id');
 
         // Check cache
         $cache_key = BMN_Schools_Cache_Manager::generate_key('property_schools', [
@@ -3058,7 +1927,6 @@ class BMN_Schools_REST_API {
             'lng' => round($lng, 4),
             'radius' => $radius,
             'city' => $city ? strtoupper($city) : '',
-            'district_id' => $district_id ?: '',
         ]);
         $cached = BMN_Schools_Cache_Manager::get($cache_key, 'nearby_schools');
         if ($cached !== false) {
@@ -3067,27 +1935,9 @@ class BMN_Schools_REST_API {
 
         $tables = bmn_schools()->get_table_names();
 
-        // Build query based on filter mode:
-        // 1. district_id - Get ALL schools in the district (no limit per level)
-        // 2. city - Get schools in that city
-        // 3. radius - Get schools within radius (legacy behavior)
-        if ($district_id) {
-            // Filter by district - get ALL schools in the district
-            $sql = $wpdb->prepare(
-                "SELECT s.*,
-                 (3959 * ACOS(
-                     COS(RADIANS(%f)) * COS(RADIANS(latitude)) *
-                     COS(RADIANS(longitude) - RADIANS(%f)) +
-                     SIN(RADIANS(%f)) * SIN(RADIANS(latitude))
-                 )) AS distance
-                 FROM {$tables['schools']} s
-                 WHERE latitude IS NOT NULL AND longitude IS NOT NULL
-                 AND district_id = %d
-                 ORDER BY level ASC, distance ASC",
-                $lat, $lng, $lat, intval($district_id)
-            );
-        } elseif ($city) {
-            // Filter by city (case-insensitive) - get ALL schools in the city/district
+        // Build query - filter by city if provided, otherwise use radius
+        if ($city) {
+            // Filter by city (case-insensitive)
             $sql = $wpdb->prepare(
                 "SELECT s.*,
                  (3959 * ACOS(
@@ -3098,7 +1948,8 @@ class BMN_Schools_REST_API {
                  FROM {$tables['schools']} s
                  WHERE latitude IS NOT NULL AND longitude IS NOT NULL
                  AND UPPER(city) = %s
-                 ORDER BY level ASC, distance ASC",
+                 ORDER BY distance ASC
+                 LIMIT 30",
                 $lat, $lng, $lat, strtoupper($city)
             );
         } else {
@@ -3121,96 +1972,49 @@ class BMN_Schools_REST_API {
 
         $results = $wpdb->get_results($sql);
 
-        // For district/city mode, show more schools per level (10); for radius mode, limit to 3
-        $max_schools_per_level = ($district_id || $city) ? 10 : 3;
-
         // Load ranking calculator for highlights and benchmark lookups
         require_once BMN_SCHOOLS_PLUGIN_DIR . 'includes/class-ranking-calculator.php';
 
-        // PERFORMANCE OPTIMIZATION (v0.6.36): Two-pass approach with batch queries
-        // Pass 1: Determine which schools will be included (respecting level limits)
+        // Group by level
         $grouped = [
             'elementary' => [],
             'middle' => [],
             'high' => [],
         ];
-        $schools_to_include = [];
-        $high_school_ids = [];
 
         foreach ($results as $school) {
-            $level = $this->determine_display_level($school);
+            $level = $school->level ?: 'other';
             if (!isset($grouped[$level])) {
-                continue;
+                continue; // Skip 'other' and 'combined' for cleaner display
             }
-            if (count($grouped[$level]) >= $max_schools_per_level) {
-                continue;
+
+            if (count($grouped[$level]) >= 3) {
+                continue; // Limit 3 per level
             }
-            // Store school with its level for later
-            $school->_display_level = $level;
-            $grouped[$level][] = $school;
-            $schools_to_include[] = $school;
-            if ($level === 'high') {
-                $high_school_ids[] = (int) $school->id;
-            }
-        }
 
-        // Collect all school IDs for batch queries
-        $school_ids = array_map(function($s) { return (int) $s->id; }, $schools_to_include);
+            // Get MCAS score
+            $mcas = $wpdb->get_var($wpdb->prepare(
+                "SELECT AVG(proficient_or_above_pct)
+                 FROM {$tables['test_scores']}
+                 WHERE school_id = %d
+                 AND year = (SELECT MAX(year) FROM {$tables['test_scores']} WHERE school_id = %d)",
+                $school->id, $school->id
+            ));
 
-        // Batch fetch all data in single queries (instead of N+1 queries per school)
-        $mcas_by_school = $this->batch_get_mcas_scores($school_ids);
-        $rankings_by_school = $this->batch_get_rankings($school_ids);
-        $demographics_by_school = $this->batch_get_demographics($school_ids);
-        $discipline_by_school = $this->batch_get_discipline($school_ids);
-        $sports_by_school = $this->batch_get_sports($high_school_ids);
-
-        // Get previous year rankings for trend calculation (need ranking year first)
-        $prev_rankings_by_school = [];
-        if (!empty($rankings_by_school)) {
-            $first_ranking = reset($rankings_by_school);
-            if ($first_ranking && $first_ranking->year) {
-                $prev_rankings_by_school = $this->batch_get_previous_rankings($school_ids, (int) $first_ranking->year);
-            }
-        }
-
-        // Reset grouped for Pass 2 (building final response)
-        $grouped = [
-            'elementary' => [],
-            'middle' => [],
-            'high' => [],
-        ];
-
-        // Pass 2: Build response using pre-fetched batch data
-        foreach ($schools_to_include as $school) {
-            $level = $school->_display_level;
-            $sid = (int) $school->id;
-
-            // Get MCAS from batch data
-            $mcas = $mcas_by_school[$sid] ?? null;
-
-            // Get ranking from batch data
+            // Get ranking data including component scores for data completeness
             $ranking_data = null;
-            $ranking = $rankings_by_school[$sid] ?? null;
+            $ranking = $wpdb->get_row($wpdb->prepare(
+                "SELECT year, category, composite_score, percentile_rank, state_rank,
+                        mcas_score, graduation_score, masscore_score, attendance_score,
+                        ap_score, growth_score, spending_score, ratio_score
+                 FROM {$tables['rankings']}
+                 WHERE school_id = %d AND composite_score IS NOT NULL
+                 ORDER BY year DESC
+                 LIMIT 1",
+                $school->id
+            ));
             if ($ranking && $ranking->composite_score !== null) {
-                // Calculate trend from batch previous rankings
-                $prev = $prev_rankings_by_school[$sid] ?? null;
-                $trend = null;
-                if ($prev) {
-                    $rank_change = (int) $prev->state_rank - (int) $ranking->state_rank;
-                    $direction = $rank_change > 0 ? 'up' : ($rank_change < 0 ? 'down' : 'stable');
-                    $abs_change = abs($rank_change);
-                    $trend = [
-                        'direction' => $direction,
-                        'rank_change' => $rank_change,
-                        'score_change' => round((float) $ranking->composite_score - (float) $prev->composite_score, 1),
-                        'percentile_change' => (int) $ranking->percentile_rank - (int) $prev->percentile_rank,
-                        'previous_year' => (int) $prev->year,
-                        'previous_rank' => (int) $prev->state_rank,
-                        'previous_score' => round((float) $prev->composite_score, 1),
-                        'rank_change_text' => $direction === 'up' ? "Improved {$abs_change} spots from last year" :
-                                              ($direction === 'down' ? "Dropped {$abs_change} spots from last year" : "Same rank as last year"),
-                    ];
-                }
+                $trend = $this->get_ranking_trend($school->id, (int) $ranking->year, $ranking->category);
 
                 // Count available components for data completeness
                 $components = [
@@ -3233,36 +2037,11 @@ class BMN_Schools_REST_API {
                 }
 
                 // Determine confidence level based on data completeness
-                // Phase 6: Elementary now has 5 components (added spending with district fallback)
-                $is_elementary = stripos($school->level ?? '', 'Elementary') !== false;
                 $confidence_level = 'limited';
-                $limited_data_note = null;
-
-                if ($is_elementary) {
-                    // For elementary: 5 possible components (MCAS, attendance, ratio, growth, spending)
-                    if ($components_available >= 5) {
-                        $confidence_level = 'comprehensive';
-                    } elseif ($components_available >= 4) {
-                        $confidence_level = 'good';
-                    } else {
-                        // Provide specific reason for limited data
-                        $has_mcas = in_array('mcas', $components_list);
-                        $has_growth = in_array('growth', $components_list);
-                        if (!$has_mcas && !$has_growth) {
-                            $limited_data_note = 'No MCAS data available (this school may be private or serve grades below 3)';
-                        } elseif (!$has_growth) {
-                            $limited_data_note = 'Limited historical data for year-over-year comparison';
-                        } else {
-                            $limited_data_note = 'Rating based on limited available metrics';
-                        }
-                    }
-                } else {
-                    // Standard thresholds for middle/high schools
-                    if ($components_available >= 7) {
-                        $confidence_level = 'comprehensive';
-                    } elseif ($components_available >= 5) {
-                        $confidence_level = 'good';
-                    }
+                if ($components_available >= 7) {
+                    $confidence_level = 'comprehensive';
+                } elseif ($components_available >= 5) {
+                    $confidence_level = 'good';
                 }
 
                 // Get benchmark comparison
@@ -3307,18 +2086,26 @@ class BMN_Schools_REST_API {
                     'trend' => $trend,
                     'data_completeness' => [
                         'components_available' => $components_available,
-                        'components_total' => $is_elementary ? 5 : 8,
+                        'components_total' => 8,
                         'confidence_level' => $confidence_level,
                         'components' => $components_list,
-                        'limited_data_note' => $limited_data_note,
                     ],
                     'benchmarks' => $benchmark_data,
                 ];
             }
 
-            // Get demographics from batch data
+            // Get demographics data
             $demographics_data = null;
-            $demographics = $demographics_by_school[$sid] ?? null;
+            $demographics = $wpdb->get_row($wpdb->prepare(
+                "SELECT total_students, pct_free_reduced_lunch, avg_class_size,
+                        pct_white, pct_black, pct_hispanic, pct_asian,
+                        pct_multiracial, pct_english_learner, pct_special_ed
+                 FROM {$tables['demographics']}
+                 WHERE school_id = %d
+                 ORDER BY year DESC
+                 LIMIT 1",
+                $school->id
+            ));
             if ($demographics) {
                 $demographics_data = [
                     'total_students' => $demographics->total_students ? (int) $demographics->total_students : null,
@@ -3328,202 +2115,28 @@ class BMN_Schools_REST_API {
                 ];
             }
 
-            // Get highlights for this school (already cached per-school via transients)
-            $highlights = BMN_Schools_Ranking_Calculator::get_school_highlights($sid);
-
-            // Get discipline from batch data
-            $discipline_data = $discipline_by_school[$sid] ?? null;
-
-            // Get sports from batch data (only for high schools)
-            $sports_data = ($level === 'high') ? ($sports_by_school[$sid] ?? null) : null;
+            // Get highlights for this school
+            $highlights = BMN_Schools_Ranking_Calculator::get_school_highlights($school->id);
 
             $grouped[$level][] = [
-                'id' => $sid,
+                'id' => (int) $school->id,
                 'name' => $school->name,
                 'grades' => $this->format_grades($school->grades_low, $school->grades_high),
                 'distance' => round($school->distance, 2),
                 'address' => $school->address,
-                'mcas_proficient_pct' => $mcas,
+                'mcas_proficient_pct' => $mcas ? round((float) $mcas, 1) : null,
                 'latitude' => (float) $school->latitude,
                 'longitude' => (float) $school->longitude,
                 'ranking' => $ranking_data,
                 'demographics' => $demographics_data,
                 'highlights' => !empty($highlights) ? $highlights : null,
-                'discipline' => $discipline_data,
-                'sports' => $sports_data,
             ];
-        }
-
-        // For city/district mode: if any levels are empty, supplement with regional schools
-        // This handles regional districts where cities share schools (e.g., Nahant→Swampscott)
-        if ($city) {
-            $missing_levels = [];
-            foreach (['elementary', 'middle', 'high'] as $check_level) {
-                if (empty($grouped[$check_level])) {
-                    $missing_levels[] = $check_level;
-                }
-            }
-
-            if (!empty($missing_levels)) {
-                // Check for regional school mapping
-                $regional_mapping = $this->get_regional_school_mapping($city);
-
-                // Track already-added school IDs to avoid duplicates
-                $added_ids = [];
-                foreach ($grouped as $level_schools) {
-                    foreach ($level_schools as $s) {
-                        $added_ids[$s['id']] = true;
-                    }
-                }
-
-                // Process each missing level
-                foreach ($missing_levels as $missing_level) {
-                    $mapped_city = null;
-
-                    // Check if we have a regional mapping for this level
-                    if ($regional_mapping && !empty($regional_mapping[$missing_level])) {
-                        $mapped_city = $regional_mapping[$missing_level];
-                    }
-
-                    if ($mapped_city) {
-                        // Fetch schools from the mapped city for this level
-                        $regional_sql = $wpdb->prepare(
-                            "SELECT s.*,
-                             (3959 * ACOS(
-                                 COS(RADIANS(%f)) * COS(RADIANS(latitude)) *
-                                 COS(RADIANS(longitude) - RADIANS(%f)) +
-                                 SIN(RADIANS(%f)) * SIN(RADIANS(latitude))
-                             )) AS distance
-                             FROM {$tables['schools']} s
-                             WHERE UPPER(city) = %s
-                             AND latitude IS NOT NULL AND longitude IS NOT NULL
-                             ORDER BY name ASC
-                             LIMIT 20",
-                            $lat, $lng, $lat, strtoupper($mapped_city)
-                        );
-                        $regional_results = $wpdb->get_results($regional_sql);
-
-                        foreach ($regional_results as $regional_school) {
-                            if (isset($added_ids[$regional_school->id])) {
-                                continue;
-                            }
-
-                            $school_level = $this->determine_display_level($regional_school);
-                            if ($school_level !== $missing_level) {
-                                continue;
-                            }
-
-                            if (count($grouped[$missing_level]) >= 5) {
-                                break;
-                            }
-
-                            // Get full data for regional school
-                            $regional_mcas = $wpdb->get_var($wpdb->prepare(
-                                "SELECT AVG(proficient_or_above_pct)
-                                 FROM {$tables['test_scores']}
-                                 WHERE school_id = %d
-                                 AND year = (SELECT MAX(year) FROM {$tables['test_scores']} WHERE school_id = %d)",
-                                $regional_school->id, $regional_school->id
-                            ));
-
-                            $regional_ranking = $wpdb->get_row($wpdb->prepare(
-                                "SELECT composite_score, percentile_rank, state_rank, category, year
-                                 FROM {$tables['rankings']}
-                                 WHERE school_id = %d AND composite_score IS NOT NULL
-                                 ORDER BY year DESC LIMIT 1",
-                                $regional_school->id
-                            ));
-
-                            $regional_ranking_data = null;
-                            if ($regional_ranking) {
-                                // Get trend data
-                                $prev_ranking = $wpdb->get_row($wpdb->prepare(
-                                    "SELECT state_rank FROM {$tables['rankings']}
-                                     WHERE school_id = %d AND year = %d - 1
-                                     AND composite_score IS NOT NULL",
-                                    $regional_school->id, $regional_ranking->year
-                                ));
-
-                                $trend_data = null;
-                                if ($prev_ranking) {
-                                    $rank_change = (int) $prev_ranking->state_rank - (int) $regional_ranking->state_rank;
-                                    $direction = $rank_change > 0 ? 'up' : ($rank_change < 0 ? 'down' : 'stable');
-                                    $abs_change = abs($rank_change);
-                                    $trend_text = $direction === 'up' ? "Improved {$abs_change} spots from last year" :
-                                                  ($direction === 'down' ? "Dropped {$abs_change} spots from last year" : "Same rank as last year");
-                                    $trend_data = [
-                                        'direction' => $direction,
-                                        'rank_change' => $rank_change,
-                                        'rank_change_text' => $trend_text,
-                                    ];
-                                }
-
-                                $regional_ranking_data = [
-                                    'category' => $regional_ranking->category,
-                                    'category_label' => $this->format_category_label($regional_ranking->category),
-                                    'composite_score' => round((float) $regional_ranking->composite_score, 1),
-                                    'percentile_rank' => (int) $regional_ranking->percentile_rank,
-                                    'state_rank' => (int) $regional_ranking->state_rank,
-                                    'category_total' => $this->get_category_total($regional_ranking->category),
-                                    'letter_grade' => BMN_Schools_Ranking_Calculator::get_letter_grade_from_percentile($regional_ranking->percentile_rank),
-                                    'trend' => $trend_data,
-                                ];
-                            }
-
-                            // Get demographics
-                            $regional_demographics = $wpdb->get_row($wpdb->prepare(
-                                "SELECT total_students, pct_free_reduced_lunch,
-                                        pct_white, pct_black, pct_hispanic, pct_asian, pct_multiracial
-                                 FROM {$tables['demographics']}
-                                 WHERE school_id = %d
-                                 ORDER BY year DESC LIMIT 1",
-                                $regional_school->id
-                            ));
-
-                            $regional_demographics_data = null;
-                            if ($regional_demographics) {
-                                $regional_demographics_data = [
-                                    'total_students' => (int) $regional_demographics->total_students,
-                                    'diversity' => $this->calculate_diversity_index($regional_demographics),
-                                    'pct_free_reduced_lunch' => $regional_demographics->pct_free_reduced_lunch ?
-                                        round((float) $regional_demographics->pct_free_reduced_lunch, 1) : null,
-                                ];
-                            }
-
-                            // Get highlights
-                            $regional_highlights = BMN_Schools_Ranking_Calculator::get_school_highlights($regional_school->id);
-
-                            // Get discipline data
-                            $regional_discipline = $this->get_school_discipline($regional_school->id);
-
-                            $grouped[$missing_level][] = [
-                                'id' => (int) $regional_school->id,
-                                'name' => $regional_school->name,
-                                'grades' => $this->format_grades($regional_school->grades_low, $regional_school->grades_high),
-                                'distance' => round($regional_school->distance, 2),
-                                'address' => $regional_school->address,
-                                'city' => $regional_school->city, // Include city to show it's from another town
-                                'mcas_proficient_pct' => $regional_mcas ? round((float) $regional_mcas, 1) : null,
-                                'latitude' => (float) $regional_school->latitude,
-                                'longitude' => (float) $regional_school->longitude,
-                                'ranking' => $regional_ranking_data,
-                                'demographics' => $regional_demographics_data,
-                                'highlights' => !empty($regional_highlights) ? $regional_highlights : null,
-                                'discipline' => $regional_discipline,
-                                'is_regional' => true, // Flag to indicate this is from a regional/shared district
-                                'regional_note' => "Students from {$city} attend this school",
-                            ];
-                            $added_ids[$regional_school->id] = true;
-                        }
-                    }
-                }
-            }
         }
 
         // Get district
         $district = null;
         $districts = $wpdb->get_results(
-            "SELECT id, name, nces_district_id, type, boundary_geojson, extra_data
+            "SELECT id, name, nces_district_id, type, boundary_geojson
              FROM {$tables['districts']}
              WHERE boundary_geojson IS NOT NULL AND state = 'MA'"
         );
@@ -3551,17 +2164,6 @@ class BMN_Schools_REST_API {
                         'middle_avg' => $district_ranking->middle_avg ? round((float) $district_ranking->middle_avg, 1) : null,
                         'high_avg' => $district_ranking->high_avg ? round((float) $district_ranking->high_avg, 1) : null,
                     ];
-                }
-
-                // Include college outcomes and discipline if available
-                if (!empty($dist->extra_data)) {
-                    $extra = json_decode($dist->extra_data, true);
-                    if (isset($extra['college_outcomes'])) {
-                        $district['college_outcomes'] = $extra['college_outcomes'];
-                    }
-                    if (isset($extra['discipline'])) {
-                        $district['discipline'] = $this->enrich_discipline_with_percentile($extra['discipline']);
-                    }
                 }
                 break;
             }
@@ -3802,15 +2404,15 @@ class BMN_Schools_REST_API {
                 'term' => 'Composite Score',
                 'full_name' => 'BMN Boston Composite Rating',
                 'category' => 'rating',
-                'description' => 'Our proprietary 0-100 rating combining multiple data points. For middle/high schools: MCAS scores (40%), graduation rate (12%), MCAS growth (10%), AP performance (9%), MassCore completion (8%), attendance (8%), student-teacher ratio (5%), per-pupil spending (4%), and college outcomes (4%). For elementary schools: MCAS scores (45%), attendance (20%), MCAS growth (15%), per-pupil spending (12%), and student-teacher ratio (8%).',
+                'description' => 'Our proprietary 0-100 rating that combines multiple data points: MCAS scores (25%), graduation rate (15%), MassCore completion (15%), attendance (10%), AP performance (10%), MCAS growth (10%), per-pupil spending (10%), and student-teacher ratio (5%).',
                 'parent_tip' => 'The composite score gives a holistic view, but no single number tells the whole story. Two schools with similar scores might excel in different areas. Click "View Details" to see the breakdown.',
             ],
             'letter_grade' => [
                 'term' => 'Letter Grade',
                 'full_name' => 'School Letter Grade (A+ to F)',
                 'category' => 'rating',
-                'description' => 'A simplified rating based on the school\'s percentile rank among similar schools. A+ (top 10%), A (top 20%), A- (top 30%), B+ (top 40%), B (top 50%), B- (top 60%), C+ (top 70%), C (top 80%), C- (top 90%), D (bottom 10%), F (lowest).',
-                'parent_tip' => 'Letter grades make comparison easy, but remember that a "B" school (top 50%) might be perfect for your child. Consider factors like location, specific programs, and school culture alongside the grade.',
+                'description' => 'A simplified rating based on the composite score. A+ (97-100), A (93-96), A- (90-92), B+ (87-89), B (83-86), B- (80-82), C+ (77-79), C (73-76), C- (70-72), D (60-69), F (below 60).',
+                'parent_tip' => 'Letter grades make comparison easy, but remember that a "B" school might be perfect for your child. Consider factors like location, specific programs, and school culture alongside the grade.',
             ],
             'percentile_rank' => [
                 'term' => 'Percentile Rank',
@@ -3847,13 +2449,6 @@ class BMN_Schools_REST_API {
                 'description' => 'Partnerships between high schools and colleges where students earn college credits while in high school, often for free. Massachusetts has a designated Early College network with quality standards.',
                 'parent_tip' => 'Early College can save thousands in college costs. Students can earn 12-30 credits. It\'s especially valuable for first-generation college students who get a head start on the college experience.',
             ],
-            'college_outcomes' => [
-                'term' => 'College Outcomes',
-                'full_name' => 'Post-Secondary Enrollment Rate',
-                'category' => 'metric',
-                'description' => 'The percentage of high school graduates who enroll in college (2-year or 4-year) within one year of graduation. Massachusetts tracks this data through the Education to Careers Hub. This metric contributes 4% to a school\'s composite score.',
-                'parent_tip' => 'Look for districts where 60%+ of graduates attend college. Top districts often have 80%+ enrollment rates. Also consider 4-year vs 2-year college rates—both are valuable paths.',
-            ],
             'chronic_absence' => [
                 'term' => 'Chronic Absence',
                 'full_name' => 'Chronic Absenteeism Rate',
@@ -3888,34 +2483,6 @@ class BMN_Schools_REST_API {
                 'category' => 'governance',
                 'description' => 'The elected (or sometimes appointed) board that governs local public schools. They set policy, approve budgets, and hire the superintendent. Called "School Board" in most other states.',
                 'parent_tip' => 'School Committee meetings are open to the public. Attending a meeting can give you insight into community priorities and any issues facing the schools.',
-            ],
-            'suspension' => [
-                'term' => 'Suspension',
-                'full_name' => 'School Suspension',
-                'category' => 'discipline',
-                'description' => 'Temporary removal from school, either in-school (ISS) where students remain on campus in a separate room, or out-of-school (OSS) where students are sent home. Massachusetts limits OSS to 10 consecutive days without a hearing.',
-                'parent_tip' => 'Ask about the school\'s re-entry process and support for returning students. Schools with low suspension rates often use alternative approaches like restorative justice.',
-            ],
-            'expulsion' => [
-                'term' => 'Expulsion',
-                'full_name' => 'School Expulsion',
-                'category' => 'discipline',
-                'description' => 'Permanent removal from school, typically reserved for serious violations like weapons or drugs. In Massachusetts, expelled students must be offered alternative education services.',
-                'parent_tip' => 'Expulsion is rare and schools must follow due process. Massachusetts law protects students\' right to a hearing and appeal before expulsion.',
-            ],
-            'restorative_justice' => [
-                'term' => 'Restorative Justice',
-                'full_name' => 'Restorative Discipline Practices',
-                'category' => 'discipline',
-                'description' => 'An approach to discipline that focuses on repairing harm and restoring relationships rather than punishment. Includes peer mediation, community circles, and conflict resolution programs.',
-                'parent_tip' => 'Schools using restorative practices often have lower suspension rates and better school climate. Ask if the school has trained staff in restorative approaches.',
-            ],
-            'discipline_rate' => [
-                'term' => 'Discipline Rate',
-                'full_name' => 'Student Discipline Rate',
-                'category' => 'discipline',
-                'description' => 'The percentage of students receiving disciplinary action (out-of-school suspension, expulsion, or emergency removal) in a school year. The Massachusetts state average is approximately 5.5%.',
-                'parent_tip' => 'Lower discipline rates suggest a positive school climate with fewer behavioral incidents. Rates under 3% indicate schools that emphasize prevention and alternatives to suspension.',
             ],
         ];
 
