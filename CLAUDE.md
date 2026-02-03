@@ -1517,6 +1517,58 @@ $grade_score -= $bed_diff * 10;                     // Bedroom difference penalt
 - `class-mld-mobile-rest-api.php` - `handle_generate_cma_pdf()` builds data
 - `class-mld-cma-pdf-generator.php` - Expects specific structure
 
+### 47. CMA PDF Selected Comparables Must Query Directly (v6.74.11)
+
+When users select specific comparables in the iOS app for PDF generation, the backend must query those exact properties by `listing_key`, NOT re-run a generic search query.
+
+**Problem (v6.74.10 and earlier):** The PDF generator ran its own query with different criteria than the CMA display endpoint. User-selected comparables might not appear in the PDF query results.
+
+```php
+// WRONG - Generic query might not include user's selected properties
+$comparables = $wpdb->get_results($wpdb->prepare(
+    "SELECT * FROM {$archive_table}
+     WHERE city = %s AND bedrooms_total BETWEEN %d AND %d
+     LIMIT 10",
+    $subject->city, $bed_low, $bed_high
+));
+// Then filter to selected_comparables - but they might not be in results!
+
+// CORRECT - Query selected comparables directly by listing_key
+if (!empty($selected_comparables)) {
+    $placeholders = implode(',', array_fill(0, count($selected_comparables), '%s'));
+    $comparables = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM {$archive_table}
+         WHERE listing_key IN ({$placeholders})",
+        $selected_comparables
+    ));
+}
+```
+
+### 48. Archive Summary Table Column Names (v6.74.12)
+
+The archive summary table (`bme_listing_summary_archive`) uses different column names than expected. Always check the actual schema.
+
+| Expected | Actual Column | Notes |
+|----------|---------------|-------|
+| `list_date` | `listing_contract_date` | Date property was listed |
+| DOM calculation | `days_on_market` | Pre-calculated, use directly |
+
+```php
+// WRONG - list_date doesn't exist
+if (!empty($comp->close_date) && !empty($comp->list_date)) {
+    $dom = (strtotime($comp->close_date) - strtotime($comp->list_date)) / 86400;
+}
+
+// CORRECT - use days_on_market column, fallback to listing_contract_date
+if (!empty($comp->days_on_market) && $comp->days_on_market > 0) {
+    $dom = (int) $comp->days_on_market;
+} elseif (!empty($comp->close_date) && !empty($comp->listing_contract_date)) {
+    $dom = (int) ((strtotime($comp->close_date) - strtotime($comp->listing_contract_date)) / 86400);
+}
+```
+
+**Symptom:** "Average Days on Market: N/A" in CMA PDF despite having valid comparables.
+
 ---
 
 ## Authentication & Token Configuration

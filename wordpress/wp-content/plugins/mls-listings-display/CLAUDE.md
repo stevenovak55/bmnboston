@@ -688,6 +688,54 @@ System Health dashboard (WP Admin → MLS Listings → System Health) shows:
 
 ## Version History
 
+### Version 6.74.12 - CMA PDF DAYS ON MARKET FIX (Feb 3, 2026)
+
+Fixed "Average Days on Market: N/A" showing in CMA PDF despite valid comparables.
+
+**Problem:** DOM calculation was looking for `$comp->list_date` which doesn't exist in the archive summary table.
+
+**Root Cause:** The `bme_listing_summary_archive` table uses:
+- `listing_contract_date` (not `list_date`)
+- `days_on_market` (pre-calculated value)
+
+**Fix:** Now uses `days_on_market` directly, with fallback to calculating from `listing_contract_date`:
+```php
+if (!empty($comp->days_on_market) && $comp->days_on_market > 0) {
+    $dom = (int) $comp->days_on_market;
+} elseif (!empty($comp->close_date) && !empty($comp->listing_contract_date)) {
+    $dom = (int) ((strtotime($comp->close_date) - strtotime($comp->listing_contract_date)) / 86400);
+}
+```
+
+**Files Changed:**
+- `includes/class-mld-mobile-rest-api.php` - Fixed DOM calculation in two places
+
+---
+
+### Version 6.74.11 - CMA PDF COMPARABLE SELECTION FIX (Feb 3, 2026)
+
+Fixed "Insufficient Data" error when generating CMA PDF with user-selected comparables.
+
+**Problem:** Users could select specific comparables in the iOS app, but the PDF showed "Insufficient Data" for all statistics.
+
+**Root Cause:** The PDF generator ran its own query with different criteria than the CMA display endpoint. User-selected comparables might not appear in the PDF query results due to different LIMIT, bedroom/sqft ranges, etc.
+
+**Fix:** When `selected_comparables` is provided, query those exact properties directly by `listing_key`:
+```php
+if (!empty($selected_comparables)) {
+    $placeholders = implode(',', array_fill(0, count($selected_comparables), '%s'));
+    $comparables = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM {$archive_table} WHERE listing_key IN ({$placeholders})",
+        $selected_comparables
+    ));
+}
+```
+
+**Files Changed:**
+- `includes/class-mld-mobile-rest-api.php` - Direct query for selected comparables
+
+---
+
 ### Version 6.53.0 - NOTIFICATION DEDUPLICATION FIX (Jan 10, 2026)
 
 Fixed duplicate notifications appearing in Notification Center on every login.
