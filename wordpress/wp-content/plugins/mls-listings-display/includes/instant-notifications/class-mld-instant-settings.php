@@ -137,7 +137,7 @@ class MLD_Instant_Settings {
                     $this->render_stats_tab($usage_stats, $user_stats);
                     break;
                 default:
-                    $this->render_settings_tab($settings);
+                    $this->render_settings_tab($settings, $usage_stats, $user_stats);
                     break;
             }
             ?>
@@ -147,8 +147,12 @@ class MLD_Instant_Settings {
 
     /**
      * Render the main settings tab
+     *
+     * @param array $settings Settings array
+     * @param array $usage_stats Usage statistics
+     * @param array $user_stats User statistics
      */
-    private function render_settings_tab($settings) {
+    private function render_settings_tab($settings, $usage_stats, $user_stats) {
         ?>
         <div class="mld-settings-grid">
                 <!-- Global Settings -->

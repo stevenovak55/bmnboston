@@ -1,0 +1,693 @@
+/**
+ * Blog Agent Admin Styles
+ *
+ * @package MLS_Listings_Display
+ * @subpackage Blog_Agent
+ * @since 6.73.0
+ */
+
+/* ==========================================================================
+   Layout & Structure
+   ========================================================================== */
+
+.mld-blog-agent-wrap {
+    max-width: 1400px;
+}
+
+.mld-blog-agent-wrap h1 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mld-blog-agent-wrap h1 .dashicons {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+}
+
+.mld-blog-agent-content {
+    margin-top: 20px;
+}
+
+/* ==========================================================================
+   Create Article Flow
+   ========================================================================== */
+
+.mld-blog-agent-create {
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mld-step {
+    margin-bottom: 40px;
+}
+
+.mld-step h2 {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.mld-step > p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+/* Topic Actions */
+.mld-topic-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.mld-topic-actions .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    height: auto;
+}
+
+.mld-or {
+    color: #999;
+    font-style: italic;
+}
+
+/* Topics Container */
+.mld-topics-container {
+    margin-top: 20px;
+}
+
+.mld-topics-loading {
+    text-align: center;
+    padding: 40px;
+}
+
+.mld-topics-loading .spinner {
+    float: none;
+    margin: 0 auto 10px;
+}
+
+.mld-topics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+/* Topic Card */
+.mld-topic-card {
+    background: #f9f9f9;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mld-topic-card:hover {
+    border-color: #0073aa;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mld-topic-card.selected {
+    border-color: #0073aa;
+    background: #f0f7fc;
+}
+
+.mld-topic-card h4 {
+    margin: 0 0 10px;
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.mld-topic-card p {
+    margin: 0 0 15px;
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.mld-topic-card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+
+.mld-topic-score {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mld-topic-source {
+    color: #999;
+}
+
+/* Custom Topic Form */
+.mld-custom-topic-form {
+    background: #f9f9f9;
+    padding: 25px;
+    border-radius: 8px;
+    max-width: 600px;
+}
+
+.mld-form-field {
+    margin-bottom: 20px;
+}
+
+.mld-form-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.mld-form-field input[type="text"],
+.mld-form-field textarea {
+    width: 100%;
+    max-width: 100%;
+}
+
+.mld-form-field input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+.mld-form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.mld-form-row .mld-form-field {
+    flex: 1;
+}
+
+/* Selected Topic Display */
+.mld-selected-topic {
+    background: #f0f7fc;
+    border: 1px solid #0073aa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.mld-selected-topic h3 {
+    margin: 0 0 10px;
+    font-size: 14px;
+    color: #666;
+}
+
+#mld-selected-topic-display {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+#mld-change-topic {
+    margin-top: 10px;
+    padding: 0;
+}
+
+/* Generation Options */
+.mld-generation-options {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+/* Generate Button */
+#mld-generate-article {
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Progress Bar */
+.mld-progress {
+    margin-top: 30px;
+}
+
+.mld-progress-bar {
+    height: 8px;
+    background: #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.mld-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0073aa, #00a0d2);
+    width: 0%;
+    transition: width 0.5s ease;
+    animation: progress-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes progress-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.mld-progress-text {
+    margin-top: 10px;
+    text-align: center;
+    color: #666;
+}
+
+/* ==========================================================================
+   Article Preview
+   ========================================================================== */
+
+.mld-article-preview {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.mld-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+}
+
+.mld-scores {
+    display: flex;
+    gap: 20px;
+}
+
+.mld-score {
+    text-align: center;
+}
+
+.mld-score-label {
+    display: block;
+    font-size: 11px;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.mld-score-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+}
+
+.mld-seo-score .mld-score-value { color: #0073aa; }
+.mld-geo-score .mld-score-value { color: #46b450; }
+
+.mld-preview-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.mld-preview-content {
+    padding: 20px;
+}
+
+.mld-title-preview,
+.mld-meta-preview,
+.mld-content-preview {
+    margin-bottom: 20px;
+}
+
+.mld-title-preview label,
+.mld-meta-preview label,
+.mld-content-preview label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #666;
+}
+
+.mld-title-preview input,
+.mld-meta-preview textarea {
+    width: 100%;
+}
+
+.mld-char-count {
+    display: block;
+    text-align: right;
+    font-size: 12px;
+    color: #999;
+    margin-top: 5px;
+}
+
+.mld-char-count.warning {
+    color: #d63638;
+}
+
+#mld-preview-content-area {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 20px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+#mld-preview-content-area h2 {
+    font-size: 20px;
+    margin: 1.5em 0 0.5em;
+}
+
+#mld-preview-content-area h3 {
+    font-size: 16px;
+    margin: 1.2em 0 0.5em;
+}
+
+#mld-preview-content-area p {
+    line-height: 1.6;
+}
+
+.mld-preview-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: #f9f9f9;
+    border-top: 1px solid #ddd;
+}
+
+.mld-preview-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mld-publish-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* ==========================================================================
+   Score Badges
+   ========================================================================== */
+
+.mld-score-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.mld-score-badge.mld-score-good {
+    background: #d4edda;
+    color: #155724;
+}
+
+.mld-score-badge.mld-score-ok {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.mld-score-badge.mld-score-poor {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* ==========================================================================
+   Status Badges
+   ========================================================================== */
+
+.mld-status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.mld-status-badge.mld-status-draft,
+.mld-status-badge.mld-status-pending {
+    background: #e5e5e5;
+    color: #666;
+}
+
+.mld-status-badge.mld-status-published {
+    background: #d4edda;
+    color: #155724;
+}
+
+.mld-status-badge.mld-status-selected,
+.mld-status-badge.mld-status-generated {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.mld-status-badge.mld-status-archived {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.mld-status-badge.mld-status-excellent,
+.mld-status-badge.mld-status-good {
+    background: #d4edda;
+    color: #155724;
+}
+
+.mld-status-badge.mld-status-poor,
+.mld-status-badge.mld-status-needs_improvement {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* ==========================================================================
+   Modal
+   ========================================================================== */
+
+.mld-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mld-modal-content {
+    background: #fff;
+    border-radius: 8px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.mld-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.mld-modal-header h3 {
+    margin: 0;
+}
+
+.mld-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    line-height: 1;
+}
+
+.mld-modal-close:hover {
+    color: #000;
+}
+
+.mld-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* SEO Issues List */
+.mld-seo-issue {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.mld-seo-issue-severity {
+    flex-shrink: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: 5px;
+}
+
+.mld-seo-issue-severity.high { background: #dc3232; }
+.mld-seo-issue-severity.medium { background: #ffb900; }
+.mld-seo-issue-severity.low { background: #00a0d2; }
+
+.mld-seo-issue-content {
+    flex: 1;
+}
+
+.mld-seo-issue-content strong {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.mld-seo-issue-content p {
+    margin: 0;
+    color: #666;
+    font-size: 13px;
+}
+
+/* ==========================================================================
+   Articles List
+   ========================================================================== */
+
+.mld-articles-list {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mld-articles-list .wp-list-table {
+    margin-top: 0;
+}
+
+.mld-articles-list .description {
+    margin: 5px 0 0;
+    color: #666;
+}
+
+/* ==========================================================================
+   Topics List
+   ========================================================================== */
+
+.mld-topics-list {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mld-topics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.mld-topics-header h3 {
+    margin: 0;
+}
+
+/* ==========================================================================
+   Performance Stats
+   ========================================================================== */
+
+.mld-performance {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.mld-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.mld-stat-card {
+    background: #fff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.mld-stat-value {
+    display: block;
+    font-size: 36px;
+    font-weight: 600;
+    color: #0073aa;
+    margin-bottom: 5px;
+}
+
+.mld-stat-label {
+    display: block;
+    font-size: 13px;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.mld-recommendations {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mld-recommendations h3 {
+    margin-top: 0;
+}
+
+.mld-recommendation-tip {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media screen and (max-width: 782px) {
+    .mld-topic-actions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .mld-form-row {
+        flex-direction: column;
+    }
+
+    .mld-preview-header,
+    .mld-preview-footer {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .mld-scores {
+        justify-content: center;
+    }
+
+    .mld-publish-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .mld-publish-actions .button {
+        width: 100%;
+    }
+}

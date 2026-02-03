@@ -46,6 +46,14 @@ class MLD_Comparable_Sales {
     const ROAD_TYPE_DEFAULT_PCT = 0.05; // 5% default road type premium (down from 25%)
 
     /**
+     * Lot size adjustment constants (v6.73.0)
+     * Per bank appraisal standards, lot size matters for non-condo properties
+     */
+    const LOT_SIZE_PCT = 0.02;       // 2% per 0.25 acre difference
+    const LOT_SIZE_MAX_PCT = 0.10;   // 10% max lot size adjustment
+    const LOT_SIZE_MIN_DIFF = 0.1;   // Minimum 0.1 acre difference to adjust
+
+    /**
      * Market data cache
      */
     private $market_data = null;
@@ -62,6 +70,17 @@ class MLD_Comparable_Sales {
      * @param array $filters User-selected filters
      * @return array Array of comparable properties with adjustments
      */
+    /**
+     * Minimum comparables needed for a reliable CMA (FHA requirement)
+     */
+    const MIN_COMPARABLES_REQUIRED = 5;
+
+    /**
+     * Radius tiers for auto-expansion (miles)
+     * Starts tight per bank appraisal standards, expands only if needed
+     */
+    const RADIUS_TIERS = array(1, 2, 3, 5, 10);
+
     public function find_comparables($subject_property, $filters = array()) {
         global $wpdb;
 
@@ -71,11 +90,48 @@ class MLD_Comparable_Sales {
         // Load market data for adjustments
         $this->load_market_data($subject_property['city'], $subject_property['state']);
 
-        // Build query
-        $query = $this->build_query($subject_property, $filters);
+        // v6.73.0: Auto-expand radius if enabled and insufficient comps found
+        $original_radius = $filters['radius'];
+        $radius_expanded = false;
+        $final_radius = $filters['radius'];
+        $results = array();
 
-        // Execute query
-        $results = $wpdb->get_results($query, ARRAY_A);
+        if (!empty($filters['auto_expand_radius'])) {
+            // Build radius tiers starting from requested radius
+            $radius_tiers = array_filter(self::RADIUS_TIERS, function($r) use ($original_radius) {
+                return $r >= $original_radius;
+            });
+
+            // Ensure we have at least the original radius
+            if (empty($radius_tiers)) {
+                $radius_tiers = array($original_radius);
+            }
+
+            foreach ($radius_tiers as $test_radius) {
+                $filters['radius'] = $test_radius;
+                $query = $this->build_query($subject_property, $filters);
+                $results = $wpdb->get_results($query, ARRAY_A);
+
+                if (count($results) >= self::MIN_COMPARABLES_REQUIRED) {
+                    $final_radius = $test_radius;
+                    $radius_expanded = ($test_radius > $original_radius);
+                    break;
+                }
+
+                // Track the last attempt
+                $final_radius = $test_radius;
+                $radius_expanded = ($test_radius > $original_radius);
+            }
+        } else {
+            // No auto-expansion, just run the query once
+            $query = $this->build_query($subject_property, $filters);
+            $results = $wpdb->get_results($query, ARRAY_A);
+        }
+
+        // Update filters to reflect actual radius used
+        $filters['radius'] = $final_radius;
+        $filters['radius_expanded'] = $radius_expanded;
+        $filters['original_radius'] = $original_radius;
 
         if (empty($results)) {
             return array(
@@ -85,7 +141,8 @@ class MLD_Comparable_Sales {
                     'avg_price' => 0,
                     'price_range' => array('min' => 0, 'max' => 0),
                     'estimated_value' => array('low' => 0, 'mid' => 0, 'high' => 0)
-                )
+                ),
+                'filters_applied' => $filters
             );
         }
 
@@ -126,10 +183,14 @@ class MLD_Comparable_Sales {
 
     /**
      * Get default filter settings
+     *
+     * v6.73.0: Changed default radius from 3 miles to 1 mile to align with
+     * bank appraisal standards. Auto-expansion handles insufficient comps.
      */
     private function get_default_filters() {
         return array(
-            'radius' => 3, // miles
+            'radius' => 1, // miles (v6.73.0: reduced from 3 to match bank appraisal standards)
+            'auto_expand_radius' => true, // v6.73.0: automatically expand if insufficient comps
             'price_range_pct' => 15, // ±15%
             'sqft_range_pct' => 20, // ±20%
             'beds_min' => null,
@@ -822,8 +883,7 @@ class MLD_Comparable_Sales {
                 'unknown' => 0,                      // Unknown - baseline (no data yet)
                 'main_road' => 0,                    // Main road - baseline
                 'neighborhood_road' => $road_type_premium,   // Neighborhood road premium (from admin settings)
-                '' => 0,                             // Empty - treat as unknown
-                null => 0                            // Null - treat as unknown
+                '' => 0,                             // Empty/null - treat as unknown
             );
 
             // If comp doesn't have road type, assume baseline (0)
@@ -848,7 +908,6 @@ class MLD_Comparable_Sales {
                     'main_road' => 'Main Road',
                     'neighborhood_road' => 'Neighborhood Road',
                     '' => 'Unknown',
-                    null => 'Unknown'
                 );
 
                 $comp_label = isset($road_type_labels[$comp_road_type]) ? $road_type_labels[$comp_road_type] : ucfirst(str_replace('_', ' ', $comp_road_type));
@@ -875,8 +934,7 @@ class MLD_Comparable_Sales {
                 'some_updates' => 0,        // Baseline
                 'needs_updating' => -12,
                 'distressed' => -30,
-                '' => 0,                    // Unknown/baseline
-                null => 0                   // Unknown/baseline
+                '' => 0,                    // Unknown/null - baseline
             );
 
             // If comp doesn't have condition, assume baseline (0)
@@ -904,7 +962,6 @@ class MLD_Comparable_Sales {
                     'needs_updating' => 'Needs Updating',
                     'distressed' => 'Distressed',
                     '' => 'Unknown',
-                    null => 'Unknown'
                 );
 
                 $comp_label = isset($condition_labels[$comp_condition]) ? $condition_labels[$comp_condition] : ucfirst(str_replace('_', ' ', $comp_condition));
@@ -915,6 +972,53 @@ class MLD_Comparable_Sales {
                     'difference' => $comp_label . ' vs ' . $subject_label,
                     'adjustment' => round($adjustment, 0),
                     'explanation' => $comp_label . ' (' . ($condition_diff > 0 ? '+' : '') . $condition_diff . '%) vs ' . $subject_label
+                );
+                $total += $adjustment;
+            }
+        }
+
+        // LOT SIZE ADJUSTMENT (v6.73.0)
+        // Per bank appraisal standards, lot size is a significant factor for non-condo properties
+        // Skip for condos where lot size is typically shared/irrelevant
+        $subject_property_type = $subject['property_type'] ?? '';
+        $is_condo = in_array($subject_property_type, array('Condominium', 'Condo', 'Condex'));
+
+        if (!$is_condo && !empty($comp['lot_size_acres']) && !empty($subject['lot_size'])) {
+            $lot_diff = $comp['lot_size_acres'] - $subject['lot_size'];
+
+            // Only adjust if difference is significant (> 0.1 acres)
+            if (abs($lot_diff) >= self::LOT_SIZE_MIN_DIFF) {
+                // Get comp price for percentage calculation
+                $comp_price = !empty($comp['close_price']) ? $comp['close_price'] : $comp['list_price'];
+
+                // Calculate adjustment: 2% per 0.25 acre difference
+                // Larger lots are generally more valuable (positive adjustment if comp is smaller)
+                $quarter_acres = $lot_diff / 0.25;
+                $lot_pct = $this->market_data['lot_size_pct'] ?? self::LOT_SIZE_PCT;
+                $raw_adjustment = $quarter_acres * ($comp_price * $lot_pct);
+
+                // Apply 10% cap
+                $max_adjustment = $comp_price * self::LOT_SIZE_MAX_PCT;
+                $capped = abs($raw_adjustment) > $max_adjustment;
+                $adjustment = max(-$max_adjustment, min($max_adjustment, $raw_adjustment));
+
+                // Negative adjustment if comp has larger lot (comp is superior)
+                $adjustment = -$adjustment;
+
+                // Build explanation
+                $subject_lot_display = number_format($subject['lot_size'], 2);
+                $comp_lot_display = number_format($comp['lot_size_acres'], 2);
+                $explanation = 'Lot size: ' . $comp_lot_display . ' acres vs ' . $subject_lot_display . ' acres';
+                if ($capped) {
+                    $explanation .= ' [capped at 10%]';
+                }
+
+                $adjustments[] = array(
+                    'feature' => 'Lot Size',
+                    'difference' => number_format(abs($lot_diff), 2) . ' acres ' . ($lot_diff > 0 ? 'larger' : 'smaller'),
+                    'adjustment' => round($adjustment, 0),
+                    'explanation' => $explanation,
+                    'capped' => $capped
                 );
                 $total += $adjustment;
             }
@@ -1069,6 +1173,17 @@ class MLD_Comparable_Sales {
      * @param array $subject Subject property data
      * @return array Adjustment data (feature, difference, adjustment, explanation)
      */
+    /**
+     * Calculate time-based market adjustment
+     *
+     * v6.73.0: Now uses market-derived appreciation rates instead of static rate.
+     * Pulls actual appreciation data from MLD_Market_Forecasting for the specific
+     * city/property type, per Fannie Mae guidelines requiring market-based adjustments.
+     *
+     * @param array $comp Comparable property data
+     * @param array $subject Subject property data
+     * @return array Adjustment data (feature, difference, adjustment, explanation)
+     */
     private function calculate_time_adjustment($comp, $subject) {
         $adjustment_data = array(
             'feature' => 'Time/Market Trend',
@@ -1084,7 +1199,7 @@ class MLD_Comparable_Sales {
 
         // Calculate months since sale
         $close_timestamp = strtotime($comp['close_date']);
-        $current_timestamp = time();
+        $current_timestamp = current_time('timestamp'); // Use WP timezone
         $months_ago = round(($current_timestamp - $close_timestamp) / (60 * 60 * 24 * 30));
 
         // Don't adjust if sale is very recent (< 1 month)
@@ -1092,9 +1207,20 @@ class MLD_Comparable_Sales {
             return $adjustment_data;
         }
 
-        // Get market appreciation rate from settings (default: 0.5% per month = 6% annual)
-        // This can be customized per market area in future versions
-        $annual_appreciation_rate = floatval(get_option('mld_cma_annual_appreciation_rate', 6.0));
+        // v6.73.0: Use market-derived appreciation rate from load_market_data()
+        // Falls back to admin setting if market data unavailable
+        $annual_appreciation_rate = 0;
+        $rate_source = 'default';
+
+        if (!empty($this->market_data['annual_appreciation_rate'])) {
+            $annual_appreciation_rate = floatval($this->market_data['annual_appreciation_rate']);
+            $rate_source = $this->market_data['appreciation_source'] ?? 'market';
+        } else {
+            // Fallback to admin setting (legacy behavior)
+            $annual_appreciation_rate = floatval(get_option('mld_cma_annual_appreciation_rate', 6.0));
+            $rate_source = 'admin_setting';
+        }
+
         $monthly_rate = $annual_appreciation_rate / 12 / 100; // Convert to monthly decimal
 
         // Cap at 24 months to avoid excessive adjustments
@@ -1110,8 +1236,12 @@ class MLD_Comparable_Sales {
         $adjustment_data['difference'] = $months_ago . ' month' . ($months_ago > 1 ? 's' : '') . ' ago';
         $adjustment_data['adjustment'] = round($adjustment, 0);
 
+        // Build explanation with source indicator
         $rate_display = number_format($annual_appreciation_rate, 1);
-        $adjustment_data['explanation'] = 'Market appreciation since sale date (' . $rate_display . '% annual rate)';
+        $source_label = ($rate_source === 'market_12mo') ? 'actual 12-mo' :
+                        (($rate_source === 'market_trend') ? 'trend-based' : 'default');
+        $adjustment_data['explanation'] = 'Market appreciation since sale (' . $rate_display . '% annual, ' . $source_label . ')';
+        $adjustment_data['rate_source'] = $rate_source;
 
         return $adjustment_data;
     }
@@ -1249,7 +1379,7 @@ class MLD_Comparable_Sales {
         if ($price_count > 0) {
             $sorted_prices = $prices;
             sort($sorted_prices);
-            $mid = floor($price_count / 2);
+            $mid = (int) floor($price_count / 2);
             $median_price = $price_count % 2 == 0
                 ? round(($sorted_prices[$mid - 1] + $sorted_prices[$mid]) / 2, 0)
                 : round($sorted_prices[$mid], 0);
@@ -1257,7 +1387,7 @@ class MLD_Comparable_Sales {
         if ($comp_count > 0) {
             $sorted_adjusted = $adjusted_prices;
             sort($sorted_adjusted);
-            $mid = floor($comp_count / 2);
+            $mid = (int) floor($comp_count / 2);
             $median_adjusted_price = $comp_count % 2 == 0
                 ? round(($sorted_adjusted[$mid - 1] + $sorted_adjusted[$mid]) / 2, 0)
                 : round($sorted_adjusted[$mid], 0);
@@ -1273,7 +1403,7 @@ class MLD_Comparable_Sales {
             $avg_price_per_sqft = round(array_sum($price_per_sqft_values) / count($price_per_sqft_values), 2);
             $sorted_ppsf = $price_per_sqft_values;
             sort($sorted_ppsf);
-            $mid = floor(count($sorted_ppsf) / 2);
+            $mid = (int) floor(count($sorted_ppsf) / 2);
             $median_price_per_sqft = count($sorted_ppsf) % 2 == 0
                 ? round(($sorted_ppsf[$mid - 1] + $sorted_ppsf[$mid]) / 2, 2)
                 : round($sorted_ppsf[$mid], 2);
@@ -1316,6 +1446,52 @@ class MLD_Comparable_Sales {
             return false;
         });
 
+        // v6.73.0: Bracketing verification per bank appraisal standards
+        // Bank appraisals require at least one comp superior and one inferior to subject
+        // This ensures the value is "bracketed" and not extrapolated
+        $subject_price = !empty($subject['price']) ? floatval($subject['price']) : 0;
+        $has_superior = false;  // Comp with higher adjusted price than subject
+        $has_inferior = false;  // Comp with lower adjusted price than subject
+        $superior_count = 0;
+        $inferior_count = 0;
+
+        if ($subject_price > 0) {
+            foreach ($comparables as $comp) {
+                // Skip subject property itself (score of 100)
+                if (($comp['comparability_score'] ?? 0) >= 100) {
+                    continue;
+                }
+
+                $adjusted = floatval($comp['adjusted_price'] ?? 0);
+                if ($adjusted > $subject_price) {
+                    $has_superior = true;
+                    $superior_count++;
+                } elseif ($adjusted < $subject_price) {
+                    $has_inferior = true;
+                    $inferior_count++;
+                }
+            }
+        }
+
+        $is_bracketed = $has_superior && $has_inferior;
+        $bracketing_status = 'unknown';
+        $bracketing_warning = null;
+
+        if ($subject_price <= 0) {
+            $bracketing_status = 'no_subject_price';
+        } elseif ($is_bracketed) {
+            $bracketing_status = 'properly_bracketed';
+        } elseif (!$has_superior && !$has_inferior) {
+            $bracketing_status = 'no_comps';
+            $bracketing_warning = 'No comparable sales found to bracket subject value';
+        } elseif (!$has_superior) {
+            $bracketing_status = 'all_inferior';
+            $bracketing_warning = 'All comparables are priced below subject - value may be overstated';
+        } else {
+            $bracketing_status = 'all_superior';
+            $bracketing_warning = 'All comparables are priced above subject - value may be understated';
+        }
+
         return array(
             'total_found' => $comp_count,
             'top_comps_count' => count($top_comps),
@@ -1352,7 +1528,17 @@ class MLD_Comparable_Sales {
             ),
             'avg_distance' => $comp_count > 0 ? round(array_sum(array_column($comparables, 'distance_miles')) / $comp_count, 2) : 0,
             'avg_comparability_score' => $comp_count > 0 ? round(array_sum(array_column($comparables, 'comparability_score')) / $comp_count, 1) : 0,
-            'recent_sales_count' => count($recent_sales)
+            'recent_sales_count' => count($recent_sales),
+            // v6.73.0: Bracketing verification per bank appraisal standards
+            'bracketing' => array(
+                'is_bracketed' => $is_bracketed,
+                'status' => $bracketing_status,
+                'has_superior' => $has_superior,
+                'has_inferior' => $has_inferior,
+                'superior_count' => $superior_count,
+                'inferior_count' => $inferior_count,
+                'warning' => $bracketing_warning
+            )
         );
     }
 
@@ -1379,12 +1565,41 @@ class MLD_Comparable_Sales {
         $trends = new MLD_Market_Trends();
         $summary = $trends->get_market_summary($city, $state, 'all', 12);
 
+        // Get market appreciation data for time adjustments (v6.73.0)
+        // Uses actual market data instead of static rate
+        require_once plugin_dir_path(__FILE__) . 'class-mld-market-forecasting.php';
+        $forecaster = new MLD_Market_Forecasting();
+        $forecast = $forecaster->get_price_forecast($city, $state, $property_type, 24, 12);
+
+        // Extract appreciation rate from forecast data
+        $annual_appreciation_rate = 0;
+        $appreciation_source = 'default';
+
+        if (!empty($forecast['success']) && !empty($forecast['appreciation'])) {
+            // Prefer 12-month actual appreciation
+            if (!empty($forecast['appreciation']['12_month'])) {
+                $annual_appreciation_rate = floatval($forecast['appreciation']['12_month']);
+                $appreciation_source = 'market_12mo';
+            } elseif (!empty($forecast['trend']['annual_change_pct'])) {
+                // Fall back to trend-based calculation
+                $annual_appreciation_rate = floatval($forecast['trend']['annual_change_pct']);
+                $appreciation_source = 'market_trend';
+            }
+        }
+
+        // Clamp appreciation rate to reasonable bounds (-15% to +20% annual)
+        // Prevents extreme adjustments from volatile or sparse data
+        $annual_appreciation_rate = max(-15, min(20, $annual_appreciation_rate));
+
         // Merge calculator data with trends data
         $this->market_data = array_merge($adjustments, array(
             'avg_close_price' => $summary['avg_close_price'] ?? 700000,
             'avg_dom' => $summary['avg_dom'] ?? 60,
             'avg_sp_lp_ratio' => $summary['avg_sp_lp_ratio'] ?? 100,
-            'monthly_sales_velocity' => $summary['monthly_sales_velocity'] ?? 0
+            'monthly_sales_velocity' => $summary['monthly_sales_velocity'] ?? 0,
+            // v6.73.0: Market-derived appreciation for time adjustments
+            'annual_appreciation_rate' => $annual_appreciation_rate,
+            'appreciation_source' => $appreciation_source
         ));
 
         // Add fallback defaults if calculator couldn't determine values

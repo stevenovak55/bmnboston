@@ -237,7 +237,7 @@ function mld_get_tab_specific_data($city, $state, $property_type, $tab) {
  * Handle city comparison request
  *
  * @param WP_REST_Request $request REST request object
- * @return WP_REST_Response Response
+ * @return WP_REST_Response|WP_Error Response or error
  */
 function mld_handle_city_comparison_request($request) {
     $cities_str = $request->get_param('cities');
@@ -270,7 +270,7 @@ function mld_handle_city_comparison_request($request) {
  * Handle available cities request
  *
  * @param WP_REST_Request $request REST request object
- * @return WP_REST_Response Response
+ * @return WP_REST_Response|WP_Error Response or error
  */
 function mld_handle_available_cities_request($request) {
     // Ensure analytics class is loaded

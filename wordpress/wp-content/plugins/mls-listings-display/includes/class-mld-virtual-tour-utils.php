@@ -188,7 +188,7 @@ class MLD_Virtual_Tour_Utils {
         
         // Calculate padding for aspect ratio
         $ratio_parts = explode(':', $options['aspect_ratio']);
-        $padding_percent = ($ratio_parts[1] / $ratio_parts[0]) * 100;
+        $padding_percent = ((float) $ratio_parts[1] / (float) $ratio_parts[0]) * 100;
         
         $wrapper_html = '<div class="' . esc_attr($options['class']) . '" style="position: relative; padding-bottom: ' . $padding_percent . '%; height: 0; overflow: hidden;">';
         $wrapper_html .= '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">';

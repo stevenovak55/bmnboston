@@ -126,7 +126,7 @@ class MLD_Market_Report_Generator {
         return array(
             'market_summary' => $trends->get_market_summary($city, $state, $property_type, $months),
             'monthly_trends' => $trends->calculate_monthly_trends($city, $state, $property_type, $months),
-            'quarterly_trends' => $trends->calculate_quarterly_trends($city, $state, $property_type, ceil($months / 3)),
+            'quarterly_trends' => $trends->calculate_quarterly_trends($city, $state, $property_type, (int) ceil($months / 3)),
             'yoy_comparison' => $trends->calculate_yoy_comparison($city, $state, $property_type),
             'appreciation' => $trends->calculate_appreciation_rate($city, $state, $property_type, $months),
             'city_summary' => MLD_Extended_Analytics::get_city_summary($city, $state),
@@ -653,7 +653,7 @@ class MLD_Market_Report_Generator {
     /**
      * Save PDF to file
      *
-     * @return string File path
+     * @return array{file: string, url: string, filename: string} File info
      */
     private function save_pdf() {
         $upload_dir = wp_upload_dir();

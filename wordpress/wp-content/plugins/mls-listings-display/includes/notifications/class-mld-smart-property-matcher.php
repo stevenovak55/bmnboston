@@ -282,6 +282,7 @@ class MLD_Smart_Property_Matcher {
             if ($lng > min($p1y, $p2y)) {
                 if ($lng <= max($p1y, $p2y)) {
                     if ($lat <= max($p1x, $p2x)) {
+                        $xinters = $p1x; // Initialize for the case when p1y == p2y
                         if ($p1y != $p2y) {
                             $xinters = ($lng - $p1y) * ($p2x - $p1x) / ($p2y - $p1y) + $p1x;
                         }

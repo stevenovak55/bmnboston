@@ -360,7 +360,7 @@ class MLD_Response_Engine {
 
         // Extract price
         if (preg_match('/\$?([\d,]+)(?:k|K|thousand)?/i', $question, $matches)) {
-            $price = str_replace(',', '', $matches[1]);
+            $price = (int) str_replace(',', '', $matches[1]);
             if (stripos($question, 'k') !== false || stripos($question, 'thousand') !== false) {
                 $price *= 1000;
             }

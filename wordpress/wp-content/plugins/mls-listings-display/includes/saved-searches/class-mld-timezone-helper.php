@@ -34,7 +34,7 @@ class MLD_Timezone_Helper {
             if (empty($timezone_string)) {
                 // Fallback to GMT offset
                 $gmt_offset = get_option('gmt_offset', 0);
-                $timezone_string = timezone_name_from_abbr('', $gmt_offset * 3600, false);
+                $timezone_string = timezone_name_from_abbr('', (int) ($gmt_offset * 3600), 0);
 
                 if ($timezone_string === false) {
                     // Create a custom timezone string for the offset
@@ -151,11 +151,11 @@ class MLD_Timezone_Helper {
 
             switch ($unit) {
                 case 'minutes':
-                    return round($diff / 60);
+                    return (int) round($diff / 60);
                 case 'hours':
-                    return round($diff / 3600);
+                    return (int) round($diff / 3600);
                 case 'days':
-                    return round($diff / 86400);
+                    return (int) round($diff / 86400);
                 default:
                     return $diff;
             }

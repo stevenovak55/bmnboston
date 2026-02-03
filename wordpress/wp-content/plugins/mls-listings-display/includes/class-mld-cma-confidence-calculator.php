@@ -373,7 +373,7 @@ class MLD_CMA_Confidence_Calculator {
      * Calculate reliability percentage
      *
      * @param float $score Confidence score
-     * @return string Reliability percentage with description
+     * @return array{percentage: float, description: string} Reliability data
      */
     private function calculate_reliability_percentage($score) {
         // Convert 0-100 score to reliability percentage

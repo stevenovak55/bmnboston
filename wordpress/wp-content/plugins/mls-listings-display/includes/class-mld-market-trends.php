@@ -403,4 +403,133 @@ class MLD_Market_Trends {
             'months_analyzed' => $months_span
         );
     }
+
+    /**
+     * Get city market trends for CMA PDF generation
+     *
+     * Combines market summary and monthly trends into the format expected by the PDF generator.
+     *
+     * @param string $city City name
+     * @param string $state State abbreviation
+     * @param int $months Number of months to analyze
+     * @return array Trends data with success, summary, monthly, and trend_description
+     */
+    public function get_city_trends($city, $state = '', $months = 12) {
+        // Get the market summary
+        $summary_data = $this->get_market_summary($city, $state, 'all', $months);
+
+        if (isset($summary_data['error'])) {
+            return array(
+                'success' => false,
+                'error' => $summary_data['error']
+            );
+        }
+
+        // Get monthly trends
+        $monthly_trends = $this->calculate_monthly_trends($city, $state, 'all', $months);
+
+        if (empty($monthly_trends)) {
+            return array(
+                'success' => false,
+                'error' => 'No monthly trend data available'
+            );
+        }
+
+        // Get YoY comparison for price change percentage
+        $yoy_data = $this->calculate_yoy_comparison($city, $state, 'all');
+        $price_change_pct = 0;
+        if (!isset($yoy_data['error']) && isset($yoy_data['current_year_avg_price']) && isset($yoy_data['prior_year_avg_price'])) {
+            $price_change_pct = (($yoy_data['current_year_avg_price'] - $yoy_data['prior_year_avg_price']) / $yoy_data['prior_year_avg_price']) * 100;
+        }
+
+        // Calculate median price from monthly data
+        $prices = array_column($monthly_trends, 'avg_close_price');
+        sort($prices);
+        $count = count($prices);
+        $mid = (int) floor($count / 2);
+        $median_price = $count > 0 ? ($count % 2 === 0
+            ? ($prices[$mid - 1] + $prices[$mid]) / 2
+            : $prices[$mid]) : 0;
+
+        // Format summary for PDF
+        $summary = array(
+            'median_price' => round($median_price),
+            'avg_dom' => $summary_data['avg_dom'] ?? 0,
+            'total_sales' => $summary_data['total_sales'] ?? 0,
+            'price_change_pct' => round($price_change_pct, 1),
+        );
+
+        // Format monthly data for PDF
+        $monthly = array();
+        foreach ($monthly_trends as $month_data) {
+            $monthly[] = array(
+                'month' => $month_data['month'],
+                'median_price' => round($month_data['avg_close_price']),
+                'price_per_sqft' => round($month_data['avg_price_per_sqft']),
+                'sales_count' => $month_data['sales_count'],
+                'avg_dom' => round($month_data['avg_dom']),
+            );
+        }
+
+        // Generate trend description
+        $trend_description = $this->generate_trend_description($city, $summary, $monthly_trends);
+
+        return array(
+            'success' => true,
+            'summary' => $summary,
+            'monthly' => $monthly,
+            'trend_description' => $trend_description,
+        );
+    }
+
+    /**
+     * Generate a natural language trend description
+     *
+     * @param string $city City name
+     * @param array $summary Summary data
+     * @param array $monthly_trends Monthly trend data
+     * @return string Trend description
+     */
+    private function generate_trend_description($city, $summary, $monthly_trends) {
+        $parts = array();
+
+        // Price trend
+        if ($summary['price_change_pct'] > 0) {
+            $parts[] = sprintf(
+                'Home prices in %s have increased by %.1f%% compared to last year.',
+                $city,
+                abs($summary['price_change_pct'])
+            );
+        } elseif ($summary['price_change_pct'] < 0) {
+            $parts[] = sprintf(
+                'Home prices in %s have decreased by %.1f%% compared to last year.',
+                $city,
+                abs($summary['price_change_pct'])
+            );
+        } else {
+            $parts[] = sprintf('Home prices in %s have remained stable over the past year.', $city);
+        }
+
+        // Market activity
+        if ($summary['total_sales'] > 0) {
+            $parts[] = sprintf(
+                'Over the past 12 months, there have been %d closed sales with a median price of $%s.',
+                $summary['total_sales'],
+                number_format($summary['median_price'])
+            );
+        }
+
+        // Days on market
+        if ($summary['avg_dom'] > 0) {
+            if ($summary['avg_dom'] < 30) {
+                $parts[] = sprintf('Properties are selling quickly, averaging just %d days on market.', round($summary['avg_dom']));
+            } elseif ($summary['avg_dom'] < 60) {
+                $parts[] = sprintf('Properties typically sell within %d days on market.', round($summary['avg_dom']));
+            } else {
+                $parts[] = sprintf('Properties are taking longer to sell, averaging %d days on market.', round($summary['avg_dom']));
+            }
+        }
+
+        return implode(' ', $parts);
+    }
 }

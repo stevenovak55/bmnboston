@@ -152,6 +152,8 @@ class MLD_Notification_Ajax {
             $saved_search_id = null;
             $saved_search_name = null;
             $property_address = null;
+            $appointment_id = null;
+            $client_id = null;
 
             if (is_array($payload)) {
                 $listing_id = $payload['listing_id'] ?? null;

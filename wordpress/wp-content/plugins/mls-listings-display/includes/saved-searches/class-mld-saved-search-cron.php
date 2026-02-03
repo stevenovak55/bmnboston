@@ -147,7 +147,7 @@ class MLD_Saved_Search_Cron {
         if (empty($timezone_string)) {
             // Fallback to GMT offset
             $gmt_offset = get_option('gmt_offset', 0);
-            $timezone_string = timezone_name_from_abbr('', $gmt_offset * 3600, false);
+            $timezone_string = timezone_name_from_abbr('', (int) ($gmt_offset * 3600), 0);
             if ($timezone_string === false) {
                 $timezone_string = 'UTC';
             }

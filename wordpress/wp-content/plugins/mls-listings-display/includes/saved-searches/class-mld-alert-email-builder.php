@@ -536,7 +536,7 @@ class MLD_Alert_Email_Builder {
         $sqft = $listing['building_area_total'] ?? $listing['living_area'] ?? 0;
         $price = $listing['list_price'] ?? 0;
         if ($sqft > 0 && $price > 0) {
-            return round($price / $sqft);
+            return (int) round($price / $sqft);
         }
         return null;
     }

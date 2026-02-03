@@ -132,7 +132,7 @@ class MLD_Neighborhood_Analytics {
      * @param string $city City name
      * @param string $state State abbreviation (optional)
      * @param string $property_type Property type filter (default: 'all')
-     * @return array Analytics data or WP_Error
+     * @return array|WP_Error Analytics data or WP_Error
      */
     public function calculate_city_analytics($city, $state = '', $property_type = 'all') {
         global $wpdb;

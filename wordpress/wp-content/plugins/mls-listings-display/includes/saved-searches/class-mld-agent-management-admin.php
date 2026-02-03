@@ -185,6 +185,7 @@ class MLD_Agent_Management_Admin {
             'bio' => isset($_POST['bio']) ? sanitize_textarea_field($_POST['bio']) : '',
             'photo_url' => isset($_POST['photo_url']) ? esc_url_raw($_POST['photo_url']) : '',
             'license_number' => isset($_POST['license_number']) ? sanitize_text_field($_POST['license_number']) : '',
+            'mls_agent_id' => isset($_POST['mls_agent_id']) ? sanitize_text_field($_POST['mls_agent_id']) : '',
             'specialties' => isset($_POST['specialties']) ? sanitize_textarea_field($_POST['specialties']) : '',
             'is_active' => isset($_POST['is_active']) ? intval($_POST['is_active']) : 1,
             'snab_staff_id' => isset($_POST['snab_staff_id']) && !empty($_POST['snab_staff_id']) ? intval($_POST['snab_staff_id']) : null

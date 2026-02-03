@@ -26,24 +26,19 @@ class MLD_App_Store_Banner {
     const APP_STORE_URL = 'https://apps.apple.com/us/app/bmn-boston/id6745724401';
 
     /**
-     * Cookie name for dismissal tracking
+     * Unified cookie name for all app CTA dismissals
+     * Uses single cookie so dismissing any CTA dismisses all of them
+     *
+     * @since 6.73.0 Unified from separate banner/property cookies
      */
-    const COOKIE_NAME = 'mld_app_banner_dismissed';
+    const COOKIE_NAME = 'mld_app_dismissed';
 
     /**
-     * Days to remember dismissal
+     * Days to remember dismissal (unified across all CTAs)
+     *
+     * @since 6.73.0 Standardized to 14 days (was 30 for banner, 14 for property)
      */
-    const COOKIE_DAYS = 30;
-
-    /**
-     * Cookie name for property card dismissal
-     */
-    const PROPERTY_COOKIE_NAME = 'mld_app_property_card_dismissed';
-
-    /**
-     * Days to remember property card dismissal (less aggressive than banner)
-     */
-    const PROPERTY_COOKIE_DAYS = 14;
+    const COOKIE_DAYS = 14;
 
     /**
      * Instance of this class
@@ -73,6 +68,8 @@ class MLD_App_Store_Banner {
             return;
         }
 
+        // Native Safari Smart App Banner (appears in Safari address bar)
+        add_action('wp_head', array($this, 'render_smart_app_banner_meta'), 1);
         // Always output banner HTML - JS will control visibility based on device
         add_action('wp_body_open', array($this, 'render_banner'), 5);
         // Always output footer HTML - JS will control visibility based on device
@@ -82,11 +79,38 @@ class MLD_App_Store_Banner {
     }
 
     /**
+     * Render native Safari Smart App Banner meta tag
+     * This creates the native iOS Safari banner that appears in the address bar area
+     * Supports deep linking to specific properties when on property pages
+     *
+     * @since 6.73.0
+     */
+    public function render_smart_app_banner_meta() {
+        $app_id = '6745724401';
+
+        // Deep link to property if on property page
+        $app_argument = '';
+        if (get_query_var('mld_property')) {
+            $listing_id = get_query_var('mld_property');
+            $app_argument = ', app-argument=bmnboston://property/' . esc_attr($listing_id);
+        }
+
+        echo '<meta name="apple-itunes-app" content="app-id=' . $app_id . $app_argument . '">' . "\n";
+    }
+
+    /**
      * Render the banner HTML and assets
      * Banner is hidden by default, JS shows it on iOS devices
+     * Skips property pages where the property-specific card is shown instead
      */
     public function render_banner() {
+        // Skip on property pages - property card will show instead (prevents duplicate CTAs)
+        if (get_query_var('mld_property') || is_singular('property')) {
+            return;
+        }
+
         $app_store_url = self::APP_STORE_URL;
+        // Black badge for light background (banner bg is #f8f9fa)
         $app_store_badge = 'https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83';
         ?>
         <style>
@@ -150,12 +174,33 @@ class MLD_App_Store_Banner {
         html.mld-has-app-banner body {
             margin-top: 0 !important;
         }
+        /* Push down fixed/sticky headers when banner is active */
+        html.mld-has-app-banner header,
+        html.mld-has-app-banner .site-header,
+        html.mld-has-app-banner #masthead,
+        html.mld-has-app-banner .bne-header,
+        html.mld-has-app-banner .elementor-location-header {
+            top: 54px !important;
+        }
+        /* Mobile nav toggle / hamburger menu */
+        html.mld-has-app-banner .bne-header__menu-toggle,
+        html.mld-has-app-banner .mobile-menu-toggle,
+        html.mld-has-app-banner .menu-toggle {
+            /* These are usually inside the header, so they move with it */
+        }
         @media (max-width: 380px) {
             #mld-app-banner .mld-banner-subtitle {
                 display: none;
             }
             html.mld-has-app-banner {
                 margin-top: 48px !important;
+            }
+            html.mld-has-app-banner header,
+            html.mld-has-app-banner .site-header,
+            html.mld-has-app-banner #masthead,
+            html.mld-has-app-banner .bne-header,
+            html.mld-has-app-banner .elementor-location-header {
+                top: 48px !important;
             }
         }
         </style>
@@ -694,11 +739,11 @@ class MLD_App_Store_Banner {
 
             if (!card || !stickyBar) return;
 
-            // Config
+            // Config (uses unified cookie - dismissing any CTA dismisses all)
             var deepLinkUrl = '<?php echo esc_js($deep_link_url); ?>';
             var appStoreUrl = '<?php echo esc_js($app_store_url); ?>';
-            var cookieName = '<?php echo self::PROPERTY_COOKIE_NAME; ?>';
-            var cookieDays = <?php echo self::PROPERTY_COOKIE_DAYS; ?>;
+            var cookieName = '<?php echo self::COOKIE_NAME; ?>';
+            var cookieDays = <?php echo self::COOKIE_DAYS; ?>;
 
             // Device detection
             var ua = navigator.userAgent;

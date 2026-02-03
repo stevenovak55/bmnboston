@@ -378,6 +378,31 @@ class MLD_Instant_Matcher {
             return false;
         }
 
+        // Lot Size Check (v6.72.1)
+        if (!$this->matches_lot_size($listing, $filters)) {
+            return false;
+        }
+
+        // Parking/Garage Check (v6.72.1)
+        if (!$this->matches_parking($listing, $filters)) {
+            return false;
+        }
+
+        // Amenities Check (v6.72.1)
+        if (!$this->matches_amenities($listing, $filters)) {
+            return false;
+        }
+
+        // Rental-specific Filters Check (v6.72.1)
+        if (!$this->matches_rental_filters($listing, $filters)) {
+            return false;
+        }
+
+        // Special Filters Check (v6.72.1)
+        if (!$this->matches_special_filters($listing, $filters)) {
+            return false;
+        }
+
         // All checks passed!
         return true;
     }
@@ -547,16 +572,23 @@ class MLD_Instant_Matcher {
     }
 
     /**
-     * Year built matching
+     * Year built matching (v6.72.1 - added year_built_max support)
      */
     private function matches_year_built($listing, $filters) {
-        if (!isset($filters['year_built_min'])) {
+        // If no year filters, pass
+        if (!isset($filters['year_built_min']) && !isset($filters['year_built_max'])) {
             return true;
         }
 
         $year_built = $listing['YearBuilt'] ?? $listing['year_built'] ?? 0;
 
-        if ($year_built < $filters['year_built_min']) {
+        // Check minimum year
+        if (isset($filters['year_built_min']) && $year_built < $filters['year_built_min']) {
+            return false;
+        }
+
+        // Check maximum year
+        if (isset($filters['year_built_max']) && $year_built > $filters['year_built_max']) {
             return false;
         }
 
@@ -758,6 +790,272 @@ class MLD_Instant_Matcher {
         $min_value = $grade_order[$min_grade] ?? 0;
 
         return $grade_value >= $min_value;
+    }
+
+    /**
+     * Check if listing matches lot size criteria (v6.72.1)
+     */
+    private function matches_lot_size($listing, $filters) {
+        // Get lot size - handle both CamelCase and snake_case
+        $lot_size = $listing['LotSizeAcres'] ?? $listing['lot_size_acres'] ?? null;
+
+        // If no lot size data, don't filter out (graceful degradation)
+        if ($lot_size === null) {
+            return true;
+        }
+
+        // Check minimum lot size
+        if (!empty($filters['lot_size_min']) && $lot_size < $filters['lot_size_min']) {
+            return false;
+        }
+
+        // Check maximum lot size
+        if (!empty($filters['lot_size_max']) && $lot_size > $filters['lot_size_max']) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if listing matches parking/garage criteria (v6.72.1)
+     */
+    private function matches_parking($listing, $filters) {
+        // Check garage spaces
+        if (!empty($filters['garage_spaces_min'])) {
+            $garage_spaces = $listing['GarageSpaces'] ?? $listing['garage_spaces'] ?? 0;
+            if ($garage_spaces < $filters['garage_spaces_min']) {
+                return false;
+            }
+        }
+
+        // Check total parking
+        if (!empty($filters['parking_total_min'])) {
+            $parking_total = $listing['ParkingTotal'] ?? $listing['parking_total'] ?? 0;
+            if ($parking_total < $filters['parking_total_min']) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if listing matches amenity filters (v6.72.1)
+     *
+     * Handles boolean YN flags for: pool, fireplace, waterfront, view, cooling,
+     * spa, outdoor space, senior community, virtual tour
+     */
+    private function matches_amenities($listing, $filters) {
+        // Pool filter
+        if (!empty($filters['PoolPrivateYN']) || !empty($filters['has_pool'])) {
+            $has_pool = $listing['PoolPrivateYN'] ?? $listing['pool_private_yn'] ?? 'N';
+            if (strtoupper($has_pool) !== 'Y') {
+                return false;
+            }
+        }
+
+        // Fireplace filter
+        if (!empty($filters['FireplaceYN']) || !empty($filters['has_fireplace'])) {
+            $has_fireplace = $listing['FireplaceYN'] ?? $listing['fireplace_yn'] ?? 'N';
+            if (strtoupper($has_fireplace) !== 'Y') {
+                return false;
+            }
+        }
+
+        // Waterfront filter
+        if (!empty($filters['WaterfrontYN']) || !empty($filters['has_waterfront'])) {
+            $has_waterfront = $listing['WaterfrontYN'] ?? $listing['waterfront_yn'] ?? 'N';
+            if (strtoupper($has_waterfront) !== 'Y') {
+                return false;
+            }
+        }
+
+        // View filter
+        if (!empty($filters['ViewYN']) || !empty($filters['has_view'])) {
+            $has_view = $listing['ViewYN'] ?? $listing['view_yn'] ?? 'N';
+            if (strtoupper($has_view) !== 'Y') {
+                return false;
+            }
+        }
+
+        // Cooling/AC filter
+        if (!empty($filters['CoolingYN']) || !empty($filters['has_cooling'])) {
+            $has_cooling = $listing['CoolingYN'] ?? $listing['cooling_yn'] ?? 'N';
+            if (strtoupper($has_cooling) !== 'Y') {
+                return false;
+            }
+        }
+
+        // Spa filter
+        if (!empty($filters['SpaYN']) || !empty($filters['has_spa'])) {
+            $has_spa = $listing['SpaYN'] ?? $listing['spa_yn'] ?? 'N';
+            if (strtoupper($has_spa) !== 'Y') {
+                return false;
+            }
+        }
+
+        // Virtual tour filter
+        if (!empty($filters['has_virtual_tour'])) {
+            $virtual_tour = $listing['VirtualTourURLUnbranded'] ??
+                           $listing['virtual_tour_url_unbranded'] ??
+                           $listing['VirtualTourURLBranded'] ??
+                           $listing['virtual_tour_url_branded'] ?? '';
+            if (empty($virtual_tour)) {
+                return false;
+            }
+        }
+
+        // Senior community filter
+        if (!empty($filters['SeniorCommunityYN']) || !empty($filters['senior_community'])) {
+            $is_senior = $listing['SeniorCommunityYN'] ?? $listing['senior_community_yn'] ?? 'N';
+            if (strtoupper($is_senior) !== 'Y') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if listing matches rental-specific filters (v6.72.1)
+     *
+     * Handles pet policies and laundry features for rental properties
+     */
+    private function matches_rental_filters($listing, $filters) {
+        $property_type = $listing['PropertyType'] ?? $listing['property_type'] ?? '';
+
+        // Only apply rental filters to rental properties
+        if (strtolower($property_type) !== 'residential lease') {
+            // If not a rental, don't apply rental filters but don't exclude
+            return true;
+        }
+
+        // Pet policy filters - check if listing allows specified pets
+        if (!empty($filters['pets_dogs'])) {
+            $pets_allowed = $listing['PetsAllowed'] ?? $listing['pets_allowed'] ?? '';
+            $pets_str = is_array($pets_allowed) ? implode(' ', $pets_allowed) : (string)$pets_allowed;
+            if (stripos($pets_str, 'dog') === false && stripos($pets_str, 'yes') === false) {
+                return false;
+            }
+        }
+
+        if (!empty($filters['pets_cats'])) {
+            $pets_allowed = $listing['PetsAllowed'] ?? $listing['pets_allowed'] ?? '';
+            $pets_str = is_array($pets_allowed) ? implode(' ', $pets_allowed) : (string)$pets_allowed;
+            if (stripos($pets_str, 'cat') === false && stripos($pets_str, 'yes') === false) {
+                return false;
+            }
+        }
+
+        if (!empty($filters['pets_none'])) {
+            $pets_allowed = $listing['PetsAllowed'] ?? $listing['pets_allowed'] ?? '';
+            $pets_str = is_array($pets_allowed) ? implode(' ', $pets_allowed) : (string)$pets_allowed;
+            // "No pets" filter - property should NOT allow pets
+            if (!empty($pets_str) && stripos($pets_str, 'no') === false) {
+                return false;
+            }
+        }
+
+        if (!empty($filters['pets_negotiable'])) {
+            $pets_allowed = $listing['PetsAllowed'] ?? $listing['pets_allowed'] ?? '';
+            $pets_str = is_array($pets_allowed) ? implode(' ', $pets_allowed) : (string)$pets_allowed;
+            if (stripos($pets_str, 'negotiable') === false && stripos($pets_str, 'conditional') === false) {
+                return false;
+            }
+        }
+
+        // Laundry features filter
+        if (!empty($filters['laundry_features'])) {
+            $laundry = $listing['LaundryFeatures'] ?? $listing['laundry_features'] ?? '';
+            $laundry_str = is_array($laundry) ? implode(' ', $laundry) : (string)$laundry;
+
+            $required_features = is_array($filters['laundry_features'])
+                ? $filters['laundry_features']
+                : [$filters['laundry_features']];
+
+            foreach ($required_features as $feature) {
+                if (stripos($laundry_str, $feature) === false) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if listing matches special filters (v6.72.1)
+     *
+     * Handles: exclusive_only, price_reduced, max_dom, min_dom, open_house_only
+     */
+    private function matches_special_filters($listing, $filters) {
+        // Exclusive listing filter (listing_id < 1,000,000)
+        if (!empty($filters['exclusive_only'])) {
+            $listing_id = $listing['listing_id'] ?? $listing['ListingId'] ?? '';
+            if (!is_numeric($listing_id) || (int)$listing_id >= 1000000) {
+                return false;
+            }
+        }
+
+        // Price reduced filter - check if listing has had price reduction
+        if (!empty($filters['price_reduced'])) {
+            // Check for price change indicators
+            $original_price = $listing['OriginalListPrice'] ?? $listing['original_list_price'] ?? 0;
+            $current_price = $listing['ListPrice'] ?? $listing['list_price'] ?? 0;
+
+            // If we have both prices and current is less than original = price reduced
+            if ($original_price > 0 && $current_price > 0 && $current_price >= $original_price) {
+                return false; // Not price reduced
+            }
+
+            // Also check for explicit price change flag if available
+            $price_change = $listing['PriceChangeTimestamp'] ?? $listing['price_change_timestamp'] ?? null;
+            if (!$price_change && $original_price <= 0) {
+                // No price change data available, can't determine
+                return false;
+            }
+        }
+
+        // Days on market filters
+        $dom = $listing['DaysOnMarket'] ?? $listing['days_on_market'] ?? null;
+
+        if (!empty($filters['max_dom']) && $dom !== null) {
+            if ($dom > $filters['max_dom']) {
+                return false;
+            }
+        }
+
+        if (!empty($filters['min_dom']) && $dom !== null) {
+            if ($dom < $filters['min_dom']) {
+                return false;
+            }
+        }
+
+        // Open house filter - check if listing has upcoming open house
+        if (!empty($filters['open_house_only'])) {
+            global $wpdb;
+
+            $listing_id = $listing['listing_id'] ?? $listing['ListingId'] ?? '';
+            if (empty($listing_id)) {
+                return false;
+            }
+
+            // Check for upcoming open houses
+            $wp_today = wp_date('Y-m-d');
+            $has_open_house = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}bme_open_houses
+                 WHERE listing_id = %s AND open_house_date >= %s",
+                $listing_id,
+                $wp_today
+            ));
+
+            if (!$has_open_house) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

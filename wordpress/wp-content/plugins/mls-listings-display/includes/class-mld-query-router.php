@@ -254,6 +254,7 @@ class MLD_Query_Router {
                         $params['offset'] ?? 0
                     );
                 }
+                return array(); // Fallback empty array if method doesn't exist
         }
     }
 

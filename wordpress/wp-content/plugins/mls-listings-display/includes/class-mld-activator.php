@@ -377,6 +377,7 @@ class MLD_Activator {
             office_name VARCHAR(255),
             office_address TEXT,
             license_number VARCHAR(100),
+            mls_agent_id VARCHAR(100),
             phone VARCHAR(20),
             email VARCHAR(255),
             bio TEXT,

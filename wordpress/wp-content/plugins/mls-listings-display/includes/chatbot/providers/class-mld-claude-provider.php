@@ -178,7 +178,7 @@ class MLD_Claude_Provider extends MLD_AI_Provider_Base {
             'timeout' => 30,
         ));
 
-        $response_time_ms = round((microtime(true) - $start_time) * 1000);
+        $response_time_ms = (int) round((microtime(true) - $start_time) * 1000);
 
         // Handle errors
         if (is_wp_error($response)) {
@@ -323,7 +323,7 @@ class MLD_Claude_Provider extends MLD_AI_Provider_Base {
 
             // Handle errors
             if (is_wp_error($response)) {
-                $response_time_ms = round((microtime(true) - $start_time) * 1000);
+                $response_time_ms = (int) round((microtime(true) - $start_time) * 1000);
                 $error_data = $this->format_error($response->get_error_message(), 'request_failed');
                 $this->log_request($payload, $error_data, $response_time_ms);
                 return $error_data;
@@ -334,7 +334,7 @@ class MLD_Claude_Provider extends MLD_AI_Provider_Base {
 
             // Check for API errors
             if ($status_code !== 200) {
-                $response_time_ms = round((microtime(true) - $start_time) * 1000);
+                $response_time_ms = (int) round((microtime(true) - $start_time) * 1000);
                 $error_message = isset($body['error']['message']) ? $body['error']['message'] : 'Unknown API error';
                 $error_data = $this->format_error($error_message, 'api_error_' . $status_code);
                 $this->log_request($payload, $error_data, $response_time_ms);
@@ -412,7 +412,7 @@ class MLD_Claude_Provider extends MLD_AI_Provider_Base {
             }
 
             // Model returned final response
-            $response_time_ms = round((microtime(true) - $start_time) * 1000);
+            $response_time_ms = (int) round((microtime(true) - $start_time) * 1000);
 
             // Debug logging (v6.14.0)
             if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -453,7 +453,7 @@ class MLD_Claude_Provider extends MLD_AI_Provider_Base {
         }
 
         // Max iterations reached
-        $response_time_ms = round((microtime(true) - $start_time) * 1000);
+        $response_time_ms = (int) round((microtime(true) - $start_time) * 1000);
         return $this->format_error('Maximum tool iterations reached', 'max_iterations');
     }
 

@@ -185,6 +185,52 @@ class MLD_Referral_Signup {
             wp_send_json_error(array('message' => __('Security check failed.', 'mls-listings-display')));
         }
 
+        // Get client IP for logging
+        $ip = self::get_client_ip();
+
+        // ============ BOT PROTECTION LAYER 1: Honeypot ============
+        // If honeypot field has a value, a bot filled it. Return fake success.
+        $honeypot = isset($_POST['mld_signup_website']) ? sanitize_text_field($_POST['mld_signup_website']) : '';
+        if (!empty($honeypot)) {
+            // Log the blocked attempt
+            if (class_exists('MLD_Email_Validator')) {
+                MLD_Email_Validator::log_blocked_attempt(
+                    isset($_POST['email']) ? sanitize_email($_POST['email']) : 'unknown',
+                    'Honeypot field filled',
+                    'honeypot_triggered',
+                    array('ip' => $ip, 'source' => 'web')
+                );
+            }
+            // Return fake success to avoid tipping off the bot
+            wp_send_json_success(array(
+                'message' => __('Account created successfully!', 'mls-listings-display'),
+                'redirect' => home_url('/my-dashboard/'),
+            ));
+        }
+
+        // ============ BOT PROTECTION LAYER 2: Time-Based Validation ============
+        // Reject submissions faster than 3 seconds (bots submit instantly)
+        $form_timestamp = isset($_POST['mld_form_ts']) ? intval($_POST['mld_form_ts']) : 0;
+        $current_timestamp = current_time('timestamp');
+        $time_diff = $current_timestamp - $form_timestamp;
+
+        if ($form_timestamp > 0 && $time_diff < 3) {
+            // Log the blocked attempt
+            if (class_exists('MLD_Email_Validator')) {
+                MLD_Email_Validator::log_blocked_attempt(
+                    isset($_POST['email']) ? sanitize_email($_POST['email']) : 'unknown',
+                    'Form submitted too quickly (' . $time_diff . ' seconds)',
+                    'too_fast',
+                    array('ip' => $ip, 'source' => 'web')
+                );
+            }
+            // Return fake success
+            wp_send_json_success(array(
+                'message' => __('Account created successfully!', 'mls-listings-display'),
+                'redirect' => home_url('/my-dashboard/'),
+            ));
+        }
+
         // Get form data
         $email = sanitize_email($_POST['email']);
         $password = $_POST['password'];
@@ -196,6 +242,25 @@ class MLD_Referral_Signup {
         // Validate required fields
         if (empty($email) || empty($password) || empty($first_name)) {
             wp_send_json_error(array('message' => __('Please fill in all required fields.', 'mls-listings-display')));
+        }
+
+        // ============ BOT PROTECTION LAYER 3 & 4: Email Validation ============
+        // Check for disposable emails and gibberish patterns
+        if (class_exists('MLD_Email_Validator')) {
+            $email_validation = MLD_Email_Validator::validate($email);
+            if (!$email_validation['valid']) {
+                MLD_Email_Validator::log_blocked_attempt(
+                    $email,
+                    $email_validation['reason'],
+                    $email_validation['code'],
+                    array('ip' => $ip, 'source' => 'web')
+                );
+                // Return real error for disposable/gibberish emails
+                wp_send_json_error(array(
+                    'message' => $email_validation['reason'],
+                    'code' => $email_validation['code']
+                ));
+            }
         }
 
         // Check if email already exists
@@ -266,6 +331,38 @@ class MLD_Referral_Signup {
             'redirect' => home_url('/my-dashboard/'),
             'assigned_agent' => $assigned_agent,
         ));
+    }
+
+    /**
+     * Get the client IP address, accounting for CDN/proxy headers
+     *
+     * @return string IP address
+     */
+    private static function get_client_ip() {
+        // Check for CDN/proxy headers (Kinsta, Cloudflare, etc.)
+        $headers = array(
+            'HTTP_CF_CONNECTING_IP',     // Cloudflare
+            'HTTP_X_FORWARDED_FOR',      // Standard proxy header
+            'HTTP_X_REAL_IP',            // Nginx proxy
+            'REMOTE_ADDR',               // Direct connection
+        );
+
+        foreach ($headers as $header) {
+            if (!empty($_SERVER[$header])) {
+                // X-Forwarded-For may contain multiple IPs, get the first one
+                $ip = $_SERVER[$header];
+                if (strpos($ip, ',') !== false) {
+                    $ips = explode(',', $ip);
+                    $ip = trim($ips[0]);
+                }
+                // Validate IP
+                if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                    return sanitize_text_field($ip);
+                }
+            }
+        }
+
+        return 'unknown';
     }
 }
 

@@ -5,6 +5,23 @@
  * Provides time-series analysis, price forecasting, and appreciation trends
  * Uses statistical methods to project future market values
  *
+ * v1.0.3 - Fixed data quality for reliable forecasts (Jan 31, 2026):
+ * - Use MEDIAN instead of average (resistant to outliers)
+ * - Remove outliers using IQR method before calculations
+ * - Increased minimum sales per month from 3 to 5
+ * - Added reasonable price bounds ($50K-$10M)
+ * - Property type filtering always applied when available
+ *
+ * v1.0.2 - Fixed momentum calculation (Jan 31, 2026):
+ * - Use actual period price changes instead of annualized linear regression
+ * - Prevents absurd values like -124% from short-term volatility
+ * - Capped strength to 50% max for display purposes
+ *
+ * v1.0.1 - Fixed archive table usage (Jan 31, 2026):
+ * - Changed get_historical_prices() to query bme_listings_archive tables
+ * - Closed sales are stored in archive, not active tables
+ * - Fixed DATE_FORMAT escaping for wpdb->prepare()
+ *
  * @package MLS_Listings_Display
  * @subpackage CMA
  * @since 5.2.0
@@ -104,6 +121,7 @@ class MLD_Market_Forecasting {
 
     /**
      * Get historical price data by month
+     * v1.0.3: Use MEDIAN instead of average, better outlier handling
      *
      * @param string $city City name
      * @param string $state State abbreviation
@@ -114,22 +132,20 @@ class MLD_Market_Forecasting {
     private function get_historical_prices($city, $state, $property_type, $months) {
         $table_prefix = $this->wpdb->prefix;
 
+        // v1.0.3: First get individual sales to calculate median in PHP
         $query = "
             SELECT
-                DATE_FORMAT(l.close_date, '%Y-%m') as month,
-                COUNT(*) as sales_count,
-                AVG(l.close_price) as avg_price,
-                STDDEV(l.close_price) as price_stddev,
-                MIN(l.close_price) as min_price,
-                MAX(l.close_price) as max_price,
-                AVG(l.close_price / NULLIF(ld.building_area_total, 0)) as avg_price_per_sqft,
-                AVG(l.mlspin_market_time_property) as avg_dom
-            FROM {$table_prefix}bme_listings l
-            LEFT JOIN {$table_prefix}bme_listing_details ld ON l.listing_id = ld.listing_id
-            LEFT JOIN {$table_prefix}bme_listing_location loc ON l.listing_id = loc.listing_id
+                DATE_FORMAT(l.close_date, '%%Y-%%m') as month,
+                l.close_price,
+                l.close_price / NULLIF(ld.building_area_total, 0) as price_per_sqft,
+                COALESCE(NULLIF(l.days_on_market, 0), DATEDIFF(l.close_date, l.listing_contract_date)) as dom
+            FROM {$table_prefix}bme_listings_archive l
+            LEFT JOIN {$table_prefix}bme_listing_details_archive ld ON l.listing_id = ld.listing_id
+            LEFT JOIN {$table_prefix}bme_listing_location_archive loc ON l.listing_id = loc.listing_id
             WHERE l.standard_status = 'Closed'
             AND l.close_date >= DATE_SUB(NOW(), INTERVAL %d MONTH)
-            AND l.close_price > 0
+            AND l.close_price > 50000
+            AND l.close_price < 10000000
         ";
 
         $params = array($months);
@@ -144,19 +160,61 @@ class MLD_Market_Forecasting {
             $params[] = $state;
         }
 
-        if ($property_type !== 'all') {
+        // v1.0.3: Always filter by property type if provided (critical for accuracy)
+        if (!empty($property_type) && $property_type !== 'all') {
             $query .= " AND l.property_type = %s";
             $params[] = $property_type;
         }
 
-        $query .= "
-            GROUP BY month
-            HAVING sales_count >= 3
-            ORDER BY month ASC
-        ";
+        $query .= " ORDER BY month ASC, l.close_price ASC";
 
         $prepared = $this->wpdb->prepare($query, $params);
-        $results = $this->wpdb->get_results($prepared, ARRAY_A);
+        $raw_results = $this->wpdb->get_results($prepared, ARRAY_A);
+
+        // Group by month and calculate median
+        $by_month = array();
+        foreach ($raw_results as $row) {
+            $month = $row['month'];
+            if (!isset($by_month[$month])) {
+                $by_month[$month] = array(
+                    'prices' => array(),
+                    'ppsf' => array(),
+                    'dom' => array()
+                );
+            }
+            $by_month[$month]['prices'][] = floatval($row['close_price']);
+            if (!empty($row['price_per_sqft'])) {
+                $by_month[$month]['ppsf'][] = floatval($row['price_per_sqft']);
+            }
+            if (!empty($row['dom'])) {
+                $by_month[$month]['dom'][] = floatval($row['dom']);
+            }
+        }
+
+        // v1.0.3: Calculate median for each month, require minimum 5 sales
+        $results = array();
+        foreach ($by_month as $month => $data) {
+            $count = count($data['prices']);
+            if ($count < 5) {
+                continue; // Skip months with too few sales for reliable median
+            }
+
+            // Remove outliers (outside 1.5 IQR) before calculating median
+            $prices = $this->remove_outliers($data['prices']);
+            if (count($prices) < 3) {
+                continue; // Not enough data after outlier removal
+            }
+
+            $results[] = array(
+                'month' => $month,
+                'sales_count' => $count,
+                'avg_price' => $this->calculate_median($prices), // Use median as "avg_price" for compatibility
+                'min_price' => min($prices),
+                'max_price' => max($prices),
+                'avg_price_per_sqft' => !empty($data['ppsf']) ? $this->calculate_median($data['ppsf']) : 0,
+                'avg_dom' => !empty($data['dom']) ? $this->calculate_median($data['dom']) : 0
+            );
+        }
 
         return $results;
     }
@@ -340,6 +398,7 @@ class MLD_Market_Forecasting {
 
     /**
      * Calculate price momentum indicator
+     * v1.0.2: Fixed to use actual period changes instead of annualized projections
      *
      * @param array $historical_data Historical price data
      * @return array Momentum analysis
@@ -356,19 +415,28 @@ class MLD_Market_Forecasting {
             );
         }
 
-        // Compare recent trend (last 3 months) vs longer term (last 6-12 months)
-        $recent_data = array_slice($historical_data, -3);
-        $longer_term_data = array_slice($historical_data, max(0, $n - 12), min($n, 12));
+        // v1.0.2: Use actual price changes instead of annualized linear regression
+        // Recent: compare current month to 3 months ago
+        $current_price = floatval($historical_data[$n - 1]['avg_price']);
+        $price_3mo_ago = floatval($historical_data[max(0, $n - 4)]['avg_price']);
+        $price_6mo_ago = floatval($historical_data[max(0, $n - 7)]['avg_price']);
+        $price_12mo_ago = floatval($historical_data[0]['avg_price']); // Oldest available
 
-        $recent_trend = $this->calculate_linear_trend($recent_data);
-        $longer_trend = $this->calculate_linear_trend($longer_term_data);
+        // Calculate actual percentage changes (not annualized)
+        $recent_change_pct = $price_3mo_ago > 0 ?
+            (($current_price - $price_3mo_ago) / $price_3mo_ago) * 100 : 0;
 
-        $recent_change_pct = $recent_trend['annual_change_pct'];
-        $longer_change_pct = $longer_trend['annual_change_pct'];
+        $longer_change_pct = $price_6mo_ago > 0 ?
+            (($current_price - $price_6mo_ago) / $price_6mo_ago) * 100 : 0;
 
-        // Determine momentum
-        $momentum_diff = $recent_change_pct - $longer_change_pct;
+        // Determine momentum by comparing recent vs longer-term change rates
+        // If recent 3-month is better than 6-month pace, momentum is positive
+        $momentum_diff = $recent_change_pct - ($longer_change_pct / 2); // Normalize 6mo to 3mo equivalent
 
+        // Determine direction based on recent price movement
+        $direction = $recent_change_pct > 1 ? 'up' : ($recent_change_pct < -1 ? 'down' : 'flat');
+
+        // Determine momentum status
         if (abs($momentum_diff) < 2) {
             $status = 'stable';
             $description = 'Market showing steady, consistent trends';
@@ -386,8 +454,8 @@ class MLD_Market_Forecasting {
             $description = 'Price growth weakening';
         }
 
-        $direction = $recent_trend['direction'];
-        $strength = abs($recent_change_pct);
+        // v1.0.2: Cap strength to reasonable bounds (0-50%)
+        $strength = min(50, abs($recent_change_pct));
 
         return array(
             'status' => $status,
@@ -596,6 +664,67 @@ class MLD_Market_Forecasting {
         }
 
         return sqrt($sum_squares / ($n - 1));
+    }
+
+    /**
+     * Calculate median of an array
+     * v1.0.3: Added for more robust price calculations
+     *
+     * @param array $values Numeric values (will be sorted)
+     * @return float Median value
+     */
+    private function calculate_median($values) {
+        if (empty($values)) {
+            return 0;
+        }
+
+        sort($values);
+        $count = count($values);
+        $middle = (int) floor($count / 2);
+
+        if ($count % 2 == 0) {
+            // Even number: average of two middle values
+            return ($values[$middle - 1] + $values[$middle]) / 2;
+        } else {
+            // Odd number: middle value
+            return $values[$middle];
+        }
+    }
+
+    /**
+     * Remove outliers using IQR method
+     * v1.0.3: Added to prevent extreme values from skewing results
+     *
+     * @param array $values Numeric values
+     * @param float $multiplier IQR multiplier (default 1.5 for moderate outlier removal)
+     * @return array Values with outliers removed
+     */
+    private function remove_outliers($values, $multiplier = 1.5) {
+        if (count($values) < 4) {
+            return $values; // Need at least 4 values for IQR
+        }
+
+        sort($values);
+        $count = count($values);
+
+        // Calculate Q1 (25th percentile) and Q3 (75th percentile)
+        $q1_index = (int) floor($count * 0.25);
+        $q3_index = (int) floor($count * 0.75);
+
+        $q1 = $values[$q1_index];
+        $q3 = $values[$q3_index];
+        $iqr = $q3 - $q1;
+
+        // Define bounds
+        $lower_bound = $q1 - ($multiplier * $iqr);
+        $upper_bound = $q3 + ($multiplier * $iqr);
+
+        // Filter out outliers
+        $filtered = array_filter($values, function($v) use ($lower_bound, $upper_bound) {
+            return $v >= $lower_bound && $v <= $upper_bound;
+        });
+
+        return array_values($filtered); // Re-index array
     }
 
     /**

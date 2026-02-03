@@ -94,6 +94,13 @@ class MLD_Main {
                 // The class auto-instantiates at the end of the file
             }
         }
+
+        // Blog Writing Agent (v6.73.0)
+        // Load on all requests - REST API routes must be registered via rest_api_init hook
+        // which fires before REST_REQUEST is defined
+        if (file_exists(MLD_PLUGIN_PATH . 'includes/blog-agent/class-mld-blog-agent-init.php')) {
+            require_once MLD_PLUGIN_PATH . 'includes/blog-agent/class-mld-blog-agent-init.php';
+        }
     }
 
     /**
@@ -150,6 +157,12 @@ class MLD_Main {
             if (class_exists('MLD_Admin_Menu')) {
                 new MLD_Admin_Menu();
             }
+        }
+
+        // Initialize Blog Writing Agent (v6.73.0)
+        if (class_exists('MLD_Blog_Agent_Init')) {
+            MLD_Blog_Agent_Init::get_instance();
+            MLD_Logger::info('Blog Writing Agent initialized');
         }
 
         // Log successful initialization

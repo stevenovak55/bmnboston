@@ -767,7 +767,7 @@ class MLD_Market_Conditions {
             );
         }
 
-        $midpoint = floor(count($monthly_data) / 2);
+        $midpoint = (int) floor(count($monthly_data) / 2);
         $first_half = array_slice($monthly_data, 0, $midpoint);
         $second_half = array_slice($monthly_data, $midpoint);
 

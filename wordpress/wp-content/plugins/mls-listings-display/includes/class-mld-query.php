@@ -1270,6 +1270,13 @@ class MLD_Query {
                     }
                     break;
 
+                // v6.72.1: Added beds_min for iOS parity - uses minimum instead of array
+                case 'beds_min':
+                    if ($value > 0) {
+                        $conditions[] = $wpdb->prepare("bedrooms_total >= %d", (int)$value);
+                    }
+                    break;
+
                 case 'bathrooms':
                     $min = isset($filter['min']) ? (float)$filter['min'] : 0;
                     if ($min > 0) {
@@ -2064,6 +2071,7 @@ public static function get_listings_for_map($north, $south, $east, $west, $filte
         $filter_map = [
             'PropertyType' => ['alias' => 'l', 'column' => 'property_type', 'type' => 'property_type'], 'price_min' => ['alias' => 'l', 'column' => 'list_price', 'compare' => '>='],
             'price_max' => ['alias' => 'l', 'column' => 'list_price', 'compare' => '<='], 'beds' => ['alias' => 'ld', 'column' => 'bedrooms_total'],
+            'beds_min' => ['alias' => 'ld', 'column' => 'bedrooms_total', 'compare' => '>='],  // v6.72.1: Min-only to align with iOS
             'baths_min' => ['alias' => 'ld', 'column' => 'bathrooms_total_integer', 'compare' => '>='], 'home_type' => ['alias' => 'l', 'column' => 'property_sub_type'],
             'status' => ['alias' => 'l', 'column' => 'standard_status', 'type' => 'status_mapping'], 'sqft_min' => ['alias' => 'ld', 'column' => 'living_area', 'compare' => '>='],
             'sqft_max' => ['alias' => 'ld', 'column' => 'living_area', 'compare' => '<='], 'year_built_min' => ['alias' => 'ld', 'column' => 'year_built', 'compare' => '>='],

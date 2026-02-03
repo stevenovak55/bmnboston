@@ -1081,7 +1081,7 @@ class MLD_Saved_Search_Notifications {
      * Test the live alert flow for a saved search (admin/debug use)
      *
      * @param int $search_id The saved search ID
-     * @return array Test results including email preview
+     * @return array|false Test results including email preview, or false on failure
      */
     public static function test_live_alert_flow($search_id) {
         $test_result = self::test_notification($search_id);

@@ -54,9 +54,9 @@ class MLD_Property_Type_Pages {
         // Residential Lease subtypes
         'Apartment' => 'apartments',
         
-        // Land subtypes  
-        'Residential' => 'residential-land',
-        'Commercial' => 'commercial-land',
+        // Land subtypes
+        'Residential Land' => 'residential-land',
+        'Commercial Land' => 'commercial-land',
         'Parking' => 'parking-lots'
     );
 

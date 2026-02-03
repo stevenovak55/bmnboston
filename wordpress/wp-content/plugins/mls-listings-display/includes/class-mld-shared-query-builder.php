@@ -48,6 +48,7 @@ class MLD_Shared_Query_Builder {
 
         // Rooms
         'bedrooms' => 'beds',
+        'beds_min' => 'beds',
         'bathrooms' => 'baths',
         'baths_min' => 'baths',
 
