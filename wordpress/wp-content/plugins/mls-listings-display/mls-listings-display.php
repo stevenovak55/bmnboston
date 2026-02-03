@@ -3,7 +3,7 @@
  * Plugin Name:       MLS Listings Display
  * Plugin URI:        https://example.com/
  * Description:       Displays real estate listings from the Bridge MLS Extractor Pro plugin using shortcodes with mobile-optimized property search and display.
- * Version: 6.75.0
+ * Version: 6.75.2
  * Author:            AZ Home Solutions LLC
  * Author URI:        https://example.com/
  * License:           GPL-2.0+
@@ -11,6 +11,18 @@
  * Text Domain:       mls-listings-display
  *
  * @package           MLS_Listings_Display
+ *
+ * Version 6.75.2 - FIX CMA PDF FIELD NAME MISMATCHES (Feb 3, 2026)
+ * Fixed additional CMA PDF data issues where field names didn't match what the PDF generator expected.
+ * - Fixed 'postal_code' field (PDF expects 'postal_code', was sending 'zip') - ZIP was showing as N/A
+ * - Fixed 'price' field (PDF expects 'price', was sending 'list_price') - List Price was showing as N/A
+ * - Added 'property_sub_type' field for completeness
+ *
+ * Version 6.75.1 - FIX CMA PDF MISSING GARAGE SPACES (Feb 3, 2026)
+ * Fixed garage spaces showing as 0 in CMA PDF for properties that have garages.
+ * - Added garage_spaces field to subject property array passed to PDF generator
+ * - Added garage_spaces and lot_size_area fields to comparables array
+ * - Also added pool field to subject property for completeness
  *
  * Version 6.75.0 - CMA PDF: iOS MANUAL ADJUSTMENTS INTEGRATION (Feb 3, 2026)
  * Updated CMA PDF generation endpoint to receive and apply manual adjustments from iOS:
@@ -2516,7 +2528,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 // Define plugin constants.
 // Add timestamp for cache busting during development
-define('MLD_VERSION', '6.75.0');
+define('MLD_VERSION', '6.75.2');
 
 define( 'MLD_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MLD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) ); // Alias for MLD_PLUGIN_PATH for backward compatibility

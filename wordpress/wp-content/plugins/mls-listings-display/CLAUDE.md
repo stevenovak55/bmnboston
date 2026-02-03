@@ -2,7 +2,7 @@
 
 Quick reference for AI-assisted development.
 
-**Current Version:** 6.75.0
+**Current Version:** 6.75.2
 **Last Updated:** February 3, 2026
 
 ---
@@ -687,6 +687,63 @@ System Health dashboard (WP Admin → MLS Listings → System Health) shows:
 ---
 
 ## Version History
+
+### Version 6.75.2 - FIX CMA PDF FIELD NAME MISMATCHES (Feb 3, 2026)
+
+Fixed additional CMA PDF data issues where field names didn't match what the PDF generator expected.
+
+**Problems Fixed:**
+1. **ZIP Code showing as "N/A"** - PDF generator expects `postal_code` but we were passing `zip`
+2. **List Price showing as "N/A"** - PDF generator expects `price` but we were passing only `list_price`
+
+**Root Cause:** The `handle_generate_cma_pdf()` function built the `$subject_property` array with field names that didn't match what `class-mld-cma-pdf-generator.php` expects.
+
+**PDF Generator Expected Fields (line ~838-850):**
+```php
+array('Zip Code', $subject['postal_code'] ?? 'N/A'),  // expects 'postal_code'
+array('List Price', isset($subject['price']) ? '$' . number_format($subject['price']) : 'N/A'),  // expects 'price'
+```
+
+**Fix:** Updated field names to match PDF generator expectations:
+```php
+'postal_code' => $subject->postal_code,  // Was 'zip'
+'price' => (int) $subject->list_price,   // Added (PDF expects 'price')
+'list_price' => (int) $subject->list_price,  // Keep for backward compatibility
+'property_sub_type' => $subject->property_sub_type,  // Added for completeness
+```
+
+**Files Changed:**
+- `includes/class-mld-mobile-rest-api.php` - Fixed field names in `handle_generate_cma_pdf()`
+
+---
+
+### Version 6.75.1 - FIX CMA PDF MISSING GARAGE SPACES (Feb 3, 2026)
+
+Fixed garage spaces showing as 0 in CMA PDF for properties that have garages.
+
+**Problem:** CMA PDF showed "Garage: 0 spaces" for the subject property even when the property had a garage (e.g., 99 Grove St, Reading with 1 garage space).
+
+**Root Cause:** When building the `$subject_property` array for the PDF generator in `handle_generate_cma_pdf()`, the `garage_spaces` field was not included. The PDF generator at line 848 uses:
+```php
+array('Garage', ($subject['garage_spaces'] ?? 0) . ' spaces'),
+```
+Since `garage_spaces` was missing from the array, it defaulted to 0.
+
+**Fix:** Added `garage_spaces` field to both subject property and comparables arrays:
+```php
+// Subject property (line ~7281)
+'garage_spaces' => (int) ($subject->garage_spaces ?? 0),
+'pool' => !empty($subject->has_pool) ? 1 : 0,
+
+// Comparables (line ~7459)
+'garage_spaces' => (int) ($comp->garage_spaces ?? 0),
+'lot_size_area' => $comp->lot_size_acres ?? null,
+```
+
+**Files Changed:**
+- `includes/class-mld-mobile-rest-api.php` - Added `garage_spaces` to subject property array and comparables array in `handle_generate_cma_pdf()`
+
+---
 
 ### Version 6.75.0 - CMA MANUAL ADJUSTMENTS FOR PDF GENERATION (Feb 3, 2026)
 

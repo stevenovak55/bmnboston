@@ -7263,6 +7263,7 @@ class MLD_Mobile_REST_API {
             : 0;
 
         // Build subject property data for PDF generator
+        // NOTE: Field names must match what class-mld-cma-pdf-generator.php expects
         $subject_address = trim($subject->street_number . ' ' . $subject->street_name);
         $subject_property = array(
             'listing_id' => $subject->listing_id,
@@ -7270,14 +7271,18 @@ class MLD_Mobile_REST_API {
             'address' => $subject_address,
             'city' => $subject->city,
             'state' => $subject->state_or_province,
-            'zip' => $subject->postal_code,
+            'postal_code' => $subject->postal_code,  // PDF expects 'postal_code'
             'beds' => (int) $subject->bedrooms_total,
             'baths' => (float) $subject->bathrooms_total,
             'sqft' => (int) $subject->building_area_total,
-            'list_price' => (int) $subject->list_price,
+            'price' => (int) $subject->list_price,  // PDF expects 'price' for display
+            'list_price' => (int) $subject->list_price,  // Keep for backward compatibility
             'property_type' => $subject->property_type,
+            'property_sub_type' => $subject->property_sub_type,
             'year_built' => $subject->year_built,
             'lot_size' => $subject->lot_size_acres,
+            'garage_spaces' => (int) ($subject->garage_spaces ?? 0),
+            'pool' => !empty($subject->has_pool) ? 1 : 0,
             'photo_url' => $subject->main_photo_url,
         );
 
@@ -7454,6 +7459,8 @@ class MLD_Mobile_REST_API {
                 'sold_date' => $comp->close_date ?: $comp->modification_timestamp,
                 'price_per_sqft' => $comp->building_area_total > 0 ? round($sold_price / $comp->building_area_total) : null,
                 'photo_url' => $comp->main_photo_url,
+                'garage_spaces' => (int) ($comp->garage_spaces ?? 0),
+                'lot_size_area' => $comp->lot_size_acres ?? null,
             );
         }
 
