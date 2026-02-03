@@ -1,0 +1,180 @@
+# ==============================================================================
+# BMN Boston Development Environment - Git Ignore
+# ==============================================================================
+
+# ==============================================================================
+# macOS
+# ==============================================================================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ==============================================================================
+# IDE / Editor
+# ==============================================================================
+.idea/
+.vscode/
+.claude/
+*.swp
+*.swo
+*~
+.project
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# ==============================================================================
+# WordPress
+# ==============================================================================
+
+# WordPress Core (we only track wp-content)
+wordpress/docker/wordpress_data/
+
+# Uploads - don't track user uploads
+wordpress/wp-content/uploads/*
+!wordpress/wp-content/uploads/.gitkeep
+
+# WordPress debug log
+wordpress/wp-content/debug.log
+
+# WordPress cache
+wordpress/wp-content/cache/
+wordpress/wp-content/advanced-cache.php
+wordpress/wp-content/wp-cache-config.php
+wordpress/wp-content/object-cache.php
+
+# WordPress upgrade files
+wordpress/wp-content/upgrade/
+
+# Plugin/Theme build artifacts
+wordpress/wp-content/plugins/*/node_modules/
+wordpress/wp-content/plugins/*/vendor/
+wordpress/wp-content/plugins/*/.git/
+wordpress/wp-content/themes/*/node_modules/
+wordpress/wp-content/themes/*/vendor/
+wordpress/wp-content/themes/*/.git/
+
+# ==============================================================================
+# Database
+# ==============================================================================
+
+# Keep structure but ignore actual SQL files (may contain sensitive data)
+# Uncomment below if you want to track seed files
+# wordpress/database/seeds/*.sql
+
+# ==============================================================================
+# Docker
+# ==============================================================================
+
+# Docker volumes are managed separately
+docker-volumes/
+
+# ==============================================================================
+# iOS / Xcode
+# ==============================================================================
+
+# Build generated
+ios/build/
+ios/*/build/
+ios/*/DerivedData/
+ios/*/*.moved-aside
+ios/*/*.pbxuser
+!ios/*/*.xcodeproj/project.pbxuser
+ios/*/*.xccheckout
+ios/*/*.xcscmblueprint
+
+# User-specific Xcode files
+ios/*/*.xcuserstate
+ios/*/*.xcuserdatad/
+
+# Xcode workspaces
+ios/*/*.xcworkspace/
+!ios/*/*.xcworkspace/contents.xcworkspacedata
+!ios/*/*.xcworkspace/xcshareddata/
+
+# CocoaPods
+ios/*/Pods/
+ios/*/Podfile.lock
+
+# Carthage
+ios/*/Carthage/Build/
+ios/*/Carthage/Checkouts/
+
+# Swift Package Manager
+ios/*/.build/
+ios/*/.swiftpm/
+ios/*/Package.resolved
+
+# fastlane
+ios/*/fastlane/report.xml
+ios/*/fastlane/Preview.html
+ios/*/fastlane/screenshots/**/*.png
+ios/*/fastlane/test_output/
+
+# Code Injection
+ios/*/*.xcodeproj/
+!ios/*/*.xcodeproj/project.pbxproj
+
+# ==============================================================================
+# Node.js (for any build tools)
+# ==============================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# ==============================================================================
+# Environment & Secrets
+# ==============================================================================
+.env
+.env.local
+.env.*.local
+*.env
+.envrc
+
+# Secret files
+**/secrets/
+**/*secret*
+**/*credentials*
+**/*.pem
+**/*.key
+
+# ==============================================================================
+# Logs
+# ==============================================================================
+logs/
+*.log
+npm-debug.log*
+
+# ==============================================================================
+# Testing
+# ==============================================================================
+coverage/
+.nyc_output/
+
+# ==============================================================================
+# Temporary Files
+# ==============================================================================
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# ==============================================================================
+# Archives (unless specifically needed)
+# ==============================================================================
+*.zip
+*.tar.gz
+*.rar
+
+# ==============================================================================
+# Documentation Build Output
+# ==============================================================================
+docs/_build/

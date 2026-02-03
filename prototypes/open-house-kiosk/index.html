@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1024, height=768, initial-scale=1.0">
+    <title>Open House Sign-In | BMN Boston</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Property Slideshow Background -->
+    <div class="slideshow-container">
+        <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1920&q=80')"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1920&q=80')"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=1920&q=80')"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=80')"></div>
+        <div class="gradient-overlay"></div>
+
+        <!-- Slideshow Indicators -->
+        <div class="slideshow-indicators">
+            <span class="indicator active"></span>
+            <span class="indicator"></span>
+            <span class="indicator"></span>
+            <span class="indicator"></span>
+        </div>
+    </div>
+
+    <!-- Property Info Overlay -->
+    <div class="property-overlay">
+        <div class="property-tag">Open House Today</div>
+        <h1 class="property-address">135 Seaport Boulevard, Unit 1807</h1>
+        <p class="property-location">Boston, MA 02210</p>
+
+        <div class="property-price">$2,495,000</div>
+
+        <div class="property-details">
+            <div class="detail">
+                <span class="detail-value">3</span>
+                <span class="detail-label">Beds</span>
+            </div>
+            <div class="detail-divider"></div>
+            <div class="detail">
+                <span class="detail-value">2.5</span>
+                <span class="detail-label">Baths</span>
+            </div>
+            <div class="detail-divider"></div>
+            <div class="detail">
+                <span class="detail-value">2,150</span>
+                <span class="detail-label">Sq Ft</span>
+            </div>
+        </div>
+
+        <button class="sign-in-cta" onclick="openSignIn()">
+            <span class="cta-text">Sign In to Learn More</span>
+            <svg class="cta-arrow" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Agent Badge -->
+    <div class="agent-badge">
+        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop&crop=face" alt="Agent" class="agent-photo">
+        <div class="agent-info">
+            <span class="agent-label">Your Host</span>
+            <span class="agent-name">Steve Novak</span>
+        </div>
+    </div>
+
+    <!-- Sign-In Modal -->
+    <div class="modal-overlay" id="signInModal">
+        <div class="modal-backdrop" onclick="closeSignIn()"></div>
+        <div class="modal-container">
+            <!-- Progress Indicator -->
+            <div class="progress-container">
+                <div class="progress-steps">
+                    <div class="step active" data-step="1">
+                        <div class="step-dot">1</div>
+                        <span class="step-label">Contact</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" data-step="2">
+                        <div class="step-dot">2</div>
+                        <span class="step-label">Agent Status</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" data-step="3">
+                        <div class="step-dot">3</div>
+                        <span class="step-label">Details</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" data-step="4">
+                        <div class="step-dot">4</div>
+                        <span class="step-label">Consent</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" data-step="5">
+                        <div class="step-dot">✓</div>
+                        <span class="step-label">Done</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Steps -->
+            <div class="form-content">
+                <!-- Step 1: Contact Info -->
+                <div class="form-step active" data-step="1">
+                    <h2 class="form-title">Welcome! Let's get to know you.</h2>
+                    <p class="form-subtitle">Please enter your contact information</p>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">First Name</label>
+                            <input type="text" class="form-input" placeholder="John" id="firstName">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" class="form-input" placeholder="Smith" id="lastName">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" class="form-input" placeholder="john.smith@email.com" id="email">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" class="form-input" placeholder="(617) 555-0123" id="phone">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn-secondary" onclick="closeSignIn()">Cancel</button>
+                        <button class="btn-primary" onclick="nextStep(2)">
+                            Continue
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Agent Status -->
+                <div class="form-step" data-step="2">
+                    <h2 class="form-title">Are you currently working with a real estate agent?</h2>
+                    <p class="form-subtitle">This helps us provide you with the best service</p>
+
+                    <div class="option-cards">
+                        <button class="option-card" onclick="selectAgentStatus('no')">
+                            <div class="option-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M6 21V19C6 16.7909 7.79086 15 10 15H14C16.2091 15 18 16.7909 18 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <span class="option-title">No, I'm not working with an agent</span>
+                            <span class="option-desc">I'd like to learn more about this property</span>
+                        </button>
+
+                        <button class="option-card" onclick="selectAgentStatus('yes')">
+                            <div class="option-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                                    <circle cx="15" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M3 21V19C3 17.3431 4.34315 16 6 16H12C13.6569 16 15 17.3431 15 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M15 16H18C19.6569 16 21 17.3431 21 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <span class="option-title">Yes, I have an agent</span>
+                            <span class="option-desc">I'm working with another real estate agent</span>
+                        </button>
+
+                        <button class="option-card" onclick="selectAgentStatus('this-agent')">
+                            <div class="option-icon icon-highlight">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M6 21V19C6 16.7909 7.79086 15 10 15H14C16.2091 15 18 16.7909 18 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M16 4L18 6L22 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <span class="option-title">Yes, with Steve Novak</span>
+                            <span class="option-desc">I'm already working with today's host</span>
+                        </button>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn-secondary" onclick="prevStep(1)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Back
+                        </button>
+                        <div></div>
+                    </div>
+                </div>
+
+                <!-- Step 3a: Agent Details (if working with another agent) -->
+                <div class="form-step" data-step="3a">
+                    <h2 class="form-title">Please share your agent's information</h2>
+                    <p class="form-subtitle">We'll coordinate any follow-up through your agent</p>
+
+                    <div class="info-banner">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                            <path d="M12 16V12M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <span>Out of respect for your working relationship, we'll contact your agent rather than reaching out to you directly.</span>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Agent's Name</label>
+                            <input type="text" class="form-input" placeholder="Agent's full name" id="agentName">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Brokerage</label>
+                            <input type="text" class="form-input" placeholder="Real estate company" id="agentBrokerage">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Agent's Phone (Optional)</label>
+                            <input type="tel" class="form-input" placeholder="(617) 555-0123" id="agentPhone">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Agent's Email (Optional)</label>
+                            <input type="email" class="form-input" placeholder="agent@email.com" id="agentEmail">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn-secondary" onclick="prevStep(2)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Back
+                        </button>
+                        <button class="btn-primary" onclick="nextStep(4)">
+                            Continue
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3b: Buying Intent (if not working with agent) -->
+                <div class="form-step" data-step="3b">
+                    <h2 class="form-title">Tell us about your home search</h2>
+                    <p class="form-subtitle">This helps us find the perfect property for you</p>
+
+                    <div class="form-section">
+                        <label class="form-label">When are you looking to buy?</label>
+                        <div class="timeline-options">
+                            <button class="timeline-btn" data-value="browsing">Just Browsing</button>
+                            <button class="timeline-btn" data-value="0-3">0-3 Months</button>
+                            <button class="timeline-btn" data-value="3-6">3-6 Months</button>
+                            <button class="timeline-btn" data-value="6+">6+ Months</button>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">Are you pre-approved for a mortgage?</label>
+                        <div class="preapproval-options">
+                            <button class="preapproval-btn" data-value="yes">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Yes
+                            </button>
+                            <button class="preapproval-btn" data-value="no">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M6 18L18 6M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                                No
+                            </button>
+                            <button class="preapproval-btn" data-value="unsure">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M9 9C9 7.89543 9.89543 7 11 7H13C14.1046 7 15 7.89543 15 9C15 10.1046 14.1046 11 13 11H12V13M12 17H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                                Not Sure
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group lender-group" style="display: none;">
+                        <label class="form-label">Lender Name (Optional)</label>
+                        <input type="text" class="form-input" placeholder="Bank or mortgage company" id="lenderName">
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn-secondary" onclick="prevStep(2)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Back
+                        </button>
+                        <button class="btn-primary" onclick="nextStep(4)">
+                            Continue
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Consent & MA Disclosure -->
+                <div class="form-step" data-step="4">
+                    <h2 class="form-title">Almost done!</h2>
+                    <p class="form-subtitle">Please review and confirm your preferences</p>
+
+                    <div class="consent-section">
+                        <label class="consent-item">
+                            <input type="checkbox" class="consent-checkbox" id="consentFollowUp" checked>
+                            <span class="consent-checkmark"></span>
+                            <span class="consent-text">I consent to be contacted about this property</span>
+                        </label>
+
+                        <label class="consent-item">
+                            <input type="checkbox" class="consent-checkbox" id="consentEmail" checked>
+                            <span class="consent-checkmark"></span>
+                            <span class="consent-text">Send me email alerts for similar properties</span>
+                        </label>
+
+                        <label class="consent-item">
+                            <input type="checkbox" class="consent-checkbox" id="consentText">
+                            <span class="consent-checkmark"></span>
+                            <span class="consent-text">I agree to receive text messages</span>
+                        </label>
+                    </div>
+
+                    <div class="disclosure-section">
+                        <h3 class="disclosure-title">Massachusetts Agency Disclosure</h3>
+                        <div class="disclosure-content">
+                            <p>Under Massachusetts law, real estate licensees are required to disclose to consumers the types of agency relationships available:</p>
+                            <ul>
+                                <li><strong>Seller's Agent:</strong> Represents the seller and owes fiduciary duties to the seller.</li>
+                                <li><strong>Buyer's Agent:</strong> Represents the buyer and owes fiduciary duties to the buyer.</li>
+                                <li><strong>Dual Agent:</strong> Represents both buyer and seller with informed consent.</li>
+                            </ul>
+                            <p>Today's listing agent represents the seller's interests. If you are not represented by your own buyer's agent, consider seeking representation.</p>
+                        </div>
+
+                        <label class="consent-item disclosure-acknowledge">
+                            <input type="checkbox" class="consent-checkbox" id="maDisclosure">
+                            <span class="consent-checkmark"></span>
+                            <span class="consent-text">I acknowledge receiving this agency disclosure</span>
+                        </label>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn-secondary" onclick="prevStep(3)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Back
+                        </button>
+                        <button class="btn-primary btn-submit" onclick="submitForm()">
+                            Complete Sign-In
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 5: Success -->
+                <div class="form-step" data-step="5">
+                    <div class="success-content">
+                        <div class="success-icon">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                                <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <h2 class="success-title">Thank You!</h2>
+                        <p class="success-message">Welcome to the open house. Please feel free to explore the property.</p>
+
+                        <div class="success-details">
+                            <div class="success-detail">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                                <span>We'll send you a summary of this property</span>
+                            </div>
+                            <div class="success-detail" id="alertDetail" style="display: none;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M18 8A6 6 0 006 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M13.73 21A2 2 0 0110.27 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                                <span>You'll receive alerts for similar properties</span>
+                            </div>
+                        </div>
+
+                        <button class="btn-primary btn-done" onclick="closeSignIn()">
+                            Done
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Close Button -->
+            <button class="modal-close" onclick="closeSignIn()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 18L18 6M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
