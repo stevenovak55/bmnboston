@@ -987,6 +987,13 @@ class MLD_Mobile_REST_API {
                 'permission_callback' => array(__CLASS__, 'check_auth'),
             ));
 
+            // Analyze property condition with AI (v6.75.0)
+            register_rest_route(self::NAMESPACE, '/cma/analyze-condition', array(
+                'methods' => 'POST',
+                'callback' => array(__CLASS__, 'handle_analyze_condition'),
+                'permission_callback' => array(__CLASS__, 'check_auth'),
+            ));
+
             // ============ Chatbot Routes ============
 
             // Send message
@@ -6629,6 +6636,151 @@ class MLD_Mobile_REST_API {
     }
 
     /**
+     * Calculate adjustments for a comparable property relative to the subject
+     *
+     * @param object $comp Comparable property object
+     * @param object $subject Subject property object
+     * @return array Array with 'items' containing adjustment details
+     */
+    private static function calculate_mobile_adjustments($comp, $subject) {
+        $items = array();
+
+        // Get comparable price for percentage-based calculations
+        $comp_price = $comp->close_price > 0 ? (int) $comp->close_price : (int) $comp->list_price;
+
+        // Square footage adjustment (using market-based $/sqft with diminishing returns)
+        $comp_sqft = (int) $comp->building_area_total;
+        $subject_sqft = (int) $subject->building_area_total;
+        if ($comp_sqft > 0 && $subject_sqft > 0) {
+            $sqft_diff = $comp_sqft - $subject_sqft;
+            if (abs($sqft_diff) > 50) { // Only adjust if difference > 50 sqft
+                // Use $350/sqft as default market rate
+                $price_per_sqft = 350;
+                $abs_diff = abs($sqft_diff);
+
+                // Apply diminishing returns: first 200sqft at full value, then 75%, then 50%
+                $tier1_sqft = min($abs_diff, 200);
+                $tier2_sqft = max(0, min($abs_diff - 200, 300));
+                $tier3_sqft = max(0, $abs_diff - 500);
+
+                $tier1_value = $tier1_sqft * $price_per_sqft * 1.00;
+                $tier2_value = $tier2_sqft * $price_per_sqft * 0.75;
+                $tier3_value = $tier3_sqft * $price_per_sqft * 0.50;
+
+                $adjustment = $tier1_value + $tier2_value + $tier3_value;
+
+                // Cap at 10% of property value
+                $max_adjustment = $comp_price * 0.10;
+                $adjustment = min($adjustment, $max_adjustment);
+
+                // Apply direction (negative if comp is larger)
+                if ($sqft_diff > 0) {
+                    $adjustment = -$adjustment;
+                }
+
+                $items[] = array(
+                    'feature' => 'Square Footage',
+                    'difference' => ($sqft_diff > 0 ? 'Larger' : 'Smaller') . ' by ' . abs($sqft_diff) . ' sqft',
+                    'adjustment' => (int) round($adjustment),
+                );
+            }
+        }
+
+        // Bedroom adjustment (2.5% of property value per bedroom)
+        $comp_beds = (int) $comp->bedrooms_total;
+        $subject_beds = (int) $subject->bedrooms_total;
+        if ($comp_beds > 0 && $subject_beds > 0) {
+            $bed_diff = $comp_beds - $subject_beds;
+            if ($bed_diff != 0) {
+                $bed_value = $comp_price * 0.025; // 2.5% per bedroom
+                $bed_value = max(15000, min(75000, $bed_value)); // Bound $15k-$75k
+                $adjustment = -($bed_diff * $bed_value);
+
+                $items[] = array(
+                    'feature' => 'Bedrooms',
+                    'difference' => abs($bed_diff) . ' ' . ($bed_diff > 0 ? 'more' : 'fewer') . ' bedroom' . (abs($bed_diff) > 1 ? 's' : ''),
+                    'adjustment' => (int) round($adjustment),
+                );
+            }
+        }
+
+        // Bathroom adjustment (1% of property value per bathroom)
+        $comp_baths = (float) $comp->bathrooms_total;
+        $subject_baths = (float) $subject->bathrooms_total;
+        if ($comp_baths > 0 && $subject_baths > 0) {
+            $bath_diff = $comp_baths - $subject_baths;
+            if (abs($bath_diff) >= 0.5) { // Only adjust if >= 0.5 bath difference
+                $bath_value = $comp_price * 0.01; // 1% per bathroom
+                $bath_value = max(5000, min(30000, $bath_value)); // Bound $5k-$30k
+                $adjustment = -($bath_diff * $bath_value);
+
+                $items[] = array(
+                    'feature' => 'Bathrooms',
+                    'difference' => abs($bath_diff) . ' ' . ($bath_diff > 0 ? 'more' : 'fewer') . ' bathroom' . (abs($bath_diff) > 1 ? 's' : ''),
+                    'adjustment' => (int) round($adjustment),
+                );
+            }
+        }
+
+        // Year built adjustment (0.4% per year, capped at 20 years)
+        $comp_year = !empty($comp->year_built) ? (int) $comp->year_built : 0;
+        $subject_year = !empty($subject->year_built) ? (int) $subject->year_built : 0;
+        if ($comp_year > 1800 && $subject_year > 1800) {
+            $age_diff = $comp_year - $subject_year;
+            if (abs($age_diff) >= 5) { // Only adjust if >= 5 years difference
+                $years_to_adjust = min(abs($age_diff), 20); // Cap at 20 years
+                $year_value = $comp_price * 0.004; // 0.4% per year
+                $adjustment = $years_to_adjust * $year_value;
+
+                // Apply direction (negative if comp is newer)
+                if ($age_diff > 0) {
+                    $adjustment = -$adjustment;
+                }
+
+                $items[] = array(
+                    'feature' => 'Year Built',
+                    'difference' => abs($age_diff) . ' years ' . ($age_diff > 0 ? 'newer' : 'older'),
+                    'adjustment' => (int) round($adjustment),
+                );
+            }
+        }
+
+        // Garage spaces adjustment (2.5% first space, 1.5% additional)
+        $comp_garage = isset($comp->garage_spaces) ? (int) $comp->garage_spaces : 0;
+        $subject_garage = isset($subject->garage_spaces) ? (int) $subject->garage_spaces : 0;
+        $garage_diff = $comp_garage - $subject_garage;
+        if ($garage_diff != 0) {
+            $spaces_to_adjust = abs($garage_diff);
+            $garage_value = 0;
+
+            for ($i = 0; $i < $spaces_to_adjust; $i++) {
+                if ($i == 0) {
+                    // First space: 2.5%, bounded $15k-$60k
+                    $first_value = $comp_price * 0.025;
+                    $first_value = max(15000, min(60000, $first_value));
+                    $garage_value += $first_value;
+                } else {
+                    // Additional: 1.5%, bounded $10k-$40k
+                    $add_value = $comp_price * 0.015;
+                    $add_value = max(10000, min(40000, $add_value));
+                    $garage_value += $add_value;
+                }
+            }
+
+            // Apply direction (negative if comp has more)
+            $adjustment = $garage_diff > 0 ? -$garage_value : $garage_value;
+
+            $items[] = array(
+                'feature' => 'Garage Spaces',
+                'difference' => abs($garage_diff) . ' ' . ($garage_diff > 0 ? 'more' : 'fewer') . ' space' . (abs($garage_diff) > 1 ? 's' : ''),
+                'adjustment' => (int) round($adjustment),
+            );
+        }
+
+        return array('items' => $items);
+    }
+
+    /**
      * Handle get property CMA
      *
      * Implements tiered filtering with A/B grade requirement:
@@ -6783,10 +6935,61 @@ class MLD_Mobile_REST_API {
             $range_quality = self::calculate_range_quality($value_range['low'], $value_range['high']);
         }
 
-        // Format comparables for response
-        $formatted_comps = array_map(function($comp) {
+        // Get market context
+        $market_context = null;
+        if (class_exists('MLD_Comparable_Sales')) {
+            require_once plugin_dir_path(__FILE__) . 'class-mld-comparable-sales.php';
+            $comp_sales = new MLD_Comparable_Sales();
+            $market_context = $comp_sales->get_market_context($subject->city, $subject->state_or_province);
+        }
+
+        // Calculate average DOM from comparables
+        $total_dom = 0;
+        $dom_count = 0;
+        foreach ($ab_comparables as $comp) {
+            if (!empty($comp->days_on_market) && $comp->days_on_market > 0) {
+                $total_dom += (int) $comp->days_on_market;
+                $dom_count++;
+            } elseif (!empty($comp->close_date) && !empty($comp->listing_contract_date)) {
+                $dom = (int) ((strtotime($comp->close_date) - strtotime($comp->listing_contract_date)) / 86400);
+                if ($dom > 0) {
+                    $total_dom += $dom;
+                    $dom_count++;
+                }
+            }
+        }
+        $avg_dom = $dom_count > 0 ? round($total_dom / $dom_count) : null;
+
+        // Format comparables for response with adjustments
+        $formatted_comps = array_map(function($comp) use ($subject) {
             $sold_price = $comp->close_price > 0 ? $comp->close_price : $comp->list_price;
             $address = trim($comp->street_number . ' ' . $comp->street_name);
+
+            // Calculate adjustments for this comparable
+            $adjustments = self::calculate_mobile_adjustments($comp, $subject);
+            $total_adjustment = 0;
+            foreach ($adjustments['items'] as $adj) {
+                $total_adjustment += $adj['adjustment'];
+            }
+            $adjusted_price = (int) $sold_price + $total_adjustment;
+
+            // Calculate gross and net adjustment percentages
+            $gross_adjustment = 0;
+            foreach ($adjustments['items'] as $adj) {
+                $gross_adjustment += abs($adj['adjustment']);
+            }
+            $gross_pct = $sold_price > 0 ? round(($gross_adjustment / $sold_price) * 100, 1) : 0;
+            $net_pct = $sold_price > 0 ? round((abs($total_adjustment) / $sold_price) * 100, 1) : 0;
+
+            // Add warnings if adjustments are too large
+            $warnings = array();
+            if ($net_pct > 25) {
+                $warnings[] = 'Net adjustment exceeds 25% - use with caution';
+            }
+            if ($gross_pct > 50) {
+                $warnings[] = 'Gross adjustment exceeds 50% - significant differences';
+            }
+
             return array(
                 'listing_id' => $comp->listing_key,
                 'address' => $address,
@@ -6795,13 +6998,23 @@ class MLD_Mobile_REST_API {
                 'beds' => (int) $comp->bedrooms_total,
                 'baths' => (float) $comp->bathrooms_total,
                 'sqft' => (int) $comp->building_area_total,
+                'year_built' => !empty($comp->year_built) ? (int) $comp->year_built : null,
+                'garage_spaces' => isset($comp->garage_spaces) ? (int) $comp->garage_spaces : null,
                 'sold_price' => (int) $sold_price,
+                'adjusted_price' => $adjusted_price,
                 'sold_date' => $comp->close_date ?: $comp->modification_timestamp,
                 'distance_miles' => round((float) $comp->distance_miles, 2),
                 'price_per_sqft' => $comp->building_area_total > 0 ? round($sold_price / $comp->building_area_total) : null,
                 'photo_url' => $comp->main_photo_url,
                 'comparability_score' => $comp->comparability_score,
                 'comparability_grade' => $comp->comparability_grade,
+                'adjustments' => array(
+                    'items' => $adjustments['items'],
+                    'total_adjustment' => $total_adjustment,
+                    'gross_pct' => $gross_pct,
+                    'net_pct' => $net_pct,
+                    'warnings' => $warnings,
+                ),
             );
         }, $ab_comparables);
 
@@ -6819,13 +7032,17 @@ class MLD_Mobile_REST_API {
                     'beds' => (int) $subject->bedrooms_total,
                     'baths' => (float) $subject->bathrooms_total,
                     'sqft' => (int) $subject->building_area_total,
+                    'year_built' => !empty($subject->year_built) ? (int) $subject->year_built : null,
+                    'garage_spaces' => isset($subject->garage_spaces) ? (int) $subject->garage_spaces : null,
                     'list_price' => (int) $subject->list_price,
                 ),
                 'estimated_value' => $estimated_value,
                 'value_range' => $value_range,
                 'confidence_score' => $confidence,
                 'range_quality' => $range_quality,
+                'avg_dom' => $avg_dom,
                 'filter_tier_used' => $filter_tier_used,
+                'market_context' => $market_context,
                 'comparables' => $formatted_comps,
                 'comparables_count' => count($formatted_comps)
             )
@@ -6845,6 +7062,30 @@ class MLD_Mobile_REST_API {
         $selected_comparables = isset($params['selected_comparables']) && is_array($params['selected_comparables'])
             ? array_map('sanitize_text_field', $params['selected_comparables'])
             : null;
+
+        // v6.75.1: Get subject condition and manual adjustments from iOS
+        $subject_condition = sanitize_text_field($params['subject_condition'] ?? 'some_updates');
+        $manual_adjustments = isset($params['manual_adjustments']) && is_array($params['manual_adjustments'])
+            ? $params['manual_adjustments']
+            : array();
+
+        // Condition adjustment percentages (matches iOS CMACondition enum)
+        $condition_percentages = array(
+            'new_construction' => 0.20,
+            'fully_renovated' => 0.12,
+            'some_updates' => 0.0,
+            'needs_updating' => -0.12,
+            'distressed' => -0.30,
+        );
+
+        // Get subject condition percentage
+        $subject_condition_pct = isset($condition_percentages[$subject_condition])
+            ? $condition_percentages[$subject_condition]
+            : 0.0;
+
+        // Pool and waterfront adjustment amounts (matches iOS)
+        $pool_adjustment = 50000;
+        $waterfront_adjustment = 200000;
 
         if (empty($listing_id)) {
             return new WP_REST_Response(array(
@@ -7095,11 +7336,78 @@ class MLD_Mobile_REST_API {
                 $comparability_grade = 'F';
             }
 
-            // Build adjustments array (simplified - no actual price adjustments)
+            // Build adjustments array with actual price adjustments (v6.75.1)
             $adjustments = array(
                 'total_adjustment' => 0,
                 'items' => array(),
             );
+
+            // Get manual adjustment for this comparable (keyed by listing_key or listing_id)
+            $comp_adjustment = null;
+            if (isset($manual_adjustments[$comp->listing_key])) {
+                $comp_adjustment = $manual_adjustments[$comp->listing_key];
+            } elseif (isset($manual_adjustments[$comp->listing_id])) {
+                $comp_adjustment = $manual_adjustments[$comp->listing_id];
+            }
+
+            // Start with sold price as base
+            $adjusted_price = (int) $sold_price;
+
+            // Apply condition adjustment if manual adjustment exists
+            if ($comp_adjustment && !empty($comp_adjustment['condition'])) {
+                $comp_condition = sanitize_text_field($comp_adjustment['condition']);
+                $comp_condition_pct = isset($condition_percentages[$comp_condition])
+                    ? $condition_percentages[$comp_condition]
+                    : 0.0;
+
+                // Relative adjustment: (subject - comp) × price
+                // If comp is BETTER condition than subject → SUBTRACT from comp price
+                // If comp is WORSE condition than subject → ADD to comp price
+                $condition_adjustment = (int) round(($subject_condition_pct - $comp_condition_pct) * $sold_price);
+
+                if ($condition_adjustment != 0) {
+                    $adjusted_price += $condition_adjustment;
+                    $adjustments['items'][] = array(
+                        'feature' => 'Condition',
+                        'adjustment' => $condition_adjustment,
+                        'note' => ucwords(str_replace('_', ' ', $comp_condition))
+                    );
+                    $adjustments['total_adjustment'] += $condition_adjustment;
+                }
+            }
+
+            // Apply pool adjustment if specified
+            if ($comp_adjustment && isset($comp_adjustment['has_pool'])) {
+                $comp_has_pool = (bool) $comp_adjustment['has_pool'];
+                // Assume subject doesn't have pool by default (adjust if comp has pool)
+                // If comp has pool and subject doesn't → subtract from comp price
+                // If comp doesn't have pool and subject does → add to comp price
+                if ($comp_has_pool) {
+                    // Comp has pool - this makes comp more valuable, so subtract
+                    $adjusted_price -= $pool_adjustment;
+                    $adjustments['items'][] = array(
+                        'feature' => 'Pool',
+                        'adjustment' => -$pool_adjustment,
+                        'note' => 'Comp has pool'
+                    );
+                    $adjustments['total_adjustment'] -= $pool_adjustment;
+                }
+            }
+
+            // Apply waterfront adjustment if specified
+            if ($comp_adjustment && isset($comp_adjustment['has_waterfront'])) {
+                $comp_has_waterfront = (bool) $comp_adjustment['has_waterfront'];
+                // If comp has waterfront → subtract from comp price
+                if ($comp_has_waterfront) {
+                    $adjusted_price -= $waterfront_adjustment;
+                    $adjustments['items'][] = array(
+                        'feature' => 'Waterfront',
+                        'adjustment' => -$waterfront_adjustment,
+                        'note' => 'Comp is waterfront'
+                    );
+                    $adjustments['total_adjustment'] -= $waterfront_adjustment;
+                }
+            }
 
             // Add sqft adjustment note if significant difference
             if ($subject->building_area_total > 0 && $comp->building_area_total > 0) {
@@ -7107,7 +7415,7 @@ class MLD_Mobile_REST_API {
                 if (abs($sqft_diff) > 100) {
                     $adjustments['items'][] = array(
                         'feature' => 'Square Footage',
-                        'adjustment' => 0, // No actual price adjustment
+                        'adjustment' => 0, // No automatic price adjustment for sqft
                         'note' => ($sqft_diff > 0 ? '+' : '') . number_format($sqft_diff) . ' sqft'
                     );
                 }
@@ -7118,7 +7426,7 @@ class MLD_Mobile_REST_API {
             if ($bed_diff != 0) {
                 $adjustments['items'][] = array(
                     'feature' => 'Bedrooms',
-                    'adjustment' => 0,
+                    'adjustment' => 0, // No automatic price adjustment for beds
                     'note' => ($bed_diff > 0 ? '+' : '') . $bed_diff . ' bed(s)'
                 );
             }
@@ -7132,7 +7440,7 @@ class MLD_Mobile_REST_API {
                 'city' => $comp->city,
                 'state' => $comp->state_or_province,
                 'list_price' => (int) $comp->list_price,
-                'adjusted_price' => (int) $sold_price, // Use sold price as adjusted price
+                'adjusted_price' => $adjusted_price, // Now includes condition/pool/waterfront adjustments
                 'bedrooms_total' => (int) $comp->bedrooms_total,
                 'bathrooms_total' => (float) $comp->bathrooms_total,
                 'building_area_total' => (int) $comp->building_area_total,
@@ -7149,22 +7457,44 @@ class MLD_Mobile_REST_API {
             );
         }
 
+        // v6.75.1: Calculate adjusted value estimates using adjusted prices from comparables
+        $adjusted_prices = array();
+        foreach ($formatted_comparables as $fc) {
+            if (isset($fc['adjusted_price']) && $fc['adjusted_price'] > 0) {
+                $adjusted_prices[] = $fc['adjusted_price'];
+            }
+        }
+
+        $adjusted_estimated_value = null;
+        $adjusted_value_low = null;
+        $adjusted_value_high = null;
+
+        if (count($adjusted_prices) >= 3) {
+            sort($adjusted_prices);
+            $adjusted_estimated_value = round(array_sum($adjusted_prices) / count($adjusted_prices));
+            $adjusted_value_low = $adjusted_prices[0];
+            $adjusted_value_high = $adjusted_prices[count($adjusted_prices) - 1];
+        }
+
         // The PDF generator expects $cma_data['summary'] with nested values
         $cma_data = array(
             'summary' => array(
                 'estimated_value' => array(
-                    'low' => $value_low,
-                    'high' => $value_high,
-                    'mid' => $estimated_value,
+                    'low' => $adjusted_value_low ?: $value_low,
+                    'high' => $adjusted_value_high ?: $value_high,
+                    'mid' => $adjusted_estimated_value ?: $estimated_value,
                     'confidence' => $confidence_level,
                 ),
                 'total_found' => count($comparables),
-                'avg_price' => count($prices) > 0 ? round(array_sum($prices) / count($prices)) : 0,
+                'avg_price' => count($adjusted_prices) > 0 ? round(array_sum($adjusted_prices) / count($adjusted_prices)) : (count($prices) > 0 ? round(array_sum($prices) / count($prices)) : 0),
                 'median_price' => $median_price,
                 'avg_dom' => $avg_dom,
                 'price_per_sqft' => array(
                     'avg' => $avg_price_per_sqft,
                 ),
+                // v6.75.1: Include subject condition info for PDF display
+                'subject_condition' => $subject_condition,
+                'subject_condition_label' => ucwords(str_replace('_', ' ', $subject_condition)),
             ),
             'comparables' => $formatted_comparables,
         );
@@ -7219,6 +7549,68 @@ class MLD_Mobile_REST_API {
                 'message' => 'Failed to generate PDF. Please try again.'
             ), 500);
         }
+    }
+
+    /**
+     * Handle analyze property condition
+     * POST /cma/analyze-condition
+     *
+     * Uses Claude Vision API to analyze property photos and suggest condition rating.
+     *
+     * @since 6.75.0
+     */
+    public static function handle_analyze_condition($request) {
+        // Load the condition analyzer
+        require_once dirname(__FILE__) . '/class-mld-condition-analyzer.php';
+
+        // Check if analyzer is available
+        if (!MLD_Condition_Analyzer::is_available()) {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'code' => 'analyzer_unavailable',
+                'message' => 'AI condition analyzer is not configured. Please contact support.'
+            ), 503);
+        }
+
+        $params = $request->get_json_params();
+        $listing_id = sanitize_text_field($params['listing_id'] ?? '');
+        $photo_urls = isset($params['photo_urls']) && is_array($params['photo_urls'])
+            ? array_map('esc_url_raw', $params['photo_urls'])
+            : array();
+        $force_refresh = isset($params['force_refresh']) && $params['force_refresh'] === true;
+
+        // Validate required fields
+        if (empty($listing_id)) {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'code' => 'missing_listing_id',
+                'message' => 'Listing ID is required'
+            ), 400);
+        }
+
+        if (empty($photo_urls)) {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'code' => 'missing_photo_urls',
+                'message' => 'At least one photo URL is required'
+            ), 400);
+        }
+
+        // Call the analyzer
+        $result = MLD_Condition_Analyzer::analyze($listing_id, $photo_urls, $force_refresh);
+
+        if (!$result['success']) {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'code' => 'analysis_failed',
+                'message' => $result['error'] ?? 'Failed to analyze property condition'
+            ), 500);
+        }
+
+        return new WP_REST_Response(array(
+            'success' => true,
+            'data' => $result['data']
+        ), 200);
     }
 
     // ============ Chatbot Handler ============

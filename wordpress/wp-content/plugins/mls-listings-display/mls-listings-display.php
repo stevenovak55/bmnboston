@@ -3,7 +3,7 @@
  * Plugin Name:       MLS Listings Display
  * Plugin URI:        https://example.com/
  * Description:       Displays real estate listings from the Bridge MLS Extractor Pro plugin using shortcodes with mobile-optimized property search and display.
- * Version: 6.74.12
+ * Version: 6.75.0
  * Author:            AZ Home Solutions LLC
  * Author URI:        https://example.com/
  * License:           GPL-2.0+
@@ -11,6 +11,26 @@
  * Text Domain:       mls-listings-display
  *
  * @package           MLS_Listings_Display
+ *
+ * Version 6.75.0 - CMA PDF: iOS MANUAL ADJUSTMENTS INTEGRATION (Feb 3, 2026)
+ * Updated CMA PDF generation endpoint to receive and apply manual adjustments from iOS:
+ * - Added subject_condition parameter for relative condition comparisons
+ * - Added manual_adjustments parameter with per-comparable condition, pool, waterfront
+ * - Applied relative condition adjustments: (subject% - comp%) × price
+ * - Applied pool (-$50K) and waterfront (-$200K) adjustments when comp has feature
+ * - Recalculated estimated value range using adjusted prices
+ * - Added subject_condition_label to PDF data for display
+ *
+ * Version 6.74.13 - CMA MOBILE API: ADD MARKET CONTEXT AND ADJUSTMENTS (Feb 3, 2026)
+ * Enhanced the iOS CMA endpoint to return market context and detailed adjustments data
+ * for the iOS app enhancement (Phase 1 & 2 of CMA Enhancement Plan)
+ * - Added market_context object with market_type, avg_sp_lp_ratio, avg_dom, monthly_velocity
+ * - Added adjustments object per comparable with itemized breakdowns (sqft, beds, baths, year, garage)
+ * - Added adjusted_price for each comparable (sold_price + total_adjustment)
+ * - Added gross_pct and net_pct adjustment percentages with warnings if >25% net
+ * - Added avg_dom to response summary calculated from comparables
+ * - Added year_built and garage_spaces to subject and comparable objects
+ * - Created calculate_mobile_adjustments() helper function for adjustment calculations
  *
  * Version 6.74.8 - FIX AGENT-CLIENT RELATIONSHIP COUNT DISCREPANCIES (Feb 2, 2026)
  * Fixed bug where client counts showed incorrect numbers after unassign operations
@@ -2496,7 +2516,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 // Define plugin constants.
 // Add timestamp for cache busting during development
-define('MLD_VERSION', '6.74.12');
+define('MLD_VERSION', '6.75.0');
 
 define( 'MLD_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MLD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) ); // Alias for MLD_PLUGIN_PATH for backward compatibility

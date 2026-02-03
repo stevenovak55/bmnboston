@@ -2,8 +2,8 @@
 
 Quick reference for AI-assisted development.
 
-**Current Version:** 6.53.0
-**Last Updated:** January 10, 2026
+**Current Version:** 6.75.0
+**Last Updated:** February 3, 2026
 
 ---
 
@@ -687,6 +687,50 @@ System Health dashboard (WP Admin → MLS Listings → System Health) shows:
 ---
 
 ## Version History
+
+### Version 6.75.0 - CMA MANUAL ADJUSTMENTS FOR PDF GENERATION (Feb 3, 2026)
+
+Added support for iOS CMA manual adjustments to be applied during PDF generation.
+
+**Problem:** CMA generation did not take into account manual adjustments made on the iOS app. Users could set condition ratings, pool, and waterfront adjustments, but these were ignored when generating the PDF.
+
+**Solution:** iOS now passes adjustment data to the backend, which applies relative condition adjustments and feature adjustments to comparable prices.
+
+**How It Works:**
+
+1. **iOS sends adjustments** via `generateCMAPDF` endpoint:
+   - `subject_condition` - The condition rating of the subject property
+   - `manual_adjustments` - Dictionary keyed by comparable ID with condition, pool, waterfront flags
+
+2. **Backend applies relative adjustments:**
+   - Condition: `(subject_pct - comp_pct) × sold_price`
+   - Pool: -$50,000 if comp has pool (subject doesn't)
+   - Waterfront: -$200,000 if comp is waterfront (subject isn't)
+
+3. **Estimated value recalculated** using adjusted comparable prices
+
+**Condition Adjustment Percentages:**
+| Condition | Adjustment |
+|-----------|------------|
+| New Construction | +20% |
+| Fully Renovated | +12% |
+| Some Updates | 0% (baseline) |
+| Needs Updating | -12% |
+| Distressed | -30% |
+
+**Example:** Subject is "Some Updates" (0%), Comp is "Fully Renovated" (+12%)
+- Adjustment = (0% - 12%) × $500,000 = -$60,000
+- Comp's adjusted price = $500,000 - $60,000 = $440,000
+
+**Files Changed:**
+- `includes/class-mld-mobile-rest-api.php` - Added `subject_condition` and `manual_adjustments` parameter handling in `handle_generate_cma_pdf()`
+
+**iOS Files Changed:**
+- `BMNBoston/Features/CMA/Views/CMASheet.swift` - Passes adjustments to API
+- `BMNBoston/Core/Networking/APIEndpoint.swift` - Updated endpoint parameters
+- `BMNBoston/Core/Models/CMA.swift` - Added response models
+
+---
 
 ### Version 6.74.12 - CMA PDF DAYS ON MARKET FIX (Feb 3, 2026)
 

@@ -719,7 +719,15 @@ extension APIEndpoint {
     ///   - listingId: The listing_key (hash) or MLS number of the property
     ///   - preparedFor: Optional name of the person the report is prepared for
     ///   - selectedComparables: Optional array of comparable listing IDs to include in the PDF
-    static func generateCMAPDF(listingId: String, preparedFor: String? = nil, selectedComparables: [String]? = nil) -> APIEndpoint {
+    ///   - subjectCondition: The condition of the subject property (for relative adjustments)
+    ///   - manualAdjustments: Per-comparable manual adjustments (condition, pool, waterfront)
+    static func generateCMAPDF(
+        listingId: String,
+        preparedFor: String? = nil,
+        selectedComparables: [String]? = nil,
+        subjectCondition: String? = nil,
+        manualAdjustments: [String: [String: Any]]? = nil
+    ) -> APIEndpoint {
         var params: [String: Any] = ["listing_id": listingId]
         if let preparedFor = preparedFor {
             params["prepared_for"] = preparedFor
@@ -727,7 +735,29 @@ extension APIEndpoint {
         if let selectedComparables = selectedComparables {
             params["selected_comparables"] = selectedComparables
         }
+        if let subjectCondition = subjectCondition {
+            params["subject_condition"] = subjectCondition
+        }
+        if let manualAdjustments = manualAdjustments {
+            params["manual_adjustments"] = manualAdjustments
+        }
         return APIEndpoint(path: "/cma/generate-pdf", method: .post, parameters: params, requiresAuth: true)
+    }
+
+    /// Analyze property condition using AI (Claude Vision) - v6.75.0
+    /// - Parameters:
+    ///   - listingId: The listing_key (hash) or MLS number for caching
+    ///   - photoUrls: Array of photo URLs to analyze (up to 5)
+    ///   - forceRefresh: Whether to bypass cache and re-analyze
+    static func analyzeCondition(listingId: String, photoUrls: [String], forceRefresh: Bool = false) -> APIEndpoint {
+        var params: [String: Any] = [
+            "listing_id": listingId,
+            "photo_urls": photoUrls
+        ]
+        if forceRefresh {
+            params["force_refresh"] = true
+        }
+        return APIEndpoint(path: "/cma/analyze-condition", method: .post, parameters: params, requiresAuth: true)
     }
 }
 
