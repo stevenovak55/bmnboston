@@ -112,10 +112,7 @@ $percentile = $data['percentile_rank'] ?? 0;
                         <span>Rankings from <?php echo esc_html($ranking_year); ?></span>
                     <?php endif; ?>
                     <?php if ($data_freshness) : ?>
-                        <span>Data updated <?php
-                            $freshness_date = new DateTime($data_freshness, wp_timezone());
-                            echo esc_html(wp_date('F Y', $freshness_date->getTimestamp()));
-                        ?></span>
+                        <span>Data updated <?php echo esc_html(date('F Y', strtotime($data_freshness))); ?></span>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>

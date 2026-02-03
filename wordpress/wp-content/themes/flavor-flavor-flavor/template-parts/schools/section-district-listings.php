@@ -121,7 +121,7 @@ endif;
                         </div>
                     </div>
 
-                    <a href="<?php echo esc_url(home_url('/property/' . $listing->listing_id . '/')); ?>"
+                    <a href="<?php echo esc_url(home_url('/property/' . $listing->listing_key . '/')); ?>"
                        class="bne-listing-card__link">
                         View Property
                     </a>

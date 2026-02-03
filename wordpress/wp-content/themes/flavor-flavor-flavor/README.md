@@ -2,9 +2,9 @@
 
 A custom real estate homepage theme for Steven Novak / BMN Boston Real Estate, built as a child theme of GeneratePress.
 
-## Version: 1.5.8
+## Version: 1.2.7
 
-**Last Updated:** 2026-01-14
+**Last Updated:** 2025-11-30
 
 ## Requirements
 
@@ -16,7 +16,7 @@ A custom real estate homepage theme for Steven Novak / BMN Boston Real Estate, b
 ## Features
 
 ### Homepage Sections
-- **Hero Section** - Agent photo, contact info, social links, quick property search, and iOS app promotion (desktop only)
+- **Hero Section** - Agent photo, contact info, social links, and quick property search
 - **Services** - Service offerings display
 - **About Us** - Team stats and description
 - **Neighborhood Analytics** - Market data cards for Boston neighborhoods
@@ -55,21 +55,6 @@ Located in **Appearance → Customize**:
 4. Configure settings in **Appearance → Customize**
 
 ## Changelog
-
-### Version 1.5.8 (2026-01-14)
-**iOS App Store Promotion - Hero Section**
-
-Added subtle app promotion to the homepage hero section, visible only on desktop browsers:
-- Appears below the CTA buttons ("Search Properties" / "Contact Us")
-- QR code linking to App Store (60x60px)
-- "Get the iOS App" label
-- App Store download badge
-- Light card design with subtle shadow
-- Uses client-side JavaScript detection for CDN cache compatibility
-- Hidden on mobile devices (they see the mobile banner instead)
-
-**Files Modified:**
-- `template-parts/homepage/section-hero.php` - Added app promo HTML, CSS, and JS
 
 ### Version 1.2.7 (2025-11-30)
 **Mobile Responsive Overhaul**
