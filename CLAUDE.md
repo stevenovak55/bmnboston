@@ -80,6 +80,12 @@ $year = date('Y');
 $year = $wpdb->get_var("SELECT MAX(year) FROM {$rankings_table}");
 ```
 
+**Acceptable `date('Y')` uses (NOT bugs):**
+- Copyright footers in emails/PDFs (display-only)
+- Blog topic search queries (`class-mld-topic-researcher.php`) - intentionally uses current year
+- New construction detection (`template-facts-features-v2.php`) - fallback; explicit flag takes priority
+- UI placeholders (admin form max/placeholder values)
+
 ### 3. Task Self-Cancellation (iOS Swift)
 Never cancel `searchTask` from within an async function called by that task. The caller handles cancellation BEFORE creating a new task.
 
@@ -1636,14 +1642,16 @@ xcodebuild test -project BMNBoston.xcodeproj -scheme BMNBoston \
 
 **See [.context/credentials/server-credentials.md](.context/credentials/server-credentials.md) for full credentials.**
 
+**NOTE:** `sshpass -p 'pass'` fails on this machine. Use `-e` flag with environment variable:
+
 ```bash
 # bmnboston.com (port 57105)
-sshpass -p 'cFDIB2uPBj5LydX' scp -P 57105 file.php stevenovakcom@35.236.219.140:~/public/wp-content/plugins/PLUGIN/
-sshpass -p 'cFDIB2uPBj5LydX' ssh -p 57105 stevenovakcom@35.236.219.140 "touch ~/public/wp-content/plugins/PLUGIN/*.php"
+SSHPASS='cFDIB2uPBj5LydX' sshpass -e scp -o StrictHostKeyChecking=no -P 57105 file.php stevenovakcom@35.236.219.140:~/public/wp-content/plugins/PLUGIN/
+SSHPASS='cFDIB2uPBj5LydX' sshpass -e ssh -o StrictHostKeyChecking=no -p 57105 stevenovakcom@35.236.219.140 "touch ~/public/wp-content/plugins/PLUGIN/*.php"
 
 # steve-novak.com (port 50594)
-sshpass -p 'nxGDPBDdpeuh2Io' scp -P 50594 file.php stevenovakrealestate@35.236.219.140:~/public/wp-content/plugins/PLUGIN/
-sshpass -p 'nxGDPBDdpeuh2Io' ssh -p 50594 stevenovakrealestate@35.236.219.140 "touch ~/public/wp-content/plugins/PLUGIN/*.php"
+SSHPASS='nxGDPBDdpeuh2Io' sshpass -e scp -o StrictHostKeyChecking=no -P 50594 file.php stevenovakrealestate@35.236.219.140:~/public/wp-content/plugins/PLUGIN/
+SSHPASS='nxGDPBDdpeuh2Io' sshpass -e ssh -o StrictHostKeyChecking=no -p 50594 stevenovakrealestate@35.236.219.140 "touch ~/public/wp-content/plugins/PLUGIN/*.php"
 ```
 
 **CRITICAL: Fix File Permissions After Deployment**
