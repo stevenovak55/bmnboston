@@ -515,7 +515,12 @@ $enhanced_listings = array_map('get_full_listing_data', $listings);
 
                     <div class="mls-info">
                         <span>MLS #<?php echo esc_html($listing->listing_id); ?></span>
-                        <span>Listed <?php echo date('M j, Y', strtotime($listing->listing_contract_date)); ?></span>
+                        <span>Listed <?php
+                            // v6.75.7: Fix timezone bug - use DateTime with wp_timezone() instead of strtotime()
+                            // Database stores in WP timezone, strtotime() interprets as UTC causing 5-hour offset
+                            $list_date = new DateTime($listing->listing_contract_date, wp_timezone());
+                            echo wp_date('M j, Y', $list_date->getTimestamp());
+                        ?></span>
                     </div>
                 </div>
             </div>

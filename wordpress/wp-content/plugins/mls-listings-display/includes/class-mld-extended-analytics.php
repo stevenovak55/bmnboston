@@ -1522,7 +1522,11 @@ class MLD_Extended_Analytics {
         }
 
         $cities = self::get_available_cities(20);
-        $year = intval(date('Y'));
+
+        // v6.75.7: Fix year rollover bug - query latest complete year from data
+        // Using date('Y') would label 2025 data as "2026 annual period" if cron runs Jan 1
+        $latest_year = $wpdb->get_var("SELECT MAX(YEAR(close_date)) FROM {$wpdb->prefix}bme_listing_summary_archive WHERE close_date IS NOT NULL");
+        $year = !empty($latest_year) ? (int) $latest_year : (intval(date('Y')) - 1);
 
         foreach ($cities as $city_data) {
             $agents = self::calculate_agent_performance(
