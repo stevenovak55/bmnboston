@@ -41,6 +41,11 @@
             this.availabilityData = {};
             this.currentWeekStart = new Date(this.startDate);
 
+            // Agent client selection state (v1.10.0 multi-attendee)
+            this.agentClients = [];
+            this.selectedClients = []; // Array for multi-select
+            this.ccEmails = []; // Array of CC email addresses
+
             // Cache DOM elements
             this.$steps = this.$container.find('.snab-step');
             this.$form = this.$container.find('.snab-booking-form');
@@ -55,6 +60,9 @@
             if (this.defaultLocation) {
                 this.$form.find('[name="property_address"]').val(this.defaultLocation);
             }
+
+            // Load agent clients if user is logged in as an agent
+            this.loadAgentClients();
         }
 
         bindEvents() {
@@ -113,6 +121,37 @@
             // Book another
             this.$container.on('click', '.snab-book-another', function() {
                 self.reset();
+            });
+
+            // Client search input - filter bubbles in real-time
+            this.$container.on('input', '.snab-client-search', function() {
+                self.filterClientBubbles($(this).val());
+            });
+
+            // Client bubble selection
+            this.$container.on('click', '.snab-client-bubble', function() {
+                self.selectClient($(this));
+            });
+
+            // Clear client selection
+            this.$container.on('click', '.snab-client-clear-btn', function() {
+                self.clearClientSelection();
+            });
+
+            // CC Email functionality (v1.10.0)
+            this.$container.on('click', '.snab-cc-add-btn', function() {
+                self.addCCEmail();
+            });
+
+            this.$container.on('keypress', '.snab-cc-email-input', function(e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    self.addCCEmail();
+                }
+            });
+
+            this.$container.on('click', '.snab-cc-remove', function() {
+                self.removeCCEmail($(this).closest('.snab-cc-chip').data('email'));
             });
         }
 
@@ -627,10 +666,27 @@
             $errorDiv.hide();
             $submitBtn.prop('disabled', true).text(snabBooking.i18n.loading);
 
+            // Build form data including multi-attendee fields (v1.10.0)
+            let formData = this.$form.serialize() + '&action=snab_book_appointment';
+
+            // Add additional clients (exclude the primary who is already in the form)
+            if (this.selectedClients.length > 1) {
+                const additionalClients = this.selectedClients.slice(1).map(c => ({
+                    name: c.name,
+                    email: c.email
+                }));
+                formData += '&additional_clients=' + encodeURIComponent(JSON.stringify(additionalClients));
+            }
+
+            // Add CC emails
+            if (this.ccEmails.length > 0) {
+                formData += '&cc_emails=' + encodeURIComponent(JSON.stringify(this.ccEmails));
+            }
+
             $.ajax({
                 url: snabBooking.ajaxUrl,
                 type: 'POST',
-                data: this.$form.serialize() + '&action=snab_book_appointment',
+                data: formData,
                 success: function(response) {
                     if (response.success) {
                         self.showConfirmation(response.data);
@@ -662,6 +718,12 @@
                     '<span class="dashicons dashicons-calendar-alt"></span> Added to Google Calendar</div>';
             }
 
+            // Show attendee count if multiple attendees (v1.10.0)
+            if (data.attendee_count && data.attendee_count > 1) {
+                detailsHtml += '<div class="snab-confirmation-item snab-attendees-info">' +
+                    '<span class="dashicons dashicons-groups"></span> ' + data.attendee_count + ' attendees will receive confirmation</div>';
+            }
+
             this.$container.find('.snab-confirmation-details').html(detailsHtml);
             this.goToStep(5);
         }
@@ -687,6 +749,17 @@
             this.$container.find('.snab-type-option').removeClass('selected');
             this.$container.find('.snab-staff-option').removeClass('selected');
             this.$container.find('.snab-property-field').hide();
+
+            // Clear client selection (v1.10.0 multi-select)
+            this.selectedClients = [];
+            this.ccEmails = [];
+            this.$container.find('.snab-client-bubble').removeClass('selected');
+            this.$container.find('.snab-client-clear-btn').hide();
+            this.$container.find('.snab-client-count').hide();
+            this.$container.find('.snab-client-search').val('');
+            this.$container.find('.snab-cc-email-input').val('');
+            this.$container.find('.snab-cc-chips').html('');
+            this.filterClientBubbles('');
 
             this.goToStep(1);
         }
@@ -718,6 +791,232 @@
          */
         isValidEmail(email) {
             return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        /**
+         * Load agent's clients for booking on their behalf
+         */
+        loadAgentClients() {
+            const self = this;
+
+            $.ajax({
+                url: snabBooking.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'snab_get_agent_clients',
+                    nonce: snabBooking.nonce
+                },
+                success: function(response) {
+                    if (response.success && response.data.clients && response.data.clients.length > 0) {
+                        self.agentClients = response.data.clients;
+                        self.renderClientBubbles();
+                        self.$container.find('.snab-client-selection').show();
+                    }
+                },
+                error: function() {
+                    // Silently fail - user may not be logged in or not an agent
+                }
+            });
+        }
+
+        /**
+         * Render client bubbles
+         */
+        renderClientBubbles() {
+            const $bubbles = this.$container.find('.snab-client-bubbles');
+            let html = '';
+
+            this.agentClients.forEach(function(client) {
+                const initials = this.getClientInitials(client.name);
+                html += '<button type="button" class="snab-client-bubble" ' +
+                        'data-client-id="' + client.id + '" ' +
+                        'data-client-name="' + this.escapeHtml(client.name) + '" ' +
+                        'data-client-email="' + this.escapeHtml(client.email) + '">' +
+                        '<span class="snab-client-initials">' + initials + '</span>' +
+                        '<span class="snab-client-name">' + this.escapeHtml(client.name) + '</span>' +
+                        '</button>';
+            }, this);
+
+            $bubbles.html(html);
+        }
+
+        /**
+         * Filter client bubbles based on search input
+         */
+        filterClientBubbles(searchTerm) {
+            const term = searchTerm.toLowerCase().trim();
+            const $bubbles = this.$container.find('.snab-client-bubble');
+            const $noResults = this.$container.find('.snab-client-no-results');
+            let visibleCount = 0;
+
+            $bubbles.each(function() {
+                const $bubble = $(this);
+                const clientName = $bubble.data('client-name').toLowerCase();
+                const clientEmail = $bubble.data('client-email').toLowerCase();
+
+                if (term === '' || clientName.includes(term) || clientEmail.includes(term)) {
+                    $bubble.show();
+                    visibleCount++;
+                } else {
+                    $bubble.hide();
+                }
+            });
+
+            // Show/hide "no results" message
+            if (visibleCount === 0 && term !== '') {
+                $noResults.show();
+            } else {
+                $noResults.hide();
+            }
+        }
+
+        /**
+         * Select a client from the bubbles (multi-select v1.10.0)
+         */
+        selectClient($bubble) {
+            const clientData = {
+                id: $bubble.data('client-id'),
+                name: $bubble.data('client-name'),
+                email: $bubble.data('client-email')
+            };
+
+            // Toggle selection (multi-select)
+            const existingIndex = this.selectedClients.findIndex(c => c.id === clientData.id);
+
+            if (existingIndex >= 0) {
+                // Remove from selection
+                this.selectedClients.splice(existingIndex, 1);
+                $bubble.removeClass('selected');
+            } else {
+                // Add to selection
+                this.selectedClients.push(clientData);
+                $bubble.addClass('selected');
+            }
+
+            // Update form with primary client (first selected)
+            if (this.selectedClients.length > 0) {
+                const primary = this.selectedClients[0];
+                this.$form.find('[name="client_name"]').val(primary.name);
+                this.$form.find('[name="client_email"]').val(primary.email);
+                this.$container.find('.snab-client-clear-btn').show();
+            } else {
+                this.$form.find('[name="client_name"]').val('');
+                this.$form.find('[name="client_email"]').val('');
+                this.$container.find('.snab-client-clear-btn').hide();
+            }
+
+            // Update selection count display
+            this.updateClientSelectionCount();
+
+            // Clear the search input
+            this.$container.find('.snab-client-search').val('');
+            this.filterClientBubbles('');
+        }
+
+        /**
+         * Update client selection count display (v1.10.0)
+         */
+        updateClientSelectionCount() {
+            const $counter = this.$container.find('.snab-client-count');
+            const count = this.selectedClients.length;
+
+            if (count > 1) {
+                $counter.text(count + ' clients selected').show();
+            } else if (count === 1) {
+                $counter.text('1 client selected').show();
+            } else {
+                $counter.hide();
+            }
+        }
+
+        /**
+         * Clear the client selection (v1.10.0 multi-select)
+         */
+        clearClientSelection() {
+            this.selectedClients = [];
+            this.$container.find('.snab-client-bubble').removeClass('selected');
+            this.$form.find('[name="client_name"]').val('');
+            this.$form.find('[name="client_email"]').val('');
+            this.$container.find('.snab-client-clear-btn').hide();
+            this.$container.find('.snab-client-count').hide();
+            this.$container.find('.snab-client-search').val('').focus();
+            this.filterClientBubbles('');
+        }
+
+        /**
+         * Add CC email (v1.10.0)
+         */
+        addCCEmail() {
+            const $input = this.$container.find('.snab-cc-email-input');
+            const email = $input.val().trim();
+
+            if (!email || !this.isValidEmail(email)) {
+                $input.addClass('snab-input-error');
+                setTimeout(() => $input.removeClass('snab-input-error'), 1000);
+                return;
+            }
+
+            // Check for duplicates
+            if (this.ccEmails.includes(email)) {
+                $input.val('');
+                return;
+            }
+
+            this.ccEmails.push(email);
+            this.renderCCEmailChips();
+            $input.val('');
+        }
+
+        /**
+         * Remove CC email (v1.10.0)
+         */
+        removeCCEmail(email) {
+            const index = this.ccEmails.indexOf(email);
+            if (index >= 0) {
+                this.ccEmails.splice(index, 1);
+                this.renderCCEmailChips();
+            }
+        }
+
+        /**
+         * Render CC email chips (v1.10.0)
+         */
+        renderCCEmailChips() {
+            const $container = this.$container.find('.snab-cc-chips');
+
+            if (this.ccEmails.length === 0) {
+                $container.html('');
+                return;
+            }
+
+            let html = '';
+            this.ccEmails.forEach(email => {
+                html += '<span class="snab-cc-chip" data-email="' + this.escapeHtml(email) + '">' +
+                        '<span class="snab-cc-email">' + this.escapeHtml(email) + '</span>' +
+                        '<button type="button" class="snab-cc-remove" aria-label="Remove">&times;</button>' +
+                        '</span>';
+            });
+            $container.html(html);
+        }
+
+        /**
+         * Get initials from client name
+         */
+        getClientInitials(name) {
+            const words = name.trim().split(' ');
+            if (words.length >= 2) {
+                return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+            }
+            return name.substring(0, 2).toUpperCase();
+        }
+
+        /**
+         * Escape HTML for safe output
+         */
+        escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
     }
 

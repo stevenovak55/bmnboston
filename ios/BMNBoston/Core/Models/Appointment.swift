@@ -7,6 +7,43 @@
 
 import Foundation
 
+// MARK: - Appointment Attendee (v1.10.0 Multi-Attendee Support)
+
+struct AppointmentAttendee: Identifiable, Codable, Equatable {
+    let id: Int?
+    let type: AttendeeType
+    let userId: Int?
+    let name: String
+    let email: String
+    let phone: String?
+
+    enum AttendeeType: String, Codable {
+        case primary = "primary"
+        case additional = "additional"
+        case cc = "cc"
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case type
+        case userId = "user_id"
+        case name
+        case email
+        case phone
+    }
+
+    var displayName: String {
+        type == .cc ? email : name
+    }
+}
+
+/// Input struct for creating attendees (booking request)
+struct AttendeeInput: Codable {
+    let name: String
+    let email: String
+    let phone: String?
+}
+
 struct Appointment: Identifiable, Decodable {
     let id: Int
     let typeName: String
@@ -19,12 +56,17 @@ struct Appointment: Identifiable, Decodable {
     let staffName: String?
     let listingId: String?
     let propertyAddress: String?
+    let clientName: String?
+    let clientEmail: String?
     let clientNotes: String?
     let canCancel: Bool
     let canReschedule: Bool
     let rescheduleCount: Int?
     let googleEventId: String?
     let createdAt: String?
+    // Multi-attendee fields (v1.10.0)
+    let attendees: [AppointmentAttendee]?
+    let attendeeCount: Int?
 
     private enum CodingKeys: String, CodingKey {
         case id
@@ -38,12 +80,30 @@ struct Appointment: Identifiable, Decodable {
         case staffName = "staff_name"
         case listingId = "listing_id"
         case propertyAddress = "property_address"
+        case clientName = "client_name"
+        case clientEmail = "client_email"
         case clientNotes = "client_notes"
         case canCancel = "can_cancel"
         case canReschedule = "can_reschedule"
         case rescheduleCount = "reschedule_count"
         case googleEventId = "google_event_id"
         case createdAt = "created_at"
+        case attendees
+        case attendeeCount = "attendee_count"
+    }
+
+    /// Get summary of attendee names (excluding CC)
+    var attendeeSummary: String {
+        guard let attendees = attendees, attendees.count > 1 else {
+            return ""
+        }
+        let names = attendees.filter { $0.type != .cc }.map { $0.name }
+        return names.joined(separator: ", ")
+    }
+
+    /// Check if appointment has multiple attendees
+    var hasMultipleAttendees: Bool {
+        (attendeeCount ?? 0) > 1
     }
 
     /// Server timezone - all appointment times are stored in Eastern time
@@ -155,12 +215,16 @@ struct Appointment: Identifiable, Decodable {
             staffName: staffName,
             listingId: listingId,
             propertyAddress: propertyAddress,
+            clientName: clientName,
+            clientEmail: clientEmail,
             clientNotes: clientNotes,
             canCancel: canCancel,
             canReschedule: canReschedule,
             rescheduleCount: (rescheduleCount ?? 0) + 1,
             googleEventId: googleEventId,
-            createdAt: createdAt
+            createdAt: createdAt,
+            attendees: attendees,
+            attendeeCount: attendeeCount
         )
     }
 
@@ -338,6 +402,9 @@ struct BookAppointmentRequest {
     let listingId: String?
     let propertyAddress: String?
     var notes: String?
+    // Multi-attendee fields (v1.10.0)
+    var additionalClients: [AttendeeInput]?
+    var ccEmails: [String]?
 }
 
 // MARK: - API Response Wrappers
@@ -404,6 +471,11 @@ struct BookingResponse: Decodable {
     let timeRaw: String?      // 24h format (HH:mm:ss) for calendar
     let duration: Int?
     let googleSynced: Bool?
+    // Multi-attendee fields (v1.10.0)
+    let clientName: String?
+    let clientEmail: String?
+    let attendees: [AppointmentAttendee]?
+    let attendeeCount: Int?
 
     private enum CodingKeys: String, CodingKey {
         case appointmentId = "appointment_id"
@@ -415,6 +487,10 @@ struct BookingResponse: Decodable {
         case timeRaw = "time_raw"
         case duration
         case googleSynced = "google_synced"
+        case clientName = "client_name"
+        case clientEmail = "client_email"
+        case attendees
+        case attendeeCount = "attendee_count"
     }
 }
 

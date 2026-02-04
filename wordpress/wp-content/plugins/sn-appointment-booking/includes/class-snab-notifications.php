@@ -64,7 +64,7 @@ class SNAB_Notifications {
     }
 
     /**
-     * Send confirmation email to client.
+     * Send confirmation email to client (and all attendees).
      *
      * @param int $appointment_id Appointment ID.
      * @return bool
@@ -75,40 +75,96 @@ class SNAB_Notifications {
             return false;
         }
 
-        $subject = $this->parse_template(
-            $this->get_template('confirmation_client_subject'),
-            $appointment
-        );
+        // Get all attendees (v1.10.0 multi-attendee support)
+        $attendees = $this->get_attendees($appointment_id);
 
-        $message = $this->parse_template(
-            $this->get_template('confirmation_client_body'),
-            $appointment
-        );
-
-        // Generate ICS attachment
+        // Generate ICS attachment (reuse for all attendees)
         $attachments = array();
         $ics_file = $this->generate_ics_attachment($appointment, 'appointment');
         if ($ics_file) {
             $attachments[] = $ics_file;
         }
 
-        $sent = $this->send_email(
-            $appointment->client_email,
-            $subject,
-            $message,
-            $attachments
-        );
+        $all_sent = true;
 
-        $this->log_notification(
-            $appointment_id,
-            self::TYPE_CONFIRMATION,
-            'client',
-            $appointment->client_email,
-            $subject,
-            $sent
-        );
+        // If we have attendees in the new table, send to all of them
+        if (!empty($attendees)) {
+            foreach ($attendees as $attendee) {
+                // Personalize appointment object for this attendee
+                $personalized_appt = clone $appointment;
+                $personalized_appt->client_name = $attendee->name;
 
-        return $sent;
+                // Add other attendees info for multi-attendee notification
+                $other_attendees = $this->get_other_attendees_list($attendees, $attendee->email);
+                if (!empty($other_attendees)) {
+                    $personalized_appt->other_attendees = $other_attendees;
+                }
+
+                $subject = $this->parse_template(
+                    $this->get_template('confirmation_client_subject'),
+                    $personalized_appt
+                );
+
+                $message = $this->parse_template(
+                    $this->get_template('confirmation_client_body'),
+                    $personalized_appt
+                );
+
+                // Add other attendees section if applicable
+                if (!empty($other_attendees)) {
+                    $message .= "\n\n" . sprintf(__('Other attendees: %s', 'sn-appointment-booking'), $other_attendees);
+                }
+
+                $sent = $this->send_email(
+                    $attendee->email,
+                    $subject,
+                    $message,
+                    $attachments
+                );
+
+                $this->log_notification(
+                    $appointment_id,
+                    self::TYPE_CONFIRMATION,
+                    'client',
+                    $attendee->email,
+                    $subject,
+                    $sent
+                );
+
+                if (!$sent) {
+                    $all_sent = false;
+                }
+            }
+        } else {
+            // Fallback: No attendees in new table, send to primary client (backward compatibility)
+            $subject = $this->parse_template(
+                $this->get_template('confirmation_client_subject'),
+                $appointment
+            );
+
+            $message = $this->parse_template(
+                $this->get_template('confirmation_client_body'),
+                $appointment
+            );
+
+            $all_sent = $this->send_email(
+                $appointment->client_email,
+                $subject,
+                $message,
+                $attachments
+            );
+
+            $this->log_notification(
+                $appointment_id,
+                self::TYPE_CONFIRMATION,
+                'client',
+                $appointment->client_email,
+                $subject,
+                $all_sent
+            );
+        }
+
+        return $all_sent;
     }
 
     /**
@@ -154,7 +210,7 @@ class SNAB_Notifications {
     }
 
     /**
-     * Send reminder email to client.
+     * Send reminder email to client (and all attendees).
      *
      * @param int $appointment_id Appointment ID.
      * @param string $type Reminder type (reminder_24h or reminder_1h).
@@ -167,41 +223,100 @@ class SNAB_Notifications {
         }
 
         $template_key = $type === self::TYPE_REMINDER_1H ? 'reminder_1h' : 'reminder_24h';
+        $reminder_column = $type === self::TYPE_REMINDER_1H ? 'reminder_1h_sent' : 'reminder_24h_sent';
 
-        $subject = $this->parse_template(
-            $this->get_template($template_key . '_subject'),
-            $appointment
-        );
-
-        $message = $this->parse_template(
-            $this->get_template($template_key . '_body'),
-            $appointment
-        );
-
-        // Generate ICS attachment for reminders (helps users add to calendar if they haven't)
+        // Generate ICS attachment (reuse for all attendees)
         $attachments = array();
         $ics_file = $this->generate_ics_attachment($appointment, 'appointment');
         if ($ics_file) {
             $attachments[] = $ics_file;
         }
 
-        $sent = $this->send_email(
-            $appointment->client_email,
-            $subject,
-            $message,
-            $attachments
-        );
+        // Get all attendees (v1.10.0 multi-attendee support)
+        $attendees = $this->get_attendees($appointment_id);
 
-        $this->log_notification(
-            $appointment_id,
-            $type,
-            'client',
-            $appointment->client_email,
-            $subject,
-            $sent
-        );
+        $all_sent = true;
 
-        // Update appointment reminder flags
+        if (!empty($attendees)) {
+            foreach ($attendees as $attendee) {
+                // Check if reminder already sent to this attendee
+                if ($attendee->$reminder_column) {
+                    continue;
+                }
+
+                // Personalize for this attendee
+                $personalized_appt = clone $appointment;
+                $personalized_appt->client_name = $attendee->name;
+
+                $subject = $this->parse_template(
+                    $this->get_template($template_key . '_subject'),
+                    $personalized_appt
+                );
+
+                $message = $this->parse_template(
+                    $this->get_template($template_key . '_body'),
+                    $personalized_appt
+                );
+
+                // Add other attendees info if applicable
+                $other_attendees = $this->get_other_attendees_list($attendees, $attendee->email);
+                if (!empty($other_attendees)) {
+                    $message .= "\n\n" . sprintf(__('Other attendees: %s', 'sn-appointment-booking'), $other_attendees);
+                }
+
+                $sent = $this->send_email(
+                    $attendee->email,
+                    $subject,
+                    $message,
+                    $attachments
+                );
+
+                $this->log_notification(
+                    $appointment_id,
+                    $type,
+                    'client',
+                    $attendee->email,
+                    $subject,
+                    $sent
+                );
+
+                // Mark reminder as sent for this attendee
+                if ($sent) {
+                    $this->mark_attendee_reminder_sent($attendee->id, $type);
+                } else {
+                    $all_sent = false;
+                }
+            }
+        } else {
+            // Fallback: No attendees in new table, send to primary client (backward compatibility)
+            $subject = $this->parse_template(
+                $this->get_template($template_key . '_subject'),
+                $appointment
+            );
+
+            $message = $this->parse_template(
+                $this->get_template($template_key . '_body'),
+                $appointment
+            );
+
+            $all_sent = $this->send_email(
+                $appointment->client_email,
+                $subject,
+                $message,
+                $attachments
+            );
+
+            $this->log_notification(
+                $appointment_id,
+                $type,
+                'client',
+                $appointment->client_email,
+                $subject,
+                $all_sent
+            );
+        }
+
+        // Update appointment reminder flags (for backward compatibility)
         global $wpdb;
         $table = $wpdb->prefix . 'snab_appointments';
         $column = $type === self::TYPE_REMINDER_1H ? 'reminder_1h_sent' : 'reminder_24h_sent';
@@ -214,11 +329,11 @@ class SNAB_Notifications {
             array('%d')
         );
 
-        return $sent;
+        return $all_sent;
     }
 
     /**
-     * Send cancellation email to client.
+     * Send cancellation email to client (and all attendees).
      *
      * @param int $appointment_id Appointment ID.
      * @param string $reason Cancellation reason.
@@ -233,36 +348,79 @@ class SNAB_Notifications {
         // Add reason to appointment object for template
         $appointment->cancellation_reason = $reason;
 
-        $subject = $this->parse_template(
-            $this->get_template('cancellation_subject'),
-            $appointment
-        );
+        // Get all attendees (v1.10.0 multi-attendee support)
+        $attendees = $this->get_attendees($appointment_id);
 
-        $message = $this->parse_template(
-            $this->get_template('cancellation_body'),
-            $appointment
-        );
+        $all_sent = true;
 
-        $sent = $this->send_email(
-            $appointment->client_email,
-            $subject,
-            $message
-        );
+        if (!empty($attendees)) {
+            foreach ($attendees as $attendee) {
+                // Personalize for this attendee
+                $personalized_appt = clone $appointment;
+                $personalized_appt->client_name = $attendee->name;
 
-        $this->log_notification(
-            $appointment_id,
-            self::TYPE_CANCELLED,
-            'client',
-            $appointment->client_email,
-            $subject,
-            $sent
-        );
+                $subject = $this->parse_template(
+                    $this->get_template('cancellation_subject'),
+                    $personalized_appt
+                );
 
-        return $sent;
+                $message = $this->parse_template(
+                    $this->get_template('cancellation_body'),
+                    $personalized_appt
+                );
+
+                $sent = $this->send_email(
+                    $attendee->email,
+                    $subject,
+                    $message
+                );
+
+                $this->log_notification(
+                    $appointment_id,
+                    self::TYPE_CANCELLED,
+                    'client',
+                    $attendee->email,
+                    $subject,
+                    $sent
+                );
+
+                if (!$sent) {
+                    $all_sent = false;
+                }
+            }
+        } else {
+            // Fallback: No attendees in new table (backward compatibility)
+            $subject = $this->parse_template(
+                $this->get_template('cancellation_subject'),
+                $appointment
+            );
+
+            $message = $this->parse_template(
+                $this->get_template('cancellation_body'),
+                $appointment
+            );
+
+            $all_sent = $this->send_email(
+                $appointment->client_email,
+                $subject,
+                $message
+            );
+
+            $this->log_notification(
+                $appointment_id,
+                self::TYPE_CANCELLED,
+                'client',
+                $appointment->client_email,
+                $subject,
+                $all_sent
+            );
+        }
+
+        return $all_sent;
     }
 
     /**
-     * Send reschedule email to client.
+     * Send reschedule email to client (and all attendees).
      *
      * @since 1.1.0
      * @param int $appointment_id Appointment ID.
@@ -278,45 +436,94 @@ class SNAB_Notifications {
         }
 
         // Add reschedule info to appointment object for template
-        // Use helper functions for proper timezone handling
-        $appointment->old_date = $old_date; // Keep raw date (Y-m-d), will be formatted in parse_template
-        $appointment->old_time = $old_time; // Keep raw time (H:i:s), will be formatted in parse_template
+        $appointment->old_date = $old_date;
+        $appointment->old_time = $old_time;
         $appointment->reschedule_reason = $reason;
 
-        $subject = $this->parse_template(
-            $this->get_template('reschedule_subject'),
-            $appointment
-        );
-
-        $message = $this->parse_template(
-            $this->get_template('reschedule_body'),
-            $appointment
-        );
-
-        // Generate ICS with new appointment time
+        // Generate ICS with new appointment time (reuse for all attendees)
         $attachments = array();
         $ics_file = $this->generate_ics_attachment($appointment, 'appointment');
         if ($ics_file) {
             $attachments[] = $ics_file;
         }
 
-        $sent = $this->send_email(
-            $appointment->client_email,
-            $subject,
-            $message,
-            $attachments
-        );
+        // Get all attendees (v1.10.0 multi-attendee support)
+        $attendees = $this->get_attendees($appointment_id);
 
-        $this->log_notification(
-            $appointment_id,
-            self::TYPE_RESCHEDULED,
-            'client',
-            $appointment->client_email,
-            $subject,
-            $sent
-        );
+        $all_sent = true;
 
-        return $sent;
+        if (!empty($attendees)) {
+            foreach ($attendees as $attendee) {
+                // Personalize for this attendee
+                $personalized_appt = clone $appointment;
+                $personalized_appt->client_name = $attendee->name;
+
+                $subject = $this->parse_template(
+                    $this->get_template('reschedule_subject'),
+                    $personalized_appt
+                );
+
+                $message = $this->parse_template(
+                    $this->get_template('reschedule_body'),
+                    $personalized_appt
+                );
+
+                // Add other attendees info if applicable
+                $other_attendees = $this->get_other_attendees_list($attendees, $attendee->email);
+                if (!empty($other_attendees)) {
+                    $message .= "\n\n" . sprintf(__('Other attendees: %s', 'sn-appointment-booking'), $other_attendees);
+                }
+
+                $sent = $this->send_email(
+                    $attendee->email,
+                    $subject,
+                    $message,
+                    $attachments
+                );
+
+                $this->log_notification(
+                    $appointment_id,
+                    self::TYPE_RESCHEDULED,
+                    'client',
+                    $attendee->email,
+                    $subject,
+                    $sent
+                );
+
+                if (!$sent) {
+                    $all_sent = false;
+                }
+            }
+        } else {
+            // Fallback: No attendees in new table (backward compatibility)
+            $subject = $this->parse_template(
+                $this->get_template('reschedule_subject'),
+                $appointment
+            );
+
+            $message = $this->parse_template(
+                $this->get_template('reschedule_body'),
+                $appointment
+            );
+
+            $all_sent = $this->send_email(
+                $appointment->client_email,
+                $subject,
+                $message,
+                $attachments
+            );
+
+            $this->log_notification(
+                $appointment_id,
+                self::TYPE_RESCHEDULED,
+                'client',
+                $appointment->client_email,
+                $subject,
+                $all_sent
+            );
+        }
+
+        return $all_sent;
     }
 
     /**
@@ -659,6 +866,70 @@ Best regards,
         );
 
         return $wpdb->get_row($sql);
+    }
+
+    /**
+     * Get all attendees for an appointment.
+     *
+     * @since 1.10.0
+     * @param int $appointment_id Appointment ID.
+     * @return array Array of attendee objects.
+     */
+    private function get_attendees($appointment_id) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'snab_appointment_attendees';
+
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT id, attendee_type, name, email, phone, reminder_24h_sent, reminder_1h_sent
+             FROM {$table}
+             WHERE appointment_id = %d
+             ORDER BY FIELD(attendee_type, 'primary', 'additional', 'cc'), id ASC",
+            $appointment_id
+        ));
+    }
+
+    /**
+     * Update reminder sent status for an attendee.
+     *
+     * @since 1.10.0
+     * @param int $attendee_id Attendee ID.
+     * @param string $reminder_type 'reminder_24h' or 'reminder_1h'.
+     */
+    private function mark_attendee_reminder_sent($attendee_id, $reminder_type) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'snab_appointment_attendees';
+        $column = $reminder_type === 'reminder_1h' ? 'reminder_1h_sent' : 'reminder_24h_sent';
+
+        $wpdb->update(
+            $table,
+            array($column => 1),
+            array('id' => $attendee_id),
+            array('%d'),
+            array('%d')
+        );
+    }
+
+    /**
+     * Get other attendees list for email personalization.
+     *
+     * @since 1.10.0
+     * @param array $attendees All attendees.
+     * @param string $exclude_email Email to exclude from the list.
+     * @return string Formatted list of other attendees.
+     */
+    private function get_other_attendees_list($attendees, $exclude_email) {
+        $others = array();
+        foreach ($attendees as $att) {
+            if ($att->email !== $exclude_email && $att->attendee_type !== 'cc') {
+                $others[] = $att->name;
+            }
+        }
+
+        if (empty($others)) {
+            return '';
+        }
+
+        return implode(', ', $others);
     }
 
     /**

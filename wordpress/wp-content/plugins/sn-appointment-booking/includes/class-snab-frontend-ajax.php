@@ -50,6 +50,49 @@ class SNAB_Frontend_Ajax {
 
         add_action('wp_ajax_snab_book_appointment', array($this, 'book_appointment'));
         add_action('wp_ajax_nopriv_snab_book_appointment', array($this, 'book_appointment'));
+
+        // Agent client search (logged-in agents only)
+        add_action('wp_ajax_snab_get_agent_clients', array($this, 'get_agent_clients'));
+    }
+
+    /**
+     * Get agent's clients for booking on behalf of client.
+     *
+     * @since 1.9.6
+     */
+    public function get_agent_clients() {
+        check_ajax_referer('snab_frontend_nonce', 'nonce');
+
+        // Must be logged in
+        if (!is_user_logged_in()) {
+            wp_send_json_error(__('You must be logged in.', 'sn-appointment-booking'));
+        }
+
+        $agent_id = get_current_user_id();
+
+        // Check if MLD Agent Client Manager exists
+        if (!class_exists('MLD_Agent_Client_Manager')) {
+            wp_send_json_success(array('clients' => array()));
+        }
+
+        // Get agent's clients
+        $clients = MLD_Agent_Client_Manager::get_agent_clients($agent_id, 'active');
+
+        if (empty($clients)) {
+            wp_send_json_success(array('clients' => array()));
+        }
+
+        // Format for frontend
+        $formatted_clients = array();
+        foreach ($clients as $client) {
+            $formatted_clients[] = array(
+                'id' => (int) $client['client_id'],
+                'name' => $client['display_name'],
+                'email' => $client['user_email'],
+            );
+        }
+
+        wp_send_json_success(array('clients' => $formatted_clients));
     }
 
     /**
@@ -154,6 +197,42 @@ class SNAB_Frontend_Ajax {
         $client_phone = isset($_POST['client_phone']) ? sanitize_text_field($_POST['client_phone']) : '';
         $property_address = isset($_POST['property_address']) ? sanitize_text_field($_POST['property_address']) : '';
         $client_notes = isset($_POST['client_notes']) ? sanitize_textarea_field($_POST['client_notes']) : '';
+
+        // Multi-attendee fields (v1.10.0)
+        $additional_clients = array();
+        if (!empty($_POST['additional_clients'])) {
+            $raw_additional = is_array($_POST['additional_clients'])
+                ? $_POST['additional_clients']
+                : json_decode(stripslashes($_POST['additional_clients']), true);
+
+            if (is_array($raw_additional)) {
+                foreach ($raw_additional as $client) {
+                    if (!empty($client['name']) && !empty($client['email'])) {
+                        $additional_clients[] = array(
+                            'name' => sanitize_text_field($client['name']),
+                            'email' => sanitize_email($client['email']),
+                            'phone' => isset($client['phone']) ? sanitize_text_field($client['phone']) : '',
+                        );
+                    }
+                }
+            }
+        }
+
+        $cc_emails = array();
+        if (!empty($_POST['cc_emails'])) {
+            $raw_cc = is_array($_POST['cc_emails'])
+                ? $_POST['cc_emails']
+                : json_decode(stripslashes($_POST['cc_emails']), true);
+
+            if (is_array($raw_cc)) {
+                foreach ($raw_cc as $email) {
+                    $clean_email = sanitize_email($email);
+                    if (is_email($clean_email)) {
+                        $cc_emails[] = $clean_email;
+                    }
+                }
+            }
+        }
 
         // Validate required fields
         $errors = array();
@@ -297,6 +376,17 @@ class SNAB_Frontend_Ajax {
 
         $appointment_id = $wpdb->insert_id;
 
+        // Insert attendees (v1.10.0 multi-attendee support)
+        $this->insert_attendees(
+            $appointment_id,
+            $client_name,
+            $client_email,
+            $client_phone,
+            $user_id,
+            $additional_clients,
+            $cc_emails
+        );
+
         // Commit the transaction - appointment is now permanently saved
         $wpdb->query('COMMIT');
 
@@ -376,6 +466,9 @@ class SNAB_Frontend_Ajax {
             'google_synced' => !empty($google_event_id),
         ));
 
+        // Get attendees for response (v1.10.0)
+        $attendees = $this->get_attendees($appointment_id);
+
         // Format response - use helper functions for proper timezone handling
         $response = array(
             'appointment_id' => $appointment_id,
@@ -388,6 +481,8 @@ class SNAB_Frontend_Ajax {
             'client_name' => $client_name,
             'client_email' => $client_email,
             'google_synced' => !empty($google_event_id),
+            'attendees' => $attendees,
+            'attendee_count' => count($attendees),
         );
 
         wp_send_json_success($response);
@@ -456,5 +551,133 @@ class SNAB_Frontend_Ajax {
         }
 
         return $filters;
+    }
+
+    /**
+     * Insert attendees for an appointment.
+     *
+     * @since 1.10.0
+     * @param int $appointment_id The appointment ID.
+     * @param string $client_name Primary client name.
+     * @param string $client_email Primary client email.
+     * @param string $client_phone Primary client phone.
+     * @param int|null $user_id WordPress user ID if exists.
+     * @param array $additional_clients Array of additional clients.
+     * @param array $cc_emails Array of CC email addresses.
+     * @return bool True on success.
+     */
+    private function insert_attendees($appointment_id, $client_name, $client_email, $client_phone, $user_id, $additional_clients = array(), $cc_emails = array()) {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'snab_appointment_attendees';
+        $now = current_time('mysql');
+
+        // Insert primary attendee
+        $wpdb->insert(
+            $table,
+            array(
+                'appointment_id' => $appointment_id,
+                'attendee_type' => 'primary',
+                'user_id' => $user_id > 0 ? $user_id : null,
+                'name' => $client_name,
+                'email' => $client_email,
+                'phone' => $client_phone ?: null,
+                'created_at' => $now,
+            ),
+            array('%d', '%s', '%d', '%s', '%s', '%s', '%s')
+        );
+
+        // Insert additional clients
+        if (!empty($additional_clients) && is_array($additional_clients)) {
+            foreach ($additional_clients as $client) {
+                if (empty($client['name']) || empty($client['email'])) {
+                    continue;
+                }
+
+                // Check if this additional client has a WordPress user account
+                $additional_user_id = null;
+                $additional_user = get_user_by('email', $client['email']);
+                if ($additional_user) {
+                    $additional_user_id = $additional_user->ID;
+                }
+
+                $wpdb->insert(
+                    $table,
+                    array(
+                        'appointment_id' => $appointment_id,
+                        'attendee_type' => 'additional',
+                        'user_id' => $additional_user_id,
+                        'name' => $client['name'],
+                        'email' => $client['email'],
+                        'phone' => isset($client['phone']) ? $client['phone'] : null,
+                        'created_at' => $now,
+                    ),
+                    array('%d', '%s', '%d', '%s', '%s', '%s', '%s')
+                );
+            }
+        }
+
+        // Insert CC emails
+        if (!empty($cc_emails) && is_array($cc_emails)) {
+            foreach ($cc_emails as $cc_email) {
+                if (!is_email($cc_email)) {
+                    continue;
+                }
+
+                // Derive name from email prefix
+                $name = ucfirst(explode('@', $cc_email)[0]);
+
+                $wpdb->insert(
+                    $table,
+                    array(
+                        'appointment_id' => $appointment_id,
+                        'attendee_type' => 'cc',
+                        'user_id' => null,
+                        'name' => $name,
+                        'email' => $cc_email,
+                        'phone' => null,
+                        'created_at' => $now,
+                    ),
+                    array('%d', '%s', '%d', '%s', '%s', '%s', '%s')
+                );
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Get attendees for an appointment.
+     *
+     * @since 1.10.0
+     * @param int $appointment_id The appointment ID.
+     * @return array Array of attendee objects.
+     */
+    private function get_attendees($appointment_id) {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'snab_appointment_attendees';
+
+        $attendees = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, attendee_type, user_id, name, email, phone
+             FROM {$table}
+             WHERE appointment_id = %d
+             ORDER BY FIELD(attendee_type, 'primary', 'additional', 'cc'), id ASC",
+            $appointment_id
+        ));
+
+        $result = array();
+        foreach ($attendees as $attendee) {
+            $result[] = array(
+                'id' => (int) $attendee->id,
+                'type' => $attendee->attendee_type,
+                'user_id' => $attendee->user_id ? (int) $attendee->user_id : null,
+                'name' => $attendee->name,
+                'email' => $attendee->email,
+                'phone' => $attendee->phone,
+            );
+        }
+
+        return $result;
     }
 }

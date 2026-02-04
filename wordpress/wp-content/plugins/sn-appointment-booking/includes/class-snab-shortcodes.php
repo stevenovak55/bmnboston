@@ -337,6 +337,25 @@ class SNAB_Shortcodes {
                     <input type="hidden" name="appointment_date" value="">
                     <input type="hidden" name="appointment_time" value="">
 
+                    <!-- Client Selection for Agents (populated via JS if user is agent) -->
+                    <div class="snab-client-selection" style="display: none;">
+                        <div class="snab-client-selection-header">
+                            <span class="snab-client-selection-label"><?php esc_html_e('Book for a Client', 'sn-appointment-booking'); ?></span>
+                            <button type="button" class="snab-client-clear-btn" style="display: none;">
+                                <?php esc_html_e('Clear', 'sn-appointment-booking'); ?>
+                            </button>
+                        </div>
+                        <div class="snab-client-search-wrapper">
+                            <input type="text" class="snab-client-search"
+                                   placeholder="<?php esc_attr_e('Search clients by name...', 'sn-appointment-booking'); ?>">
+                            <span class="dashicons dashicons-search snab-client-search-icon"></span>
+                        </div>
+                        <div class="snab-client-bubbles"></div>
+                        <div class="snab-client-no-results" style="display: none;">
+                            <?php esc_html_e('No clients match your search', 'sn-appointment-booking'); ?>
+                        </div>
+                    </div>
+
                     <div class="snab-form-row">
                         <label for="<?php echo esc_attr($widget_id); ?>-name">
                             <?php esc_html_e('Full Name', 'sn-appointment-booking'); ?> <span class="required">*</span>

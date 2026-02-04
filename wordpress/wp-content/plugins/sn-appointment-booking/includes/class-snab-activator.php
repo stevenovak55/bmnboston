@@ -232,6 +232,26 @@ class SNAB_Activator {
 
         dbDelta($sql_staff_services);
 
+        // Table: Appointment Attendees (added in v1.10.0 - multi-attendee support)
+        $table_attendees = $wpdb->prefix . 'snab_appointment_attendees';
+        $sql_attendees = "CREATE TABLE {$table_attendees} (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            appointment_id BIGINT UNSIGNED NOT NULL,
+            attendee_type ENUM('primary', 'additional', 'cc') DEFAULT 'additional',
+            user_id BIGINT UNSIGNED DEFAULT NULL,
+            name VARCHAR(100) NOT NULL,
+            email VARCHAR(100) NOT NULL,
+            phone VARCHAR(20) DEFAULT NULL,
+            reminder_24h_sent TINYINT(1) DEFAULT 0,
+            reminder_1h_sent TINYINT(1) DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_appointment (appointment_id),
+            KEY idx_email (email),
+            KEY idx_user (user_id)
+        ) {$charset_collate};";
+
+        dbDelta($sql_attendees);
+
         // Log table creation
         if (class_exists('SNAB_Logger')) {
             SNAB_Logger::info('Database tables created/updated');
@@ -525,6 +545,7 @@ class SNAB_Activator {
             'snab_notifications_log',
             'snab_shortcode_presets',
             'snab_staff_services',
+            'snab_appointment_attendees',
         );
 
         $status = array();
@@ -601,6 +622,22 @@ class SNAB_Activator {
             $missing_cols = array_diff($required_appointment_cols, $existing_cols);
             if (!empty($missing_cols)) {
                 $missing['snab_appointments'] = $missing_cols;
+            }
+        }
+
+        // Required columns for appointment_attendees table (v1.10.0)
+        $attendees_table = $wpdb->prefix . 'snab_appointment_attendees';
+        $required_attendee_cols = array(
+            'id', 'appointment_id', 'attendee_type', 'user_id', 'name', 'email',
+            'phone', 'reminder_24h_sent', 'reminder_1h_sent', 'created_at'
+        );
+
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$attendees_table}'");
+        if ($table_exists) {
+            $existing_cols = $wpdb->get_col("DESCRIBE {$attendees_table}");
+            $missing_cols = array_diff($required_attendee_cols, $existing_cols);
+            if (!empty($missing_cols)) {
+                $missing['snab_appointment_attendees'] = $missing_cols;
             }
         }
 

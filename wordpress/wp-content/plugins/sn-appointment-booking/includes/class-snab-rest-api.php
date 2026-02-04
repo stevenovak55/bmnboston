@@ -85,6 +85,135 @@ class SNAB_REST_API {
     }
 
     /**
+     * Insert attendees for an appointment
+     *
+     * @param int $appointment_id The appointment ID
+     * @param string $client_name Primary client name
+     * @param string $client_email Primary client email
+     * @param string $client_phone Primary client phone
+     * @param int|null $user_id WordPress user ID if exists
+     * @param array $additional_clients Array of additional clients
+     * @param array $cc_emails Array of CC email addresses
+     * @return bool True on success
+     * @since 1.10.0
+     */
+    private static function insert_attendees($appointment_id, $client_name, $client_email, $client_phone, $user_id, $additional_clients = array(), $cc_emails = array()) {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'snab_appointment_attendees';
+        $now = current_time('mysql');
+
+        // Insert primary attendee
+        $wpdb->insert(
+            $table,
+            array(
+                'appointment_id' => $appointment_id,
+                'attendee_type' => 'primary',
+                'user_id' => $user_id > 0 ? $user_id : null,
+                'name' => $client_name,
+                'email' => $client_email,
+                'phone' => $client_phone ?: null,
+                'created_at' => $now,
+            ),
+            array('%d', '%s', '%d', '%s', '%s', '%s', '%s')
+        );
+
+        // Insert additional clients
+        if (!empty($additional_clients) && is_array($additional_clients)) {
+            foreach ($additional_clients as $client) {
+                if (empty($client['name']) || empty($client['email'])) {
+                    continue;
+                }
+
+                // Check if this additional client has a WordPress user account
+                $additional_user_id = null;
+                $additional_user = get_user_by('email', sanitize_email($client['email']));
+                if ($additional_user) {
+                    $additional_user_id = $additional_user->ID;
+                }
+
+                $wpdb->insert(
+                    $table,
+                    array(
+                        'appointment_id' => $appointment_id,
+                        'attendee_type' => 'additional',
+                        'user_id' => $additional_user_id,
+                        'name' => sanitize_text_field($client['name']),
+                        'email' => sanitize_email($client['email']),
+                        'phone' => isset($client['phone']) ? sanitize_text_field($client['phone']) : null,
+                        'created_at' => $now,
+                    ),
+                    array('%d', '%s', '%d', '%s', '%s', '%s', '%s')
+                );
+            }
+        }
+
+        // Insert CC emails
+        if (!empty($cc_emails) && is_array($cc_emails)) {
+            foreach ($cc_emails as $cc_email) {
+                $email = sanitize_email($cc_email);
+                if (!is_email($email)) {
+                    continue;
+                }
+
+                // Derive name from email prefix
+                $name = ucfirst(explode('@', $email)[0]);
+
+                $wpdb->insert(
+                    $table,
+                    array(
+                        'appointment_id' => $appointment_id,
+                        'attendee_type' => 'cc',
+                        'user_id' => null,
+                        'name' => $name,
+                        'email' => $email,
+                        'phone' => null,
+                        'created_at' => $now,
+                    ),
+                    array('%d', '%s', '%d', '%s', '%s', '%s', '%s')
+                );
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Get attendees for an appointment
+     *
+     * @param int $appointment_id The appointment ID
+     * @return array Array of attendee objects
+     * @since 1.10.0
+     */
+    private static function get_attendees($appointment_id) {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'snab_appointment_attendees';
+
+        $attendees = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, attendee_type, user_id, name, email, phone
+             FROM {$table}
+             WHERE appointment_id = %d
+             ORDER BY FIELD(attendee_type, 'primary', 'additional', 'cc'), id ASC",
+            $appointment_id
+        ));
+
+        $result = array();
+        foreach ($attendees as $attendee) {
+            $result[] = array(
+                'id' => (int) $attendee->id,
+                'type' => $attendee->attendee_type,
+                'user_id' => $attendee->user_id ? (int) $attendee->user_id : null,
+                'name' => $attendee->name,
+                'email' => $attendee->email,
+                'phone' => $attendee->phone,
+            );
+        }
+
+        return $result;
+    }
+
+    /**
      * Register all REST routes
      */
     public static function register_routes() {
@@ -431,6 +560,14 @@ class SNAB_REST_API {
         $property_address = sanitize_text_field($params['property_address'] ?? '');
         $notes = sanitize_textarea_field($params['notes'] ?? '');
 
+        // Multi-attendee fields (v1.10.0)
+        $additional_clients = isset($params['additional_clients']) && is_array($params['additional_clients'])
+            ? $params['additional_clients']
+            : array();
+        $cc_emails = isset($params['cc_emails']) && is_array($params['cc_emails'])
+            ? $params['cc_emails']
+            : array();
+
         // Validate required fields
         if ($type_id <= 0) {
             return new WP_REST_Response(array(
@@ -659,6 +796,17 @@ class SNAB_REST_API {
 
         $appointment_id = $wpdb->insert_id;
 
+        // Insert attendees (v1.10.0 multi-attendee support)
+        self::insert_attendees(
+            $appointment_id,
+            $client_name,
+            $client_email,
+            $client_phone,
+            $user_id,
+            $additional_clients,
+            $cc_emails
+        );
+
         // Commit the transaction - appointment is now permanently saved
         $wpdb->query('COMMIT');
 
@@ -775,6 +923,10 @@ class SNAB_REST_API {
             ));
         }
 
+        // Get attendees for response (v1.10.0)
+        $attendees = self::get_attendees($appointment_id);
+        $attendee_count = count($attendees);
+
         return new WP_REST_Response(array(
             'success' => true,
             'code' => 'appointment_created',
@@ -790,6 +942,10 @@ class SNAB_REST_API {
                 'time_raw' => $time,  // 24h format for calendar integration
                 'duration' => (int) $type->duration_minutes,
                 'google_synced' => $google_synced,
+                'client_name' => $client_name,
+                'client_email' => $client_email,
+                'attendees' => $attendees,
+                'attendee_count' => $attendee_count,
             )
         ), 201);
     }
@@ -885,6 +1041,10 @@ class SNAB_REST_API {
             $can_cancel = $is_upcoming && $hours_until >= $cancel_hours;
             $can_reschedule = $is_upcoming && $hours_until >= $reschedule_hours && $appt->reschedule_count < $max_reschedules;
 
+            // Get attendees for this appointment (v1.10.0)
+            $attendees = self::get_attendees((int) $appt->id);
+            $attendee_count = count($attendees);
+
             $data[] = array(
                 'id' => (int) $appt->id,
                 'status' => $appt->status,
@@ -908,6 +1068,10 @@ class SNAB_REST_API {
                 'is_upcoming' => $is_upcoming,
                 'reschedule_count' => (int) $appt->reschedule_count,
                 'google_synced' => (bool) $appt->google_calendar_synced,
+                'client_name' => $appt->client_name,
+                'client_email' => $appt->client_email,
+                'attendees' => $attendees,
+                'attendee_count' => $attendee_count,
             );
         }
 
@@ -984,6 +1148,10 @@ class SNAB_REST_API {
         $can_cancel = $is_upcoming && $hours_until >= $cancel_hours;
         $can_reschedule = $is_upcoming && $hours_until >= $reschedule_hours && $appt->reschedule_count < $max_reschedules;
 
+        // Get attendees (v1.10.0)
+        $attendees = self::get_attendees($id);
+        $attendee_count = count($attendees);
+
         return new WP_REST_Response(array(
             'success' => true,
             'data' => array(
@@ -1005,6 +1173,9 @@ class SNAB_REST_API {
                 'staff_phone' => $appt->staff_phone,
                 'property_address' => $appt->property_address,
                 'listing_id' => $appt->listing_id,
+                'client_name' => $appt->client_name,
+                'client_email' => $appt->client_email,
+                'client_phone' => $appt->client_phone,
                 'client_notes' => $appt->client_notes,
                 'admin_notes' => $appt->admin_notes,
                 'can_cancel' => $can_cancel,
@@ -1014,6 +1185,8 @@ class SNAB_REST_API {
                 'original_datetime' => $appt->original_datetime,
                 'google_synced' => (bool) $appt->google_calendar_synced,
                 'created_at' => $appt->created_at,
+                'attendees' => $attendees,
+                'attendee_count' => $attendee_count,
             )
         ), 200);
     }

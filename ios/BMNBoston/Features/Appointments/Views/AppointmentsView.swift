@@ -217,7 +217,7 @@ struct AppointmentsView: View {
                         selectedAppointment = appointment
                     }
                     .accessibilityElement(children: .combine)
-                    .accessibilityLabel("\(appointment.typeName) on \(appointment.formattedDate) at \(appointment.formattedTime). Status: \(appointment.status.displayName)")
+                    .accessibilityLabel("\(appointment.typeName) on \(appointment.formattedDate) at \(appointment.formattedTime). Status: \(appointment.status.displayName)\(appointment.hasMultipleAttendees ? ". \(appointment.attendeeCount ?? 0) attendees" : "")")
                     .accessibilityHint("Double tap to view appointment details")
             }
         }
@@ -289,6 +289,17 @@ struct AppointmentRow: View {
                         Text(address)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
+                    }
+                    .font(.subheadline)
+                }
+
+                // Multi-attendee indicator (v1.10.0)
+                if appointment.hasMultipleAttendees, let count = appointment.attendeeCount {
+                    HStack {
+                        Image(systemName: "person.2")
+                            .foregroundStyle(.secondary)
+                        Text("\(count) attendees")
+                            .foregroundStyle(.secondary)
                     }
                     .font(.subheadline)
                 }
@@ -408,6 +419,71 @@ struct AppointmentDetailSheet: View {
                     .padding()
                     .background(Color(.systemGray6))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                    // Attendees section (v1.10.0 - Multi-Attendee Support)
+                    if let attendees = appointment.attendees, attendees.count > 1 {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Image(systemName: "person.2.fill")
+                                    .foregroundStyle(AppColors.brandTeal)
+                                Text("Attendees (\(attendees.count))")
+                                    .font(.headline)
+                            }
+
+                            ForEach(attendees) { attendee in
+                                HStack(alignment: .top, spacing: 12) {
+                                    // Attendee type indicator
+                                    Circle()
+                                        .fill(attendee.type == .primary ? AppColors.brandTeal : Color(.systemGray4))
+                                        .frame(width: 8, height: 8)
+                                        .padding(.top, 6)
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        HStack {
+                                            Text(attendee.displayName)
+                                                .font(.subheadline)
+                                                .fontWeight(attendee.type == .primary ? .semibold : .regular)
+
+                                            if attendee.type == .primary {
+                                                Text("Primary")
+                                                    .font(.caption2)
+                                                    .foregroundStyle(.white)
+                                                    .padding(.horizontal, 6)
+                                                    .padding(.vertical, 2)
+                                                    .background(AppColors.brandTeal)
+                                                    .clipShape(Capsule())
+                                            } else if attendee.type == .cc {
+                                                Text("CC")
+                                                    .font(.caption2)
+                                                    .foregroundStyle(.secondary)
+                                                    .padding(.horizontal, 6)
+                                                    .padding(.vertical, 2)
+                                                    .background(Color(.systemGray5))
+                                                    .clipShape(Capsule())
+                                            }
+                                        }
+
+                                        if attendee.type != .cc {
+                                            Text(attendee.email)
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+
+                                            if let phone = attendee.phone, !phone.isEmpty {
+                                                Text(phone)
+                                                    .font(.caption)
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                        }
+                                    }
+
+                                    Spacer()
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
 
                     // Actions
                     if appointment.status != .cancelled && appointment.status != .completed {

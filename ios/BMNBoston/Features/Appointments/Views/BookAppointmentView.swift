@@ -437,14 +437,33 @@ struct ContactDetailsView: View {
     @ObservedObject var viewModel: AppointmentViewModel
     @ObservedObject var authViewModel: AuthViewModel
     @FocusState private var focusedField: Field?
+    @State private var clientSearchText = ""
+    @State private var ccEmailInput = ""
 
     enum Field {
-        case name, email, phone, notes
+        case name, email, phone, notes, clientSearch, ccEmail
     }
 
     /// Check if user is an agent with clients
     private var isAgentWithClients: Bool {
         authViewModel.currentUser?.isAgent == true && !viewModel.agentClients.isEmpty
+    }
+
+    /// Filter clients based on search text
+    private var filteredClients: [AgentClient] {
+        if clientSearchText.isEmpty {
+            return viewModel.agentClients
+        }
+        let searchLower = clientSearchText.lowercased()
+        return viewModel.agentClients.filter { client in
+            client.displayName.lowercased().contains(searchLower) ||
+            client.email.lowercased().contains(searchLower)
+        }
+    }
+
+    /// Count of selected clients for display
+    private var selectedClientCount: Int {
+        viewModel.selectedClients.count
     }
 
     var body: some View {
@@ -547,8 +566,8 @@ struct ContactDetailsView: View {
             .padding(.vertical)
         }
         .onAppear {
-            // Pre-fill from logged in user (only if no client selected)
-            if authViewModel.isAuthenticated && viewModel.selectedClient == nil {
+            // Pre-fill from logged in user (only if no clients selected)
+            if authViewModel.isAuthenticated && viewModel.selectedClients.isEmpty {
                 viewModel.prefillUserInfo(from: authViewModel.currentUser)
             }
         }
@@ -568,7 +587,7 @@ struct ContactDetailsView: View {
         }
     }
 
-    // MARK: - Client Picker Section
+    // MARK: - Client Picker Section (Multi-Select v1.10.0)
 
     @ViewBuilder
     private var clientPickerSection: some View {
@@ -577,6 +596,16 @@ struct ContactDetailsView: View {
                 Text("Booking For")
                     .font(.headline)
                 Spacer()
+                // Show selected count badge
+                if selectedClientCount > 0 {
+                    Text("\(selectedClientCount) selected")
+                        .font(.caption)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(AppColors.brandTeal)
+                        .clipShape(Capsule())
+                }
                 if viewModel.agentClientsLoading {
                     ProgressView()
                         .scaleEffect(0.8)
@@ -591,50 +620,164 @@ struct ContactDetailsView: View {
                     .foregroundStyle(.secondary)
                     .padding(.horizontal)
             } else {
-                // Client picker
+                // Search field for filtering clients (show when 3+ clients)
+                if viewModel.agentClients.count >= 3 {
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundStyle(.secondary)
+                        TextField("Search clients...", text: $clientSearchText)
+                            .textFieldStyle(.plain)
+                            .focused($focusedField, equals: .clientSearch)
+                        if !clientSearchText.isEmpty {
+                            Button {
+                                clientSearchText = ""
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .padding(10)
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .padding(.horizontal)
+                }
+
+                // Client picker (multi-select)
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        // "Myself" option
-                        ClientPickerChip(
-                            name: "Myself",
-                            isSelected: viewModel.selectedClient == nil,
-                            action: {
-                                viewModel.selectClient(nil)
-                                viewModel.prefillUserInfo(from: authViewModel.currentUser)
-                            }
-                        )
+                        // "Myself" option (always visible, regardless of search)
+                        if clientSearchText.isEmpty {
+                            ClientPickerChip(
+                                name: "Myself",
+                                isSelected: viewModel.selectedClients.isEmpty,
+                                action: {
+                                    viewModel.selectClient(nil)
+                                    viewModel.prefillUserInfo(from: authViewModel.currentUser)
+                                }
+                            )
+                        }
 
-                        // Client options
-                        ForEach(viewModel.agentClients) { client in
+                        // Client options (filtered) - multi-select with checkmarks
+                        ForEach(filteredClients) { client in
                             ClientPickerChip(
                                 name: client.displayName,
-                                isSelected: viewModel.selectedClient?.id == client.id,
+                                isSelected: viewModel.isClientSelected(client),
+                                showCheckmark: true,
                                 action: {
                                     viewModel.selectClient(client)
+                                    // Don't clear search - user may want to select more
                                 }
                             )
                         }
                     }
                     .padding(.horizontal)
                 }
+
+                // No results message
+                if !clientSearchText.isEmpty && filteredClients.isEmpty {
+                    Text("No clients match '\(clientSearchText)'")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal)
+                }
+
+                // Multi-select hint
+                if !viewModel.agentClients.isEmpty {
+                    Text("Select multiple clients to book for a group")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal)
+                }
             }
+
+            // CC Emails Section (v1.10.0)
+            ccEmailsSection
         }
         .padding(.bottom, 8)
     }
+
+    // MARK: - CC Emails Section (v1.10.0)
+
+    @ViewBuilder
+    private var ccEmailsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("CC Emails (Optional)")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal)
+
+            // CC email input
+            HStack {
+                Image(systemName: "envelope")
+                    .foregroundStyle(.secondary)
+                TextField("Add email to receive notifications", text: $ccEmailInput)
+                    .textFieldStyle(.plain)
+                    .keyboardType(.emailAddress)
+                    .autocapitalization(.none)
+                    .focused($focusedField, equals: .ccEmail)
+                    .onSubmit {
+                        addCCEmail()
+                    }
+                if !ccEmailInput.isEmpty {
+                    Button {
+                        addCCEmail()
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundStyle(AppColors.brandTeal)
+                    }
+                }
+            }
+            .padding(10)
+            .background(Color(.systemGray6))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .padding(.horizontal)
+
+            // CC email chips
+            if !viewModel.ccEmails.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(viewModel.ccEmails, id: \.self) { email in
+                            CCEmailChip(email: email) {
+                                viewModel.removeCCEmail(email)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+            }
+        }
+        .padding(.top, 8)
+    }
+
+    private func addCCEmail() {
+        let email = ccEmailInput.trimmingCharacters(in: .whitespaces)
+        guard !email.isEmpty else { return }
+        viewModel.addCCEmail(email)
+        ccEmailInput = ""
+    }
 }
 
-// MARK: - Client Picker Chip
+// MARK: - Client Picker Chip (Multi-Select v1.10.0)
 
 struct ClientPickerChip: View {
     let name: String
     let isSelected: Bool
+    var showCheckmark: Bool = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "person.circle")
-                    .font(.subheadline)
+                if showCheckmark {
+                    // Multi-select mode: show checkbox
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.subheadline)
+                } else {
+                    // Single-select mode: show person icon
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "person.circle")
+                        .font(.subheadline)
+                }
                 Text(name)
                     .font(.subheadline)
                     .lineLimit(1)
@@ -649,6 +792,30 @@ struct ClientPickerChip: View {
                     .stroke(isSelected ? AppColors.brandTeal : Color.clear, lineWidth: 1.5)
             )
         }
+    }
+}
+
+// MARK: - CC Email Chip (v1.10.0)
+
+struct CCEmailChip: View {
+    let email: String
+    let onRemove: () -> Void
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(email)
+                .font(.caption)
+                .lineLimit(1)
+            Button(action: onRemove) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.caption)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color(.systemGray5))
+        .foregroundStyle(.primary)
+        .clipShape(Capsule())
     }
 }
 
@@ -731,10 +898,18 @@ struct ConfirmationView: View {
             .background(Color(.systemGray6))
             .clipShape(RoundedRectangle(cornerRadius: 12))
 
-            Text("A confirmation email has been sent to \(viewModel.clientEmail)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+            // Confirmation email message (v1.10.0: show attendee count)
+            if let attendeeCount = response.attendeeCount, attendeeCount > 1 {
+                Text("Confirmation emails have been sent to all \(attendeeCount) attendees")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            } else {
+                Text("A confirmation email has been sent to \(viewModel.clientEmail)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
 
             // Add to Apple Calendar button
             if !addedToCalendar {
@@ -864,17 +1039,34 @@ struct ConfirmationView: View {
             .background(Color(.systemGray6))
             .clipShape(RoundedRectangle(cornerRadius: 12))
 
-            // Contact details
+            // Contact details (v1.10.0: Multi-attendee support)
             VStack(alignment: .leading, spacing: 12) {
-                Text("Contact Information")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                HStack {
+                    Text("Contact Information")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    if viewModel.selectedClients.count > 1 || !viewModel.ccEmails.isEmpty {
+                        Spacer()
+                        HStack(spacing: 4) {
+                            Image(systemName: "person.2")
+                            Text("\(max(1, viewModel.selectedClients.count) + viewModel.ccEmails.count) attendees")
+                        }
+                        .font(.caption)
+                        .foregroundStyle(AppColors.brandTeal)
+                    }
+                }
 
+                // Primary contact
                 HStack {
                     Image(systemName: "person")
                         .foregroundStyle(.secondary)
                         .frame(width: 24)
-                    Text(viewModel.clientName)
+                    VStack(alignment: .leading) {
+                        Text(viewModel.clientName)
+                        Text("Primary")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 HStack {
@@ -889,6 +1081,46 @@ struct ConfirmationView: View {
                         .foregroundStyle(.secondary)
                         .frame(width: 24)
                     Text(viewModel.clientPhone)
+                }
+
+                // Additional attendees (v1.10.0)
+                if viewModel.selectedClients.count > 1 {
+                    Divider()
+                    Text("Additional Attendees")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    ForEach(viewModel.selectedClients.dropFirst(), id: \.id) { client in
+                        HStack {
+                            Image(systemName: "person")
+                                .foregroundStyle(.secondary)
+                                .frame(width: 24)
+                            VStack(alignment: .leading) {
+                                Text(client.displayName)
+                                Text(client.email)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+
+                // CC emails (v1.10.0)
+                if !viewModel.ccEmails.isEmpty {
+                    Divider()
+                    Text("CC (Notification Only)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    ForEach(viewModel.ccEmails, id: \.self) { email in
+                        HStack {
+                            Image(systemName: "envelope")
+                                .foregroundStyle(.secondary)
+                                .frame(width: 24)
+                            Text(email)
+                                .font(.subheadline)
+                        }
+                    }
                 }
 
                 if !viewModel.notes.isEmpty {

@@ -1182,3 +1182,355 @@ div.snab-booking-widget .snab-staff-option.selected,
     background: var(--snab-primary-light) !important;
     border-color: var(--snab-primary) !important;
 }
+
+
+/* ==========================================================================
+   Client Selection (Agent booking for client)
+   ========================================================================== */
+
+.snab-client-selection {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: var(--snab-gray-50);
+    border-radius: 12px;
+    border: 1px solid var(--snab-gray-200);
+}
+
+.snab-client-selection-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.snab-client-selection-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--snab-gray-700);
+}
+
+.snab-client-clear-btn {
+    font-size: 0.8rem;
+    color: var(--snab-primary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.snab-client-clear-btn:hover {
+    background: var(--snab-primary-light);
+}
+
+.snab-client-search-wrapper {
+    position: relative;
+    margin-bottom: 12px;
+}
+
+.snab-client-search {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    font-size: 0.95rem;
+    border: 1px solid var(--snab-gray-300);
+    border-radius: 8px;
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.snab-client-search:focus {
+    outline: none;
+    border-color: var(--snab-primary);
+    box-shadow: 0 0 0 3px rgba(var(--snab-primary-rgb), 0.1);
+}
+
+.snab-client-search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--snab-gray-400);
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.snab-client-bubbles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 160px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.snab-client-bubble {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px 6px 6px;
+    background: #fff;
+    border: 2px solid var(--snab-gray-200);
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.snab-client-bubble:hover {
+    background: var(--snab-primary-light);
+    border-color: var(--snab-primary);
+}
+
+.snab-client-bubble.selected {
+    background: var(--snab-primary);
+    border-color: var(--snab-primary);
+    color: #fff;
+}
+
+.snab-client-bubble.selected .snab-client-initials {
+    background: rgba(255, 255, 255, 0.3);
+    color: #fff;
+}
+
+.snab-client-initials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--snab-gray-200);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--snab-gray-600);
+    flex-shrink: 0;
+}
+
+.snab-client-name {
+    font-weight: 500;
+}
+
+.snab-client-no-results {
+    text-align: center;
+    padding: 12px;
+    color: var(--snab-gray-500);
+    font-size: 0.9rem;
+}
+
+/* Scrollbar styling for client bubbles */
+.snab-client-bubbles::-webkit-scrollbar {
+    width: 6px;
+}
+
+.snab-client-bubbles::-webkit-scrollbar-track {
+    background: var(--snab-gray-100);
+    border-radius: 3px;
+}
+
+.snab-client-bubbles::-webkit-scrollbar-thumb {
+    background: var(--snab-gray-300);
+    border-radius: 3px;
+}
+
+.snab-client-bubbles::-webkit-scrollbar-thumb:hover {
+    background: var(--snab-gray-400);
+}
+
+/* Responsive adjustments for client selection */
+@media (max-width: 480px) {
+    .snab-client-selection {
+        padding: 12px;
+    }
+
+    .snab-client-bubbles {
+        max-height: 120px;
+    }
+
+    .snab-client-bubble {
+        font-size: 0.85rem;
+        padding: 4px 10px 4px 4px;
+    }
+
+    .snab-client-initials {
+        width: 24px;
+        height: 24px;
+        font-size: 0.7rem;
+    }
+}
+
+/* ==========================================================================
+   Multi-Attendee Support (v1.10.0)
+   ========================================================================== */
+
+/* Client count badge for multi-select */
+.snab-client-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--snab-primary);
+    background: var(--snab-primary-light);
+    border-radius: 12px;
+}
+
+/* CC Email Section */
+.snab-cc-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--snab-gray-200);
+}
+
+.snab-cc-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--snab-gray-600);
+}
+
+.snab-cc-input-wrapper {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.snab-cc-email-input {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    border: 1px solid var(--snab-gray-300);
+    border-radius: 8px;
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.snab-cc-email-input:focus {
+    outline: none;
+    border-color: var(--snab-primary);
+    box-shadow: 0 0 0 3px rgba(var(--snab-primary-rgb), 0.1);
+}
+
+.snab-cc-email-input.snab-input-error {
+    border-color: var(--snab-error);
+    animation: snabShake 0.3s ease;
+}
+
+@keyframes snabShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
+.snab-cc-add-btn {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--snab-primary);
+    background: var(--snab-primary-light);
+    border: 1px solid var(--snab-primary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.snab-cc-add-btn:hover {
+    background: var(--snab-primary);
+    color: #fff;
+}
+
+/* CC Email Chips */
+.snab-cc-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.snab-cc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px 6px 12px;
+    background: var(--snab-gray-100);
+    border: 1px solid var(--snab-gray-300);
+    border-radius: 100px;
+    font-size: 0.85rem;
+    color: var(--snab-gray-700);
+}
+
+.snab-cc-email {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.snab-cc-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--snab-gray-500);
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.snab-cc-remove:hover {
+    color: var(--snab-error);
+    background: var(--snab-error-light);
+}
+
+/* Attendees info in confirmation */
+.snab-attendees-info {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 10px 20px;
+    color: var(--snab-primary);
+    background: var(--snab-primary-light);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.snab-attendees-info .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+/* Responsive adjustments for multi-attendee */
+@media (max-width: 480px) {
+    .snab-cc-input-wrapper {
+        flex-direction: column;
+    }
+
+    .snab-cc-add-btn {
+        width: 100%;
+    }
+
+    .snab-cc-chip {
+        font-size: 0.8rem;
+        padding: 4px 6px 4px 10px;
+    }
+
+    .snab-cc-email {
+        max-width: 140px;
+    }
+}

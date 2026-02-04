@@ -96,7 +96,9 @@ class AppointmentViewModel: ObservableObject {
     // Agent client selection (for booking on behalf of clients)
     @Published var agentClients: [AgentClient] = []
     @Published var agentClientsLoading = false
-    @Published var selectedClient: AgentClient?
+    // Multi-attendee support (v1.10.0)
+    @Published var selectedClients: [AgentClient] = []
+    @Published var ccEmails: [String] = []
 
     // MARK: - Computed Properties
 
@@ -343,6 +345,18 @@ class AppointmentViewModel: ObservableObject {
         isBooking = true
         bookingError = nil
 
+        // Build additional clients array from selected clients (excluding first/primary)
+        var additionalClients: [AttendeeInput]? = nil
+        if selectedClients.count > 1 {
+            additionalClients = selectedClients.dropFirst().map { client in
+                AttendeeInput(
+                    name: client.displayName,
+                    email: client.email,
+                    phone: client.phone
+                )
+            }
+        }
+
         let request = BookAppointmentRequest(
             appointmentTypeId: type.id,
             staffId: staff.id,
@@ -353,7 +367,9 @@ class AppointmentViewModel: ObservableObject {
             clientPhone: clientPhone.trimmingCharacters(in: .whitespaces),
             listingId: listingId,
             propertyAddress: propertyAddress,
-            notes: notes.isEmpty ? nil : notes
+            notes: notes.isEmpty ? nil : notes,
+            additionalClients: additionalClients,
+            ccEmails: ccEmails.isEmpty ? nil : ccEmails
         )
 
         do {
@@ -384,7 +400,9 @@ class AppointmentViewModel: ObservableObject {
         bookingResponse = nil
         bookingError = nil
         availability = nil
-        selectedClient = nil  // Clear selected client for agents
+        // Multi-attendee: clear selected clients and CC emails
+        selectedClients = []
+        ccEmails = []
     }
 
     /// Pre-fill booking for property showing
@@ -507,21 +525,55 @@ class AppointmentViewModel: ObservableObject {
         }
     }
 
-    /// Select a client and prefill their contact info
+    /// Toggle client selection (multi-select support v1.10.0)
+    /// First selected client becomes primary and prefills contact info
     func selectClient(_ client: AgentClient?) {
-        selectedClient = client
+        guard let client = client else {
+            // Deselect all - user selected "Myself"
+            selectedClients = []
+            return
+        }
 
-        if let client = client {
-            // Prefill contact info from selected client
-            clientName = client.displayName
-            clientEmail = client.email
-            clientPhone = client.phone ?? ""
+        // Toggle selection
+        if let index = selectedClients.firstIndex(where: { $0.id == client.id }) {
+            selectedClients.remove(at: index)
+        } else {
+            selectedClients.append(client)
+        }
+
+        // Prefill contact info from primary (first selected) client
+        if let primary = selectedClients.first {
+            clientName = primary.displayName
+            clientEmail = primary.email
+            clientPhone = primary.phone ?? ""
         }
     }
 
-    /// Clear selected client and reset fields
-    func clearSelectedClient() {
-        selectedClient = nil
+    /// Check if a client is selected
+    func isClientSelected(_ client: AgentClient) -> Bool {
+        selectedClients.contains { $0.id == client.id }
+    }
+
+    /// Clear all selected clients
+    func clearSelectedClients() {
+        selectedClients = []
         // Don't clear the fields - user may have edited them
+    }
+
+    // MARK: - CC Email Management (v1.10.0)
+
+    /// Add a CC email address
+    func addCCEmail(_ email: String) {
+        let trimmedEmail = email.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !trimmedEmail.isEmpty, !ccEmails.contains(trimmedEmail) else { return }
+        // Basic email validation
+        let emailRegex = #"^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
+        guard trimmedEmail.range(of: emailRegex, options: .regularExpression) != nil else { return }
+        ccEmails.append(trimmedEmail)
+    }
+
+    /// Remove a CC email address
+    func removeCCEmail(_ email: String) {
+        ccEmails.removeAll { $0 == email }
     }
 }
