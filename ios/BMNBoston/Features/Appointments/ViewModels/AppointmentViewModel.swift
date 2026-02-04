@@ -93,6 +93,11 @@ class AppointmentViewModel: ObservableObject {
     @Published var cancelError: String?
     @Published var rescheduleError: String?
 
+    // Agent client selection (for booking on behalf of clients)
+    @Published var agentClients: [AgentClient] = []
+    @Published var agentClientsLoading = false
+    @Published var selectedClient: AgentClient?
+
     // MARK: - Computed Properties
 
     var filteredAppointments: [Appointment] {
@@ -379,6 +384,7 @@ class AppointmentViewModel: ObservableObject {
         bookingResponse = nil
         bookingError = nil
         availability = nil
+        selectedClient = nil  // Clear selected client for agents
     }
 
     /// Pre-fill booking for property showing
@@ -483,5 +489,39 @@ class AppointmentViewModel: ObservableObject {
         clientName = user.displayName ?? "\(user.firstName ?? "") \(user.lastName ?? "")".trimmingCharacters(in: .whitespaces)
         clientEmail = user.email ?? ""
         // Phone would need to be added to User model if available
+    }
+
+    // MARK: - Agent Client Management
+
+    /// Load agent's client list (for booking on behalf of clients)
+    func loadAgentClients() async {
+        agentClientsLoading = true
+        defer { agentClientsLoading = false }
+
+        do {
+            let response: AgentClientListResponse = try await APIClient.shared.request(.agentClients)
+            agentClients = response.clients
+        } catch {
+            // Silently fail - user may not be an agent
+            agentClients = []
+        }
+    }
+
+    /// Select a client and prefill their contact info
+    func selectClient(_ client: AgentClient?) {
+        selectedClient = client
+
+        if let client = client {
+            // Prefill contact info from selected client
+            clientName = client.displayName
+            clientEmail = client.email
+            clientPhone = client.phone ?? ""
+        }
+    }
+
+    /// Clear selected client and reset fields
+    func clearSelectedClient() {
+        selectedClient = nil
+        // Don't clear the fields - user may have edited them
     }
 }

@@ -3,7 +3,7 @@
  * Plugin Name: SN Appointment Booking
  * Plugin URI: https://steve-novak.com
  * Description: Google Calendar-integrated appointment booking system for real estate professionals. Allows clients to book showings, consultations, and other appointments directly from your website.
- * Version: 1.9.5
+ * Version: 1.9.7
  * Author: Steve Novak
  * Author URI: https://steve-novak.com
  * License: GPL-2.0+
@@ -241,13 +241,13 @@ if (!defined('ABSPATH')) {
  * Update this when releasing new versions.
  * Also update in: class-snab-upgrader.php, version.json, .context/SESSION_RESUME.md
  */
-define('SNAB_VERSION', '1.9.5');
+define('SNAB_VERSION', '1.9.7');
 
 /**
  * Database version.
  * Increment when database schema changes.
  */
-define('SNAB_DB_VERSION', '1.9.5');
+define('SNAB_DB_VERSION', '1.9.6');
 
 /**
  * Plugin file path.

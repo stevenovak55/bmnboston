@@ -442,10 +442,20 @@ struct ContactDetailsView: View {
         case name, email, phone, notes
     }
 
+    /// Check if user is an agent with clients
+    private var isAgentWithClients: Bool {
+        authViewModel.currentUser?.isAgent == true && !viewModel.agentClients.isEmpty
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Text("Your Contact Information")
+                // Agent client picker (only for agents)
+                if authViewModel.currentUser?.isAgent == true {
+                    clientPickerSection
+                }
+
+                Text(isAgentWithClients ? "Client Contact Information" : "Your Contact Information")
                     .font(.headline)
                     .padding(.horizontal)
 
@@ -537,9 +547,15 @@ struct ContactDetailsView: View {
             .padding(.vertical)
         }
         .onAppear {
-            // Pre-fill from logged in user
-            if authViewModel.isAuthenticated {
+            // Pre-fill from logged in user (only if no client selected)
+            if authViewModel.isAuthenticated && viewModel.selectedClient == nil {
                 viewModel.prefillUserInfo(from: authViewModel.currentUser)
+            }
+        }
+        .task {
+            // Load agent's clients if user is an agent
+            if authViewModel.currentUser?.isAgent == true {
+                await viewModel.loadAgentClients()
             }
         }
         .toolbar {
@@ -549,6 +565,89 @@ struct ContactDetailsView: View {
                     focusedField = nil
                 }
             }
+        }
+    }
+
+    // MARK: - Client Picker Section
+
+    @ViewBuilder
+    private var clientPickerSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Booking For")
+                    .font(.headline)
+                Spacer()
+                if viewModel.agentClientsLoading {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                }
+            }
+            .padding(.horizontal)
+
+            if viewModel.agentClients.isEmpty && !viewModel.agentClientsLoading {
+                // No clients - show hint
+                Text("You can book for yourself or enter client details manually below.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal)
+            } else {
+                // Client picker
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        // "Myself" option
+                        ClientPickerChip(
+                            name: "Myself",
+                            isSelected: viewModel.selectedClient == nil,
+                            action: {
+                                viewModel.selectClient(nil)
+                                viewModel.prefillUserInfo(from: authViewModel.currentUser)
+                            }
+                        )
+
+                        // Client options
+                        ForEach(viewModel.agentClients) { client in
+                            ClientPickerChip(
+                                name: client.displayName,
+                                isSelected: viewModel.selectedClient?.id == client.id,
+                                action: {
+                                    viewModel.selectClient(client)
+                                }
+                            )
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+            }
+        }
+        .padding(.bottom, 8)
+    }
+}
+
+// MARK: - Client Picker Chip
+
+struct ClientPickerChip: View {
+    let name: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "person.circle")
+                    .font(.subheadline)
+                Text(name)
+                    .font(.subheadline)
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(isSelected ? AppColors.brandTeal.opacity(0.15) : Color(.systemGray6))
+            .foregroundStyle(isSelected ? AppColors.brandTeal : .primary)
+            .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(isSelected ? AppColors.brandTeal : Color.clear, lineWidth: 1.5)
+            )
         }
     }
 }

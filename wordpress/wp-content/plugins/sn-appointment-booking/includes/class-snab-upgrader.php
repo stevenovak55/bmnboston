@@ -24,13 +24,13 @@ class SNAB_Upgrader {
      * Current plugin version.
      * IMPORTANT: Keep in sync with SNAB_VERSION in main plugin file.
      */
-    const CURRENT_VERSION = '1.9.5';
+    const CURRENT_VERSION = '1.9.7';
 
     /**
      * Current database version.
      * IMPORTANT: Keep in sync with SNAB_DB_VERSION in main plugin file.
      */
-    const CURRENT_DB_VERSION = '1.9.5';
+    const CURRENT_DB_VERSION = '1.9.6';
 
     /**
      * Check version and run upgrades if needed.

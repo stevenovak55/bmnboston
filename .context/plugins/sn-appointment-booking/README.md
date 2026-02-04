@@ -6,7 +6,7 @@ Google Calendar-integrated appointment booking system.
 
 | Setting | Value |
 |---------|-------|
-| Version | 1.9.5 |
+| Version | 1.9.7 |
 | API Namespace | `/wp-json/snab/v1` |
 | Main File | `sn-appointment-booking.php` |
 | Current Phase | 16 - Cross-Platform REST API |

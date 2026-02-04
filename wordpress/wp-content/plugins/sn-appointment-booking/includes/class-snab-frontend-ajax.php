@@ -230,7 +230,20 @@ class SNAB_Frontend_Ajax {
 
         // Create the appointment with transaction handling
         $appointments_table = $wpdb->prefix . 'snab_appointments';
-        $user_id = is_user_logged_in() ? get_current_user_id() : null;
+
+        // Determine user_id for the appointment
+        // Priority: 1) User matching client_email, 2) Currently logged-in user
+        // This allows agents to book appointments for their clients
+        $user_id = null;
+
+        // First, check if client_email matches a registered user
+        $client_user = get_user_by('email', $client_email);
+        if ($client_user) {
+            $user_id = $client_user->ID;
+        } elseif (is_user_logged_in()) {
+            // Fall back to currently logged-in user if no matching client found
+            $user_id = get_current_user_id();
+        }
 
         // Start transaction to prevent race conditions
         $wpdb->query('START TRANSACTION');

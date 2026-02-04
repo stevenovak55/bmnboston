@@ -23,8 +23,10 @@ class SNAB_Availability_Service {
 
     /**
      * Default slot interval in minutes.
+     * Controls the granularity of available time slots (e.g., 15 = :00, :15, :30, :45).
+     * Appointment duration is separate and can be longer than this interval.
      */
-    const DEFAULT_SLOT_INTERVAL = 30;
+    const DEFAULT_SLOT_INTERVAL = 15;
 
     /**
      * Google Calendar instance.

@@ -358,23 +358,26 @@ class SNAB_REST_API {
         // Use availability service
         $service = new SNAB_Availability_Service();
 
-        $options = array(
-            'staff_id' => $staff_id > 0 ? $staff_id : null,
-            'appointment_type_id' => $type_id > 0 ? $type_id : null,
-            'duration_minutes' => $duration,
-        );
-
+        // Build filters array for the availability service
+        $filters = array();
         if (!empty($allowed_days)) {
-            $options['allowed_days'] = array_map('absint', explode(',', $allowed_days));
+            $filters['allowed_days'] = array_map('absint', explode(',', $allowed_days));
         }
         if ($start_hour > 0) {
-            $options['start_hour'] = $start_hour;
+            $filters['start_hour'] = $start_hour;
         }
         if ($end_hour > 0) {
-            $options['end_hour'] = $end_hour;
+            $filters['end_hour'] = $end_hour;
         }
 
-        $slots = $service->get_available_slots($start_date, $end_date, $options);
+        // Call with correct parameter order: start_date, end_date, type_id, staff_id, filters
+        $slots = $service->get_available_slots(
+            $start_date,
+            $end_date,
+            $type_id > 0 ? $type_id : null,
+            $staff_id > 0 ? $staff_id : null,
+            $filters
+        );
 
         // The availability service returns: ['2025-12-30' => ['09:00', '09:30', ...], ...]
         // Transform to the format expected by the frontend
@@ -541,8 +544,19 @@ class SNAB_REST_API {
         // Determine status
         $status = $type->requires_approval ? 'pending' : 'confirmed';
 
-        // Get user ID if authenticated
-        $user_id = get_current_user_id();
+        // Determine user_id for the appointment
+        // Priority: 1) User matching client_email, 2) Currently logged-in user
+        // This allows agents to book appointments for their clients
+        $user_id = 0;
+
+        // First, check if client_email matches a registered user
+        $client_user = get_user_by('email', $client_email);
+        if ($client_user) {
+            $user_id = $client_user->ID;
+        } elseif (is_user_logged_in()) {
+            // Fall back to currently logged-in user if no matching client found
+            $user_id = get_current_user_id();
+        }
 
         // Start transaction to prevent race conditions
         $wpdb->query('START TRANSACTION');
@@ -574,6 +588,17 @@ class SNAB_REST_API {
             ), 409);
         }
 
+        // Delete any cancelled/no_show appointments at this slot to free up the unique constraint
+        // (We already verified no active appointments exist via the pre-check above)
+        $wpdb->query($wpdb->prepare(
+            "DELETE FROM {$wpdb->prefix}snab_appointments
+             WHERE staff_id = %d AND appointment_date = %s AND start_time = %s
+             AND status IN ('cancelled', 'no_show')",
+            $staff->id,
+            $date,
+            $time
+        ));
+
         // Insert appointment
         $result = $wpdb->insert(
             $wpdb->prefix . 'snab_appointments',
@@ -599,10 +624,11 @@ class SNAB_REST_API {
         );
 
         if (!$result) {
+            // Capture error BEFORE rollback (rollback clears last_error)
+            $error = $wpdb->last_error;
             $wpdb->query('ROLLBACK');
 
             // Check if it's a duplicate key error (race condition - slot was taken)
-            $error = $wpdb->last_error;
             if (strpos($error, 'Duplicate entry') !== false || strpos($error, 'unique_slot') !== false) {
                 SNAB_Logger::warning('Slot booking race condition detected', array(
                     'type_id' => $type_id,

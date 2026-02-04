@@ -187,6 +187,59 @@ Guest bookings require:
 
 These are stored in the appointment record for follow-up.
 
+## Agent Booking on Behalf of Clients (v1.9.7)
+
+Agents can book appointments on behalf of their assigned clients. The iOS app shows a client picker when the logged-in user is an agent with assigned clients.
+
+### iOS Flow
+
+```
+1. Agent opens booking form
+   │
+   ▼
+2. AppointmentViewModel.loadAgentClients()
+   GET /mld-mobile/v1/agent/clients
+   │
+   ▼
+3. ContactDetailsView shows client picker
+   ├── "Myself" option (default)
+   ├── Horizontal scrolling client chips
+   └── Selecting a client auto-fills name/email/phone
+   │
+   ▼
+4. Booking submitted with client's contact info
+   │
+   ▼
+5. Server associates appointment with client user account
+   - Looks up user by client_email
+   - If found, sets user_id to client's WordPress user ID
+   - If not found, falls back to agent's user ID
+```
+
+### Server-Side User Association
+
+Both REST API and AJAX paths include client email lookup:
+
+```php
+// Determine user_id for the appointment
+// Priority: 1) User matching client_email, 2) Currently logged-in user
+$user_id = 0;
+
+// First, check if client_email matches a registered user
+$client_user = get_user_by('email', $client_email);
+if ($client_user) {
+    $user_id = $client_user->ID;
+} elseif (is_user_logged_in()) {
+    // Fall back to currently logged-in user
+    $user_id = get_current_user_id();
+}
+```
+
+This allows:
+- Clients to see appointments booked on their behalf in their account
+- Agents to book for clients without needing to log in as the client
+- Proper appointment history for both agents and clients
+
 ## Key Differences Between Paths
 
 | Feature | iOS (REST) | Web (AJAX) |

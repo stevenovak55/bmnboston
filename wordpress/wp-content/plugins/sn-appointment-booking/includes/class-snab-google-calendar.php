@@ -660,16 +660,15 @@ class SNAB_Google_Calendar {
         global $wpdb;
         $staff_table = $wpdb->prefix . 'snab_staff';
 
-        // Revoke token at Google
-        $access_token = $this->get_staff_access_token($staff_id);
-        if ($access_token) {
-            wp_remote_post(self::OAUTH_REVOKE_URL, array(
-                'body' => array('token' => $access_token),
-                'timeout' => 10,
-            ));
-        }
+        // Get access token directly from DB to avoid triggering refresh (which could cause recursion)
+        // DO NOT call get_staff_access_token() here - it triggers refresh on expired tokens
+        $encrypted_token = $wpdb->get_var($wpdb->prepare(
+            "SELECT google_access_token FROM {$staff_table} WHERE id = %d",
+            $staff_id
+        ));
+        $access_token = $encrypted_token ? $this->decrypt($encrypted_token) : null;
 
-        // Clear stored tokens
+        // Clear stored tokens FIRST to prevent recursion if revoke triggers another error
         $result = $wpdb->update(
             $staff_table,
             array(
@@ -683,6 +682,14 @@ class SNAB_Google_Calendar {
             array('%s', '%s', '%s', '%s', '%s'),
             array('%d')
         );
+
+        // Try to revoke token at Google (best effort, after clearing local tokens)
+        if ($access_token) {
+            wp_remote_post(self::OAUTH_REVOKE_URL, array(
+                'body' => array('token' => $access_token),
+                'timeout' => 10,
+            ));
+        }
 
         SNAB_Logger::info('Staff Google Calendar disconnected', array('staff_id' => $staff_id));
         return $result !== false;
