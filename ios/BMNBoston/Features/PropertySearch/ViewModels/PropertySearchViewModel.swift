@@ -139,6 +139,14 @@ class PropertySearchViewModel: ObservableObject {
     // This allows the map zoom animation to complete without triggering new searches
     private let polygonSearchCooldownSeconds: TimeInterval = 3.0
 
+    // Timestamp of last location filter search (city/neighborhood/zip/address/streetName)
+    // Used to prevent bounds-based search from overriding location filter results during map animation
+    private var lastLocationFilterSearchTime: Date?
+
+    // Cooldown period after location filter search during which bounds updates are ignored
+    // This allows the map zoom animation to complete without triggering new searches
+    private let locationFilterCooldownSeconds: TimeInterval = 3.0
+
     // MARK: - Search Task Helper
 
     /// Cancel any in-flight search, run the provided closure to modify filters, then trigger a new search.
@@ -1084,6 +1092,12 @@ class PropertySearchViewModel: ObservableObject {
             updateCityBoundaries()
         }
 
+        // Set cooldown to prevent bounds updates during map zoom animation
+        // This fixes the race condition where updateMapBounds() overrides location filter results
+        if [.city, .neighborhood, .zip, .address, .streetName].contains(suggestion.type) {
+            lastLocationFilterSearchTime = Date()
+        }
+
         logger.debug("Starting search after applying suggestion")
 
         searchTask = Task {
@@ -1595,6 +1609,16 @@ class PropertySearchViewModel: ObservableObject {
             let elapsed = Date().timeIntervalSince(lastSearch)
             if elapsed < polygonSearchCooldownSeconds {
                 logger.debug("Skipping bounds update - polygon search cooldown active (\(String(format: "%.1f", elapsed))s elapsed)")
+                return
+            }
+        }
+
+        // Skip if we're within the cooldown period after a location filter search (city/neighborhood/zip/address/streetName)
+        // This prevents the map zoom animation from triggering a bounds search that overwrites location filter results
+        if let lastSearch = lastLocationFilterSearchTime {
+            let elapsed = Date().timeIntervalSince(lastSearch)
+            if elapsed < locationFilterCooldownSeconds {
+                logger.debug("Skipping bounds update - location filter cooldown active (\(String(format: "%.1f", elapsed))s elapsed)")
                 return
             }
         }
