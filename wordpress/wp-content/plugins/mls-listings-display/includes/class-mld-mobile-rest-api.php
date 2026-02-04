@@ -1823,6 +1823,29 @@ class MLD_Mobile_REST_API {
     }
 
     /**
+     * Get the MLS Agent ID for a user
+     *
+     * Returns the MLS Agent ID from mld_agent_profiles for ShowingTime integration.
+     * iOS uses this to build ShowingTime SSO URLs for appointment scheduling.
+     *
+     * @param int $user_id The WordPress user ID
+     * @return string|null The MLS Agent ID or null if not found
+     * @since 6.75.3
+     */
+    public static function get_user_mls_agent_id($user_id) {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'mld_agent_profiles';
+
+        $mls_agent_id = $wpdb->get_var($wpdb->prepare(
+            "SELECT mls_agent_id FROM {$table} WHERE user_id = %d AND is_active = 1",
+            $user_id
+        ));
+
+        return !empty($mls_agent_id) ? $mls_agent_id : null;
+    }
+
+    /**
      * Get listing keys that have been shared with a user (client)
      *
      * Used to mark properties as "shared by agent" in API responses.
@@ -2011,6 +2034,9 @@ class MLD_Mobile_REST_API {
         // Get custom avatar URL (from agent profile or Gravatar fallback)
         $avatar_url = self::get_user_avatar_url($user->ID);
 
+        // Get MLS Agent ID for ShowingTime integration (v6.75.3)
+        $mls_agent_id = self::get_user_mls_agent_id($user->ID);
+
         // Trigger client login notification for agents (v6.43.0)
         do_action('mld_client_logged_in', $user->ID, 'ios');
 
@@ -2027,6 +2053,7 @@ class MLD_Mobile_REST_API {
                     'avatar_url' => $avatar_url,
                     'user_type' => $user_type,
                     'assigned_agent' => $assigned_agent,
+                    'mls_agent_id' => $mls_agent_id,
                 ),
                 'access_token' => $access_token,
                 'refresh_token' => $refresh_token,
@@ -2371,6 +2398,9 @@ class MLD_Mobile_REST_API {
         // Get custom avatar URL (v6.33.13)
         $avatar_url = self::get_user_avatar_url($user->ID);
 
+        // Get MLS Agent ID for ShowingTime integration (v6.75.3)
+        $mls_agent_id = self::get_user_mls_agent_id($user->ID);
+
         $response = new WP_REST_Response(array(
             'success' => true,
             'data' => array(
@@ -2387,6 +2417,8 @@ class MLD_Mobile_REST_API {
                 'is_admin' => $user_type_data['is_admin'] ?? false,
                 'agent_profile_id' => $user_type_data['agent_profile_id'] ?? null,
                 'assigned_agent' => $assigned_agent,
+                // v6.75.3 - ShowingTime integration
+                'mls_agent_id' => $mls_agent_id,
             )
         ), 200);
 

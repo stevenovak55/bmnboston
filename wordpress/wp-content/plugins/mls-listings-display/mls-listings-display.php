@@ -3,7 +3,7 @@
  * Plugin Name:       MLS Listings Display
  * Plugin URI:        https://example.com/
  * Description:       Displays real estate listings from the Bridge MLS Extractor Pro plugin using shortcodes with mobile-optimized property search and display.
- * Version: 6.75.2
+ * Version: 6.75.3
  * Author:            AZ Home Solutions LLC
  * Author URI:        https://example.com/
  * License:           GPL-2.0+
@@ -11,6 +11,13 @@
  * Text Domain:       mls-listings-display
  *
  * @package           MLS_Listings_Display
+ *
+ * Version 6.75.3 - SHOWINGTIME MLS AGENT ID FIX (Feb 3, 2026)
+ * Fixed ShowingTime links not working on iOS - server was not returning mls_agent_id in API responses.
+ * - Added get_user_mls_agent_id() helper function to retrieve MLS Agent ID from agent profiles
+ * - Added mls_agent_id field to login response (handle_login)
+ * - Added mls_agent_id field to /me endpoint response (handle_get_me)
+ * - iOS can now generate ShowingTime SSO URLs for appointment scheduling
  *
  * Version 6.75.2 - FIX CMA PDF FIELD NAME MISMATCHES (Feb 3, 2026)
  * Fixed additional CMA PDF data issues where field names didn't match what the PDF generator expected.
@@ -2528,7 +2535,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 // Define plugin constants.
 // Add timestamp for cache busting during development
-define('MLD_VERSION', '6.75.2');
+define('MLD_VERSION', '6.75.3');
 
 define( 'MLD_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MLD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) ); // Alias for MLD_PLUGIN_PATH for backward compatibility
