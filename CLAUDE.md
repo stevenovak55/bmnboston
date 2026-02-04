@@ -1731,7 +1731,7 @@ curl -s "https://bmnboston.com/wp-json/bmn-schools/v1/health" | python3 -c "impo
 Quick reference for current versions:
 | Component | Current Version |
 |-----------|-----------------|
-| iOS App | v391 (1.6) |
+| iOS App | v398 (1.6) |
 | MLS Listings Display | v6.75.3 |
 | BMN Schools | v0.6.39 |
 | SN Appointments | v1.9.5 |
