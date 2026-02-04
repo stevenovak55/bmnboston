@@ -37,6 +37,8 @@ struct PropertySearchView: View {
     // v6.68.12: Track when autocomplete navigation is in progress
     // This prevents onChange from handling navigation while modal is dismissing
     @State private var isAutocompleteNavigationInProgress = false
+    // v399: Track navigation task for cancellation when clearing property navigation
+    @State private var navigationTask: Task<Void, Never>?
 
     // List view mode persistence (v216)
     @AppStorage("listViewMode") private var listViewModeRaw: String = ListViewMode.card.rawValue
@@ -222,6 +224,18 @@ struct PropertySearchView: View {
         #if DEBUG
         debugLog("🔔 fetchAndNavigateToProperty - listingId: \(listingId ?? "nil"), listingKey: \(listingKey ?? "nil")")
         #endif
+
+        // v399: If already showing a property, dismiss it first to avoid navigation contention
+        if selectedProperty != nil {
+            #if DEBUG
+            debugLog("🔔 Dismissing current property before navigating to new one")
+            #endif
+            await MainActor.run {
+                selectedProperty = nil
+            }
+            // Wait for dismiss animation to complete
+            try? await Task.sleep(nanoseconds: 300_000_000) // 300ms
+        }
 
         do {
             // Prefer listing_key for API calls (the /properties/{id} endpoint expects the hash, not MLS number)
@@ -827,6 +841,11 @@ struct PropertySearchView: View {
                 )
                 viewModel.animateMapRegion = true
             }
+        }
+        // v399: Handle clearing property navigation when a new deep link arrives while viewing a property
+        .onReceive(NotificationCenter.default.publisher(for: .clearPropertyNavigation)) { _ in
+            navigationTask?.cancel()
+            selectedProperty = nil
         }
     }
 

@@ -2,7 +2,7 @@
 
 Comprehensive reference for AI-assisted development.
 
-**Current Project Version:** 398 (Marketing Version 1.7)
+**Current Project Version:** 399 (Marketing Version 1.7)
 **Last Updated:** February 4, 2026
 
 ---
@@ -377,6 +377,27 @@ func login(email: String, password: String) async {
 ```
 
 **Rule:** Any method that receives user data from the server should save it, not just the primary login flow.
+
+---
+
+## Recent Changes (v399)
+
+### Deep Link Property Navigation Fix (Feb 4, 2026)
+
+Fixed issue where clicking a deep link to Property B while already viewing Property A would stay on Property A instead of switching to Property B. This occurred from push notifications, email links, and universal links.
+
+**Root Causes Fixed:**
+
+1. **PropertyDetailView didn't reload on property change** - Added `.onChange(of: propertyId)` modifier to reset state and reload when the property ID changes while the view is already displayed.
+
+2. **Navigation stack contention** - The `.navigationDestination` binding stayed TRUE when changing from Property A to Property B because it only checked `selectedProperty != nil`. Added dismiss-then-navigate pattern in `fetchAndNavigateToProperty()` with 300ms delay for animation.
+
+3. **Deep link handlers didn't clear existing navigation** - Added `.clearPropertyNavigation` notification that all deep link handlers post before setting new pending navigation.
+
+**Files Changed:**
+- `BMNBostonApp.swift` - Added `.clearPropertyNavigation` notification name, post it in all deep link handlers (property URLs, listing URLs, push notifications)
+- `PropertyDetailView.swift` - Added `.onChange(of: propertyId)` to reset state and reload
+- `PropertySearchView.swift` - Added clear navigation observer, updated `fetchAndNavigateToProperty()` to dismiss current property first
 
 ---
 

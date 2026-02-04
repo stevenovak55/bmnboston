@@ -403,6 +403,25 @@ struct PropertyDetailView: View {
             // Track property view for analytics (Sprint 5)
             await trackPropertyView()
         }
+        // v399: Reload when propertyId changes (deep link to different property while viewing one)
+        .onChange(of: propertyId) { newPropertyId in
+            // Reset state for new property
+            property = nil
+            propertyHistory = nil
+            addressHistory = nil
+            marketInsights = nil
+            isLoading = true
+            errorMessage = nil
+            isExpanded = false
+            expandedSections = []
+
+            // Reload new property
+            Task {
+                await loadProperty()
+                await loadMyAgent()
+                await trackPropertyView()
+            }
+        }
     }
 
     // MARK: - Analytics Tracking (Sprint 5)

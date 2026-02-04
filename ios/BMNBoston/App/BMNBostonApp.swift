@@ -114,6 +114,8 @@ struct BMNBostonApp: App {
                 #if DEBUG
                 debugLog("📎 Deep link to property: \(mlsNumber)")
                 #endif
+                // Clear any existing property navigation state (v399 fix)
+                NotificationCenter.default.post(name: .clearPropertyNavigation, object: nil)
                 // Navigate to property detail
                 notificationStore.setPendingPropertyNavigation(listingId: mlsNumber, listingKey: nil)
                 NotificationCenter.default.post(name: .switchToSearchTab, object: nil)
@@ -179,6 +181,8 @@ struct BMNBostonApp: App {
                 #if DEBUG
                 debugLog("📎 Universal Link to property: \(mlsNumber)")
                 #endif
+                // Clear any existing property navigation state (v399 fix)
+                NotificationCenter.default.post(name: .clearPropertyNavigation, object: nil)
                 // Navigate to property detail
                 notificationStore.setPendingPropertyNavigation(listingId: mlsNumber, listingKey: nil)
                 NotificationCenter.default.post(name: .switchToSearchTab, object: nil)
@@ -197,6 +201,8 @@ struct BMNBostonApp: App {
                 #if DEBUG
                 debugLog("📎 Universal Link to listing: \(mlsNumber)")
                 #endif
+                // Clear any existing property navigation state (v399 fix)
+                NotificationCenter.default.post(name: .clearPropertyNavigation, object: nil)
                 notificationStore.setPendingPropertyNavigation(listingId: mlsNumber, listingKey: nil)
                 NotificationCenter.default.post(name: .switchToSearchTab, object: nil)
             }
@@ -441,6 +447,8 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                 #if DEBUG
                 debugLog("📍 Setting pending property navigation - listingId: \(listingIdString ?? "nil"), listingKey: \(listingKey ?? "nil")")
                 #endif
+                // Clear any existing property navigation state (v399 fix)
+                NotificationCenter.default.post(name: .clearPropertyNavigation, object: nil)
                 // Store pending navigation in NotificationStore
                 NotificationStore.shared.setPendingPropertyNavigation(listingId: listingIdString, listingKey: listingKey)
                 // Switch to search tab
@@ -524,4 +532,5 @@ extension Notification.Name {
     static let navigateToProperty = Notification.Name("navigateToProperty")
     static let showRegistrationWithReferral = Notification.Name("showRegistrationWithReferral")
     static let showSavedSearchesList = Notification.Name("showSavedSearchesList")
+    static let clearPropertyNavigation = Notification.Name("clearPropertyNavigation")
 }
