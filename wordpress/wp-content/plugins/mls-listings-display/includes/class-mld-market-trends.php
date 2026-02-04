@@ -75,9 +75,11 @@ class MLD_Market_Trends {
         $previous_month = null;
 
         foreach ($results as $row) {
+            // v6.75.4: Use DateTime with wp_timezone() for correct month name formatting
+            $month_dt = new DateTime($row['month'] . '-01', wp_timezone());
             $month_data = array(
                 'month' => $row['month'],
-                'month_name' => date('F Y', strtotime($row['month'] . '-01')),
+                'month_name' => $month_dt->format('F Y'),
                 'sales_count' => (int)$row['sales_count'],
                 'avg_close_price' => round($row['avg_close_price'], 2),
                 'min_price' => round($row['min_price'], 2),
@@ -346,7 +348,10 @@ class MLD_Market_Trends {
         }
 
         // Calculate monthly velocity
-        $date_diff = strtotime($result['latest_sale']) - strtotime($result['earliest_sale']);
+        // v6.75.4: Use DateTime with wp_timezone() for correct date calculations
+        $latest_dt = new DateTime($result['latest_sale'], wp_timezone());
+        $earliest_dt = new DateTime($result['earliest_sale'], wp_timezone());
+        $date_diff = $latest_dt->getTimestamp() - $earliest_dt->getTimestamp();
         $months_span = $date_diff / (30 * 24 * 60 * 60); // Approximate months
         $monthly_velocity = $months_span > 0 ? $result['total_sales'] / $months_span : 0;
 

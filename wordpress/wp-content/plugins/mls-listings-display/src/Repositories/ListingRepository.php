@@ -149,7 +149,8 @@ class ListingRepository implements RepositoryInterface {
      * Get recently updated listings
      */
     public function findRecentlyUpdated(int $days = 7, array $filters = []): array {
-        $filters['updated_since'] = date('Y-m-d H:i:s', strtotime("-{$days} days"));
+        // v6.75.4: Use wp_date with current_time for correct timezone handling
+        $filters['updated_since'] = wp_date('Y-m-d H:i:s', current_time('timestamp') - ($days * DAY_IN_SECONDS));
         return $this->dataProvider->getListings($filters);
     }
 }

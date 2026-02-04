@@ -282,7 +282,9 @@ class MLD_Notification_Ajax {
         $listing_id = isset($payload['listing_id']) ? $payload['listing_id'] : null;
 
         // Get the hour bucket for deduplication matching
-        $hour_bucket = date('Y-m-d H', strtotime($notification->created_at));
+        // v6.75.4: Use DateTime with wp_timezone() instead of strtotime() which assumes UTC
+        $dt = new DateTime($notification->created_at, wp_timezone());
+        $hour_bucket = $dt->format('Y-m-d H');
 
         // Update ALL related notification rows (same type, listing/title, hour)
         // This keeps iOS and web in sync since they show deduplicated views
@@ -380,7 +382,9 @@ class MLD_Notification_Ajax {
         $listing_id = isset($payload['listing_id']) ? $payload['listing_id'] : null;
 
         // Get the hour bucket for deduplication matching
-        $hour_bucket = date('Y-m-d H', strtotime($notification->created_at));
+        // v6.75.4: Use DateTime with wp_timezone() instead of strtotime() which assumes UTC
+        $dt_dismiss = new DateTime($notification->created_at, wp_timezone());
+        $hour_bucket = $dt_dismiss->format('Y-m-d H');
 
         // Update ALL related notification rows (same type, listing/title, hour)
         // This keeps iOS and web in sync since they show deduplicated views

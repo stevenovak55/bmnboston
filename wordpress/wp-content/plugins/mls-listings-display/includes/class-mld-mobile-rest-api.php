@@ -5336,13 +5336,17 @@ class MLD_Mobile_REST_API {
 
     /**
      * Convert MySQL datetime to ISO8601 format for iOS compatibility
+     * v6.75.4: Fixed to use WordPress timezone instead of UTC
+     * Database stores datetimes in WordPress timezone (America/New_York)
      */
     private static function to_iso8601($mysql_datetime) {
         if (empty($mysql_datetime)) {
             return null;
         }
-        $dt = new DateTime($mysql_datetime, new DateTimeZone('UTC'));
-        return $dt->format('c'); // ISO8601 format
+        // Use WordPress timezone - database stores in WP timezone, not UTC
+        // Using UTC caused timestamps to appear 5 hours early on iOS
+        $dt = new DateTime($mysql_datetime, wp_timezone());
+        return $dt->format('c'); // ISO8601 format with timezone offset
     }
 
     /**

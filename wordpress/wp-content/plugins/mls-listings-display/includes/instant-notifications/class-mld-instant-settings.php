@@ -587,9 +587,14 @@ class MLD_Instant_Settings {
                                     </span>
                                 </td>
                                 <td>
-                                    <?php echo date('M j, g:i A', strtotime($item->retry_after)); ?>
-                                    <?php if (strtotime($item->retry_after) > time()): ?>
-                                        <br><small>(<?php echo human_time_diff(time(), strtotime($item->retry_after)); ?> from now)</small>
+                                    <?php
+                                    // v6.75.4: Use DateTime with wp_timezone() for correct display
+                                    $retry_dt = new DateTime($item->retry_after, wp_timezone());
+                                    $retry_timestamp = $retry_dt->getTimestamp();
+                                    echo wp_date('M j, g:i A', $retry_timestamp);
+                                    ?>
+                                    <?php if ($retry_timestamp > current_time('timestamp')): ?>
+                                        <br><small>(<?php echo human_time_diff(current_time('timestamp'), $retry_timestamp); ?> from now)</small>
                                     <?php else: ?>
                                         <br><small class="ready">Ready to process</small>
                                     <?php endif; ?>

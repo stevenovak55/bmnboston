@@ -321,7 +321,9 @@ class ListingService {
      * @return string Formatted date (e.g., "Jan 15, 2025")
      */
     private function formatDate(string $date): string {
-        return date('M j, Y', strtotime($date));
+        // v6.75.4: Use DateTime with wp_timezone() for correct display
+        $dt = new \DateTime($date, wp_timezone());
+        return wp_date('M j, Y', $dt->getTimestamp());
     }
 
     /**
@@ -335,8 +337,11 @@ class ListingService {
             return false;
         }
 
-        $listDate = strtotime($listing['ListingContractDate']);
-        $daysSince = (time() - $listDate) / (24 * 60 * 60);
+        // v6.75.4: Use DateTime with wp_timezone() for correct timezone handling
+        // strtotime() interprets dates as UTC, causing 5-hour discrepancy
+        // Database stores dates in WordPress timezone (America/New_York)
+        $listDate = new \DateTime($listing['ListingContractDate'], wp_timezone());
+        $daysSince = (current_time('timestamp') - $listDate->getTimestamp()) / (24 * 60 * 60);
 
         return $daysSince <= 30; // Listed within last 30 days
     }

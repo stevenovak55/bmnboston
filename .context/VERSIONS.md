@@ -7,9 +7,9 @@ Single source of truth for all component versions. Update this file when bumping
 | Component | Version | Updated | Source of Truth |
 |-----------|---------|---------|-----------------|
 | iOS App | v398 (1.7) | Feb 4, 2026 | `ios/BMNBoston.xcodeproj/project.pbxproj` |
-| MLS Listings Display | v6.75.3 | Feb 3, 2026 | `mls-listings-display/version.json` |
+| MLS Listings Display | v6.75.4 | Feb 4, 2026 | `mls-listings-display/version.json` |
 | BMN Schools | v0.6.39 | Jan 21, 2026 | `bmn-schools/version.json` |
-| SN Appointments | v1.10.0 | Feb 3, 2026 | `sn-appointment-booking/version.json` |
+| SN Appointments | v1.10.1 | Feb 4, 2026 | `sn-appointment-booking/version.json` |
 | Exclusive Listings | v1.5.3 | Jan 27, 2026 | `exclusive-listings/version.json` |
 | Bridge MLS Extractor | v4.0.32 | Jan 21, 2026 | `bridge-mls-extractor-pro-review/bridge-mls-extractor-pro.php` |
 | Theme (flavor-flavor-flavor) | v1.5.9 | Jan 28, 2026 | `flavor-flavor-flavor/version.json` |
@@ -64,4 +64,4 @@ Update `CURRENT_PROJECT_VERSION = N;` in **6 occurrences** in `project.pbxproj` 
 
 ---
 
-*Last updated: 2026-02-03*
+*Last updated: 2026-02-04*

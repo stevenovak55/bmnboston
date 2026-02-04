@@ -283,13 +283,16 @@ class SNAB_Analytics {
         ), ARRAY_A);
 
         // Convert periods to labels
+        // v1.10.1: Use DateTime with wp_timezone() for correct label formatting
         $data = array();
         foreach ($results as $row) {
             $label = $row['period'];
             if ($interval === 'day') {
-                $label = date($label_format, strtotime($row['period']));
+                $period_dt = new DateTime($row['period'], wp_timezone());
+                $label = $period_dt->format($label_format);
             } elseif ($interval === 'month') {
-                $label = date($label_format, strtotime($row['period'] . '-01'));
+                $period_dt = new DateTime($row['period'] . '-01', wp_timezone());
+                $label = $period_dt->format($label_format);
             }
 
             $data[] = array(
