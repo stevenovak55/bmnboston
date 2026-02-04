@@ -980,15 +980,11 @@ if (strtolower($status) === 'closed' && !empty($listing['close_price'])) {
                     <div class="mld-v3-open-houses">
                         <h3>Open House Schedule</h3>
                         <div class="mld-v3-open-house-list">
-                            <?php foreach ($open_houses as $oh): 
-                                // Create DateTime objects assuming the times are in UTC
-                                $start = new DateTime($oh['OpenHouseStartTime'], new DateTimeZone('UTC'));
-                                $end = new DateTime($oh['OpenHouseEndTime'], new DateTimeZone('UTC'));
-                                
-                                // Convert to Eastern Time
-                                $eastern = new DateTimeZone('America/New_York');
-                                $start->setTimezone($eastern);
-                                $end->setTimezone($eastern);
+                            <?php foreach ($open_houses as $oh):
+                                // v6.75.4: Database stores in WordPress timezone (America/New_York), not UTC
+                                // No conversion needed - use wp_timezone() directly
+                                $start = new DateTime($oh['OpenHouseStartTime'], wp_timezone());
+                                $end = new DateTime($oh['OpenHouseEndTime'], wp_timezone());
                             ?>
                             <div class="mld-v3-open-house-item">
                                 <div class="mld-v3-oh-date">

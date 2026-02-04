@@ -158,8 +158,8 @@ function mld_render_analytics_tab() {
                                     </span>
                                 </td>
                                 <td><?php
-    // Convert UTC timestamp to site timezone before comparison
-    $local_time = strtotime(get_date_from_gmt($conv['started_at']));
+    // v6.75.4: Database stores in WP timezone, not UTC - use DateTime with wp_timezone()
+    $local_time = (new DateTime($conv['started_at'], wp_timezone()))->getTimestamp();
     echo esc_html(human_time_diff($local_time, current_time('timestamp')));
 ?> <?php _e('ago', 'mls-listings-display'); ?></td>
                                 <td>
@@ -269,8 +269,8 @@ function mld_render_conversation_detail($conversation_id) {
                 </p>
                 <p><strong><?php _e('Started:', 'mls-listings-display'); ?></strong>
                     <?php
-    // Convert UTC to site timezone using wp_date()
-    $local_timestamp = strtotime(get_date_from_gmt($conversation['started_at']));
+    // v6.75.4: Database stores in WP timezone, not UTC - use DateTime with wp_timezone()
+    $local_timestamp = (new DateTime($conversation['started_at'], wp_timezone()))->getTimestamp();
     echo esc_html(wp_date('F j, Y g:i A', $local_timestamp));
     ?>
                 </p>
@@ -295,8 +295,8 @@ function mld_render_conversation_detail($conversation_id) {
                                 </strong>
                                 <span class="mld-message-time">
                                     <?php
-    // Convert UTC to site timezone
-    $msg_local_time = strtotime(get_date_from_gmt($message['created_at']));
+    // v6.75.4: Database stores in WP timezone, not UTC - use DateTime with wp_timezone()
+    $msg_local_time = (new DateTime($message['created_at'], wp_timezone()))->getTimestamp();
     echo esc_html(wp_date('g:i A', $msg_local_time));
     ?>
                                 </span>

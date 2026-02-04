@@ -19,8 +19,10 @@ function mld_get_property_badge($listing) {
     $badges = [];
 
     // New listing badge
-    $listing_date = strtotime($listing->listing_contract_date ?? $listing->created_at);
-    if ($listing_date > strtotime('-7 days')) {
+    // v6.75.4: Use DateTime with wp_timezone() - database stores in WP timezone, not UTC
+    $listing_date = (new DateTime($listing->listing_contract_date ?? $listing->created_at, wp_timezone()))->getTimestamp();
+    $seven_days_ago = current_time('timestamp') - (7 * DAY_IN_SECONDS);
+    if ($listing_date > $seven_days_ago) {
         $badges[] = ['text' => 'NEW', 'color' => '#00A859', 'icon' => '✨'];
     }
 
@@ -33,8 +35,12 @@ function mld_get_property_badge($listing) {
     }
 
     // Open house badge
-    if (!empty($listing->open_house_date) && strtotime($listing->open_house_date) > time()) {
-        $badges[] = ['text' => 'OPEN HOUSE', 'color' => '#FF6B35', 'icon' => '🏠'];
+    // v6.75.4: Use DateTime with wp_timezone() and current_time() for correct comparison
+    if (!empty($listing->open_house_date)) {
+        $oh_date = (new DateTime($listing->open_house_date, wp_timezone()))->getTimestamp();
+        if ($oh_date > current_time('timestamp')) {
+            $badges[] = ['text' => 'OPEN HOUSE', 'color' => '#FF6B35', 'icon' => '🏠'];
+        }
     }
 
     // Hot home badge (based on views/saves - would need tracking)
@@ -59,8 +65,9 @@ function mld_format_currency($amount) {
 
 if (!function_exists('mld_get_days_on_market')) {
 function mld_get_days_on_market($listing) {
-    $listing_date = strtotime($listing->listing_contract_date ?? $listing->created_at);
-    $days = floor((time() - $listing_date) / 86400);
+    // v6.75.4: Use DateTime with wp_timezone() and current_time() for correct calculation
+    $listing_date = (new DateTime($listing->listing_contract_date ?? $listing->created_at, wp_timezone()))->getTimestamp();
+    $days = floor((current_time('timestamp') - $listing_date) / 86400);
     return $days;
 }
 }

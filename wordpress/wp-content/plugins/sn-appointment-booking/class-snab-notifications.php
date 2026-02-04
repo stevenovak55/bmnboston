@@ -58,8 +58,9 @@ class SNAB_Notifications {
         add_action('snab_send_reminders', array($this, 'process_reminders'));
 
         // Schedule cron if not already scheduled
+        // v1.10.2: Use current_time() for WordPress timezone consistency
         if (!wp_next_scheduled('snab_send_reminders')) {
-            wp_schedule_event(time(), 'hourly', 'snab_send_reminders');
+            wp_schedule_event(current_time('timestamp'), 'hourly', 'snab_send_reminders');
         }
     }
 

@@ -445,12 +445,13 @@ class MLD_Saved_Searches_Frontend {
         foreach ($searches as $search) {
             // filters are already decoded by get_user_searches(), add alias for JS compatibility
             $search->filters_decoded = $search->filters;
-            // Use wp_date() for proper WordPress timezone conversion
-            $search->created_at_formatted = wp_date(get_option('date_format'), strtotime($search->created_at));
+            // v6.75.4: Use DateTime with wp_timezone() - database stores in WP timezone, not UTC
+            $created_ts = (new \DateTime($search->created_at, wp_timezone()))->getTimestamp();
+            $search->created_at_formatted = wp_date(get_option('date_format'), $created_ts);
             // Check for both column names for compatibility
             $last_run = $search->last_notified_at ?? $search->last_run ?? null;
             $search->last_run_formatted = $last_run ?
-                wp_date(get_option('date_format'), strtotime($last_run)) :
+                wp_date(get_option('date_format'), (new \DateTime($last_run, wp_timezone()))->getTimestamp()) :
                 __('Never', 'mld');
         }
 

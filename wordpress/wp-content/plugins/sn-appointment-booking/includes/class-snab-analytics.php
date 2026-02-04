@@ -194,11 +194,12 @@ class SNAB_Analytics {
         ), ARRAY_A);
 
         // Initialize hours 6am - 9pm (typical business hours)
+        // v1.10.2: Use wp_date() for WordPress timezone consistency
         $hours = array();
         for ($h = 6; $h <= 21; $h++) {
             $hours[$h] = array(
                 'hour' => $h,
-                'label' => date('g A', strtotime("{$h}:00")),
+                'label' => wp_date('g A', strtotime("{$h}:00")),
                 'count' => 0
             );
         }
@@ -420,8 +421,9 @@ class SNAB_Analytics {
             wp_send_json_error(__('Permission denied.', 'sn-appointment-booking'));
         }
 
-        $start_date = isset($_POST['start_date']) ? sanitize_text_field($_POST['start_date']) : wp_date('Y-m-d', strtotime('-30 days'));
-        $end_date = isset($_POST['end_date']) ? sanitize_text_field($_POST['end_date']) : wp_date('Y-m-d');
+        // v1.10.2: Use current_time() for WordPress timezone consistency
+        $start_date = isset($_POST['start_date']) ? sanitize_text_field($_POST['start_date']) : wp_date('Y-m-d', current_time('timestamp') - (30 * DAY_IN_SECONDS));
+        $end_date = isset($_POST['end_date']) ? sanitize_text_field($_POST['end_date']) : wp_date('Y-m-d', current_time('timestamp'));
 
         // Validate dates
         if (!$this->validate_date($start_date) || !$this->validate_date($end_date)) {
@@ -471,8 +473,9 @@ class SNAB_Analytics {
             wp_die(__('Permission denied.', 'sn-appointment-booking'));
         }
 
-        $start_date = isset($_REQUEST['start_date']) ? sanitize_text_field($_REQUEST['start_date']) : wp_date('Y-m-d', strtotime('-30 days'));
-        $end_date = isset($_REQUEST['end_date']) ? sanitize_text_field($_REQUEST['end_date']) : wp_date('Y-m-d');
+        // v1.10.2: Use current_time() for WordPress timezone consistency
+        $start_date = isset($_REQUEST['start_date']) ? sanitize_text_field($_REQUEST['start_date']) : wp_date('Y-m-d', current_time('timestamp') - (30 * DAY_IN_SECONDS));
+        $end_date = isset($_REQUEST['end_date']) ? sanitize_text_field($_REQUEST['end_date']) : wp_date('Y-m-d', current_time('timestamp'));
 
         // Get all appointments for export
         global $wpdb;
@@ -641,8 +644,9 @@ class SNAB_Analytics {
         ));
 
         // Default date range: last 30 days + next 30 days (to include upcoming appointments)
-        $end_date = wp_date('Y-m-d', strtotime('+30 days'));
-        $start_date = wp_date('Y-m-d', strtotime('-30 days'));
+        // v1.10.2: Use current_time() for WordPress timezone consistency
+        $end_date = wp_date('Y-m-d', current_time('timestamp') + (30 * DAY_IN_SECONDS));
+        $start_date = wp_date('Y-m-d', current_time('timestamp') - (30 * DAY_IN_SECONDS));
 
         ?>
         <div class="wrap snab-admin-wrap snab-analytics-wrap">

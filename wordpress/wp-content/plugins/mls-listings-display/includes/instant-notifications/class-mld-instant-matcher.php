@@ -181,9 +181,10 @@ class MLD_Instant_Matcher {
         foreach ($searches as $search) {
             // v6.68.15: Skip if search was created AFTER this listing was imported
             // This prevents new searches from receiving alerts for properties that existed before the search
+            // v6.75.4: Use DateTime with wp_timezone() - database stores in WP timezone, not UTC
             if (!empty($search->created_at) && !empty($listing_timestamp)) {
-                $search_created = strtotime($search->created_at);
-                $listing_modified = strtotime($listing_timestamp);
+                $search_created = (new \DateTime($search->created_at, wp_timezone()))->getTimestamp();
+                $listing_modified = (new \DateTime($listing_timestamp, wp_timezone()))->getTimestamp();
                 if ($listing_modified > 0 && $search_created > $listing_modified) {
                     $this->log("Skipping search {$search->id} for listing {$listing_id} - search created at {$search->created_at}, listing modified at {$listing_timestamp}", 'debug');
                     continue;
@@ -224,9 +225,10 @@ class MLD_Instant_Matcher {
 
         foreach ($searches as $search) {
             // v6.68.15: Skip if search was created AFTER this listing was last modified
+            // v6.75.4: Use DateTime with wp_timezone() - database stores in WP timezone, not UTC
             if (!empty($search->created_at) && !empty($listing_timestamp)) {
-                $search_created = strtotime($search->created_at);
-                $listing_modified = strtotime($listing_timestamp);
+                $search_created = (new \DateTime($search->created_at, wp_timezone()))->getTimestamp();
+                $listing_modified = (new \DateTime($listing_timestamp, wp_timezone()))->getTimestamp();
                 if ($listing_modified > 0 && $search_created > $listing_modified) {
                     continue;
                 }
@@ -262,9 +264,10 @@ class MLD_Instant_Matcher {
 
         foreach ($searches as $search) {
             // v6.68.15: Skip if search was created AFTER this listing was last modified
+            // v6.75.4: Use DateTime with wp_timezone() - database stores in WP timezone, not UTC
             if (!empty($search->created_at) && !empty($listing_timestamp)) {
-                $search_created = strtotime($search->created_at);
-                $listing_modified = strtotime($listing_timestamp);
+                $search_created = (new \DateTime($search->created_at, wp_timezone()))->getTimestamp();
+                $listing_modified = (new \DateTime($listing_timestamp, wp_timezone()))->getTimestamp();
                 if ($listing_modified > 0 && $search_created > $listing_modified) {
                     continue;
                 }
@@ -303,9 +306,10 @@ class MLD_Instant_Matcher {
 
         foreach ($searches as $search) {
             // v6.68.15: Skip if search was created AFTER this listing was last modified
+            // v6.75.4: Use DateTime with wp_timezone() - database stores in WP timezone, not UTC
             if (!empty($search->created_at) && !empty($listing_timestamp)) {
-                $search_created = strtotime($search->created_at);
-                $listing_modified = strtotime($listing_timestamp);
+                $search_created = (new \DateTime($search->created_at, wp_timezone()))->getTimestamp();
+                $listing_modified = (new \DateTime($listing_timestamp, wp_timezone()))->getTimestamp();
                 if ($listing_modified > 0 && $search_created > $listing_modified) {
                     continue;
                 }
