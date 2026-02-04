@@ -662,12 +662,77 @@
     max-height: 150px;
 }
 
-/* Date Range Select */
-.mld-date-range select {
-    padding: 4px 8px;
+/* Date Range Control - Global (v6.75.7) */
+.mld-date-range-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: 20px;
+    padding-left: 20px;
+    border-left: 1px solid #c3c4c7;
+}
+
+.mld-date-presets {
+    display: flex;
+    gap: 0;
+}
+
+.mld-date-btn {
+    padding: 6px 14px;
+    border: 1px solid #c3c4c7;
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    color: #50575e;
+    transition: all 0.15s;
+    margin-left: -1px;
+}
+
+.mld-date-btn:first-child {
+    border-radius: 4px 0 0 4px;
+    margin-left: 0;
+}
+
+.mld-date-btn:last-child {
+    border-radius: 0 4px 4px 0;
+}
+
+.mld-date-btn:hover {
+    background: #f0f0f1;
+    color: #1d2327;
+    z-index: 1;
+}
+
+.mld-date-btn.active {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: #fff;
+    z-index: 2;
+}
+
+.mld-custom-dates {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mld-date-input {
+    padding: 5px 8px;
     border: 1px solid #c3c4c7;
     border-radius: 4px;
     font-size: 13px;
+    max-width: 145px;
+}
+
+.mld-date-separator {
+    color: #646970;
+    font-size: 13px;
+}
+
+.mld-chart-range-label {
+    font-size: 12px;
+    color: #646970;
+    font-weight: 400;
 }
 
 /* Button Icons */
@@ -801,6 +866,13 @@
     .mld-stats-row {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    .mld-date-range-control {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+        flex-wrap: wrap;
+    }
 }
 
 @media (max-width: 782px) {
@@ -830,6 +902,16 @@
     }
 
     .mld-platform-filter {
+        flex-wrap: wrap;
+    }
+
+    .mld-date-range-control {
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .mld-custom-dates {
         flex-wrap: wrap;
     }
 

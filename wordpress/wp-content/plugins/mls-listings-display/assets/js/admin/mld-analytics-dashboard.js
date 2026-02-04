@@ -20,6 +20,8 @@
             ios: true
         },
         dateRange: '7d',
+        startDate: null,
+        endDate: null,
         activityItems: [],
         // v6.47.0: Activity stream state
         activity: {
@@ -222,10 +224,51 @@
             refreshData();
         });
 
-        // Date range selector
-        $('#mld-chart-range').on('change', function() {
-            state.dateRange = this.value;
-            loadTrendsData();
+        // v6.75.7: Date range preset buttons
+        $('.mld-date-btn').on('click', function() {
+            var range = $(this).data('range');
+            $('.mld-date-btn').removeClass('active');
+            $(this).addClass('active');
+
+            if (range === 'custom') {
+                $('#mld-custom-dates').show();
+                if (!$('#mld-start-date').val()) {
+                    var defaultStart = new Date();
+                    defaultStart.setDate(defaultStart.getDate() - 14);
+                    $('#mld-start-date').val(defaultStart.toISOString().split('T')[0]);
+                }
+            } else {
+                $('#mld-custom-dates').hide();
+                state.dateRange = range;
+                state.startDate = null;
+                state.endDate = null;
+                refreshAllDashboardData();
+            }
+        });
+
+        // v6.75.7: Apply custom date range
+        $('#mld-apply-dates').on('click', function() {
+            var startDate = $('#mld-start-date').val();
+            var endDate = $('#mld-end-date').val();
+
+            if (!startDate || !endDate) {
+                alert('Please select both a start and end date.');
+                return;
+            }
+            if (startDate > endDate) {
+                alert('Start date must be before end date.');
+                return;
+            }
+            var diffDays = Math.ceil((new Date(endDate) - new Date(startDate)) / 86400000);
+            if (diffDays > 90) {
+                alert('Maximum custom range is 90 days.');
+                return;
+            }
+
+            state.dateRange = 'custom';
+            state.startDate = startDate;
+            state.endDate = endDate;
+            refreshAllDashboardData();
         });
 
         // Pause/resume activity stream
@@ -326,6 +369,84 @@
     }
 
     /**
+     * v6.75.7: Refresh all date-sensitive dashboard data
+     */
+    function refreshAllDashboardData() {
+        $('#mld-chart-range-label').text(getDateRangeLabel());
+        loadTrendsData();
+        loadTopContent();
+        loadTrafficSources();
+        loadGeoData($('.mld-geo-tab.active').data('tab') || 'cities');
+        loadTopSearches();
+    }
+
+    /**
+     * v6.75.7: Get API params for current date range
+     */
+    function getDateRangeParams() {
+        var params = {};
+
+        if (state.dateRange === 'custom' && state.startDate && state.endDate) {
+            params.start_date = state.startDate;
+            params.end_date = state.endDate;
+        } else {
+            params.range = state.dateRange;
+            // Compute start_date/end_date for endpoints that don't understand 'range'
+            var now = new Date();
+            var end = now.toISOString().split('T')[0];
+            var start;
+            switch (state.dateRange) {
+                case '24h':
+                    start = new Date(now.getTime() - 86400000);
+                    break;
+                case '30d':
+                    start = new Date(now.getTime() - 30 * 86400000);
+                    break;
+                case '7d':
+                default:
+                    start = new Date(now.getTime() - 7 * 86400000);
+                    break;
+            }
+            params.start_date = start.toISOString().split('T')[0];
+            params.end_date = end;
+        }
+
+        // Auto-detect granularity
+        var diffDays = Math.ceil((new Date(params.end_date) - new Date(params.start_date)) / 86400000);
+        params.granularity = (diffDays <= 1) ? 'hourly' : 'daily';
+
+        return params;
+    }
+
+    /**
+     * v6.75.7: Get human-readable label for current date range
+     */
+    function getDateRangeLabel() {
+        switch (state.dateRange) {
+            case '24h': return 'Last 24 Hours';
+            case '7d':  return 'Last 7 Days';
+            case '30d': return 'Last 30 Days';
+            case 'custom':
+                if (state.startDate && state.endDate) {
+                    if (state.startDate === state.endDate) {
+                        return formatDateLabel(state.startDate);
+                    }
+                    return formatDateLabel(state.startDate) + ' \u2013 ' + formatDateLabel(state.endDate);
+                }
+                return 'Custom Range';
+            default: return 'Last 7 Days';
+        }
+    }
+
+    /**
+     * v6.75.7: Format YYYY-MM-DD as readable label
+     */
+    function formatDateLabel(dateStr) {
+        var d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    }
+
+    /**
      * Update last updated timestamp
      */
     function updateLastUpdated() {
@@ -402,7 +523,7 @@
      * Load traffic trends data
      */
     function loadTrendsData() {
-        apiRequest('trends', { range: state.dateRange }).done(function(response) {
+        apiRequest('trends', getDateRangeParams()).done(function(response) {
             if (response.success && state.charts.traffic) {
                 const data = response.data;
 
@@ -949,15 +1070,17 @@
      * Load top content
      */
     function loadTopContent() {
+        var dateParams = getDateRangeParams();
+
         // Top pages
-        apiRequest('top-content', { type: 'pages' }).done(function(response) {
+        apiRequest('top-content', $.extend({ type: 'pages' }, dateParams)).done(function(response) {
             if (response.success) {
                 renderTopTable('#mld-top-pages tbody', response.data, ['page_path', 'views', 'avg_time_on_page']);
             }
         });
 
         // Top properties - use enhanced renderer
-        apiRequest('top-content', { type: 'properties' }).done(function(response) {
+        apiRequest('top-content', $.extend({ type: 'properties' }, dateParams)).done(function(response) {
             if (response.success) {
                 renderTopProperties('#mld-top-properties tbody', response.data);
             }
@@ -971,7 +1094,8 @@
      * Load top searches (v6.54.0)
      */
     function loadTopSearches() {
-        apiRequest('top-searches', { limit: 10 }).done(function(response) {
+        var dateParams = getDateRangeParams();
+        apiRequest('top-searches', $.extend({ limit: 10 }, dateParams)).done(function(response) {
             if (response.success) {
                 renderTopSearches('#mld-top-searches tbody', response.data);
             }
@@ -1178,7 +1302,7 @@
      * Load traffic sources
      */
     function loadTrafficSources() {
-        apiRequest('traffic-sources').done(function(response) {
+        apiRequest('traffic-sources', getDateRangeParams()).done(function(response) {
             if (response.success) {
                 const data = response.data || [];
 
@@ -1217,7 +1341,7 @@
      * Load geographic data
      */
     function loadGeoData(type) {
-        apiRequest('geographic', { type: type }).done(function(response) {
+        apiRequest('geographic', $.extend({ type: type }, getDateRangeParams())).done(function(response) {
             if (response.success) {
                 const data = response.data || [];
                 const total = data.reduce(function(sum, d) { return sum + (parseInt(d.sessions) || 0); }, 0);

@@ -32,6 +32,24 @@ $stats = $dashboard->get_quick_stats();
             <input type="checkbox" id="mld-filter-ios" checked>
             <span class="mld-platform-badge mld-platform-ios">iOS App</span>
         </label>
+        <!-- v6.75.7: Dashboard-wide Date Range Control -->
+        <div class="mld-date-range-control">
+            <div class="mld-date-presets">
+                <button type="button" class="mld-date-btn" data-range="24h">24h</button>
+                <button type="button" class="mld-date-btn active" data-range="7d">7 Days</button>
+                <button type="button" class="mld-date-btn" data-range="30d">30 Days</button>
+                <button type="button" class="mld-date-btn" data-range="custom">Custom</button>
+            </div>
+            <div class="mld-custom-dates" id="mld-custom-dates" style="display: none;">
+                <input type="date" id="mld-start-date" class="mld-date-input"
+                       max="<?php echo esc_attr(wp_date('Y-m-d')); ?>">
+                <span class="mld-date-separator">to</span>
+                <input type="date" id="mld-end-date" class="mld-date-input"
+                       value="<?php echo esc_attr(wp_date('Y-m-d')); ?>"
+                       max="<?php echo esc_attr(wp_date('Y-m-d')); ?>">
+                <button type="button" class="button button-primary" id="mld-apply-dates">Apply</button>
+            </div>
+        </div>
         <span class="mld-last-updated">
             Last updated: <span id="mld-last-update-time">--</span>
         </span>
@@ -115,13 +133,7 @@ $stats = $dashboard->get_quick_stats();
         <div class="mld-card mld-card-chart">
             <div class="mld-card-header">
                 <h3>Traffic Trends</h3>
-                <div class="mld-date-range">
-                    <select id="mld-chart-range">
-                        <option value="24h">Last 24 Hours</option>
-                        <option value="7d" selected>Last 7 Days</option>
-                        <option value="30d">Last 30 Days</option>
-                    </select>
-                </div>
+                <span class="mld-chart-range-label" id="mld-chart-range-label">Last 7 Days</span>
             </div>
             <div class="mld-card-body">
                 <canvas id="mld-traffic-chart" height="300"></canvas>
