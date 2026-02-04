@@ -38,6 +38,7 @@ struct ServerNotification: Decodable {
     let savedSearchId: Int?
     let savedSearchName: String?
     let appointmentId: Int?
+    let clientId: Int?
     let sentAt: Date
     let isRead: Bool
     let readAt: Date?
@@ -54,6 +55,7 @@ struct ServerNotification: Decodable {
         case savedSearchId = "saved_search_id"
         case savedSearchName = "saved_search_name"
         case appointmentId = "appointment_id"
+        case clientId = "client_id"
         case sentAt = "sent_at"
         case isRead = "is_read"
         case readAt = "read_at"
@@ -115,6 +117,13 @@ struct ServerNotification: Decodable {
             #endif
         }
 
+        // Validate navigation data for agent activity notifications
+        if type == .agentActivity && clientId == nil && listingId == nil && listingKey == nil {
+            #if DEBUG
+            debugLog("⚠️ NotificationStore: Agent activity notification (id: \(id)) missing client_id and listing data - navigation will fail")
+            #endif
+        }
+
         // Use server ID as the notification ID to avoid duplicates
         return NotificationItem(
             id: "server_\(id)",
@@ -129,7 +138,7 @@ struct ServerNotification: Decodable {
             dismissedAt: dismissedAt,
             savedSearchId: savedSearchId,
             appointmentId: appointmentId,
-            clientId: nil,
+            clientId: clientId,
             listingId: listingId,
             listingKey: listingKey,
             listingCount: nil,
@@ -187,8 +196,12 @@ class NotificationStore: ObservableObject {
     // Pending navigation from push notification tap
     @Published var pendingPropertyListingId: String?
     @Published var pendingPropertyListingKey: String?
+    @Published var pendingAppointmentId: Int?
+    @Published var pendingClientId: Int?
 
     private let storageKey = "com.bmnboston.notifications"
+    private let pendingAppointmentKey = "com.bmnboston.pendingAppointmentId"
+    private let pendingClientKey = "com.bmnboston.pendingClientId"
     private let lastSyncKey = "com.bmnboston.notifications.lastSync"
 
     /// Maximum notifications to keep in local storage.
@@ -206,6 +219,23 @@ class NotificationStore: ObservableObject {
 
     private init() {
         loadNotifications()
+        loadPendingNavigation()
+    }
+
+    /// Load any persisted pending navigation from UserDefaults (for cold launch)
+    private func loadPendingNavigation() {
+        if let pendingAppointment = UserDefaults.standard.object(forKey: pendingAppointmentKey) as? Int {
+            self.pendingAppointmentId = pendingAppointment
+            #if DEBUG
+            debugLog("🔔 NotificationStore: Loaded pending appointment navigation - appointmentId: \(pendingAppointment)")
+            #endif
+        }
+        if let pendingClient = UserDefaults.standard.object(forKey: pendingClientKey) as? Int {
+            self.pendingClientId = pendingClient
+            #if DEBUG
+            debugLog("🔔 NotificationStore: Loaded pending client navigation - clientId: \(pendingClient)")
+            #endif
+        }
     }
 
     /// Set pending property navigation (called from AppDelegate when notification is tapped)
@@ -224,6 +254,52 @@ class NotificationStore: ObservableObject {
         #endif
         self.pendingPropertyListingId = nil
         self.pendingPropertyListingKey = nil
+    }
+
+    /// Set pending appointment navigation (called from AppDelegate when notification is tapped)
+    /// Also persists to UserDefaults for cold launch support
+    func setPendingAppointmentNavigation(appointmentId: Int?) {
+        #if DEBUG
+        debugLog("🔔 NotificationStore: setPendingAppointmentNavigation - appointmentId: \(appointmentId ?? -1)")
+        #endif
+        self.pendingAppointmentId = appointmentId
+        if let id = appointmentId {
+            UserDefaults.standard.set(id, forKey: pendingAppointmentKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: pendingAppointmentKey)
+        }
+    }
+
+    /// Clear pending appointment navigation after it's been handled
+    func clearPendingAppointmentNavigation() {
+        #if DEBUG
+        debugLog("🔔 NotificationStore: clearPendingAppointmentNavigation")
+        #endif
+        self.pendingAppointmentId = nil
+        UserDefaults.standard.removeObject(forKey: pendingAppointmentKey)
+    }
+
+    /// Set pending client navigation (called from AppDelegate when notification is tapped)
+    /// Also persists to UserDefaults for cold launch support
+    func setPendingClientNavigation(clientId: Int?) {
+        #if DEBUG
+        debugLog("🔔 NotificationStore: setPendingClientNavigation - clientId: \(clientId ?? -1)")
+        #endif
+        self.pendingClientId = clientId
+        if let id = clientId {
+            UserDefaults.standard.set(id, forKey: pendingClientKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: pendingClientKey)
+        }
+    }
+
+    /// Clear pending client navigation after it's been handled
+    func clearPendingClientNavigation() {
+        #if DEBUG
+        debugLog("🔔 NotificationStore: clearPendingClientNavigation")
+        #endif
+        self.pendingClientId = nil
+        UserDefaults.standard.removeObject(forKey: pendingClientKey)
     }
 
     // MARK: - Public Methods

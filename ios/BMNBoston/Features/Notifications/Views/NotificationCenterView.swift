@@ -279,17 +279,19 @@ struct NotificationCenterView: View {
             }
 
         case .appointmentReminder:
-            if notification.appointmentId != nil {
+            if let appointmentId = notification.appointmentId {
                 dismiss()
-                // Navigate to appointments
+                // Set pending appointment navigation and switch to Appointments tab
+                NotificationStore.shared.setPendingAppointmentNavigation(appointmentId: appointmentId)
                 NotificationCenter.default.post(name: .switchToAppointmentsTab, object: nil)
             }
 
         case .agentActivity:
-            if notification.clientId != nil {
+            if let clientId = notification.clientId {
                 dismiss()
-                // Navigate to clients
-                NotificationCenter.default.post(name: .switchToProfileTab, object: nil)
+                // Set pending client navigation and switch to My Clients tab
+                NotificationStore.shared.setPendingClientNavigation(clientId: clientId)
+                NotificationCenter.default.post(name: .switchToMyClientsTab, object: nil)
             } else if notification.listingKey != nil || notification.listingId != nil {
                 dismiss()
                 // Navigate to property detail

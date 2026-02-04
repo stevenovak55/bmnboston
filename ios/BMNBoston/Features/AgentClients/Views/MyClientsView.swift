@@ -12,6 +12,7 @@ import SwiftUI
 
 struct MyClientsView: View {
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var notificationStore = NotificationStore.shared
     @State private var clients: [AgentClient] = []
     @State private var metrics: AgentMetrics?
     @State private var isLoading = true
@@ -19,6 +20,7 @@ struct MyClientsView: View {
     @State private var selectedClient: AgentClient?
     @State private var showCreateClient = false
     @State private var analyticsClient: AgentClient?
+    @State private var pendingNavigationClientId: Int?
 
     var body: some View {
         NavigationStack {
@@ -54,6 +56,24 @@ struct MyClientsView: View {
             }
             .task {
                 await loadClients()
+            }
+            .onAppear {
+                checkPendingClientNavigation()
+            }
+            .onChange(of: notificationStore.pendingClientId) { _ in
+                checkPendingClientNavigation()
+            }
+            .onChange(of: clients) { _ in
+                // If we have a pending navigation and clients just loaded, try again
+                if pendingNavigationClientId != nil {
+                    checkPendingClientNavigation()
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .switchToMyClientsTab)) { _ in
+                // Small delay to ensure tab switch animation completes
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    checkPendingClientNavigation()
+                }
             }
             .sheet(item: $selectedClient) { client in
                 ClientDetailView(client: client, dismissSheet: {
@@ -189,6 +209,54 @@ struct MyClientsView: View {
         }
 
         isLoading = false
+    }
+
+    // MARK: - Pending Navigation
+
+    /// Checks for pending client navigation from push notification and navigates to the specific client
+    private func checkPendingClientNavigation() {
+        guard let clientId = notificationStore.pendingClientId else { return }
+
+        #if DEBUG
+        print("📍 MyClientsView: Checking pending client navigation - clientId: \(clientId)")
+        #endif
+
+        // Clear the pending state immediately to prevent duplicate navigation
+        notificationStore.clearPendingClientNavigation()
+
+        // Store locally in case clients haven't loaded yet
+        pendingNavigationClientId = clientId
+
+        // Try to find and select the client
+        if let client = clients.first(where: { $0.id == clientId }) {
+            #if DEBUG
+            print("📍 MyClientsView: Found client, selecting it")
+            #endif
+            pendingNavigationClientId = nil
+            selectedClient = client
+        } else {
+            #if DEBUG
+            print("📍 MyClientsView: Client not found in list, will retry when clients load")
+            #endif
+            // Refresh clients to ensure we have the latest data
+            Task {
+                await loadClients(forceRefresh: true)
+                // After refresh, try to find the client again
+                if let client = clients.first(where: { $0.id == clientId }) {
+                    await MainActor.run {
+                        pendingNavigationClientId = nil
+                        selectedClient = client
+                    }
+                } else {
+                    #if DEBUG
+                    print("📍 MyClientsView: Client \(clientId) not found even after refresh")
+                    #endif
+                    await MainActor.run {
+                        pendingNavigationClientId = nil
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -2,7 +2,7 @@
 
 Comprehensive reference for AI-assisted development.
 
-**Current Project Version:** 399 (Marketing Version 1.7)
+**Current Project Version:** 400 (Marketing Version 1.7)
 **Last Updated:** February 4, 2026
 
 ---

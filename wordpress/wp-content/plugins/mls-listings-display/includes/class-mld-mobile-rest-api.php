@@ -14599,6 +14599,8 @@ class MLD_Mobile_REST_API {
             $image_url = null;
             $saved_search_id = null;
             $saved_search_name = null;
+            $appointment_id = null;
+            $client_id = null;
 
             if (is_array($payload)) {
                 $listing_id = isset($payload['listing_id']) ? $payload['listing_id'] : null;
@@ -14606,6 +14608,8 @@ class MLD_Mobile_REST_API {
                 $image_url = isset($payload['image_url']) ? $payload['image_url'] : null;
                 $saved_search_id = isset($payload['saved_search_id']) ? $payload['saved_search_id'] : null;
                 $saved_search_name = isset($payload['saved_search_name']) ? $payload['saved_search_name'] : null;
+                $appointment_id = isset($payload['appointment_id']) ? $payload['appointment_id'] : null;
+                $client_id = isset($payload['client_id']) ? $payload['client_id'] : null;
 
                 // Also check for photo_url as fallback for image
                 if (empty($image_url) && isset($payload['photo_url'])) {
@@ -14623,6 +14627,8 @@ class MLD_Mobile_REST_API {
                 'image_url' => $image_url,
                 'saved_search_id' => $saved_search_id !== null ? (int) $saved_search_id : null,
                 'saved_search_name' => $saved_search_name,
+                'appointment_id' => $appointment_id !== null ? (int) $appointment_id : null,
+                'client_id' => $client_id !== null ? (int) $client_id : null,
                 'sent_at' => self::format_datetime_iso8601($row->created_at),
                 'is_read' => (bool) $row->is_read,
                 'read_at' => self::format_datetime_iso8601($row->read_at),

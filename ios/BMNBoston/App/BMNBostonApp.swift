@@ -467,14 +467,46 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                 NotificationCenter.default.post(name: .switchToSearchTab, object: nil)
             }
 
-            // Appointment navigation
-            if userInfo["appointment_id"] != nil {
-                NotificationCenter.default.post(name: .switchToAppointmentsTab, object: nil)
+            // Appointment navigation (appointment_reminder, tour_requested)
+            // Extract appointment_id as Int from various possible types
+            var appointmentIdInt: Int?
+            if let id = userInfo["appointment_id"] as? Int {
+                appointmentIdInt = id
+            } else if let id = userInfo["appointment_id"] as? NSNumber {
+                appointmentIdInt = id.intValue
+            } else if let idString = userInfo["appointment_id"] as? String, let id = Int(idString) {
+                appointmentIdInt = id
             }
 
-            // Client activity navigation
-            if userInfo["client_id"] != nil {
-                NotificationCenter.default.post(name: .switchToProfileTab, object: nil)
+            if let appointmentId = appointmentIdInt {
+                #if DEBUG
+                debugLog("📍 Setting pending appointment navigation - appointmentId: \(appointmentId)")
+                #endif
+                NotificationStore.shared.setPendingAppointmentNavigation(appointmentId: appointmentId)
+                NotificationCenter.default.post(name: .switchToAppointmentsTab, object: nil)
+                completionHandler()
+                return
+            }
+
+            // Client activity navigation (agent_activity, client_login)
+            // Extract client_id as Int from various possible types
+            var clientIdInt: Int?
+            if let id = userInfo["client_id"] as? Int {
+                clientIdInt = id
+            } else if let id = userInfo["client_id"] as? NSNumber {
+                clientIdInt = id.intValue
+            } else if let idString = userInfo["client_id"] as? String, let id = Int(idString) {
+                clientIdInt = id
+            }
+
+            if let clientId = clientIdInt {
+                #if DEBUG
+                debugLog("📍 Setting pending client navigation - clientId: \(clientId)")
+                #endif
+                NotificationStore.shared.setPendingClientNavigation(clientId: clientId)
+                NotificationCenter.default.post(name: .switchToMyClientsTab, object: nil)
+                completionHandler()
+                return
             }
 
             completionHandler()

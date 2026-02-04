@@ -6,8 +6,8 @@ Single source of truth for all component versions. Update this file when bumping
 
 | Component | Version | Updated | Source of Truth |
 |-----------|---------|---------|-----------------|
-| iOS App | v399 (1.7) | Feb 4, 2026 | `ios/BMNBoston.xcodeproj/project.pbxproj` |
-| MLS Listings Display | v6.75.5 | Feb 4, 2026 | `mls-listings-display/version.json` |
+| iOS App | v400 (1.7) | Feb 4, 2026 | `ios/BMNBoston.xcodeproj/project.pbxproj` |
+| MLS Listings Display | v6.75.6 | Feb 4, 2026 | `mls-listings-display/version.json` |
 | BMN Schools | v0.6.39 | Jan 21, 2026 | `bmn-schools/version.json` |
 | SN Appointments | v1.10.2 | Feb 4, 2026 | `sn-appointment-booking/version.json` |
 | Exclusive Listings | v1.5.3 | Jan 27, 2026 | `exclusive-listings/version.json` |

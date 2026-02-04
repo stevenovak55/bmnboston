@@ -11,10 +11,12 @@ import SwiftUI
 struct AppointmentsView: View {
     @StateObject private var viewModel = AppointmentViewModel()
     @EnvironmentObject var authViewModel: AuthViewModel
+    @ObservedObject private var notificationStore = NotificationStore.shared
     @State private var showBookingSheet = false
     @State private var selectedAppointment: Appointment?
     @State private var showCancelConfirmation = false
     @State private var cancelReason = ""
+    @State private var pendingNavigationAppointmentId: Int?
 
     var body: some View {
         NavigationStack {
@@ -52,6 +54,72 @@ struct AppointmentsView: View {
             if authViewModel.isAuthenticated {
                 await viewModel.loadAppointments()
                 await viewModel.loadAppointmentTypes()
+            }
+        }
+        .onAppear {
+            checkPendingAppointmentNavigation()
+        }
+        .onChange(of: notificationStore.pendingAppointmentId) { _ in
+            checkPendingAppointmentNavigation()
+        }
+        .onChange(of: viewModel.appointments.count) { _ in
+            // If we have a pending navigation and appointments just loaded, try again
+            if pendingNavigationAppointmentId != nil {
+                checkPendingAppointmentNavigation()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .switchToAppointmentsTab)) { _ in
+            // Small delay to ensure tab switch animation completes
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                checkPendingAppointmentNavigation()
+            }
+        }
+    }
+
+    // MARK: - Pending Navigation
+
+    /// Checks for pending appointment navigation from push notification and navigates to the specific appointment
+    private func checkPendingAppointmentNavigation() {
+        guard let appointmentId = notificationStore.pendingAppointmentId else { return }
+
+        #if DEBUG
+        print("📍 AppointmentsView: Checking pending appointment navigation - appointmentId: \(appointmentId)")
+        #endif
+
+        // Clear the pending state immediately to prevent duplicate navigation
+        notificationStore.clearPendingAppointmentNavigation()
+
+        // Store locally in case appointments haven't loaded yet
+        pendingNavigationAppointmentId = appointmentId
+
+        // Try to find and select the appointment
+        if let appointment = viewModel.appointments.first(where: { $0.id == appointmentId }) {
+            #if DEBUG
+            print("📍 AppointmentsView: Found appointment, selecting it")
+            #endif
+            pendingNavigationAppointmentId = nil
+            selectedAppointment = appointment
+        } else {
+            #if DEBUG
+            print("📍 AppointmentsView: Appointment not found in list, will retry when appointments load")
+            #endif
+            // Refresh appointments to ensure we have the latest data
+            Task {
+                await viewModel.loadAppointments(forceRefresh: true)
+                // After refresh, try to find the appointment again
+                if let appointment = viewModel.appointments.first(where: { $0.id == appointmentId }) {
+                    await MainActor.run {
+                        pendingNavigationAppointmentId = nil
+                        selectedAppointment = appointment
+                    }
+                } else {
+                    #if DEBUG
+                    print("📍 AppointmentsView: Appointment \(appointmentId) not found even after refresh")
+                    #endif
+                    await MainActor.run {
+                        pendingNavigationAppointmentId = nil
+                    }
+                }
             }
         }
     }
