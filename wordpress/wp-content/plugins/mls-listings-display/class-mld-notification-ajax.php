@@ -682,7 +682,10 @@ class MLD_Notification_Ajax {
             return '';
         }
 
-        $timestamp = strtotime(get_date_from_gmt($datetime));
+        // v6.75.4: Use DateTime with wp_timezone() for correct timezone handling
+        // Database stores in WP timezone, strtotime() interprets as UTC causing 5-hour offset
+        $dt = new \DateTime($datetime, wp_timezone());
+        $timestamp = $dt->getTimestamp();
         $diff = current_time('timestamp') - $timestamp;
 
         if ($diff < 60) {
@@ -712,7 +715,9 @@ class MLD_Notification_Ajax {
             return '';
         }
 
-        $timestamp = strtotime(get_date_from_gmt($datetime));
+        // v6.75.4: Use DateTime with wp_timezone() for correct timezone handling
+        $dt = new \DateTime($datetime, wp_timezone());
+        $timestamp = $dt->getTimestamp();
         return date_i18n('F j, Y \a\t g:i a', $timestamp);
     }
 }
