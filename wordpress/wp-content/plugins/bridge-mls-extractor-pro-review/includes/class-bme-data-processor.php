@@ -453,6 +453,38 @@ class BME_Data_Processor {
         }
 
         $table = $this->db_manager->get_table('listings' . $table_suffix);
+
+        // v4.0.37: Check if listing exists in the OPPOSITE table (prevents duplicates between active/archive)
+        // When a listing's status changes, it may exist in the wrong table
+        $opposite_suffix = ($table_suffix === '_archive') ? '' : '_archive';
+        $opposite_table = $this->db_manager->get_table('listings' . $opposite_suffix);
+        $existing_in_opposite = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$opposite_table} WHERE listing_key = %s",
+            $data['listing_key']
+        ));
+
+        if ($existing_in_opposite) {
+            // Listing exists in opposite table - check if it also exists in target table
+            $existing_in_target = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM {$table} WHERE listing_key = %s",
+                $data['listing_key']
+            ));
+
+            if ($existing_in_target) {
+                // v4.0.37: EXISTS IN BOTH tables - delete from wrong table to resolve duplicate
+                error_log("[BME Data Processor] v4.0.37 Fix: Listing {$data['listing_id']} exists in BOTH tables. Deleting from opposite table.");
+
+                // Delete listing and all related data from the opposite table
+                $this->delete_listing_from_table($existing_in_opposite, $data['listing_id'], $opposite_suffix);
+            } else {
+                // Only exists in opposite table - delete from opposite (normal insert will add to correct table)
+                error_log("[BME Data Processor] v4.0.37 Fix: Listing {$data['listing_id']} exists in wrong table ({$opposite_suffix}). Moving to correct table.");
+
+                // Delete from opposite table so we can insert fresh into correct table
+                $this->delete_listing_from_table($existing_in_opposite, $data['listing_id'], $opposite_suffix);
+            }
+        }
+
         $existing_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$table} WHERE listing_key = %s", $data['listing_key']));
 
         if ($existing_id) {
@@ -2601,6 +2633,40 @@ class BME_Data_Processor {
 
             error_log("BME: Moved summary for listing {$mls_listing_id} " . ($to_active ? 'to active' : 'to archive'));
         }
+    }
+
+    /**
+     * Delete a listing and all its related data from a specific table set (active or archive)
+     * Added in v4.0.37 to clean up duplicate listings that exist in both tables
+     *
+     * @param int $db_id Internal database ID of the listing
+     * @param int $mls_listing_id MLS listing number (used for summary table which uses this as key)
+     * @param string $table_suffix '' for active tables, '_archive' for archive tables
+     */
+    private function delete_listing_from_table($db_id, $mls_listing_id, $table_suffix) {
+        global $wpdb;
+
+        // Delete from main listings table
+        $listings_table = $this->db_manager->get_table('listings' . $table_suffix);
+        $wpdb->delete($listings_table, ['id' => $db_id]);
+
+        // Delete from related tables (they use MLS listing_id as foreign key)
+        $related_tables = ['listing_details', 'listing_location', 'listing_financial', 'listing_features'];
+        foreach ($related_tables as $table_base) {
+            $table = $this->db_manager->get_table($table_base . $table_suffix);
+            // Related tables store MLS listing_id, not the internal DB id
+            $wpdb->delete($table, ['listing_id' => $mls_listing_id]);
+        }
+
+        // Delete from summary table (uses MLS listing_id as primary identifier)
+        if ($table_suffix === '_archive') {
+            $summary_table = $wpdb->prefix . 'bme_listing_summary_archive';
+        } else {
+            $summary_table = $wpdb->prefix . 'bme_listing_summary';
+        }
+        $wpdb->delete($summary_table, ['listing_id' => $mls_listing_id]);
+
+        error_log("BME v4.0.37: Deleted listing {$mls_listing_id} (DB ID: {$db_id}) and related data from {$table_suffix} tables");
     }
 
     /**

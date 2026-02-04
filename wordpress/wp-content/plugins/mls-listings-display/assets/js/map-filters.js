@@ -316,8 +316,6 @@ const MLD_Filters = {
       $('#school_grade').val(grade);
       MLD_Map_App.modalFilters.school_grade = grade;
 
-      console.log('[District Rating Debug] Selected grade:', grade);
-
       // Immediately update filter tags
       MLD_Filters.renderFilterTags();
 
@@ -332,8 +330,6 @@ const MLD_Filters = {
       const $toggle = $(this);
       const toggleId = $toggle.attr('id');
       const isChecked = $toggle.is(':checked');
-
-      console.log('[School Filter Debug] Toggle changed:', toggleId, 'checked:', isChecked);
 
       // Update modal state
       MLD_Map_App.modalFilters[toggleId] = isChecked;
@@ -360,10 +356,8 @@ const MLD_Filters = {
       MLD_Filters.renderFilterTags();
 
       // Update count
-      console.log('[School Filter Debug] Triggering count update');
       clearTimeout(MLD_Map_App.countUpdateTimer);
       MLD_Map_App.countUpdateTimer = setTimeout(function() {
-        console.log('[School Filter Debug] Count update timer fired');
         MLD_API.updateFilterCount();
       }, 400);
     });
@@ -675,7 +669,6 @@ const MLD_Filters = {
     const state = {};
     state.price_min = $('#bme-filter-price-min').data('raw-value') || '';
     state.price_max = $('#bme-filter-price-max').data('raw-value') || '';
-    console.log('[getModalState Debug] Price inputs - min:', state.price_min, 'max:', state.price_max);
     // v6.72.1: Beds now uses min-only to align with iOS
     state.beds_min = $('#bme-filter-beds button.active').data('value') || 0;
     state.baths_min = $('#bme-filter-baths button.active').data('value') || 0;
@@ -778,9 +771,7 @@ const MLD_Filters = {
   },
 
   applyModalFilters() {
-    console.log('[Apply Filters Debug] BEFORE getModalState, modalFilters:', JSON.parse(JSON.stringify(MLD_Map_App.modalFilters)));
     MLD_Filters.getModalState();
-    console.log('[Apply Filters Debug] AFTER getModalState, modalFilters:', JSON.parse(JSON.stringify(MLD_Map_App.modalFilters)));
     // Clear specific property search flags when applying other filters
     MLD_Map_App.isSpecificPropertySearch = false;
     MLD_Map_App.lastSearchType = null;
@@ -968,7 +959,6 @@ const MLD_Filters = {
   },
 
   getCombinedFilters(currentModalState = MLD_Map_App.modalFilters, excludeKeys = []) {
-    console.log('[getCombinedFilters Debug] Input modalState:', JSON.parse(JSON.stringify(currentModalState)));
     const combined = {};
     for (const type in MLD_Map_App.keywordFilters) {
       if (MLD_Map_App.keywordFilters[type].size > 0)
@@ -1054,7 +1044,6 @@ const MLD_Filters = {
     // School quality filters (v6.30.3) - now use direct API parameter names
     // No mapping needed - near_a_elementary, near_ab_elementary, etc. pass through directly
 
-    console.log('[getCombinedFilters Debug] Returning finalFilters:', JSON.parse(JSON.stringify(finalFilters)));
     return finalFilters;
   },
 
@@ -1294,7 +1283,6 @@ const MLD_Filters = {
     app.shouldFitToFilterResults = true;
     // Also store the timestamp to help debug timing issues
     app.fitToFilterResultsTimestamp = Date.now();
-    console.log('[FIT BOUNDS] Flag SET in addKeywordFilter for type:', type, 'value:', value, 'timestamp:', app.fitToFilterResultsTimestamp);
 
     jQuery('#bme-search-input, #bme-search-input-modal').val('');
     jQuery('#bme-autocomplete-suggestions, #bme-autocomplete-suggestions-modal').hide().empty();
@@ -1393,7 +1381,6 @@ const MLD_Filters = {
     // For City/Neighborhood filter changes, fit bounds to show the new area
     if (type === 'City' || type === 'Neighborhood') {
       MLD_Map_App.shouldFitToFilterResults = true;
-      console.log('[FIT BOUNDS] Flag SET in removeFilter for type:', type, 'value:', value);
     }
 
     MLD_API.refreshMapListings(true);
