@@ -6,10 +6,10 @@ Google Calendar-integrated appointment booking system.
 
 | Setting | Value |
 |---------|-------|
-| Version | 1.9.7 |
+| Version | 1.10.0 |
 | API Namespace | `/wp-json/snab/v1` |
 | Main File | `sn-appointment-booking.php` |
-| Current Phase | 16 - Cross-Platform REST API |
+| Current Phase | 17 - Multi-Attendee Booking |
 
 ## Key Files
 
@@ -85,6 +85,7 @@ curl "https://bmnboston.com/wp-json/snab/v1/appointments" \
 | `wp_snab_appointment_types` | Type configurations |
 | `wp_snab_availability_rules` | Staff availability |
 | `wp_snab_appointments` | Booked appointments |
+| `wp_snab_appointment_attendees` | Multi-attendee support (v1.10.0) |
 | `wp_snab_notifications_log` | Email/push history |
 
 ## Version Updates

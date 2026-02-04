@@ -2,7 +2,7 @@
 
 Registry of all completed feature work for BMN Boston platform.
 
-**Last Updated:** 2026-01-21
+**Last Updated:** 2026-02-03
 
 ---
 
@@ -10,12 +10,108 @@ Registry of all completed feature work for BMN Boston platform.
 
 | Feature | Completed | Version | Documentation |
 |---------|-----------|---------|---------------|
+| Multi-Attendee Appointments | 2026-02-03 | v1.10.0 | [Details below](#multi-attendee-appointments-v1100) |
 | BMN Schools Plugin | 2026-01-21 | v0.6.39 | [Details below](#bmn-schools-plugin-v0639) |
 | Agent-Client System | 2026-01-12 | v6.57.0 | [Details below](#agent-client-system-v6570) |
 | Site Analytics | 2026-01-04 | v6.39.11 | [Details below](#site-analytics-v63911) |
 | iOS/Web Filter Alignment | 2026-01-11 | v6.56.0 | [Details below](#iosweb-filter-alignment-v6560) |
 | App Store Promotion | 2026-01-14 | v6.62.2 | [Details below](#app-store-promotion-v6622) |
 | Unified Signup Experience | 2026-01-14 | v6.62.0 | [Details below](#unified-signup-experience-v6620) |
+
+---
+
+## Multi-Attendee Appointments (v1.10.0)
+
+**Completed:** 2026-02-03
+**Plugin:** SN Appointment Booking
+**iOS Version:** v397
+
+### Summary
+
+Added support for multiple clients and CC emails on a single appointment. All attendees receive calendar invites and email notifications. The appointment list shows attendee count and details.
+
+### Key Deliverables
+
+- **Database Schema**
+  - New `wp_snab_appointment_attendees` table
+  - Three attendee types: `primary`, `additional`, `cc`
+  - Per-attendee reminder tracking (`reminder_24h_sent`, `reminder_1h_sent`)
+
+- **REST API Updates** (`class-snab-rest-api.php`)
+  - Accept `additional_clients` array in booking request
+  - Accept `cc_emails` array for CC-only recipients
+  - Return `attendees` array and `attendee_count` in responses
+  - Backward compatible with single-client bookings
+
+- **Web Widget Updates** (`class-snab-frontend-ajax.php`)
+  - Same multi-attendee support as REST API
+  - Multi-select client UI in booking widget
+  - CC email input field
+
+- **Notifications** (`class-snab-notifications.php`)
+  - All attendees receive confirmation emails
+  - All attendees receive reminder emails (24hr, 1hr)
+  - Cancellation/reschedule notifications to all attendees
+  - Personalized greetings per attendee
+
+- **iOS App Updates** (v397)
+  - `AppointmentAttendee` model with `AttendeeType` enum
+  - Multi-client selection in `BookAppointmentView`
+  - CC email input with add/remove
+  - Attendee count indicator in appointment list
+  - Full attendee details in appointment detail view
+
+### Database Table
+
+```sql
+CREATE TABLE wp_snab_appointment_attendees (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    appointment_id BIGINT UNSIGNED NOT NULL,
+    attendee_type ENUM('primary', 'additional', 'cc') DEFAULT 'additional',
+    user_id BIGINT UNSIGNED NULL,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NULL,
+    reminder_24h_sent TINYINT(1) DEFAULT 0,
+    reminder_1h_sent TINYINT(1) DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (appointment_id) REFERENCES wp_snab_appointments(id) ON DELETE CASCADE
+);
+```
+
+### API Request Example
+
+```json
+{
+  "appointment_type_id": 1,
+  "staff_id": 1,
+  "date": "2026-02-04",
+  "time": "10:00",
+  "client_name": "John Doe",
+  "client_email": "john@example.com",
+  "additional_clients": [
+    {"name": "Jane Doe", "email": "jane@example.com", "phone": "617-555-5678"}
+  ],
+  "cc_emails": ["realtor@agency.com", "lawyer@firm.com"]
+}
+```
+
+### Files Modified
+
+**WordPress:**
+- `sn-appointment-booking.php` - Version bump
+- `includes/class-snab-activator.php` - Attendees table creation
+- `includes/class-snab-rest-api.php` - Multi-attendee booking
+- `includes/class-snab-frontend-ajax.php` - Multi-attendee AJAX
+- `includes/class-snab-notifications.php` - Multi-recipient emails
+- `includes/class-snab-upgrader.php` - Version constants
+- `assets/js/booking-widget.js` - Multi-select UI
+- `assets/css/frontend.css` - Multi-select styles
+
+**iOS:**
+- `Core/Models/Appointment.swift` - Attendee model
+- `Features/Appointments/Views/BookAppointmentView.swift` - Multi-select UI
+- `Features/Appointments/Views/AppointmentsView.swift` - Attendee display
 
 ---
 
