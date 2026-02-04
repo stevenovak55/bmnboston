@@ -3,7 +3,7 @@
  * Plugin Name:       MLS Listings Display
  * Plugin URI:        https://example.com/
  * Description:       Displays real estate listings from the Bridge MLS Extractor Pro plugin using shortcodes with mobile-optimized property search and display.
- * Version: 6.75.6
+ * Version: 6.75.7
  * Author:            AZ Home Solutions LLC
  * Author URI:        https://example.com/
  * License:           GPL-2.0+
@@ -11,6 +11,13 @@
  * Text Domain:       mls-listings-display
  *
  * @package           MLS_Listings_Display
+ *
+ * Version 6.75.7 - AUDIT FIXES: YEAR ROLLOVER & EMAIL TIMEZONE (Feb 4, 2026)
+ * Fixed two issues discovered during documentation vs code audit:
+ * - Analytics: update_agent_performance() now queries MAX(YEAR(close_date)) instead of date('Y')
+ *   Prevents 2025 data from being mislabeled as "2026 annual period" when cron runs Jan 1
+ * - Email: listing-updates-enhanced.php now uses DateTime with wp_timezone() instead of strtotime()
+ *   Fixes 5-hour offset in displayed listing dates (strtotime interprets MySQL datetime as UTC)
  *
  * Version 6.75.4 - TIMEZONE FIX IN LISTINGSERVICE (Feb 4, 2026)
  * Fixed timezone bug in isRecentListing() that could miscalculate "recent listing" status.
@@ -2541,7 +2548,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 // Define plugin constants.
 // Add timestamp for cache busting during development
-define('MLD_VERSION', '6.75.6');
+define('MLD_VERSION', '6.75.7');
 
 define( 'MLD_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MLD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) ); // Alias for MLD_PLUGIN_PATH for backward compatibility
