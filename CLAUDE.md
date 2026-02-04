@@ -1732,7 +1732,7 @@ Quick reference for current versions:
 | Component | Current Version |
 |-----------|-----------------|
 | iOS App | v391 (1.6) |
-| MLS Listings Display | v6.74.7 |
+| MLS Listings Display | v6.75.3 |
 | BMN Schools | v0.6.39 |
 | SN Appointments | v1.9.5 |
 | Exclusive Listings | v1.5.3 |

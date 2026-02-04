@@ -7,7 +7,7 @@ Single source of truth for all component versions. Update this file when bumping
 | Component | Version | Updated | Source of Truth |
 |-----------|---------|---------|-----------------|
 | iOS App | v397 (1.6) | Feb 3, 2026 | `ios/BMNBoston.xcodeproj/project.pbxproj` |
-| MLS Listings Display | v6.75.0 | Feb 3, 2026 | `mls-listings-display/version.json` |
+| MLS Listings Display | v6.75.3 | Feb 3, 2026 | `mls-listings-display/version.json` |
 | BMN Schools | v0.6.39 | Jan 21, 2026 | `bmn-schools/version.json` |
 | SN Appointments | v1.10.0 | Feb 3, 2026 | `sn-appointment-booking/version.json` |
 | Exclusive Listings | v1.5.3 | Jan 27, 2026 | `exclusive-listings/version.json` |
@@ -21,7 +21,7 @@ All components have automated bump scripts in `shared/scripts/`:
 | Component | Script | Example |
 |-----------|--------|---------|
 | iOS App | `bump-ios-version.sh` | `./bump-ios-version.sh 392` |
-| MLS Listings Display | `bump-mld-version.sh` | `./bump-mld-version.sh 6.75.0` |
+| MLS Listings Display | `bump-mld-version.sh` | `./bump-mld-version.sh 6.75.3` |
 | BMN Schools | `bump-schools-version.sh` | `./bump-schools-version.sh 0.6.40` |
 | SN Appointments | `bump-appointments-version.sh` | `./bump-appointments-version.sh 1.9.6` |
 | Bridge MLS Extractor | `bump-bme-version.sh` | `./bump-bme-version.sh 4.0.33` |
