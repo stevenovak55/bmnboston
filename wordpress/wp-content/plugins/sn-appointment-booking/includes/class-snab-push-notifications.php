@@ -77,9 +77,9 @@ class SNAB_Push_Notifications {
         add_action('snab_send_push_reminders', array($this, 'process_push_reminders'));
 
         // Schedule cron if not already scheduled
-        // v1.10.2: Use current_time() for WordPress timezone consistency
+        // v1.10.3: wp_schedule_event() requires UTC timestamp - use time(), not current_time()
         if (!wp_next_scheduled('snab_send_push_reminders')) {
-            wp_schedule_event(current_time('timestamp'), 'hourly', 'snab_send_push_reminders');
+            wp_schedule_event(time(), 'hourly', 'snab_send_push_reminders');
         }
     }
 
@@ -551,7 +551,9 @@ class SNAB_Push_Notifications {
         $tokens_table = $wpdb->prefix . 'snab_device_tokens';
         $types_table = $wpdb->prefix . 'snab_appointment_types';
 
-        $now = current_time('timestamp');
+        // v1.10.3: Use time() (UTC) with wp_date() which converts UTC→local.
+        // current_time('timestamp') + wp_date() double-converts timezone, shifting queries ~5 hours.
+        $now = time();
         $in_24h = $now + (24 * HOUR_IN_SECONDS);
         $in_1h = $now + HOUR_IN_SECONDS;
         $in_2h = $now + (2 * HOUR_IN_SECONDS);

@@ -250,6 +250,25 @@ echo wp_date('M j, Y g:i A', $date->getTimestamp());
 
 **Why this matters:** Server runs UTC but WordPress is America/New_York (UTC-5). Using `time()` or `strtotime()` instead of `current_time()` causes 5-hour mismatches.
 
+**CRITICAL - Never combine `current_time('timestamp')` with `wp_date()`:**
+```php
+// WRONG - double timezone conversion! Shifts queries ~5 hours (v1.10.2 bug)
+$now = current_time('timestamp');   // Already offset by -5h
+$in_1h = $now + HOUR_IN_SECONDS;
+wp_date('Y-m-d H:i:s', $in_1h);    // Applies -5h AGAIN! → 10 hours off!
+
+// CORRECT - time() is real UTC, wp_date() converts to local once
+$now = time();
+$in_1h = $now + HOUR_IN_SECONDS;
+wp_date('Y-m-d H:i:s', $in_1h);    // Single conversion: UTC → EST ✓
+
+// ALSO CORRECT - wp_schedule_event() expects UTC timestamp
+wp_schedule_event(time(), 'hourly', 'my_hook');        // ✓ UTC
+wp_schedule_event(current_time('timestamp'), ...);     // ✗ Wrong!
+```
+
+**Rule of thumb:** `wp_date()` and `wp_schedule_event()` expect real UTC timestamps (`time()`). Never pass `current_time('timestamp')` to them.
+
 **Full timezone guide (PHP, JavaScript, iOS):** See [.context/AGENT_PROTOCOL.md Rule 13](.context/AGENT_PROTOCOL.md#rule-13-timezone-consistency)
 
 ### 11. Don't Send Nonces on Public REST Endpoints (NEW)
@@ -1763,7 +1782,7 @@ Quick reference for current versions:
 | iOS App | v400 (1.7) |
 | MLS Listings Display | v6.75.8 |
 | BMN Schools | v0.6.39 |
-| SN Appointments | v1.10.2 |
+| SN Appointments | v1.10.3 |
 | Exclusive Listings | v1.5.3 |
 
 ---

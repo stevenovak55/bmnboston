@@ -1,12 +1,12 @@
 {
     "name": "SN Appointment Booking",
     "slug": "sn-appointment-booking",
-    "version": "1.10.2",
+    "version": "1.10.3",
     "db_version": "1.10.0",
     "requires_wp": "5.8",
     "requires_php": "7.4",
     "tested_up_to": "6.4",
-    "last_updated": "2026-02-04",
+    "last_updated": "2026-02-05",
     "phase": 17,
     "status": "development"
 }
