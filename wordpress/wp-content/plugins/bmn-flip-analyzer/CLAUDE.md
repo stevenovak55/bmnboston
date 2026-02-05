@@ -1,6 +1,6 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.3.0
+**Current Version:** 0.3.1
 **Last Updated:** 2026-02-05
 
 ## Overview
@@ -64,7 +64,7 @@ wp flip property <listing_id> [--verbose]
 wp flip summary
 wp flip config --list-cities | --add-city=Woburn | --remove-city=Burlington
 wp flip clear [--older-than=30] [--all] [--yes]
-wp flip analyze-photos [--top=50] [--min-score=40]  # Not yet implemented
+wp flip analyze_photos [--top=50] [--min-score=40]  # Pass 2: Claude Vision photo analysis
 ```
 
 ## Scoring Weights
@@ -178,7 +178,7 @@ Uses Claude Vision API (`claude-sonnet-4-5-20250929`) to analyze up to 5 photos 
 
 See `DEVELOPMENT.md` for detailed progress tracking.
 
-## Known Issues (v0.3.0)
+## Known Issues (v0.3.1)
 
-1. **Overpass API rate limiting** - Occasional 429 errors during bulk analysis; need retry logic
-2. **ARV above ceiling** - Properties with ARV > 100% of neighborhood ceiling show warning but aren't auto-disqualified (may want to add this)
+1. ~~**Overpass API rate limiting**~~ - Fixed in v0.3.1: retry with exponential backoff (1s, 2s, 4s) for 429/408/503/504
+2. ~~**ARV above ceiling**~~ - Fixed in v0.3.1: auto-disqualifies when ARV > 120% of neighborhood ceiling

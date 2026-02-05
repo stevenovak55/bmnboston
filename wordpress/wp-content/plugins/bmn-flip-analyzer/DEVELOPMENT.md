@@ -1,8 +1,8 @@
 # BMN Flip Analyzer - Development Log
 
-## Current Version: 0.3.0 (In Development)
+## Current Version: 0.3.1
 
-## Status: Phase 2.5 - Enhanced Location & Road Analysis (In Progress)
+## Status: Phase 2.5 Complete - Ready for Phase 3 (Web Dashboard)
 
 ---
 
@@ -123,10 +123,42 @@
 | 42 Lantern Ln, Burlington | Quiet Residential | 74.25 | Best expansion potential |
 
 **Next steps:**
-1. Consider adding auto-disqualifier for ARV > 120% of neighborhood ceiling
-2. Add rate limiting/retry logic for Overpass API (saw 429 errors)
-3. Test photo analysis on top candidates
+1. ~~Consider adding auto-disqualifier for ARV > 120% of neighborhood ceiling~~ ✓ (Session 4)
+2. ~~Add rate limiting/retry logic for Overpass API (saw 429 errors)~~ ✓ (Session 4)
+3. ~~Test photo analysis on top candidates~~ ✓ (Session 4)
 4. Continue to Phase 3 (Web admin dashboard)
+
+### Session 4 - 2026-02-05
+
+**What was done:**
+- **Overpass API retry logic** (`class-flip-road-analyzer.php`):
+  - Extracted shared `make_overpass_request()` method with retry logic
+  - Exponential backoff: 1s, 2s, 4s delays between retries
+  - Handles 429 (rate limit), 408 (timeout), 503/504 (service unavailable)
+  - Max 3 retries, non-retryable errors (400, 404) fail immediately
+  - Both `query_osm_by_name()` and `query_osm()` now use shared method
+- **Ceiling auto-disqualifier** (`class-flip-analyzer.php`):
+  - Added check in `check_disqualifiers()`: ARV > 120% of neighborhood ceiling
+  - Stores ceiling data (neighborhood_ceiling, ceiling_pct, ceiling_warning) in disqualified records
+  - Two properties caught: 16 Court St, N. Andover (135%) and 3 West Hollow, Andover (151%)
+- **Photo analysis testing** on 4 viable candidates:
+  - MLS# 73432608 (515 Upham St, Melrose): Score 70.88→78.08, rehab $132K→$88K (cosmetic), ROI 9.56%→13.16%
+  - MLS# 73453561 (42 Lantern Ln, Burlington): Photo score 72, $35/sqft moderate rehab
+  - MLS# 73456716 (Lot 7 Weeping Willow, Andover): Photo score 5 (new construction lot?)
+  - MLS# 73460195 (105 Central St, Andover): Photo score 25, $15/sqft cosmetic
+- Version bump to 0.3.1
+
+**Key observations:**
+- Retry logic caught a 504 error during analysis and recovered successfully
+- Photo analysis correctly identified 515 Upham St road as "Quiet Residential" (OSM had said "Busy Road" via secondary highway tag)
+- Photo analysis significantly refined rehab estimates downward — most properties only need cosmetic work
+- Only 4 of 69 properties survived all disqualifiers (65 disqualified)
+- Low comp count (1 comp for top candidate) is the main risk factor
+
+**Next steps:**
+1. Phase 3: Web admin dashboard with Chart.js, expandable rows, CSV export
+2. Consider expanding target cities or loosening disqualifier thresholds
+3. Investigate low comp counts — may need to expand comp search radius or time window
 
 ---
 
@@ -237,17 +269,23 @@ bmn-flip-analyzer/
 - Renovation-prioritized comp selection
 - Min price filter ($100K) to exclude anomalies
 
-### v0.3.0 (In Development)
+### v0.3.0 (Complete)
 - Road type detection via OpenStreetMap Overpass API
 - Neighborhood ceiling check (ARV vs max sale in area)
 - Revised property scoring: lot size & expansion potential
 - Removed bed/bath penalties (they can always be added)
 - Street-name-based OSM queries for accurate road classification
 
+### v0.3.1 (Complete)
+- Overpass API retry logic with exponential backoff (429/503/504 handling)
+- Auto-disqualify properties where ARV > 120% of neighborhood ceiling
+- Store ceiling data in disqualified property records
+- Photo analysis tested on top 4 candidates
+
 ### v0.4.0 (Planned)
 - Web admin dashboard with Chart.js
 
-### v0.4.0 (Planned)
+### v0.5.0 (Planned)
 - iOS SwiftUI integration
 
 ### v1.0.0 (Planned)

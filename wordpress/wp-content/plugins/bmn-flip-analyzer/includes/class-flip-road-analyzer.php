@@ -17,6 +17,12 @@ class Flip_Road_Analyzer {
     /** OSM Overpass API endpoint */
     const OVERPASS_API = 'https://overpass-api.de/api/interpreter';
 
+    /** Max retry attempts for rate-limited or failed requests */
+    const MAX_RETRIES = 3;
+
+    /** HTTP status codes that should trigger a retry */
+    const RETRYABLE_STATUSES = [429, 408, 503, 504];
+
     /** Road type mapping from OSM highway tags to our categories */
     const OSM_ROAD_MAP = [
         // Quiet residential
@@ -125,6 +131,59 @@ class Flip_Road_Analyzer {
     }
 
     /**
+     * Make an Overpass API request with retry logic and exponential backoff.
+     *
+     * Handles 429 (rate limit), 408 (timeout), 503/504 (service unavailable)
+     * by retrying with exponential backoff: 1s, 2s, 4s.
+     *
+     * @param string $query Overpass QL query string.
+     * @return array|null Decoded JSON response or null on failure.
+     */
+    private static function make_overpass_request(string $query): ?array {
+        $last_status = 0;
+
+        for ($attempt = 0; $attempt <= self::MAX_RETRIES; $attempt++) {
+            if ($attempt > 0) {
+                $delay = pow(2, $attempt - 1); // 1s, 2s, 4s
+                sleep($delay);
+            }
+
+            $response = wp_remote_post(self::OVERPASS_API, [
+                'timeout' => 15,
+                'headers' => ['Content-Type' => 'application/x-www-form-urlencoded'],
+                'body'    => $query,
+            ]);
+
+            if (is_wp_error($response)) {
+                error_log("Flip Road Analyzer OSM Error (attempt {$attempt}): " . $response->get_error_message());
+                continue;
+            }
+
+            $status = wp_remote_retrieve_response_code($response);
+            $last_status = $status;
+
+            if ($status === 200) {
+                $body = wp_remote_retrieve_body($response);
+                $data = json_decode($body, true);
+                return is_array($data) ? $data : null;
+            }
+
+            // Retry on rate limit or server errors
+            if (in_array($status, self::RETRYABLE_STATUSES, true)) {
+                error_log("Flip Road Analyzer OSM HTTP {$status} (attempt {$attempt}), retrying...");
+                continue;
+            }
+
+            // Non-retryable error (400, 404, etc.)
+            error_log("Flip Road Analyzer OSM HTTP Error: {$status} (non-retryable)");
+            return null;
+        }
+
+        error_log("Flip Road Analyzer OSM failed after " . (self::MAX_RETRIES + 1) . " attempts (last status: {$last_status})");
+        return null;
+    }
+
+    /**
      * Extract just the street name without suffix (St, Ave, etc.)
      */
     private static function extract_street_name(string $full_name): string {
@@ -151,23 +210,7 @@ class Flip_Road_Analyzer {
             $lat + $lat_delta, $lng + $lng_delta
         );
 
-        $response = wp_remote_post(self::OVERPASS_API, [
-            'timeout' => 15,
-            'headers' => ['Content-Type' => 'application/x-www-form-urlencoded'],
-            'body'    => $query,
-        ]);
-
-        if (is_wp_error($response)) {
-            return null;
-        }
-
-        $status = wp_remote_retrieve_response_code($response);
-        if ($status !== 200) {
-            return null;
-        }
-
-        $body = wp_remote_retrieve_body($response);
-        $data = json_decode($body, true);
+        $data = self::make_overpass_request($query);
 
         if (empty($data['elements'])) {
             return null;
@@ -214,32 +257,12 @@ class Flip_Road_Analyzer {
      */
     private static function query_osm(float $lat, float $lng): ?array {
         // Query for roads within 50 meters of the coordinates
-        // Using compact query format for reliability
         $query = sprintf(
             '[out:json][timeout:10];way(around:50,%f,%f)["highway"];out body;',
             $lat, $lng
         );
 
-        // Use POST with raw body (not form data)
-        $response = wp_remote_post(self::OVERPASS_API, [
-            'timeout' => 15,
-            'headers' => ['Content-Type' => 'application/x-www-form-urlencoded'],
-            'body'    => $query,  // Send query directly, not as form data
-        ]);
-
-        if (is_wp_error($response)) {
-            error_log('Flip Road Analyzer OSM Error: ' . $response->get_error_message());
-            return null;
-        }
-
-        $status = wp_remote_retrieve_response_code($response);
-        if ($status !== 200) {
-            error_log('Flip Road Analyzer OSM HTTP Error: ' . $status);
-            return null;
-        }
-
-        $body = wp_remote_retrieve_body($response);
-        $data = json_decode($body, true);
+        $data = self::make_overpass_request($query);
 
         if (empty($data['elements'])) {
             // No roads found, try larger radius

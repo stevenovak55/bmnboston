@@ -2,12 +2,17 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies Single Family Residence flip candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis.
- * Version: 0.3.0
+ * Version: 0.3.1
  * Author: BMN Boston
  * Requires PHP: 8.0
  *
+ * Version 0.3.1 - Robustness & Quality Improvements
+ * - Overpass API retry logic with exponential backoff for 429/503 errors
+ * - Auto-disqualify properties where ARV > 120% of neighborhood ceiling
+ * - Store ceiling data in disqualified property records
+ *
  * Version 0.3.0 - Enhanced Location & Expansion Analysis
- * - Road type detection via Claude Vision (cul-de-sac, busy-road, etc.)
+ * - Road type detection via OSM Overpass API (cul-de-sac, busy-road, etc.)
  * - Neighborhood ceiling check (compares ARV to max sale in area)
  * - Revised property scoring: focuses on lot size & expansion potential
  * - Removed bed/bath penalties (they can always be added)
@@ -27,7 +32,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.3.0');
+define('FLIP_VERSION', '0.3.1');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 

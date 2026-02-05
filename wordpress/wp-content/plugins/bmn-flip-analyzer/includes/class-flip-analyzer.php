@@ -273,6 +273,14 @@ class Flip_Analyzer {
             return 'Default rehab estimate exceeds 35% of ARV';
         }
 
+        // ARV exceeds neighborhood ceiling by too much (unrealistic exit price)
+        $ceiling_pct = $arv_data['ceiling_pct'] ?? 0;
+        if ($ceiling_pct > 120) {
+            return 'ARV exceeds 120% of neighborhood ceiling ($'
+                . number_format($arv_data['neighborhood_ceiling'] ?? 0)
+                . ', ceiling_pct: ' . round($ceiling_pct) . '%)';
+        }
+
         return null;
     }
 
@@ -293,6 +301,9 @@ class Flip_Analyzer {
             'arv_confidence'      => $arv_data['arv_confidence'],
             'comp_count'          => $arv_data['comp_count'],
             'avg_comp_ppsf'       => $arv_data['avg_comp_ppsf'],
+            'neighborhood_ceiling' => round((float) ($arv_data['neighborhood_ceiling'] ?? 0), 2),
+            'ceiling_pct'          => $arv_data['ceiling_pct'] ?? 0,
+            'ceiling_warning'      => ($arv_data['ceiling_warning'] ?? false) ? 1 : 0,
             'estimated_rehab_cost' => 0,
             'rehab_level'         => 'unknown',
             'mao'                 => 0,
