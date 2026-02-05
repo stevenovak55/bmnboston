@@ -2,7 +2,7 @@
 
 All incomplete work items across the BMN Boston platform.
 
-**Last Updated:** 2026-01-21 (documentation audit completed)
+**Last Updated:** 2026-02-04
 
 ---
 
@@ -65,7 +65,7 @@ The core Agent-Client system is complete (v6.57.0). These are optional future im
 |-------------|----------|--------|-------------|
 | MaxMind GeoLite2 setup | Low | Low | Accurate geolocation (requires free license) |
 | Export functionality | Low | Medium | CSV/PDF export from dashboard |
-| Custom date ranges | Low | Low | Arbitrary date range selection |
+| ~~Custom date ranges~~ | ~~Done~~ | ~~v6.75.8~~ | ~~Completed Feb 4, 2026~~ |
 
 ---
 
