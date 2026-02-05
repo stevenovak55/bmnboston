@@ -1714,6 +1714,27 @@ curl "https://bmnboston.com/wp-json/mld-mobile/v1/agent/clients" \
     -H "Authorization: Bearer $TOKEN"
 ```
 
+### Analytics Dashboard Endpoints
+
+```bash
+# Trends with preset range (7d, 30d, 90d, 12m, ytd)
+curl "https://bmnboston.com/wp-json/mld-mobile/v1/analytics/trends?range=7d"
+
+# Trends with custom date range (overrides range param when both provided)
+curl "https://bmnboston.com/wp-json/mld-mobile/v1/analytics/trends?start_date=2026-01-01&end_date=2026-01-31"
+
+# Top content (pages, properties, searches)
+curl "https://bmnboston.com/wp-json/mld-mobile/v1/analytics/top-content?type=pages&start_date=2026-01-28&end_date=2026-02-04"
+
+# Traffic sources
+curl "https://bmnboston.com/wp-json/mld-mobile/v1/analytics/traffic-sources?start_date=2026-01-28&end_date=2026-02-04"
+
+# Geographic data (countries, cities)
+curl "https://bmnboston.com/wp-json/mld-mobile/v1/analytics/geo?type=countries&start_date=2026-01-28&end_date=2026-02-04"
+```
+
+**Analytics date params**: Use `range=7d|30d|90d|12m|ytd` for presets, OR `start_date=YYYY-MM-DD&end_date=YYYY-MM-DD` for custom ranges. Custom dates override `range` when both provided.
+
 ---
 
 ## Post-Deployment Verification
@@ -1764,6 +1785,10 @@ Quick reference for current versions:
 | Agent-Client Manager | `wordpress/.../mls-listings-display/includes/saved-searches/class-mld-agent-client-manager.php` |
 | Email Utilities | `wordpress/.../mls-listings-display/includes/class-mld-email-utilities.php` |
 | CMA PDF Generator | `wordpress/.../mls-listings-display/includes/class-mld-cma-pdf-generator.php` |
+| Analytics Dashboard JS | `wordpress/.../mls-listings-display/assets/js/admin/mld-analytics-dashboard.js` |
+| Analytics Dashboard CSS | `wordpress/.../mls-listings-display/assets/css/admin/mld-analytics-dashboard.css` |
+| Analytics REST API | `wordpress/.../mls-listings-display/includes/class-mld-extended-analytics.php` |
+| Analytics Dashboard View | `wordpress/.../mls-listings-display/includes/analytics/admin/views/analytics-dashboard.php` |
 
 ---
 
