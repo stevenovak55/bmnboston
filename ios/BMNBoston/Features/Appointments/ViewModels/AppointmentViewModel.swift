@@ -99,6 +99,8 @@ class AppointmentViewModel: ObservableObject {
     // Multi-attendee support (v1.10.0)
     @Published var selectedClients: [AgentClient] = []
     @Published var ccEmails: [String] = []
+    // Manual guest invites for non-agent users (v1.10.4)
+    @Published var manualGuests: [AttendeeInput] = []
 
     // MARK: - Computed Properties
 
@@ -345,16 +347,23 @@ class AppointmentViewModel: ObservableObject {
         isBooking = true
         bookingError = nil
 
-        // Build additional clients array from selected clients (excluding first/primary)
+        // Build additional clients array from selected clients and manual guests (v1.10.4)
         var additionalClients: [AttendeeInput]? = nil
+        var allAdditional: [AttendeeInput] = []
         if selectedClients.count > 1 {
-            additionalClients = selectedClients.dropFirst().map { client in
+            allAdditional += selectedClients.dropFirst().map { client in
                 AttendeeInput(
                     name: client.displayName,
                     email: client.email,
                     phone: client.phone
                 )
             }
+        }
+        if !manualGuests.isEmpty {
+            allAdditional += manualGuests
+        }
+        if !allAdditional.isEmpty {
+            additionalClients = allAdditional
         }
 
         let request = BookAppointmentRequest(
@@ -400,9 +409,10 @@ class AppointmentViewModel: ObservableObject {
         bookingResponse = nil
         bookingError = nil
         availability = nil
-        // Multi-attendee: clear selected clients and CC emails
+        // Multi-attendee: clear selected clients, CC emails, and manual guests
         selectedClients = []
         ccEmails = []
+        manualGuests = []
     }
 
     /// Pre-fill booking for property showing
@@ -558,6 +568,27 @@ class AppointmentViewModel: ObservableObject {
     func clearSelectedClients() {
         selectedClients = []
         // Don't clear the fields - user may have edited them
+    }
+
+    // MARK: - Manual Guest Management (v1.10.4)
+
+    /// Add a manual guest (for non-agent users)
+    func addManualGuest(name: String, email: String) {
+        let trimmedName = name.trimmingCharacters(in: .whitespaces)
+        let trimmedEmail = email.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !trimmedName.isEmpty, !trimmedEmail.isEmpty else { return }
+        // Basic email validation
+        let emailRegex = #"^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
+        guard trimmedEmail.range(of: emailRegex, options: .regularExpression) != nil else { return }
+        // Prevent duplicates
+        guard !manualGuests.contains(where: { $0.email == trimmedEmail }) else { return }
+        manualGuests.append(AttendeeInput(name: trimmedName, email: trimmedEmail, phone: nil))
+    }
+
+    /// Remove a manual guest by index
+    func removeManualGuest(at index: Int) {
+        guard index >= 0 && index < manualGuests.count else { return }
+        manualGuests.remove(at: index)
     }
 
     // MARK: - CC Email Management (v1.10.0)

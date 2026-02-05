@@ -3,7 +3,7 @@
  * Plugin Name: SN Appointment Booking
  * Plugin URI: https://steve-novak.com
  * Description: Google Calendar-integrated appointment booking system for real estate professionals. Allows clients to book showings, consultations, and other appointments directly from your website.
- * Version: 1.10.3
+ * Version: 1.10.4
  * Author: Steve Novak
  * Author URI: https://steve-novak.com
  * License: GPL-2.0+
@@ -17,6 +17,15 @@
  * @since 1.0.0
  *
  * == Changelog ==
+ *
+ * = 1.10.4 (2026-02-05) =
+ * * FEATURE: Google Calendar invites now include all attendees (additional + CC)
+ * * FEATURE: CC'd guests without accounts receive app invite email with signup CTA
+ * * Added update_staff_event() method for proper per-staff calendar updates
+ * * Added build_attendees_array() helper for Google Calendar attendee formatting
+ * * Fixed reschedule to use correct Google Calendar API format across all paths
+ * * ICS calendar files now include all attendees (primary, additional, CC)
+ * * App invite email has 30-day debounce per recipient to prevent spam
  *
  * = 1.10.0 (2026-02-03) =
  * * FEATURE: Multi-attendee appointment support
@@ -251,7 +260,7 @@ if (!defined('ABSPATH')) {
  * Update this when releasing new versions.
  * Also update in: class-snab-upgrader.php, version.json, .context/SESSION_RESUME.md
  */
-define('SNAB_VERSION', '1.10.3');
+define('SNAB_VERSION', '1.10.4');
 
 /**
  * Database version.

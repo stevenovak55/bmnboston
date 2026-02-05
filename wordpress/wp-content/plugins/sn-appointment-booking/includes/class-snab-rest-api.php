@@ -867,6 +867,12 @@ class SNAB_REST_API {
                     $google_event_data['location'] = $property_address;
                 }
 
+                // Add all attendees (primary, additional, CC) to Google Calendar invite (v1.10.4)
+                $attendees_array = $google->build_attendees_array($appointment_id);
+                if (!empty($attendees_array)) {
+                    $google_event_data['attendees'] = $attendees_array;
+                }
+
                 $event_result = $google->create_staff_event($staff->id, $google_event_data);
                 if (!is_wp_error($event_result) && isset($event_result['id'])) {
                     $wpdb->update(
@@ -899,12 +905,37 @@ class SNAB_REST_API {
         try {
             $notifications = snab_notifications();
             $notifications->send_client_confirmation($appointment_id);
+            $notifications->send_staff_confirmation($appointment_id);
             $notifications->send_admin_confirmation($appointment_id);
         } catch (Exception $e) {
             SNAB_Logger::error('Failed to send confirmation email', array(
                 'appointment_id' => $appointment_id,
                 'error' => $e->getMessage(),
             ));
+        }
+
+        // Send app invite to CC'd guests without accounts (v1.10.4)
+        if (!empty($cc_emails)) {
+            try {
+                global $wpdb;
+                $attendees_table = $wpdb->prefix . 'snab_appointment_attendees';
+                $cc_without_accounts = $wpdb->get_col($wpdb->prepare(
+                    "SELECT email FROM {$attendees_table}
+                     WHERE appointment_id = %d
+                     AND attendee_type = 'cc'
+                     AND (user_id IS NULL OR user_id = 0)",
+                    $appointment_id
+                ));
+
+                if (!empty($cc_without_accounts)) {
+                    $notifications->send_app_invite($appointment_id, $cc_without_accounts);
+                }
+            } catch (Exception $e) {
+                SNAB_Logger::error('Failed to send app invite', array(
+                    'appointment_id' => $appointment_id,
+                    'error' => $e->getMessage(),
+                ));
+            }
         }
 
         // Clear rate limit on success
@@ -1493,15 +1524,35 @@ class SNAB_REST_API {
             ), 500);
         }
 
-        // Update Google Calendar event
-        if ($appt->google_event_id) {
+        // Update Google Calendar event (v1.10.4: use per-staff method with proper format + attendees)
+        if ($appt->google_event_id && $appt->staff_id) {
             try {
                 $google = snab_google_calendar();
-                $google->update_event($appt->google_event_id, array(
-                    'date' => $new_date,
-                    'start_time' => $new_time,
-                    'end_time' => $new_end_datetime->format('H:i:s'),
-                ), $appt->staff_id);
+                if ($google->is_staff_connected($appt->staff_id)) {
+                    $timezone = wp_timezone_string();
+                    $time_with_seconds = (strlen($new_time) === 5) ? $new_time . ':00' : $new_time;
+                    $start_datetime = $new_date . 'T' . $time_with_seconds;
+                    $end_datetime_str = $new_date . 'T' . $new_end_datetime->format('H:i:s');
+
+                    $update_data = array(
+                        'start' => array(
+                            'dateTime' => $start_datetime,
+                            'timeZone' => $timezone,
+                        ),
+                        'end' => array(
+                            'dateTime' => $end_datetime_str,
+                            'timeZone' => $timezone,
+                        ),
+                    );
+
+                    // Include all attendees in the update
+                    $attendees_array = $google->build_attendees_array($id);
+                    if (!empty($attendees_array)) {
+                        $update_data['attendees'] = $attendees_array;
+                    }
+
+                    $google->update_staff_event($appt->staff_id, $appt->google_event_id, $update_data);
+                }
             } catch (Exception $e) {
                 SNAB_Logger::error('Failed to update Google Calendar event', array(
                     'appointment_id' => $id,

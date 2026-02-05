@@ -155,6 +155,66 @@ class SNAB_Notifications {
     }
 
     /**
+     * Send confirmation email to assigned staff member.
+     * Only sends if staff email differs from admin email (avoids duplicate).
+     *
+     * @param int $appointment_id Appointment ID.
+     * @return bool
+     */
+    public function send_staff_confirmation($appointment_id) {
+        $appointment = $this->get_appointment($appointment_id);
+        if (!$appointment) {
+            return false;
+        }
+
+        $staff_email = $appointment->staff_email;
+        if (empty($staff_email)) {
+            return false;
+        }
+
+        // Skip if staff email is same as admin email (avoid duplicate)
+        $admin_email = $this->get_admin_email();
+        if (strtolower($staff_email) === strtolower($admin_email)) {
+            return true;
+        }
+
+        // Generate ICS attachment for staff
+        $attachments = array();
+        $ics_file = $this->generate_ics_attachment($appointment, 'appointment');
+        if ($ics_file) {
+            $attachments[] = $ics_file;
+        }
+
+        $subject = $this->parse_template(
+            $this->get_template('confirmation_admin_subject'),
+            $appointment
+        );
+
+        $message = $this->parse_template(
+            $this->get_template('confirmation_admin_body'),
+            $appointment
+        );
+
+        $sent = $this->send_email(
+            $staff_email,
+            $subject,
+            $message,
+            $attachments
+        );
+
+        $this->log_notification(
+            $appointment_id,
+            self::TYPE_CONFIRMATION,
+            'staff',
+            $staff_email,
+            $subject,
+            $sent
+        );
+
+        return $sent;
+    }
+
+    /**
      * Send reminder email to client.
      *
      * @param int $appointment_id Appointment ID.

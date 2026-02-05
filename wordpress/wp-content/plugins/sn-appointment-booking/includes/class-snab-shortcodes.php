@@ -356,6 +356,36 @@ class SNAB_Shortcodes {
                         </div>
                     </div>
 
+                    <!-- Guest Invite Section (v1.10.4 - visible for all logged-in users) -->
+                    <div class="snab-guest-invite-section" style="display: none;">
+                        <div class="snab-guest-invite-header">
+                            <span class="snab-guest-invite-label"><?php esc_html_e('Invite a Guest', 'sn-appointment-booking'); ?></span>
+                        </div>
+                        <div class="snab-guest-add-form">
+                            <div class="snab-guest-input-row">
+                                <input type="text" class="snab-guest-name-input"
+                                       placeholder="<?php esc_attr_e('Guest name', 'sn-appointment-booking'); ?>">
+                                <input type="email" class="snab-guest-email-input"
+                                       placeholder="<?php esc_attr_e('Guest email', 'sn-appointment-booking'); ?>">
+                                <button type="button" class="snab-guest-add-btn"><?php esc_html_e('Add', 'sn-appointment-booking'); ?></button>
+                            </div>
+                        </div>
+                        <div class="snab-guest-list"></div>
+
+                        <!-- CC Email Section -->
+                        <div class="snab-cc-section">
+                            <div class="snab-cc-header">
+                                <span class="snab-cc-label"><?php esc_html_e('CC Email (Optional)', 'sn-appointment-booking'); ?></span>
+                            </div>
+                            <div class="snab-cc-input-row">
+                                <input type="email" class="snab-cc-email-input"
+                                       placeholder="<?php esc_attr_e('Email to receive notifications', 'sn-appointment-booking'); ?>">
+                                <button type="button" class="snab-cc-add-btn"><?php esc_html_e('Add', 'sn-appointment-booking'); ?></button>
+                            </div>
+                            <div class="snab-cc-chips"></div>
+                        </div>
+                    </div>
+
                     <div class="snab-form-row">
                         <label for="<?php echo esc_attr($widget_id); ?>-name">
                             <?php esc_html_e('Full Name', 'sn-appointment-booking'); ?> <span class="required">*</span>
@@ -805,6 +835,7 @@ class SNAB_Shortcodes {
         wp_localize_script('snab-booking-widget', 'snabBooking', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('snab_frontend_nonce'),
+            'isLoggedIn' => is_user_logged_in(),
             'timezone' => wp_timezone_string(),
             'dateFormat' => get_option('date_format'),
             'timeFormat' => get_option('time_format'),

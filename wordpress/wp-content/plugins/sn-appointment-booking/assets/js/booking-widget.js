@@ -45,6 +45,7 @@
             this.agentClients = [];
             this.selectedClients = []; // Array for multi-select
             this.ccEmails = []; // Array of CC email addresses
+            this.additionalGuests = []; // Array of {name, email} for manual guest invites (v1.10.4)
 
             // Cache DOM elements
             this.$steps = this.$container.find('.snab-step');
@@ -152,6 +153,23 @@
 
             this.$container.on('click', '.snab-cc-remove', function() {
                 self.removeCCEmail($(this).closest('.snab-cc-chip').data('email'));
+            });
+
+            // Guest invite functionality (v1.10.4)
+            this.$container.on('click', '.snab-guest-add-btn', function() {
+                self.addGuest();
+            });
+
+            this.$container.on('keypress', '.snab-guest-email-input', function(e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    self.addGuest();
+                }
+            });
+
+            this.$container.on('click', '.snab-guest-remove', function() {
+                const index = $(this).closest('.snab-guest-chip').data('index');
+                self.removeGuest(index);
             });
         }
 
@@ -670,12 +688,19 @@
             let formData = this.$form.serialize() + '&action=snab_book_appointment';
 
             // Add additional clients (exclude the primary who is already in the form)
+            // Combine agent-selected clients with manually added guests (v1.10.4)
+            let allAdditionalClients = [];
             if (this.selectedClients.length > 1) {
-                const additionalClients = this.selectedClients.slice(1).map(c => ({
+                allAdditionalClients = this.selectedClients.slice(1).map(c => ({
                     name: c.name,
                     email: c.email
                 }));
-                formData += '&additional_clients=' + encodeURIComponent(JSON.stringify(additionalClients));
+            }
+            if (this.additionalGuests.length > 0) {
+                allAdditionalClients = allAdditionalClients.concat(this.additionalGuests);
+            }
+            if (allAdditionalClients.length > 0) {
+                formData += '&additional_clients=' + encodeURIComponent(JSON.stringify(allAdditionalClients));
             }
 
             // Add CC emails
@@ -753,12 +778,16 @@
             // Clear client selection (v1.10.0 multi-select)
             this.selectedClients = [];
             this.ccEmails = [];
+            this.additionalGuests = [];
             this.$container.find('.snab-client-bubble').removeClass('selected');
             this.$container.find('.snab-client-clear-btn').hide();
             this.$container.find('.snab-client-count').hide();
             this.$container.find('.snab-client-search').val('');
             this.$container.find('.snab-cc-email-input').val('');
             this.$container.find('.snab-cc-chips').html('');
+            this.$container.find('.snab-guest-name-input').val('');
+            this.$container.find('.snab-guest-email-input').val('');
+            this.$container.find('.snab-guest-list').html('');
             this.filterClientBubbles('');
 
             this.goToStep(1);
@@ -795,9 +824,15 @@
 
         /**
          * Load agent's clients for booking on their behalf
+         * Also shows guest invite section for all logged-in users (v1.10.4)
          */
         loadAgentClients() {
             const self = this;
+
+            // Show guest invite section for all logged-in users (v1.10.4)
+            if (snabBooking.isLoggedIn) {
+                self.$container.find('.snab-guest-invite-section').show();
+            }
 
             $.ajax({
                 url: snabBooking.ajaxUrl,
@@ -994,6 +1029,69 @@
                 html += '<span class="snab-cc-chip" data-email="' + this.escapeHtml(email) + '">' +
                         '<span class="snab-cc-email">' + this.escapeHtml(email) + '</span>' +
                         '<button type="button" class="snab-cc-remove" aria-label="Remove">&times;</button>' +
+                        '</span>';
+            });
+            $container.html(html);
+        }
+
+        /**
+         * Add a guest (v1.10.4)
+         */
+        addGuest() {
+            const $nameInput = this.$container.find('.snab-guest-name-input');
+            const $emailInput = this.$container.find('.snab-guest-email-input');
+            const name = $nameInput.val().trim();
+            const email = $emailInput.val().trim();
+
+            if (!name) {
+                $nameInput.addClass('snab-input-error');
+                setTimeout(() => $nameInput.removeClass('snab-input-error'), 1000);
+                return;
+            }
+
+            if (!email || !this.isValidEmail(email)) {
+                $emailInput.addClass('snab-input-error');
+                setTimeout(() => $emailInput.removeClass('snab-input-error'), 1000);
+                return;
+            }
+
+            // Check for duplicate email
+            if (this.additionalGuests.some(g => g.email === email)) {
+                $emailInput.val('');
+                return;
+            }
+
+            this.additionalGuests.push({ name: name, email: email });
+            this.renderGuestList();
+            $nameInput.val('');
+            $emailInput.val('');
+            $nameInput.focus();
+        }
+
+        /**
+         * Remove a guest (v1.10.4)
+         */
+        removeGuest(index) {
+            this.additionalGuests.splice(index, 1);
+            this.renderGuestList();
+        }
+
+        /**
+         * Render the guest list chips (v1.10.4)
+         */
+        renderGuestList() {
+            const $container = this.$container.find('.snab-guest-list');
+
+            if (this.additionalGuests.length === 0) {
+                $container.html('');
+                return;
+            }
+
+            let html = '';
+            this.additionalGuests.forEach((guest, index) => {
+                html += '<span class="snab-guest-chip" data-index="' + index + '">' +
+                        '<span class="snab-guest-info">' + this.escapeHtml(guest.name) + ' &lt;' + this.escapeHtml(guest.email) + '&gt;</span>' +
+                        '<button type="button" class="snab-guest-remove" aria-label="Remove">&times;</button>' +
                         '</span>';
             });
             $container.html(html);

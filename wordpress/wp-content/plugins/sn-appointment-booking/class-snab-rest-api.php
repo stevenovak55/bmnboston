@@ -1351,15 +1351,35 @@ class SNAB_REST_API {
             ), 500);
         }
 
-        // Update Google Calendar event
-        if ($appt->google_event_id) {
+        // Update Google Calendar event (v1.10.4: use per-staff method with proper format + attendees)
+        if ($appt->google_event_id && $appt->staff_id) {
             try {
                 $google = snab_google_calendar();
-                $google->update_event($appt->google_event_id, array(
-                    'date' => $new_date,
-                    'start_time' => $new_time,
-                    'end_time' => $new_end_datetime->format('H:i:s'),
-                ), $appt->staff_id);
+                if ($google->is_staff_connected($appt->staff_id)) {
+                    $timezone = wp_timezone_string();
+                    $time_with_seconds = (strlen($new_time) === 5) ? $new_time . ':00' : $new_time;
+                    $start_datetime = $new_date . 'T' . $time_with_seconds;
+                    $end_datetime_str = $new_date . 'T' . $new_end_datetime->format('H:i:s');
+
+                    $update_data = array(
+                        'start' => array(
+                            'dateTime' => $start_datetime,
+                            'timeZone' => $timezone,
+                        ),
+                        'end' => array(
+                            'dateTime' => $end_datetime_str,
+                            'timeZone' => $timezone,
+                        ),
+                    );
+
+                    // Include all attendees in the update
+                    $attendees_array = $google->build_attendees_array($id);
+                    if (!empty($attendees_array)) {
+                        $update_data['attendees'] = $attendees_array;
+                    }
+
+                    $google->update_staff_event($appt->staff_id, $appt->google_event_id, $update_data);
+                }
             } catch (Exception $e) {
                 SNAB_Logger::error('Failed to update Google Calendar event', array(
                     'appointment_id' => $id,

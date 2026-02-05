@@ -1494,6 +1494,157 @@ div.snab-booking-widget .snab-staff-option.selected,
     background: var(--snab-error-light);
 }
 
+/* Guest Invite Section (v1.10.4) */
+.snab-guest-invite-section {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: var(--snab-gray-50, #f9fafb);
+    border: 1px solid var(--snab-gray-200);
+    border-radius: 12px;
+}
+
+.snab-guest-invite-header {
+    margin-bottom: 12px;
+}
+
+.snab-guest-invite-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--snab-gray-700);
+}
+
+.snab-guest-input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.snab-guest-name-input,
+.snab-guest-email-input {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    border: 1px solid var(--snab-gray-300);
+    border-radius: 8px;
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.snab-guest-name-input:focus,
+.snab-guest-email-input:focus {
+    outline: none;
+    border-color: var(--snab-primary);
+    box-shadow: 0 0 0 3px rgba(var(--snab-primary-rgb), 0.1);
+}
+
+.snab-guest-name-input.snab-input-error,
+.snab-guest-email-input.snab-input-error {
+    border-color: var(--snab-error);
+    animation: snabShake 0.3s ease;
+}
+
+.snab-guest-add-btn {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--snab-primary);
+    background: var(--snab-primary-light);
+    border: 1px solid var(--snab-primary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.snab-guest-add-btn:hover {
+    background: var(--snab-primary);
+    color: #fff;
+}
+
+.snab-guest-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.snab-guest-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px 6px 12px;
+    background: var(--snab-primary-light);
+    border: 1px solid var(--snab-primary);
+    border-radius: 100px;
+    font-size: 0.85rem;
+    color: var(--snab-gray-700);
+}
+
+.snab-guest-info {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.snab-guest-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--snab-gray-500);
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.snab-guest-remove:hover {
+    color: var(--snab-error);
+    background: var(--snab-error-light);
+}
+
+.snab-guest-invite-section .snab-cc-section {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--snab-gray-200);
+}
+
+.snab-cc-input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 480px) {
+    .snab-guest-input-row {
+        flex-direction: column;
+    }
+
+    .snab-guest-add-btn {
+        width: 100%;
+    }
+
+    .snab-guest-chip {
+        font-size: 0.8rem;
+        padding: 4px 6px 4px 10px;
+    }
+
+    .snab-guest-info {
+        max-width: 160px;
+    }
+
+    .snab-cc-input-row {
+        flex-direction: column;
+    }
+}
+
 /* Attendees info in confirmation */
 .snab-attendees-info {
     display: inline-flex;

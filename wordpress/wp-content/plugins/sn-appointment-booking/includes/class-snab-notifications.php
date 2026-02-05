@@ -30,6 +30,7 @@ class SNAB_Notifications {
     const TYPE_RESCHEDULED = 'rescheduled';
     const TYPE_CLIENT_CANCEL = 'client_cancel';
     const TYPE_CLIENT_RESCHEDULE = 'client_reschedule';
+    const TYPE_APP_INVITE = 'app_invite';
 
     /**
      * Single instance.
@@ -203,6 +204,86 @@ class SNAB_Notifications {
             self::TYPE_CONFIRMATION,
             'admin',
             $admin_email,
+            $subject,
+            $sent
+        );
+
+        return $sent;
+    }
+
+    /**
+     * Send confirmation email to the assigned staff member.
+     *
+     * Sends to the staff member assigned to this specific appointment,
+     * with ICS attachment and attendee list. Skips if staff email matches
+     * admin email (already notified via send_admin_confirmation).
+     *
+     * @since 1.10.4
+     * @param int $appointment_id Appointment ID.
+     * @return bool
+     */
+    public function send_staff_confirmation($appointment_id) {
+        $appointment = $this->get_appointment($appointment_id);
+        if (!$appointment) {
+            return false;
+        }
+
+        $staff_email = $appointment->staff_email;
+        if (empty($staff_email)) {
+            return false;
+        }
+
+        // Skip if staff email is same as admin email (avoid duplicate)
+        $admin_email = $this->get_admin_email();
+        if (strtolower($staff_email) === strtolower($admin_email)) {
+            return true; // Already handled by send_admin_confirmation
+        }
+
+        // Generate ICS attachment for staff
+        $attachments = array();
+        $ics_file = $this->generate_ics_attachment($appointment, 'appointment');
+        if ($ics_file) {
+            $attachments[] = $ics_file;
+        }
+
+        // Build attendees list for staff notification
+        $attendees = $this->get_attendees($appointment_id);
+        $attendees_text = '';
+        if (!empty($attendees) && count($attendees) > 1) {
+            $attendee_names = array();
+            foreach ($attendees as $attendee) {
+                $attendee_names[] = sprintf('%s (%s)', $attendee->name, $attendee->email);
+            }
+            $attendees_text = "\nAll Attendees:\n" . implode("\n", $attendee_names) . "\n";
+        }
+
+        $subject = $this->parse_template(
+            $this->get_template('confirmation_admin_subject'),
+            $appointment
+        );
+
+        $message = $this->parse_template(
+            $this->get_template('confirmation_admin_body'),
+            $appointment
+        );
+
+        // Append attendees list if there are multiple
+        if (!empty($attendees_text)) {
+            $message .= "\n" . $attendees_text;
+        }
+
+        $sent = $this->send_email(
+            $staff_email,
+            $subject,
+            $message,
+            $attachments
+        );
+
+        $this->log_notification(
+            $appointment_id,
+            self::TYPE_CONFIRMATION,
+            'staff',
+            $staff_email,
             $subject,
             $sent
         );
@@ -913,6 +994,182 @@ Best regards,
     }
 
     /**
+     * Send app invite email to CC'd guests without accounts.
+     *
+     * Invites CC'd recipients who don't have a WordPress account to download
+     * the iOS app and create an account. Uses a 30-day transient debounce
+     * to prevent re-sending to the same email.
+     *
+     * @since 1.10.4
+     * @param int   $appointment_id Appointment ID for context.
+     * @param array $cc_emails      Array of CC email addresses to invite.
+     * @return bool True if at least one invite was sent.
+     */
+    public function send_app_invite($appointment_id, $cc_emails) {
+        if (empty($cc_emails)) {
+            return false;
+        }
+
+        $appointment = $this->get_appointment($appointment_id);
+        if (!$appointment) {
+            return false;
+        }
+
+        $any_sent = false;
+
+        foreach ($cc_emails as $email) {
+            // 30-day debounce to prevent re-sending
+            $email_hash = md5(strtolower(trim($email)));
+            $transient_key = 'snab_app_invite_' . $email_hash;
+
+            if (get_transient($transient_key)) {
+                SNAB_Logger::debug('App invite already sent recently', array(
+                    'email' => $email,
+                    'appointment_id' => $appointment_id,
+                ));
+                continue;
+            }
+
+            $subject = sprintf(
+                __('You\'re Invited to %s - Your Real Estate Assistant', 'sn-appointment-booking'),
+                get_bloginfo('name')
+            );
+
+            $html_content = $this->build_app_invite_html($appointment, $email);
+
+            $sent = $this->send_email($email, $subject, $html_content, array(), true);
+
+            if ($sent) {
+                set_transient($transient_key, true, 30 * DAY_IN_SECONDS);
+                $any_sent = true;
+
+                $this->log_notification(
+                    $appointment_id,
+                    self::TYPE_APP_INVITE,
+                    'cc_guest',
+                    $email,
+                    $subject,
+                    true
+                );
+
+                SNAB_Logger::info('App invite email sent', array(
+                    'email' => $email,
+                    'appointment_id' => $appointment_id,
+                ));
+            } else {
+                $this->log_notification(
+                    $appointment_id,
+                    self::TYPE_APP_INVITE,
+                    'cc_guest',
+                    $email,
+                    $subject,
+                    false
+                );
+            }
+        }
+
+        return $any_sent;
+    }
+
+    /**
+     * Build HTML content for the app invite email.
+     *
+     * @since 1.10.4
+     * @param object $appointment Appointment object.
+     * @param string $email       Recipient email address.
+     * @return string HTML email content.
+     */
+    private function build_app_invite_html($appointment, $email) {
+        global $wpdb;
+        $site_name = get_bloginfo('name');
+        $signup_url = home_url('/signup/');
+
+        // Check if the staff member has a referral code for personalized signup
+        if (!empty($appointment->staff_id)) {
+            $staff_table = $wpdb->prefix . 'snab_staff';
+            $staff = $wpdb->get_row($wpdb->prepare(
+                "SELECT user_id FROM {$staff_table} WHERE id = %d",
+                $appointment->staff_id
+            ));
+
+            if ($staff && $staff->user_id && class_exists('MLD_Referral_Manager')) {
+                $referral_code = MLD_Referral_Manager::get_agent_referral_code($staff->user_id);
+                if ($referral_code) {
+                    $signup_url = add_query_arg('ref', $referral_code, $signup_url);
+                }
+            }
+        }
+
+        // Get recipient's name from attendee record
+        $attendees_table = $wpdb->prefix . 'snab_appointment_attendees';
+        $attendee_name = $wpdb->get_var($wpdb->prepare(
+            "SELECT name FROM {$attendees_table} WHERE appointment_id = %d AND email = %s LIMIT 1",
+            $appointment->id,
+            $email
+        ));
+        $greeting_name = !empty($attendee_name) ? $attendee_name : '';
+
+        // Build HTML
+        $html = '';
+
+        // Greeting
+        if (!empty($greeting_name)) {
+            $html .= '<p style="margin: 0 0 15px 0; font-size: 16px; line-height: 1.6;">Hi ' . esc_html($greeting_name) . ',</p>';
+        }
+
+        $html .= '<p style="margin: 0 0 15px 0; font-size: 16px; line-height: 1.6;">';
+        $html .= 'You were recently included on a <strong>' . esc_html($appointment->type_name) . '</strong> appointment';
+        if (!empty($appointment->property_address)) {
+            $html .= ' for <strong>' . esc_html($appointment->property_address) . '</strong>';
+        }
+        $html .= ' with ' . esc_html($site_name) . '.</p>';
+
+        $html .= '<p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6;">';
+        $html .= 'Create a free account to unlock powerful tools for your real estate journey:</p>';
+
+        // Benefits section with icons
+        $html .= '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 0 0 25px 0;">';
+
+        $benefits = array(
+            array('Instant Property Alerts', 'Get notified the moment homes matching your criteria hit the market'),
+            array('Schedule Showings', 'Book and manage property tours directly from your phone'),
+            array('Save Your Favorites', 'Organize and compare properties you love in one place'),
+            array('School Ratings & Data', 'Access comprehensive school information for every neighborhood'),
+            array('Market Insights', 'Track price changes, trends, and comparable sales'),
+        );
+
+        foreach ($benefits as $benefit) {
+            $html .= '<tr>';
+            $html .= '<td style="padding: 8px 12px 8px 0; vertical-align: top; width: 24px;">';
+            $html .= '<span style="display: inline-block; width: 20px; height: 20px; background: #0891B2; color: #fff; border-radius: 50%; text-align: center; line-height: 20px; font-size: 12px; font-weight: bold;">&#10003;</span>';
+            $html .= '</td>';
+            $html .= '<td style="padding: 8px 0;">';
+            $html .= '<strong style="color: #1a1a1a;">' . $benefit[0] . '</strong><br>';
+            $html .= '<span style="color: #666; font-size: 14px;">' . $benefit[1] . '</span>';
+            $html .= '</td>';
+            $html .= '</tr>';
+        }
+
+        $html .= '</table>';
+
+        // CTA Button
+        $html .= '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">';
+        $html .= '<tr><td align="center">';
+        $html .= '<a href="' . esc_url($signup_url) . '" style="display: inline-block; padding: 16px 40px; ';
+        $html .= 'background: linear-gradient(135deg, #0891B2 0%, #06b6d4 100%); ';
+        $html .= 'color: #ffffff; text-decoration: none; border-radius: 8px; ';
+        $html .= 'font-weight: 600; font-size: 17px; letter-spacing: 0.3px;">Create Your Free Account</a>';
+        $html .= '</td></tr></table>';
+
+        // App download section
+        if (class_exists('MLD_Email_Utilities')) {
+            $html .= MLD_Email_Utilities::get_app_download_section(true, 'full');
+        }
+
+        return $html;
+    }
+
+    /**
      * Get other attendees list for email personalization.
      *
      * @since 1.10.0
@@ -1353,7 +1610,17 @@ If you have any questions or need to make further changes, please contact us.
         if ($type === 'cancellation') {
             $content = SNAB_ICS_Generator::generate_cancellation($appointment);
         } else {
-            $content = SNAB_ICS_Generator::generate($appointment);
+            // v1.10.4: Query all attendees and pass to ICS generator
+            global $wpdb;
+            $attendees_table = $wpdb->prefix . 'snab_appointment_attendees';
+            $attendees = $wpdb->get_results($wpdb->prepare(
+                "SELECT name, email, attendee_type FROM {$attendees_table}
+                 WHERE appointment_id = %d
+                 ORDER BY FIELD(attendee_type, 'primary', 'additional', 'cc')",
+                $appointment->id
+            ));
+
+            $content = SNAB_ICS_Generator::generate($appointment, $attendees);
         }
 
         $filename = SNAB_ICS_Generator::get_filename($appointment, $type);

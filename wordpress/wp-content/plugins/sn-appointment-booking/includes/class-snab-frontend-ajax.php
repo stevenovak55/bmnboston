@@ -428,6 +428,12 @@ class SNAB_Frontend_Ajax {
                 $google_event_data['location'] = $property_address;
             }
 
+            // Add all attendees (primary, additional, CC) to Google Calendar invite (v1.10.4)
+            $attendees_array = $this->google_calendar->build_attendees_array($appointment_id);
+            if (!empty($attendees_array)) {
+                $google_event_data['attendees'] = $attendees_array;
+            }
+
             $event_result = $this->google_calendar->create_staff_event($staff_id, $google_event_data);
 
             if (!is_wp_error($event_result) && isset($event_result['id'])) {
@@ -455,7 +461,32 @@ class SNAB_Frontend_Ajax {
         // Send confirmation emails
         $notifications = snab_notifications();
         $notifications->send_client_confirmation($appointment_id);
+        $notifications->send_staff_confirmation($appointment_id);
         $notifications->send_admin_confirmation($appointment_id);
+
+        // Send app invite to CC'd guests without accounts (v1.10.4)
+        if (!empty($cc_emails)) {
+            try {
+                global $wpdb;
+                $attendees_table = $wpdb->prefix . 'snab_appointment_attendees';
+                $cc_without_accounts = $wpdb->get_col($wpdb->prepare(
+                    "SELECT email FROM {$attendees_table}
+                     WHERE appointment_id = %d
+                     AND attendee_type = 'cc'
+                     AND (user_id IS NULL OR user_id = 0)",
+                    $appointment_id
+                ));
+
+                if (!empty($cc_without_accounts)) {
+                    $notifications->send_app_invite($appointment_id, $cc_without_accounts);
+                }
+            } catch (Exception $e) {
+                SNAB_Logger::error('Failed to send app invite', array(
+                    'appointment_id' => $appointment_id,
+                    'error' => $e->getMessage(),
+                ));
+            }
+        }
 
         SNAB_Logger::info('Appointment booked successfully', array(
             'appointment_id' => $appointment_id,

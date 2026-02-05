@@ -1006,6 +1006,23 @@ extension APIEndpoint {
             params["property_address"] = propertyAddress
         }
 
+        // Multi-attendee fields (v1.10.4)
+        if let additionalClients = request.additionalClients, !additionalClients.isEmpty {
+            params["additional_clients"] = additionalClients.map { client in
+                var dict: [String: Any] = [
+                    "name": client.name,
+                    "email": client.email
+                ]
+                if let phone = client.phone {
+                    dict["phone"] = phone
+                }
+                return dict
+            }
+        }
+        if let ccEmails = request.ccEmails, !ccEmails.isEmpty {
+            params["cc_emails"] = ccEmails
+        }
+
         return APIEndpoint(
             path: "\(appointmentsBasePath)/appointments",
             method: .post,

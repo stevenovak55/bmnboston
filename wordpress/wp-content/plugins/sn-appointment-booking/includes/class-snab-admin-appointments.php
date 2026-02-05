@@ -1266,13 +1266,38 @@ class SNAB_Admin_Appointments {
             wp_send_json_error(__('Failed to reschedule appointment.', 'sn-appointment-booking'));
         }
 
-        // Update Google Calendar event
-        if ($appointment->google_event_id) {
-            $gcal = snab_google_calendar();
-            if ($gcal->is_connected()) {
-                $gcal->update_event($appointment->google_event_id, array(
-                    'start_datetime' => $new_date . 'T' . $new_start_time,
-                    'end_datetime' => $new_date . 'T' . $new_end_time,
+        // Update Google Calendar event (v1.10.4: use per-staff method with attendees)
+        if ($appointment->google_event_id && $appointment->staff_id) {
+            try {
+                $gcal = snab_google_calendar();
+                if ($gcal->is_staff_connected($appointment->staff_id)) {
+                    $timezone = wp_timezone_string();
+                    $time_with_seconds = (strlen($new_start_time) === 5) ? $new_start_time . ':00' : $new_start_time;
+                    $end_with_seconds = (strlen($new_end_time) === 5) ? $new_end_time . ':00' : $new_end_time;
+
+                    $gcal_update_data = array(
+                        'start' => array(
+                            'dateTime' => $new_date . 'T' . $time_with_seconds,
+                            'timeZone' => $timezone,
+                        ),
+                        'end' => array(
+                            'dateTime' => $new_date . 'T' . $end_with_seconds,
+                            'timeZone' => $timezone,
+                        ),
+                    );
+
+                    // Include all attendees in the update
+                    $attendees_array = $gcal->build_attendees_array($appointment_id);
+                    if (!empty($attendees_array)) {
+                        $gcal_update_data['attendees'] = $attendees_array;
+                    }
+
+                    $gcal->update_staff_event($appointment->staff_id, $appointment->google_event_id, $gcal_update_data);
+                }
+            } catch (Exception $e) {
+                SNAB_Logger::error('Failed to update Google Calendar event', array(
+                    'appointment_id' => $appointment_id,
+                    'error' => $e->getMessage(),
                 ));
             }
         }

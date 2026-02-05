@@ -911,6 +911,74 @@ class SNAB_Google_Calendar {
     }
 
     /**
+     * Update event for a staff member.
+     *
+     * @since 1.10.4
+     * @param int    $staff_id   Staff member ID.
+     * @param string $event_id   Google Calendar event ID.
+     * @param array  $event_data Event data to update.
+     * @return array|WP_Error Updated event data or WP_Error.
+     */
+    public function update_staff_event($staff_id, $event_id, $event_data) {
+        $calendar_id = $this->get_staff_calendar($staff_id);
+        $endpoint = '/calendars/' . urlencode($calendar_id) . '/events/' . urlencode($event_id);
+
+        $response = $this->staff_api_request($staff_id, $endpoint, 'PATCH', $event_data);
+
+        if (!is_wp_error($response)) {
+            SNAB_Logger::info('Staff Google Calendar event updated', array(
+                'staff_id' => $staff_id,
+                'event_id' => $event_id,
+            ));
+        }
+
+        return $response;
+    }
+
+    /**
+     * Build Google Calendar attendees array from appointment attendees.
+     *
+     * Queries the snab_appointment_attendees table and formats the data
+     * for the Google Calendar API. CC attendees are marked as optional.
+     *
+     * @since 1.10.4
+     * @param int $appointment_id Appointment ID.
+     * @return array Google Calendar attendees format.
+     */
+    public function build_attendees_array($appointment_id) {
+        global $wpdb;
+        $attendees_table = $wpdb->prefix . 'snab_appointment_attendees';
+
+        $db_attendees = $wpdb->get_results($wpdb->prepare(
+            "SELECT name, email, attendee_type FROM {$attendees_table}
+             WHERE appointment_id = %d
+             ORDER BY FIELD(attendee_type, 'primary', 'additional', 'cc')",
+            $appointment_id
+        ));
+
+        if (empty($db_attendees)) {
+            return array();
+        }
+
+        $google_attendees = array();
+        foreach ($db_attendees as $attendee) {
+            $google_attendee = array(
+                'email' => $attendee->email,
+                'displayName' => $attendee->name,
+            );
+
+            // Mark CC attendees as optional in Google Calendar
+            if ($attendee->attendee_type === 'cc') {
+                $google_attendee['optional'] = true;
+            }
+
+            $google_attendees[] = $google_attendee;
+        }
+
+        return $google_attendees;
+    }
+
+    /**
      * Get connection status for a staff member.
      *
      * @since 1.6.1

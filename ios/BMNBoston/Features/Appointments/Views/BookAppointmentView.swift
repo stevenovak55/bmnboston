@@ -439,9 +439,11 @@ struct ContactDetailsView: View {
     @FocusState private var focusedField: Field?
     @State private var clientSearchText = ""
     @State private var ccEmailInput = ""
+    @State private var guestNameInput = ""
+    @State private var guestEmailInput = ""
 
     enum Field {
-        case name, email, phone, notes, clientSearch, ccEmail
+        case name, email, phone, notes, clientSearch, ccEmail, guestName, guestEmail
     }
 
     /// Check if user is an agent with clients
@@ -472,6 +474,9 @@ struct ContactDetailsView: View {
                 // Agent client picker (only for agents)
                 if authViewModel.currentUser?.isAgent == true {
                     clientPickerSection
+                } else if authViewModel.isAuthenticated {
+                    // Guest invite section for non-agent logged-in users (v1.10.4)
+                    guestInviteSection
                 }
 
                 Text(isAgentWithClients ? "Client Contact Information" : "Your Contact Information")
@@ -697,6 +702,84 @@ struct ContactDetailsView: View {
         .padding(.bottom, 8)
     }
 
+    // MARK: - Guest Invite Section (v1.10.4 - for non-agent logged-in users)
+
+    @ViewBuilder
+    private var guestInviteSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Invite a Guest")
+                .font(.headline)
+                .padding(.horizontal)
+
+            // Guest name + email input
+            VStack(spacing: 8) {
+                HStack {
+                    Image(systemName: "person")
+                        .foregroundStyle(.secondary)
+                    TextField("Guest name", text: $guestNameInput)
+                        .textFieldStyle(.plain)
+                        .textContentType(.name)
+                        .focused($focusedField, equals: .guestName)
+                }
+                .padding(10)
+                .background(Color(.systemGray6))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                HStack {
+                    Image(systemName: "envelope")
+                        .foregroundStyle(.secondary)
+                    TextField("Guest email", text: $guestEmailInput)
+                        .textFieldStyle(.plain)
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
+                        .focused($focusedField, equals: .guestEmail)
+                        .onSubmit {
+                            addManualGuest()
+                        }
+                    if !guestNameInput.isEmpty && !guestEmailInput.isEmpty {
+                        Button {
+                            addManualGuest()
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(AppColors.brandTeal)
+                        }
+                    }
+                }
+                .padding(10)
+                .background(Color(.systemGray6))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+            .padding(.horizontal)
+
+            // Guest chips
+            if !viewModel.manualGuests.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(Array(viewModel.manualGuests.enumerated()), id: \.offset) { index, guest in
+                            GuestChip(name: guest.name, email: guest.email) {
+                                viewModel.removeManualGuest(at: index)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+            }
+
+            // CC Emails
+            ccEmailsSection
+        }
+        .padding(.bottom, 8)
+    }
+
+    private func addManualGuest() {
+        let name = guestNameInput.trimmingCharacters(in: .whitespaces)
+        let email = guestEmailInput.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty, !email.isEmpty else { return }
+        viewModel.addManualGuest(name: name, email: email)
+        guestNameInput = ""
+        guestEmailInput = ""
+    }
+
     // MARK: - CC Emails Section (v1.10.0)
 
     @ViewBuilder
@@ -814,6 +897,42 @@ struct CCEmailChip: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .background(Color(.systemGray5))
+        .foregroundStyle(.primary)
+        .clipShape(Capsule())
+    }
+}
+
+// MARK: - Guest Chip (v1.10.4)
+
+struct GuestChip: View {
+    let name: String
+    let email: String
+    let onRemove: () -> Void
+
+    var body: some View {
+        HStack(spacing: 4) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(name)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .lineLimit(1)
+                Text(email)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Button(action: onRemove) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.caption)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(AppColors.brandTeal.opacity(0.1))
+        .overlay(
+            Capsule()
+                .stroke(AppColors.brandTeal.opacity(0.3), lineWidth: 1)
+        )
         .foregroundStyle(.primary)
         .clipShape(Capsule())
     }
@@ -1045,11 +1164,11 @@ struct ConfirmationView: View {
                     Text("Contact Information")
                         .font(.subheadline)
                         .fontWeight(.medium)
-                    if viewModel.selectedClients.count > 1 || !viewModel.ccEmails.isEmpty {
+                    if viewModel.selectedClients.count > 1 || !viewModel.manualGuests.isEmpty || !viewModel.ccEmails.isEmpty {
                         Spacer()
                         HStack(spacing: 4) {
                             Image(systemName: "person.2")
-                            Text("\(max(1, viewModel.selectedClients.count) + viewModel.ccEmails.count) attendees")
+                            Text("\(max(1, viewModel.selectedClients.count) + viewModel.manualGuests.count + viewModel.ccEmails.count) attendees")
                         }
                         .font(.caption)
                         .foregroundStyle(AppColors.brandTeal)
@@ -1083,13 +1202,14 @@ struct ConfirmationView: View {
                     Text(viewModel.clientPhone)
                 }
 
-                // Additional attendees (v1.10.0)
-                if viewModel.selectedClients.count > 1 {
+                // Additional attendees (v1.10.0 + v1.10.4 manual guests)
+                if viewModel.selectedClients.count > 1 || !viewModel.manualGuests.isEmpty {
                     Divider()
                     Text("Additional Attendees")
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
+                    // Agent-selected clients
                     ForEach(viewModel.selectedClients.dropFirst(), id: \.id) { client in
                         HStack {
                             Image(systemName: "person")
@@ -1098,6 +1218,21 @@ struct ConfirmationView: View {
                             VStack(alignment: .leading) {
                                 Text(client.displayName)
                                 Text(client.email)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+
+                    // Manual guests (v1.10.4)
+                    ForEach(Array(viewModel.manualGuests.enumerated()), id: \.offset) { _, guest in
+                        HStack {
+                            Image(systemName: "person")
+                                .foregroundStyle(.secondary)
+                                .frame(width: 24)
+                            VStack(alignment: .leading) {
+                                Text(guest.name)
+                                Text(guest.email)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }

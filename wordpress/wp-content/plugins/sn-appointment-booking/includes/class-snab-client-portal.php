@@ -535,28 +535,43 @@ class SNAB_Client_Portal {
             );
         }
 
-        // Update Google Calendar event if synced
-        if (!empty($appointment->google_event_id)) {
-            $google_calendar = snab_google_calendar();
-            if ($google_calendar->is_connected()) {
-                // Get updated appointment data
-                $updated_apt = $wpdb->get_row($wpdb->prepare(
-                    "SELECT a.*, t.name AS type_name, t.color AS type_color
-                     FROM {$appointments_table} a
-                     LEFT JOIN {$wpdb->prefix}snab_appointment_types t ON a.appointment_type_id = t.id
-                     WHERE a.id = %d",
-                    $appointment_id
-                ));
+        // Update Google Calendar event if synced (v1.10.4: use per-staff method with attendees)
+        if (!empty($appointment->google_event_id) && !empty($appointment->staff_id)) {
+            try {
+                $google_calendar = snab_google_calendar();
+                if ($google_calendar->is_staff_connected($appointment->staff_id)) {
+                    $timezone = wp_timezone_string();
+                    $time_with_seconds = (strlen($new_time) === 5) ? $new_time . ':00' : $new_time;
+                    $start_datetime = $new_date . 'T' . $time_with_seconds;
 
-                if ($updated_apt) {
-                    $types_table = $wpdb->prefix . 'snab_appointment_types';
-                    $type = $wpdb->get_row($wpdb->prepare(
-                        "SELECT * FROM {$types_table} WHERE id = %d",
-                        $appointment->appointment_type_id
-                    ));
+                    // Calculate end time
+                    $duration_minutes = !empty($appointment->duration_minutes) ? (int) $appointment->duration_minutes : 30;
+                    $end_dt = new DateTime($new_date . ' ' . $new_time, wp_timezone());
+                    $end_dt->add(new DateInterval('PT' . $duration_minutes . 'M'));
+                    $end_datetime_str = $new_date . 'T' . $end_dt->format('H:i:s');
 
-                    $event_data = $google_calendar->build_event_data($updated_apt, $type);
-                    $update_result = $google_calendar->update_event($appointment->google_event_id, $event_data);
+                    $gcal_update_data = array(
+                        'start' => array(
+                            'dateTime' => $start_datetime,
+                            'timeZone' => $timezone,
+                        ),
+                        'end' => array(
+                            'dateTime' => $end_datetime_str,
+                            'timeZone' => $timezone,
+                        ),
+                    );
+
+                    // Include all attendees in the update
+                    $attendees_array = $google_calendar->build_attendees_array($appointment_id);
+                    if (!empty($attendees_array)) {
+                        $gcal_update_data['attendees'] = $attendees_array;
+                    }
+
+                    $update_result = $google_calendar->update_staff_event(
+                        $appointment->staff_id,
+                        $appointment->google_event_id,
+                        $gcal_update_data
+                    );
 
                     if (is_wp_error($update_result)) {
                         SNAB_Logger::warning('Failed to update Google Calendar event', array(
@@ -566,6 +581,11 @@ class SNAB_Client_Portal {
                         ));
                     }
                 }
+            } catch (Exception $e) {
+                SNAB_Logger::error('Failed to update Google Calendar event', array(
+                    'appointment_id' => $appointment_id,
+                    'error' => $e->getMessage(),
+                ));
             }
         }
 

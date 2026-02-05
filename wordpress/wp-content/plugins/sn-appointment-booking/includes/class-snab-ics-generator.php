@@ -25,9 +25,10 @@ class SNAB_ICS_Generator {
      * Generate an ICS file content for an appointment.
      *
      * @param object $appointment Appointment object with all details.
+     * @param array  $attendees   Optional array of attendee objects (from snab_appointment_attendees).
      * @return string ICS file content.
      */
-    public static function generate($appointment) {
+    public static function generate($appointment, $attendees = array()) {
         $timezone = wp_timezone();
         $tz_string = $timezone->getName();
 
@@ -154,8 +155,14 @@ class SNAB_ICS_Generator {
         $organizer_email = get_option('admin_email');
         $ics[] = 'ORGANIZER;CN=' . self::escape_ics_text($organizer_name) . ':mailto:' . $organizer_email;
 
-        // Attendee (the client)
-        if (!empty($appointment->client_email)) {
+        // Attendees (v1.10.4: include all attendees - primary, additional, CC)
+        if (!empty($attendees)) {
+            foreach ($attendees as $att) {
+                $att_name = !empty($att->name) ? $att->name : '';
+                $ics[] = 'ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;CN=' . self::escape_ics_text($att_name) . ':mailto:' . $att->email;
+            }
+        } elseif (!empty($appointment->client_email)) {
+            // Backward compatibility: single primary client
             $attendee_name = !empty($appointment->client_name) ? $appointment->client_name : '';
             $ics[] = 'ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;CN=' . self::escape_ics_text($attendee_name) . ':mailto:' . $appointment->client_email;
         }
