@@ -1,6 +1,6 @@
 # BMN Flip Analyzer - Development Log
 
-## Current Version: 0.6.0
+## Current Version: 0.6.1
 
 ## Status: Phase 3.5 Complete (ARV & Financial Overhaul) - Pre-Phase 4 (iOS)
 

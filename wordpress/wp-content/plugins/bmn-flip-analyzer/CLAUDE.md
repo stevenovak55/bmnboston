@@ -1,6 +1,6 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.6.0
+**Current Version:** 0.6.1
 **Last Updated:** 2026-02-05
 
 ## Overview
