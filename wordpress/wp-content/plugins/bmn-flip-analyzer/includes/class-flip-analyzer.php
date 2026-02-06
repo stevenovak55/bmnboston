@@ -140,10 +140,11 @@ class Flip_Analyzer {
         float $area_avg_dom = 30,
         ?float $actual_tax_rate = null
     ): array {
-        // Rehab with remarks adjustment
-        $rehab_per_sqft   = self::get_rehab_per_sqft($year_built);
-        $rehab_multiplier = self::get_remarks_rehab_multiplier($remarks);
-        $effective_per_sqft = $rehab_per_sqft * $rehab_multiplier;
+        // Rehab with age condition + remarks adjustment
+        $rehab_per_sqft     = self::get_rehab_per_sqft($year_built);
+        $age_condition_mult = self::get_age_condition_multiplier($year_built);
+        $rehab_multiplier   = self::get_remarks_rehab_multiplier($remarks);
+        $effective_per_sqft = max(2.0, $rehab_per_sqft * $age_condition_mult * $rehab_multiplier);
         $base_rehab       = $sqft * $effective_per_sqft;
 
         // Lead paint allowance for pre-1978 (skip if remarks already mention it)
@@ -157,13 +158,15 @@ class Flip_Analyzer {
             }
         }
 
-        // Scaled contingency by rehab scope
-        $contingency_rate  = self::get_contingency_rate($effective_per_sqft);
+        // Contingency rate based on actual scope of work (before age discount),
+        // since the rate should reflect complexity/uncertainty, not the discounted cost
+        $scope_per_sqft    = $rehab_per_sqft * $rehab_multiplier;
+        $contingency_rate  = self::get_contingency_rate($scope_per_sqft);
         $rehab_contingency = $base_rehab * $contingency_rate;
         $rehab_cost        = round($base_rehab + $rehab_contingency, 2);
 
-        // Dynamic hold period
-        $hold_months = self::estimate_hold_months($rehab_per_sqft, $area_avg_dom);
+        // Dynamic hold period uses scope-based per-sqft (age discount reduces cost, not timeline)
+        $hold_months = self::estimate_hold_months($scope_per_sqft, $area_avg_dom);
 
         // Rehab level
         $rehab_level = match (true) {
@@ -220,8 +223,9 @@ class Flip_Analyzer {
         }
 
         return [
-            'rehab_per_sqft'    => $rehab_per_sqft,
-            'rehab_multiplier'  => round($rehab_multiplier, 2),
+            'rehab_per_sqft'          => $rehab_per_sqft,
+            'age_condition_multiplier' => round($age_condition_mult, 2),
+            'rehab_multiplier'        => round($rehab_multiplier, 2),
             'rehab_cost'        => $rehab_cost,
             'rehab_contingency' => round($rehab_contingency, 2),
             'contingency_rate'  => $contingency_rate,
@@ -301,11 +305,15 @@ class Flip_Analyzer {
             // Get city metrics
             $city_metrics = Flip_Location_Scorer::get_city_metrics($city);
 
+            // Fetch remarks early (needed for DQ distress check and later for market scoring + financials)
+            $remarks = Flip_Market_Scorer::get_remarks($listing_id);
+            $property_condition = self::get_property_condition($listing_id);
+
             // Calculate ARV
             $arv_data = Flip_ARV_Calculator::calculate($property);
 
-            // Check pre-financial disqualifiers
-            $disqualify = self::check_disqualifiers($property, $arv_data);
+            // Check pre-financial disqualifiers (includes new construction check)
+            $disqualify = self::check_disqualifiers($property, $arv_data, $remarks, $property_condition);
             if ($disqualify) {
                 self::store_disqualified($property, $arv_data, $disqualify, $run_date);
                 $disqualified++;
@@ -317,9 +325,11 @@ class Flip_Analyzer {
             $financial = Flip_Financial_Scorer::score($property, $arv_data, $city_metrics['avg_ppsf']);
             $prop_score = Flip_Property_Scorer::score($property);
 
+            $sub_type = $property->property_sub_type ?? 'Single Family Residence';
             $comp_density = Flip_ARV_Calculator::count_nearby_comps(
                 (float) $property->latitude,
-                (float) $property->longitude
+                (float) $property->longitude,
+                0.5, 6, $sub_type
             );
 
             // Road type from OSM
@@ -339,7 +349,7 @@ class Flip_Analyzer {
                 ['road_type' => $road_analysis['road_type']]
             );
 
-            $remarks = Flip_Market_Scorer::get_remarks($listing_id);
+            // $remarks already fetched earlier (before DQ check)
             $market = Flip_Market_Scorer::score($property, $remarks);
 
             // Compute weighted total
@@ -386,7 +396,10 @@ class Flip_Analyzer {
             );
 
             // Post-calculation disqualifier (uses financed numbers + adaptive thresholds)
-            $post_dq = self::check_post_calc_disqualifiers($fin['estimated_profit'], $fin['cash_on_cash_roi'], $thresholds);
+            $post_dq = self::check_post_calc_disqualifiers(
+                $fin['estimated_profit'], $fin['cash_on_cash_roi'], $thresholds,
+                $arv_data['arv_confidence'] ?? 'medium'
+            );
             if ($post_dq) {
                 // Check if near-viable (within 80% of adjusted thresholds)
                 $near_viable = ($fin['estimated_profit'] >= $thresholds['min_profit'] * 0.8)
@@ -498,8 +511,9 @@ class Flip_Analyzer {
             'cash_on_cash_roi'     => $fin['cash_on_cash_roi'],
             'market_strength'      => $arv_data['market_strength'] ?? 'balanced',
             'avg_sale_to_list'     => $arv_data['avg_sale_to_list'] ?? 1.0,
-            'rehab_multiplier'     => $fin['rehab_multiplier'],
-            'road_type'            => $road_analysis['road_type'],
+            'rehab_multiplier'         => $fin['rehab_multiplier'],
+            'age_condition_multiplier' => $fin['age_condition_multiplier'],
+            'road_type'                => $road_analysis['road_type'],
             'days_on_market'       => (int) ($property->days_on_market ?? 0),
             'list_price'           => (float) $property->list_price,
             'original_list_price'  => (float) ($property->original_list_price ?? 0),
@@ -563,9 +577,11 @@ class Flip_Analyzer {
         $financial  = Flip_Financial_Scorer::score($property, $arv_data, $city_metrics['avg_ppsf']);
         $prop_score = Flip_Property_Scorer::score($property);
 
+        $sub_type = $property->property_sub_type ?? 'Single Family Residence';
         $comp_density = Flip_ARV_Calculator::count_nearby_comps(
             (float) $property->latitude,
-            (float) $property->longitude
+            (float) $property->longitude,
+            0.5, 6, $sub_type
         );
 
         $street_name   = trim(($property->street_name ?? '') . ' ' . ($property->street_suffix ?? ''));
@@ -786,9 +802,18 @@ class Flip_Analyzer {
     /**
      * Check pre-financial auto-disqualifiers.
      *
+     * @param object      $property           Row from bme_listing_summary.
+     * @param array       $arv_data           ARV calculation result.
+     * @param string|null $remarks            Public remarks (for distress keyword check).
+     * @param string|null $property_condition  Property condition from bme_listing_details.
      * @return string|null Reason for disqualification, or null if passed.
      */
-    private static function check_disqualifiers(object $property, array $arv_data): ?string {
+    private static function check_disqualifiers(
+        object $property,
+        array $arv_data,
+        ?string $remarks = null,
+        ?string $property_condition = null
+    ): ?string {
         $list_price = (float) $property->list_price;
         $arv = (float) $arv_data['estimated_arv'];
         $sqft = (int) $property->building_area_total;
@@ -805,6 +830,25 @@ class Flip_Analyzer {
             return 'Building area too small (' . $sqft . ' sqft)';
         }
 
+        // New construction / near-new disqualifier
+        $year_built = (int) $property->year_built;
+        if ($year_built > 0) {
+            $current_year = (int) wp_date('Y');
+            $age = $current_year - $year_built;
+            $has_distress = self::has_distress_signals($remarks);
+            $condition_is_poor = self::condition_indicates_distress($property_condition);
+
+            // Age ≤ 5: auto-DQ unless distress signals or poor condition
+            if ($age <= 5 && !$has_distress && !$condition_is_poor) {
+                return "Recent construction ({$year_built}) - minimal renovation potential";
+            }
+
+            // Property condition "New Construction" or "Excellent" on < 15 year old property
+            if (self::condition_indicates_pristine($property_condition, $age) && !$has_distress) {
+                return "Property condition '{$property_condition}' on {$year_built} build - no renovation potential";
+            }
+        }
+
         $market_str = $arv_data['market_strength'] ?? 'balanced';
         $max_ratio = self::MARKET_MAX_PRICE_ARV_RATIO[$market_str] ?? 0.85;
         if ($arv > 0 && $list_price > $arv * $max_ratio) {
@@ -813,10 +857,12 @@ class Flip_Analyzer {
             return "List price too close to ARV (ratio: {$ratio}, max: {$pct}% [{$market_str}])";
         }
 
-        $year_built = (int) $property->year_built;
-        $estimated_rehab = $sqft * self::get_rehab_per_sqft($year_built);
+        $base_rehab_ppsf  = self::get_rehab_per_sqft($year_built);
+        $age_mult         = self::get_age_condition_multiplier($year_built);
+        $remarks_mult     = self::get_remarks_rehab_multiplier($remarks);
+        $estimated_rehab  = $sqft * max(2.0, $base_rehab_ppsf * $age_mult * $remarks_mult);
         if ($arv > 0 && $estimated_rehab > $arv * 0.35) {
-            return 'Default rehab estimate exceeds 35% of ARV';
+            return 'Rehab estimate exceeds 35% of ARV';
         }
 
         $ceiling_pct = $arv_data['ceiling_pct'] ?? 0;
@@ -834,13 +880,24 @@ class Flip_Analyzer {
      *
      * @return string|null Reason for disqualification, or null if passed.
      */
-    private static function check_post_calc_disqualifiers(float $profit, float $roi, array $thresholds): ?string {
-        $min_profit = $thresholds['min_profit'];
-        $min_roi    = $thresholds['min_roi'];
+    private static function check_post_calc_disqualifiers(float $profit, float $roi, array $thresholds, string $arv_confidence = 'medium'): ?string {
+        // Confidence safety margin — require more profit/ROI when ARV is uncertain
+        $confidence_factor = match ($arv_confidence) {
+            'high'   => 1.0,
+            'medium' => 1.0,
+            'low'    => 1.25,  // 25% stricter
+            default  => 1.5,   // 50% stricter for 'none'
+        };
+
+        $min_profit = $thresholds['min_profit'] * $confidence_factor;
+        $min_roi    = $thresholds['min_roi'] * $confidence_factor;
         $market     = $thresholds['market_strength'];
         $suffix     = ($market !== 'balanced')
             ? ' [' . $market . ' market]'
             : '';
+        if ($confidence_factor > 1.0) {
+            $suffix .= ' [low ARV confidence]';
+        }
 
         if ($profit < $min_profit) {
             return 'Estimated profit ($' . number_format($profit) . ') below minimum ($'
@@ -895,9 +952,10 @@ class Flip_Analyzer {
             'cash_on_cash_roi'    => 0,
             'market_strength'     => $arv_data['market_strength'] ?? 'balanced',
             'avg_sale_to_list'    => $arv_data['avg_sale_to_list'] ?? 1.0,
-            'rehab_multiplier'    => 1.0,
-            'days_on_market'      => (int) ($property->days_on_market ?? 0),
-            'list_price'          => (float) $property->list_price,
+            'rehab_multiplier'         => 1.0,
+            'age_condition_multiplier' => 1.0,
+            'days_on_market'           => (int) ($property->days_on_market ?? 0),
+            'list_price'               => (float) $property->list_price,
             'original_list_price' => (float) ($property->original_list_price ?? 0),
             'price_per_sqft'      => (float) ($property->price_per_sqft ?? 0),
             'building_area_total' => (int) $property->building_area_total,
@@ -928,13 +986,16 @@ class Flip_Analyzer {
      *
      * Uses smooth continuous formula instead of step function to avoid
      * discontinuities at boundaries (e.g., age 10=$15 → age 11=$30).
-     * Formula: clamp(10 + age × 0.7, 12, 65)
+     * Formula: clamp(10 + age × 0.7, 5, 65)
+     *
+     * v0.11.0: Floor lowered from $12 to $5 to allow realistic near-zero
+     * rehab when combined with age_condition_multiplier for new properties.
      */
     public static function get_rehab_per_sqft(int $year_built): float {
         if ($year_built <= 0) return 45.0;
         $age = (int) wp_date('Y') - $year_built;
 
-        return max(12.0, min(65.0, 10.0 + $age * 0.7));
+        return max(5.0, min(65.0, 10.0 + $age * 0.7));
     }
 
     /**
@@ -1143,5 +1204,132 @@ class Flip_Analyzer {
         }
 
         return null;
+    }
+
+    /**
+     * Look up property condition from MLS listing details.
+     *
+     * @param int $listing_id MLS listing ID.
+     * @return string|null Condition value (e.g. "Excellent", "New Construction", "Poor") or null.
+     */
+    private static function get_property_condition(int $listing_id): ?string {
+        global $wpdb;
+        $details_table = $wpdb->prefix . 'bme_listing_details';
+
+        return $wpdb->get_var($wpdb->prepare(
+            "SELECT property_condition FROM {$details_table} WHERE listing_id = %d LIMIT 1",
+            $listing_id
+        ));
+    }
+
+    /**
+     * Check if listing remarks contain distress signals that indicate
+     * a property may need renovation despite being recently built.
+     */
+    private static function has_distress_signals(?string $remarks): bool {
+        if (empty($remarks)) return false;
+        $lower = strtolower($remarks);
+
+        // Strong signals — unambiguous distress, never used in marketing
+        $strong_keywords = [
+            'foreclosure', 'bank owned', 'reo', 'short sale',
+            'fire damage', 'water damage', 'condemned', 'court ordered',
+            'estate sale', 'probate', 'uninhabitable',
+        ];
+        foreach ($strong_keywords as $keyword) {
+            if (str_contains($lower, $keyword)) return true;
+        }
+
+        // Weak signals — commonly used in marketing copy ("settle for a fixer upper",
+        // "no need for a handyman"). Require they NOT appear in a negation context.
+        // Uses word-boundary matching and expanded negation detection.
+        $weak_keywords = [
+            'fixer', 'handyman', 'needs work', 'as-is', 'as is',
+            'tear down', 'teardown',
+        ];
+        $negation_phrases = [
+            'no need', 'don\'t need', 'doesn\'t need', 'not a fixer', 'no fixer',
+            'settle for', 'instead of', 'rather than', 'unlike',
+            'forget the', 'won\'t need', 'without the',
+            'why settle', 'say goodbye', 'no more',
+            'never have to', 'don\'t have to', 'you won\'t',
+        ];
+        foreach ($weak_keywords as $keyword) {
+            // Word-boundary aware search: find all occurrences
+            $offset = 0;
+            $found_unegated = false;
+            while (($pos = strpos($lower, $keyword, $offset)) !== false) {
+                // Basic word boundary: char before/after shouldn't be a letter
+                if ($pos > 0 && ctype_alpha($lower[$pos - 1])) {
+                    $offset = $pos + 1;
+                    continue;
+                }
+                $end = $pos + strlen($keyword);
+                if ($end < strlen($lower) && ctype_alpha($lower[$end])) {
+                    $offset = $pos + 1;
+                    continue;
+                }
+
+                // Check negation context: 120 chars before, 60 chars after
+                $context_start = max(0, $pos - 120);
+                $context_end = min(strlen($lower), $end + 60);
+                $context = substr($lower, $context_start, $context_end - $context_start);
+
+                $negated = false;
+                foreach ($negation_phrases as $neg) {
+                    if (str_contains($context, $neg)) {
+                        $negated = true;
+                        break;
+                    }
+                }
+                if (!$negated) {
+                    $found_unegated = true;
+                    break;
+                }
+                $offset = $pos + 1;
+            }
+            if ($found_unegated) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check if property condition field indicates distress/renovation need.
+     */
+    private static function condition_indicates_distress(?string $condition): bool {
+        if (empty($condition)) return false;
+        $lower = strtolower(trim($condition));
+        return str_contains($lower, 'poor')
+            || str_contains($lower, 'needs')
+            || str_contains($lower, 'fixer');
+    }
+
+    /**
+     * Check if property condition field indicates pristine/new state
+     * on a relatively new property (< 15 years old).
+     */
+    private static function condition_indicates_pristine(?string $condition, int $age): bool {
+        if (empty($condition) || $age > 15) return false;
+        $lower = strtolower(trim($condition));
+        return in_array($lower, ['new construction', 'excellent', 'new/never occupied'], true);
+    }
+
+    /**
+     * Get age-based condition multiplier for rehab estimates.
+     *
+     * Near-new properties without distress signals need minimal rehab.
+     * Applied BEFORE the remarks multiplier in calculate_financials().
+     */
+    public static function get_age_condition_multiplier(int $year_built): float {
+        if ($year_built <= 0) return 1.0;
+        $age = (int) wp_date('Y') - $year_built;
+
+        return match (true) {
+            $age <= 5  => 0.10,  // Brand new — basically nothing to do
+            $age <= 10 => 0.30,
+            $age <= 15 => 0.50,
+            $age <= 20 => 0.75,
+            default    => 1.0,   // Full rehab formula applies
+        };
     }
 }

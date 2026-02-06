@@ -401,6 +401,11 @@ class Flip_CLI {
         WP_CLI::line(sprintf("  Beds/Baths:      %d / %s", $result->bedrooms_total, $result->bathrooms_total));
         WP_CLI::line(sprintf("  Sqft:            %s", number_format($result->building_area_total)));
         WP_CLI::line(sprintf("  Year Built:      %d", $result->year_built));
+        $age_mult = (float) ($result->age_condition_multiplier ?? 1.0);
+        if ($age_mult < 1.0) {
+            $age = $result->year_built > 0 ? ((int) wp_date('Y') - (int) $result->year_built) : 0;
+            WP_CLI::line(sprintf("  Age Condition:   %sx rehab (age %d, near-new discount)", $age_mult, $age));
+        }
         WP_CLI::line(sprintf("  Lot Size:        %s acres", $result->lot_size_acres));
         WP_CLI::line(sprintf("  $/sqft:          $%s", number_format($result->price_per_sqft, 2)));
 

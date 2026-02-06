@@ -1,11 +1,34 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.10.0
+**Current Version:** 0.11.1
 **Last Updated:** 2026-02-06
 
 ## Overview
 
 Standalone WordPress plugin that identifies Single Family Residence flip candidates by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates.
+
+**v0.11.1 Fixes (Logic Audit — 11 loopholes):**
+- ARV confidence discount: low/none confidence requires 25-50% higher profit/ROI to pass post-calc DQ
+- Pre-DQ rehab estimate includes age condition + remarks multipliers (was base $/sqft only)
+- Missing $/sqft score: penalized at 30 instead of neutral 50
+- Contingency rate uses scope of work (base × remarks_mult), not age-discounted effective $/sqft
+- Hold period uses scope-based rehab (age discount reduces cost, not work timeline)
+- Market strength capped at balanced when < 3 sale-to-list data points available
+- Distress detection: word-boundary matching, 120-char context window, 16 negation phrases
+- Post-multiplier rehab floor: $2/sqft minimum after all multipliers applied
+- Distressed comp downweighting: foreclosure/short-sale comps get 0.3x influence weight in ARV
+- Expansion potential capped at 40 for condos/townhouses (cannot expand on shared lots)
+- Ceiling type mixed flag tracks when fallback uses all property types
+
+**v0.11.0 Enhancements (Renovation Potential Guard):**
+- New construction auto-DQ: properties ≤5 years old disqualified unless distress signals (foreclosure, as-is, etc.)
+- Property condition field from `bme_listing_details` used as supplementary DQ signal
+- Inverted year-built scoring → "renovation need" score: older properties score higher (sweet spot 41-70 years)
+- Age-based rehab condition multiplier: 0.10x for age ≤5, scales to 1.0x for age 21+
+- Lowered rehab floor from $12/sqft to $5/sqft for realistic near-zero estimates on near-new properties
+- Enhanced remarks: weighted keywords (strongest signals get 5 pts), cap increased ±15→±25, new keywords
+- New DB column: `age_condition_multiplier`
+- Dashboard: age condition display in rehab note, NEW badge on construction DQ reasons
 
 **v0.10.0 Enhancements (Pre-Analysis Filters + Force Analyze + PDF v2):**
 - Configurable pre-analysis filters: 17 filters applied at SQL level before analysis runs
@@ -101,7 +124,7 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 **Table:** `wp_bmn_flip_scores`
 - Scores: `total_score`, `financial_score`, `property_score`, `location_score`, `market_score`, `photo_score`
 - Financials: `estimated_arv`, `arv_confidence`, `comp_count`, `estimated_rehab_cost`, `mao`, `estimated_profit`, `estimated_roi`
-- Financing (v0.6.0): `financing_costs`, `holding_costs`, `rehab_contingency`, `hold_months`, `cash_profit`, `cash_roi`, `cash_on_cash_roi`, `rehab_multiplier`
+- Financing (v0.6.0): `financing_costs`, `holding_costs`, `rehab_contingency`, `hold_months`, `cash_profit`, `cash_roi`, `cash_on_cash_roi`, `rehab_multiplier`, `age_condition_multiplier` (v0.11.0)
 - Market (v0.6.0): `market_strength`, `avg_sale_to_list`
 - Neighborhood: `neighborhood_ceiling`, `ceiling_pct`, `ceiling_warning`, `road_type`
 - Property snapshot: `list_price`, `address`, `city`, `bedrooms_total`, etc.
@@ -143,7 +166,7 @@ wp flip analyze_photos [--top=50] [--min-score=40]  # Pass 2: Claude Vision phot
 | Category | Weight | Sub-factors |
 |----------|--------|-------------|
 | Financial | 40% | Price/ARV ratio (37.5%), $/sqft vs neighborhood (25%), price reduction (25%), DOM motivation (12.5%) |
-| Property | 25% | Lot size (35%), expansion potential (30%), existing sqft (20%), year/systems (15%) |
+| Property | 25% | Lot size (35%), expansion potential (30%), existing sqft (20%), renovation need (15%) |
 | Location | 25% | Road type (25%), ceiling support (25%), price trend (25%), comp density (15%), schools (10%) |
 | Market | 10% | Listing DOM (40%), price reduction (30%), season (30%) + remarks bonus (±15) |
 
@@ -165,6 +188,8 @@ Uses OpenStreetMap Overpass API to classify roads by highway tag:
 
 **Pre-calculation:**
 - 0 comps within 1 mile
+- **Recent construction (v0.11.0):** age ≤5 years auto-DQ unless distress keywords in remarks or property_condition indicates poor
+- **Pristine condition (v0.11.0):** property_condition "New Construction"/"Excellent" on properties <15 years old
 - `list_price > ARV * max_price_arv` (market-adaptive: 0.78 cold → 0.92 very_hot)
 - Default rehab estimate > 35% of ARV
 - `building_area_total < 600` sqft
@@ -289,6 +314,7 @@ Uses Claude Vision API (`claude-sonnet-4-5-20250929`) to analyze up to 5 photos 
 | 3.8 - ARV & Financial Overhaul | Complete | ARV fixes, financial model v2, risk analysis |
 | 3.9 - PDF Report v2 | Complete | Photo strips, charts, comp cards, visual redesign |
 | 4.0 - Analysis Filters + Force Analyze | Complete | 17 pre-analysis filters, force DQ bypass, CLI flags |
+| 4.1 - Renovation Potential Guard | Complete | New construction DQ, inverted year scoring, age rehab multiplier, enhanced remarks |
 | 5 - iOS | Pending | SwiftUI views, ViewModel, API |
 | 6 - Polish | Pending | Testing, weight tuning |
 

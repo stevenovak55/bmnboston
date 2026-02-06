@@ -150,6 +150,20 @@ class Flip_Database {
     }
 
     /**
+     * Add columns for v0.11.0 (renovation potential guard).
+     */
+    public static function migrate_v0110(): void {
+        global $wpdb;
+        $table = self::table_name();
+
+        $cols = $wpdb->get_col("SHOW COLUMNS FROM {$table}", 0);
+
+        if (!in_array('age_condition_multiplier', $cols, true)) {
+            $wpdb->query("ALTER TABLE {$table} ADD COLUMN age_condition_multiplier DECIMAL(4,2) DEFAULT 1.00 AFTER rehab_multiplier");
+        }
+    }
+
+    /**
      * Set default target cities on activation.
      */
     public static function set_default_cities(): void {

@@ -23,6 +23,13 @@ class Flip_ARV_Calculator {
         'turnkey', 'like new', 'updated throughout', 'fully renovated',
     ];
 
+    /** Compatible property type groups for comp fallback */
+    const COMPATIBLE_TYPES = [
+        'Townhouse'                => ['Townhouse', 'Condominium'],
+        'Condominium'              => ['Condominium', 'Townhouse'],
+        'Single Family Residence'  => ['Single Family Residence'],
+    ];
+
     /**
      * Calculate ARV for a property.
      *
@@ -40,6 +47,7 @@ class Flip_ARV_Calculator {
         $sqft = (int) $property->building_area_total;
         $beds = (int) $property->bedrooms_total;
         $baths = (float) ($property->bathrooms_total ?? 0);
+        $sub_type = $property->property_sub_type ?? 'Single Family Residence';
 
         $result = [
             'estimated_arv'         => 0,
@@ -51,8 +59,10 @@ class Flip_ARV_Calculator {
             'neighborhood_ceiling'  => 0,
             'ceiling_warning'       => false,
             'ceiling_pct'           => 0,
+            'ceiling_type_mixed'    => false,
             'avg_sale_to_list'      => 1.0,
             'market_strength'       => 'balanced',
+            'market_data_limited'   => true,
             'bath_filter_relaxed'   => false,
         ];
 
@@ -60,16 +70,56 @@ class Flip_ARV_Calculator {
             return $result;
         }
 
+        // Determine comp type search order:
+        // 1. Exact property sub-type match
+        // 2. Compatible types (e.g., Townhouse ↔ Condominium)
+        // 3. All residential types as last resort
+        $exact_types = [$sub_type];
+        $compatible_types = self::COMPATIBLE_TYPES[$sub_type] ?? [$sub_type];
+        $all_types = null; // null = no type filter
+
         // Find comps with bathroom filter, expanding radius: 0.5→1.0→2.0mi
-        $comps = self::find_comps_with_expansion($lat, $lng, $sqft, $beds, $baths);
+        $comps = self::find_comps_with_expansion($lat, $lng, $sqft, $beds, $baths, $exact_types);
         $bath_relaxed = false;
 
         // If bathroom filter is too restrictive, fall back without it
         if (count($comps) < 3) {
-            $comps_no_bath = self::find_comps_with_expansion($lat, $lng, $sqft, $beds, null);
+            $comps_no_bath = self::find_comps_with_expansion($lat, $lng, $sqft, $beds, null, $exact_types);
             if (count($comps_no_bath) > count($comps)) {
                 $comps = $comps_no_bath;
                 $bath_relaxed = true;
+            }
+        }
+
+        // Type fallback: try compatible types if not enough exact-type comps
+        if (count($comps) < 3 && count($compatible_types) > count($exact_types)) {
+            $compat_comps = self::find_comps_with_expansion($lat, $lng, $sqft, $beds, $baths, $compatible_types);
+            if (count($compat_comps) > count($comps)) {
+                $comps = $compat_comps;
+                $bath_relaxed = false;
+            }
+            if (count($comps) < 3) {
+                $compat_no_bath = self::find_comps_with_expansion($lat, $lng, $sqft, $beds, null, $compatible_types);
+                if (count($compat_no_bath) > count($comps)) {
+                    $comps = $compat_no_bath;
+                    $bath_relaxed = true;
+                }
+            }
+        }
+
+        // Last resort: all residential types (no sub-type filter)
+        if (count($comps) < 3) {
+            $broad_comps = self::find_comps_with_expansion($lat, $lng, $sqft, $beds, $baths, $all_types);
+            if (count($broad_comps) > count($comps)) {
+                $comps = $broad_comps;
+                $bath_relaxed = false;
+            }
+            if (count($comps) < 3) {
+                $broad_no_bath = self::find_comps_with_expansion($lat, $lng, $sqft, $beds, null, $all_types);
+                if (count($broad_no_bath) > count($comps)) {
+                    $comps = $broad_no_bath;
+                    $bath_relaxed = true;
+                }
             }
         }
 
@@ -77,8 +127,12 @@ class Flip_ARV_Calculator {
             return $result;
         }
 
-        // Get city avg $/sqft for market-scaled adjustments
-        $city_ppsf = self::get_city_avg_ppsf($property->city ?? '');
+        // Get city avg $/sqft for market-scaled adjustments (type-aware)
+        $city_ppsf = self::get_city_avg_ppsf($property->city ?? '', $sub_type);
+        if ($city_ppsf <= 0) {
+            // Fallback: try compatible types, then all
+            $city_ppsf = self::get_city_avg_ppsf($property->city ?? '');
+        }
         if ($city_ppsf <= 0) {
             $city_ppsf = 350; // Fallback for Greater Boston
         }
@@ -92,8 +146,8 @@ class Flip_ARV_Calculator {
             $c->total_adjustment  = $adj['total_adjustment'];
         }
 
-        // Get price trend for time adjustment
-        $price_trend_pct = self::get_price_trend($property->city ?? '');
+        // Get price trend for time adjustment (type-aware)
+        $price_trend_pct = self::get_price_trend($property->city ?? '', $sub_type);
         $monthly_rate = $price_trend_pct / 12 / 100;
 
         // Distance + renovation + time weighted average using adjusted $/sqft
@@ -111,6 +165,10 @@ class Flip_ARV_Calculator {
                 default => 1.0,
             };
 
+            // Distressed sale penalty — non-arm's-length transactions (foreclosures, short sales)
+            // get heavily downweighted since they sell below market value
+            $distress_mult = ((int) ($c->is_distressed ?? 0) === 1) ? 0.3 : 1.0;
+
             // Time decay: half-weight at 6 months (ln(2)/6 ≈ 0.115)
             $close_ts = strtotime($c->close_date);
             $months_ago = max(0, ($now_ts - $close_ts) / (30 * 86400));
@@ -120,7 +178,7 @@ class Flip_ARV_Calculator {
             $time_adjusted_ppsf = (float) $c->adjusted_ppsf * (1 + $monthly_rate * $months_ago);
 
             // Combined weight
-            $weight = $reno_mult * $time_weight / pow($dist + 0.1, 2);
+            $weight = $reno_mult * $distress_mult * $time_weight / pow($dist + 0.1, 2);
 
             $weighted_ppsf_sum += $time_adjusted_ppsf * $weight;
             $weight_sum += $weight;
@@ -133,10 +191,18 @@ class Flip_ARV_Calculator {
         // Multi-factor confidence
         $confidence = self::calc_confidence($comps);
 
-        // Neighborhood ceiling
-        $ceiling = self::get_neighborhood_ceiling($lat, $lng, 0.5);
+        // Neighborhood ceiling (type-aware)
+        $ceiling_type_mixed = false;
+        $ceiling = self::get_neighborhood_ceiling($lat, $lng, 0.5, $sub_type);
+        if ($ceiling <= 0) {
+            $ceiling = self::get_neighborhood_ceiling($lat, $lng, 1.0, $sub_type);
+        }
+        // Fallback: use all types for ceiling if type-specific has no data
         if ($ceiling <= 0) {
             $ceiling = self::get_neighborhood_ceiling($lat, $lng, 1.0);
+            if ($ceiling > 0) {
+                $ceiling_type_mixed = true;
+            }
         }
 
         $ceiling_warning = false;
@@ -156,6 +222,7 @@ class Flip_ARV_Calculator {
             }
         }
         $avg_stl = $stl_count > 0 ? round($stl_sum / $stl_count, 3) : 1.0;
+        $market_data_limited = ($stl_count < 3);
         $market_strength = match (true) {
             $avg_stl >= 1.04 => 'very_hot',
             $avg_stl >= 1.01 => 'hot',
@@ -163,6 +230,10 @@ class Flip_ARV_Calculator {
             $avg_stl >= 0.93 => 'soft',
             default          => 'cold',
         };
+        // With limited market data, don't claim hot/very_hot — default to balanced
+        if ($market_data_limited && in_array($market_strength, ['very_hot', 'hot'], true)) {
+            $market_strength = 'balanced';
+        }
 
         $result['estimated_arv']         = $estimated_arv;
         $result['arv_confidence']        = $confidence;
@@ -173,8 +244,10 @@ class Flip_ARV_Calculator {
         $result['neighborhood_ceiling']  = $ceiling;
         $result['ceiling_warning']       = $ceiling_warning;
         $result['ceiling_pct']           = $ceiling_pct;
+        $result['ceiling_type_mixed']    = $ceiling_type_mixed;
         $result['avg_sale_to_list']      = $avg_stl;
         $result['market_strength']       = $market_strength;
+        $result['market_data_limited']   = $market_data_limited;
         $result['bath_filter_relaxed']   = $bath_relaxed;
 
         return $result;
@@ -187,21 +260,22 @@ class Flip_ARV_Calculator {
      * @param float      $lng
      * @param int        $sqft
      * @param int        $beds
-     * @param float|null $baths Null to skip bathroom filter.
+     * @param float|null $baths     Null to skip bathroom filter.
+     * @param array|null $sub_types Property sub-types to match, null for all.
      * @return array
      */
-    private static function find_comps_with_expansion(float $lat, float $lng, int $sqft, int $beds, ?float $baths): array {
-        $comps = self::find_comps($lat, $lng, $sqft, $beds, $baths, 0.5);
+    private static function find_comps_with_expansion(float $lat, float $lng, int $sqft, int $beds, ?float $baths, ?array $sub_types = null): array {
+        $comps = self::find_comps($lat, $lng, $sqft, $beds, $baths, 0.5, $sub_types);
 
         if (count($comps) < 3) {
-            $expanded = self::find_comps($lat, $lng, $sqft, $beds, $baths, 1.0);
+            $expanded = self::find_comps($lat, $lng, $sqft, $beds, $baths, 1.0, $sub_types);
             if (count($expanded) > count($comps)) {
                 $comps = $expanded;
             }
         }
 
         if (count($comps) < 3) {
-            $expanded = self::find_comps($lat, $lng, $sqft, $beds, $baths, 2.0);
+            $expanded = self::find_comps($lat, $lng, $sqft, $beds, $baths, 2.0, $sub_types);
             if (count($expanded) > count($comps)) {
                 $comps = $expanded;
             }
@@ -327,23 +401,38 @@ class Flip_ARV_Calculator {
      *
      * Uses P90 instead of MAX to avoid outlier McMansion sales skewing
      * the ceiling. Requires minimum 3 sales for meaningful data.
+     *
+     * @param string|null $sub_type Property sub-type filter, null for all.
      */
-    public static function get_neighborhood_ceiling(float $lat, float $lng, float $radius_miles = 0.5): float {
+    public static function get_neighborhood_ceiling(float $lat, float $lng, float $radius_miles = 0.5, ?string $sub_type = null): float {
         global $wpdb;
         $archive_table = $wpdb->prefix . 'bme_listing_summary_archive';
 
         $lat_delta = $radius_miles / 69.0;
         $lng_delta = $radius_miles / (69.0 * cos(deg2rad($lat)));
 
+        $type_filter = '';
+        $type_params = [];
+        if ($sub_type !== null) {
+            $compatible = self::COMPATIBLE_TYPES[$sub_type] ?? [$sub_type];
+            $placeholders = implode(',', array_fill(0, count($compatible), '%s'));
+            $type_filter = "AND property_sub_type IN ({$placeholders})";
+            $type_params = $compatible;
+        }
+
+        $params = array_merge($type_params, [
+            $lat - $lat_delta, $lat + $lat_delta,
+            $lng - $lng_delta, $lng + $lng_delta,
+        ]);
+
         $where = $wpdb->prepare(
             "standard_status = 'Closed'
-              AND property_sub_type = 'Single Family Residence'
+              {$type_filter}
               AND close_date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
               AND close_price > 0
               AND latitude BETWEEN %f AND %f
               AND longitude BETWEEN %f AND %f",
-            $lat - $lat_delta, $lat + $lat_delta,
-            $lng - $lng_delta, $lng + $lng_delta
+            ...$params
         );
 
         $count = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$archive_table} WHERE {$where}");
@@ -366,17 +455,18 @@ class Flip_ARV_Calculator {
     }
 
     /**
-     * Find comparable sold SFR properties within a radius.
+     * Find comparable sold properties within a radius.
      *
      * @param float      $lat
      * @param float      $lng
      * @param int        $sqft
      * @param int        $beds
-     * @param float|null $baths Null to skip bathroom filter.
+     * @param float|null $baths     Null to skip bathroom filter.
      * @param float      $radius_miles
+     * @param array|null $sub_types Property sub-types to match, null for all residential.
      * @return array
      */
-    private static function find_comps(float $lat, float $lng, int $sqft, int $beds, ?float $baths, float $radius_miles): array {
+    private static function find_comps(float $lat, float $lng, int $sqft, int $beds, ?float $baths, float $radius_miles, ?array $sub_types = null): array {
         global $wpdb;
         $archive_table   = $wpdb->prefix . 'bme_listing_summary_archive';
         $listings_archive = $wpdb->prefix . 'bme_listings_archive';
@@ -400,6 +490,15 @@ class Flip_ARV_Calculator {
             $bath_params = [$baths_min, $baths_max];
         }
 
+        // Property sub-type filter
+        $type_where = '';
+        $type_params = [];
+        if ($sub_types !== null && !empty($sub_types)) {
+            $placeholders = implode(',', array_fill(0, count($sub_types), '%s'));
+            $type_where = "AND s.property_sub_type IN ({$placeholders})";
+            $type_params = $sub_types;
+        }
+
         // Renovation keyword scoring
         $reno_conditions = [];
         foreach (self::RENOVATED_KEYWORDS as $keyword) {
@@ -408,6 +507,15 @@ class Flip_ARV_Calculator {
         }
         $reno_case = implode(' OR ', $reno_conditions);
 
+        // Distressed sale detection (non-arm's-length transactions)
+        $distress_keywords = ['foreclosure', 'bank owned', 'short sale', 'court ordered', 'reo sale', 'reo property'];
+        $distress_conditions = [];
+        foreach ($distress_keywords as $dkw) {
+            $escaped = $wpdb->esc_like($dkw);
+            $distress_conditions[] = "l.public_remarks LIKE '%%{$escaped}%%'";
+        }
+        $distress_case = implode(' OR ', $distress_conditions);
+
         $current_year = (int) wp_date('Y');
         $new_construction_year = $current_year - 3;
 
@@ -415,9 +523,12 @@ class Flip_ARV_Calculator {
         $params = [
             $lat, $lng, $lat,
             $new_construction_year,
+        ];
+        $params = array_merge($params, $type_params);
+        $params = array_merge($params, [
             $sqft_min, $sqft_max,
             $beds_min, $beds_max,
-        ];
+        ]);
         $params = array_merge($params, $bath_params);
         $params = array_merge($params, [
             $lat - $lat_delta, $lat + $lat_delta,
@@ -449,11 +560,15 @@ class Flip_ARV_Calculator {
                     WHEN ({$reno_case}) THEN 2
                     WHEN s.year_built >= %d THEN 1
                     ELSE 0
-                END AS reno_priority
+                END AS reno_priority,
+                CASE
+                    WHEN ({$distress_case}) THEN 1
+                    ELSE 0
+                END AS is_distressed
             FROM {$archive_table} s
             LEFT JOIN {$listings_archive} l ON s.listing_id = l.listing_id
             WHERE s.standard_status = 'Closed'
-              AND s.property_sub_type = 'Single Family Residence'
+              {$type_where}
               AND s.close_date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
               AND s.close_price > 0
               AND s.building_area_total > 0
@@ -540,21 +655,34 @@ class Flip_ARV_Calculator {
 
     /**
      * Get neighborhood average $/sqft for a city.
+     *
+     * @param string      $city
+     * @param string|null $sub_type Property sub-type, null for all.
      */
-    public static function get_city_avg_ppsf(string $city): float {
+    public static function get_city_avg_ppsf(string $city, ?string $sub_type = null): float {
         global $wpdb;
         $archive_table = $wpdb->prefix . 'bme_listing_summary_archive';
+
+        $type_filter = '';
+        $params = [];
+        if ($sub_type !== null) {
+            $compatible = self::COMPATIBLE_TYPES[$sub_type] ?? [$sub_type];
+            $placeholders = implode(',', array_fill(0, count($compatible), '%s'));
+            $type_filter = "AND property_sub_type IN ({$placeholders})";
+            $params = $compatible;
+        }
+        $params[] = $city;
 
         $avg = $wpdb->get_var($wpdb->prepare(
             "SELECT AVG(close_price / building_area_total)
             FROM {$archive_table}
             WHERE standard_status = 'Closed'
-              AND property_sub_type = 'Single Family Residence'
+              {$type_filter}
               AND close_date >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
               AND close_price > 0
               AND building_area_total > 0
               AND city = %s",
-            $city
+            ...$params
         ));
 
         return round((float) $avg, 2);
@@ -563,31 +691,43 @@ class Flip_ARV_Calculator {
     /**
      * Get neighborhood price trend (recent 3 months vs 3-12 months ago).
      * Returns percent change.
+     *
+     * @param string      $city
+     * @param string|null $sub_type Property sub-type, null for all.
      */
-    public static function get_price_trend(string $city): float {
+    public static function get_price_trend(string $city, ?string $sub_type = null): float {
         global $wpdb;
         $archive_table = $wpdb->prefix . 'bme_listing_summary_archive';
+
+        $type_filter = '';
+        $type_params = [];
+        if ($sub_type !== null) {
+            $compatible = self::COMPATIBLE_TYPES[$sub_type] ?? [$sub_type];
+            $placeholders = implode(',', array_fill(0, count($compatible), '%s'));
+            $type_filter = "AND property_sub_type IN ({$placeholders})";
+            $type_params = $compatible;
+        }
 
         $recent = $wpdb->get_var($wpdb->prepare(
             "SELECT AVG(close_price / building_area_total)
             FROM {$archive_table}
             WHERE standard_status = 'Closed'
-              AND property_sub_type = 'Single Family Residence'
+              {$type_filter}
               AND close_date >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
               AND close_price > 0 AND building_area_total > 0
               AND city = %s",
-            $city
+            ...array_merge($type_params, [$city])
         ));
 
         $older = $wpdb->get_var($wpdb->prepare(
             "SELECT AVG(close_price / building_area_total)
             FROM {$archive_table}
             WHERE standard_status = 'Closed'
-              AND property_sub_type = 'Single Family Residence'
+              {$type_filter}
               AND close_date BETWEEN DATE_SUB(NOW(), INTERVAL 12 MONTH) AND DATE_SUB(NOW(), INTERVAL 3 MONTH)
               AND close_price > 0 AND building_area_total > 0
               AND city = %s",
-            $city
+            ...array_merge($type_params, [$city])
         ));
 
         if (!$older || $older <= 0) return 0;
@@ -595,47 +735,75 @@ class Flip_ARV_Calculator {
     }
 
     /**
-     * Get area average DOM for sold SFR in a city.
+     * Get area average DOM for sold properties in a city.
+     *
+     * @param string      $city
+     * @param string|null $sub_type Property sub-type, null for all.
      */
-    public static function get_area_avg_dom(string $city): float {
+    public static function get_area_avg_dom(string $city, ?string $sub_type = null): float {
         global $wpdb;
         $archive_table = $wpdb->prefix . 'bme_listing_summary_archive';
+
+        $type_filter = '';
+        $params = [];
+        if ($sub_type !== null) {
+            $compatible = self::COMPATIBLE_TYPES[$sub_type] ?? [$sub_type];
+            $placeholders = implode(',', array_fill(0, count($compatible), '%s'));
+            $type_filter = "AND property_sub_type IN ({$placeholders})";
+            $params = $compatible;
+        }
+        $params[] = $city;
 
         $avg = $wpdb->get_var($wpdb->prepare(
             "SELECT AVG(days_on_market)
             FROM {$archive_table}
             WHERE standard_status = 'Closed'
-              AND property_sub_type = 'Single Family Residence'
+              {$type_filter}
               AND close_date >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
               AND days_on_market > 0
               AND city = %s",
-            $city
+            ...$params
         ));
 
         return round((float) $avg, 0);
     }
 
     /**
-     * Count sold SFR comps near a location within radius and timeframe.
+     * Count sold comps near a location within radius and timeframe.
+     *
+     * @param string|null $sub_type Property sub-type, null for all.
      */
-    public static function count_nearby_comps(float $lat, float $lng, float $radius_miles = 0.5, int $months = 6): int {
+    public static function count_nearby_comps(float $lat, float $lng, float $radius_miles = 0.5, int $months = 6, ?string $sub_type = null): int {
         global $wpdb;
         $archive_table = $wpdb->prefix . 'bme_listing_summary_archive';
 
         $lat_delta = $radius_miles / 69.0;
         $lng_delta = $radius_miles / (69.0 * cos(deg2rad($lat)));
 
+        $type_filter = '';
+        $type_params = [];
+        if ($sub_type !== null) {
+            $compatible = self::COMPATIBLE_TYPES[$sub_type] ?? [$sub_type];
+            $placeholders = implode(',', array_fill(0, count($compatible), '%s'));
+            $type_filter = "AND property_sub_type IN ({$placeholders})";
+            $type_params = $compatible;
+        }
+
+        $params = array_merge($type_params, [
+            $months,
+            $lat - $lat_delta, $lat + $lat_delta,
+            $lng - $lng_delta, $lng + $lng_delta,
+        ]);
+
         return (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$archive_table}
             WHERE standard_status = 'Closed'
-              AND property_sub_type = 'Single Family Residence'
+              {$type_filter}
               AND close_date >= DATE_SUB(NOW(), INTERVAL %d MONTH)
               AND close_price > 0
               AND latitude BETWEEN %f AND %f
               AND longitude BETWEEN %f AND %f",
-            $months,
-            $lat - $lat_delta, $lat + $lat_delta,
-            $lng - $lng_delta, $lng + $lng_delta
+            ...$params
         ));
     }
 }

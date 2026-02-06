@@ -2,9 +2,39 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies Single Family Residence flip candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis.
- * Version: 0.10.0
+ * Version: 0.11.1
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.11.1 - Logic Audit Fixes (11 loopholes)
+ * - ARV confidence discount: low/none confidence requires 25-50% higher profit/ROI to pass DQ
+ * - Pre-DQ rehab estimate now includes age+remarks multipliers (was base only)
+ * - Missing $/sqft properly penalized (score 30, not neutral 50)
+ * - Contingency rate based on scope of work, not age-discounted cost
+ * - Hold period uses scope-based rehab (age discount affects cost, not timeline)
+ * - Market strength capped at balanced when <3 sale-to-list data points
+ * - Distress keyword detection: word boundaries, 120-char context, 16 negation phrases
+ * - Post-multiplier rehab floor: $2/sqft minimum after all multipliers
+ * - Distressed comp downweighting: foreclosure/short-sale comps get 0.3x weight in ARV
+ * - Expansion potential capped at 40 for condos/townhouses (can't expand)
+ * - Ceiling type fallback tracking (mixed-type ceiling flag)
+ *
+ * Version 0.11.0 - Renovation Potential Guard
+ * - New construction auto-DQ: properties ≤5 years old disqualified unless distress signals detected
+ * - Property condition field from bme_listing_details used as supplementary DQ signal
+ * - Inverted year-built scoring: older properties score higher (renovation need vs systems condition)
+ * - Age-based rehab condition multiplier: near-new properties get realistic near-zero rehab estimates
+ * - Lowered rehab floor from $12/sqft to $5/sqft for realistic near-new estimates
+ * - Enhanced remarks keywords: weighted values, increased cap ±25, new condition-specific terms
+ * - New DB column: age_condition_multiplier
+ * - Dashboard: shows age condition multiplier, NEW badge on construction DQ
+ *
+ * Version 0.10.0 - Pre-Analysis Filters + Force Analyze + PDF v2
+ * - 17 configurable pre-analysis filters stored as WP option
+ * - Collapsible Analysis Filters panel on dashboard with save/reset
+ * - CLI: 14 filter override flags (override saved filters for that run only)
+ * - Force Full Analysis button on DQ'd property rows (bypasses all DQ checks)
+ * - PDF report v2: photo thumbnails, circular gauge, charts, comp cards
  *
  * Version 0.9.1 - Sleeker PDF with Photos & Charts
  * - Photo thumbnail strip on cover page (5 photos from bme_media)
@@ -103,7 +133,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.10.0');
+define('FLIP_VERSION', '0.11.1');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -143,6 +173,7 @@ register_activation_hook(__FILE__, function () {
     Flip_Database::set_default_cities();
     Flip_Database::migrate_v070();
     Flip_Database::migrate_v080();
+    Flip_Database::migrate_v0110();
 });
 
 // Version-check migration for file-only updates (no deactivate/reactivate)
@@ -155,6 +186,10 @@ add_action('plugins_loaded', function () {
     if (version_compare($db_version, '0.8.0', '<')) {
         Flip_Database::migrate_v080();
         update_option('bmn_flip_db_version', '0.8.0');
+    }
+    if (version_compare($db_version, '0.11.0', '<')) {
+        Flip_Database::migrate_v0110();
+        update_option('bmn_flip_db_version', '0.11.0');
     }
 });
 

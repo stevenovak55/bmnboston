@@ -12,24 +12,40 @@ if (!defined('ABSPATH')) {
 
 class Flip_Market_Scorer {
 
-    /** Keywords indicating flip opportunity in listing remarks */
+    /** Keywords indicating flip opportunity in listing remarks (keyword => weight) */
     const POSITIVE_KEYWORDS = [
-        'as-is', 'as is', 'estate sale', 'estate', 'investor',
-        'handyman', 'handyman special', 'tlc', 'potential',
-        'needs work', 'needs updating', 'priced to sell',
-        'motivated', 'bring your vision', 'diamond in the rough',
-        'fixer', 'below market', 'must sell', 'foreclosure',
-        'bank owned', 'reo', 'short sale', 'probate',
-        'opportunity', 'value add', 'sweat equity',
+        'as-is'                => 5,  'as is'                => 5,
+        'estate sale'          => 4,  'estate'               => 3,
+        'investor'             => 3,  'handyman'             => 5,
+        'handyman special'     => 5,  'tlc'                  => 4,
+        'potential'            => 2,  'needs work'           => 5,
+        'needs updating'       => 4,  'priced to sell'       => 3,
+        'motivated'            => 3,  'bring your vision'    => 3,
+        'diamond in the rough' => 4,  'fixer'                => 5,
+        'below market'         => 3,  'must sell'            => 4,
+        'foreclosure'          => 5,  'bank owned'           => 5,
+        'reo'                  => 5,  'short sale'           => 5,
+        'probate'              => 4,  'opportunity'          => 2,
+        'value add'            => 3,  'sweat equity'         => 4,
+        'original condition'   => 4,  'untouched'            => 4,
+        'dated kitchen'        => 4,  'dated bath'           => 4,
+        'contractor special'   => 5,  'tear down'            => 5,
+        'teardown'             => 5,
     ];
 
-    /** Keywords indicating already-renovated (less flip margin) */
+    /** Keywords indicating already-renovated (less flip margin) (keyword => weight) */
     const NEGATIVE_KEYWORDS = [
-        'new roof', 'new kitchen', 'renovated', 'remodeled',
-        'updated kitchen', 'updated bath', 'move-in ready',
-        'move in ready', 'turnkey', 'turn key', 'fully updated',
-        'completely renovated', 'gut renovation', 'brand new',
-        'new construction', 'custom built',
+        'new roof'              => 3,  'new kitchen'           => 4,
+        'renovated'             => 4,  'remodeled'             => 4,
+        'updated kitchen'       => 3,  'updated bath'          => 3,
+        'move-in ready'         => 4,  'move in ready'         => 4,
+        'turnkey'               => 5,  'turn key'              => 5,
+        'fully updated'         => 5,  'completely renovated'  => 5,
+        'gut renovation'        => 5,  'brand new'             => 5,
+        'new construction'      => 5,  'custom built'          => 4,
+        'just built'            => 5,  'newly built'           => 5,
+        'recently completed'    => 5,  'like new'              => 4,
+        'new build'             => 5,
     ];
 
     /**
@@ -120,21 +136,23 @@ class Flip_Market_Scorer {
 
         $lower = strtolower($remarks);
 
-        foreach (self::POSITIVE_KEYWORDS as $keyword) {
+        $raw = 0;
+        foreach (self::POSITIVE_KEYWORDS as $keyword => $weight) {
             if (str_contains($lower, $keyword)) {
                 $result['positive'][] = $keyword;
+                $raw += $weight;
             }
         }
 
-        foreach (self::NEGATIVE_KEYWORDS as $keyword) {
+        foreach (self::NEGATIVE_KEYWORDS as $keyword => $weight) {
             if (str_contains($lower, $keyword)) {
                 $result['negative'][] = $keyword;
+                $raw -= $weight;
             }
         }
 
-        // Each positive keyword adds 3 points, each negative subtracts 3, capped at ±15
-        $raw = (count($result['positive']) * 3) - (count($result['negative']) * 3);
-        $result['adjustment'] = max(-15, min(15, $raw));
+        // Weighted adjustment capped at ±25 (v0.11.0: was ±15 with flat 3 per keyword)
+        $result['adjustment'] = max(-25, min(25, $raw));
 
         return $result;
     }

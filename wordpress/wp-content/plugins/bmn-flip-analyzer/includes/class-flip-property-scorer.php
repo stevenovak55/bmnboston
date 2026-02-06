@@ -5,7 +5,7 @@
  * REVISED: Focuses on expansion potential and lot value, NOT beds/baths.
  * Beds and baths can always be added - lot size and location cannot.
  *
- * Evaluates: lot size, expansion potential, existing sqft, year built (for systems).
+ * Evaluates: lot size, expansion potential, existing sqft, renovation need (age-based).
  */
 
 if (!defined('ABSPATH')) {
@@ -33,23 +33,28 @@ class Flip_Property_Scorer {
 
         // Factor 2: Expansion Potential (30% of property score)
         // Ratio of unused lot to existing building - room to add sqft
-        $factors['expansion_potential'] = self::score_expansion_potential($lot_sqft, $sqft);
+        // Condos/townhouses can't practically expand on their lot
+        $sub_type = $property->property_sub_type ?? 'Single Family Residence';
+        $expansion_score = self::score_expansion_potential($lot_sqft, $sqft);
+        if (in_array($sub_type, ['Condominium', 'Townhouse'], true)) {
+            $expansion_score = min($expansion_score, 40);
+        }
+        $factors['expansion_potential'] = $expansion_score;
 
         // Factor 3: Existing Square Footage (20% of property score)
         // More sqft = more to work with, but also more rehab cost
         $factors['existing_sqft'] = self::score_existing_sqft($sqft);
 
-        // Factor 4: Year Built (15% of property score)
-        // Affects systems (electrical, plumbing, HVAC) not style
-        // Older = more potential system updates needed
+        // Factor 4: Renovation Need (15% of property score)
+        // Older properties have more value-add potential through renovation
         $year = (int) $property->year_built;
-        $factors['year_built'] = self::score_year_built_systems($year);
+        $factors['renovation_need'] = self::score_renovation_need($year);
 
         // Weighted composite
         $score = ($factors['lot_size'] * 0.35)
                + ($factors['expansion_potential'] * 0.30)
                + ($factors['existing_sqft'] * 0.20)
-               + ($factors['year_built'] * 0.15);
+               + ($factors['renovation_need'] * 0.15);
 
         return [
             'score'   => round($score, 2),
@@ -128,22 +133,25 @@ class Flip_Property_Scorer {
     }
 
     /**
-     * Score year built from a systems perspective.
-     * Older homes may need electrical, plumbing, HVAC updates.
-     * This is NOT about style (style can be changed).
+     * Score renovation need — older properties have more value-add potential.
+     *
+     * Sweet spot is 41-70 years: full systems + finishes need updating,
+     * but structure is still sound. Very new = nothing to renovate.
+     * Very old = diminishing returns (lead, asbestos, irregular framing).
      */
-    private static function score_year_built_systems(int $year): float {
+    private static function score_renovation_need(int $year): float {
         if ($year <= 0) return 50; // Unknown
 
         $age = (int) wp_date('Y') - $year;
 
         return match (true) {
-            $age <= 20  => 100, // Modern systems, likely up to code
-            $age <= 40  => 85,  // Systems probably adequate
-            $age <= 60  => 70,  // May need some system updates
-            $age <= 80  => 55,  // Likely needs system updates
-            $age <= 100 => 40,  // Expect major system work
-            default     => 30,  // Very old - full system replacement likely
+            $age <= 5   => 5,   // Brand new — nothing to renovate
+            $age <= 10  => 15,  // Very little to do
+            $age <= 20  => 35,  // Light cosmetic at best
+            $age <= 40  => 70,  // Kitchens/baths likely dated — good candidate
+            $age <= 70  => 95,  // Strong candidate — full systems + finishes
+            $age <= 100 => 85,  // Excellent but some structural complexity
+            default     => 70,  // Diminishing returns — lead, asbestos, irregular framing
         };
     }
 

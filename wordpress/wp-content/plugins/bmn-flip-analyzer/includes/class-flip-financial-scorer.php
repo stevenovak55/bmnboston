@@ -71,7 +71,8 @@ class Flip_Financial_Scorer {
     }
 
     private static function score_ppsf_vs_neighborhood(float $ppsf, float $avg_ppsf): float {
-        if ($avg_ppsf <= 0 || $ppsf <= 0) return 50;
+        if ($avg_ppsf <= 0) return 50;  // No neighborhood data — neutral
+        if ($ppsf <= 0) return 30;      // Missing property data — penalty, not neutral
         $pct_below = (($avg_ppsf - $ppsf) / $avg_ppsf) * 100;
 
         if ($pct_below > 25) return 100;

@@ -406,9 +406,14 @@
         // Lead paint badge
         var leadBadge = r.lead_paint_flag ? '<span class="flip-lead-badge">Pb</span>' : '';
 
-        var dqNote = r.disqualified && r.disqualify_reason
-            ? '<div class="flip-dq-reason">' + escapeHtml(r.disqualify_reason) + '</div>'
-            : '';
+        var dqNote = '';
+        if (r.disqualified && r.disqualify_reason) {
+            var isNewConstDQ = r.disqualify_reason.indexOf('construction') > -1
+                || r.disqualify_reason.indexOf('renovation potential') > -1;
+            dqNote = '<div class="flip-dq-reason">'
+                + (isNewConstDQ ? '<span class="flip-new-badge">NEW</span> ' : '')
+                + escapeHtml(r.disqualify_reason) + '</div>';
+        }
 
         var propertyUrl = flipData.siteUrl + '/property/' + r.listing_id + '/';
         var domText = r.days_on_market ? r.days_on_market + 'd' : '--';
@@ -618,8 +623,12 @@
         html += kv('Purchase Price', formatCurrency(r.list_price));
 
         var rehabNote = r.rehab_level || '?';
+        var ageCondMult = r.age_condition_multiplier || 1.0;
+        if (ageCondMult < 1.0) {
+            rehabNote += ', <span class="flip-age-mult">' + ageCondMult.toFixed(2) + 'x age</span>';
+        }
         if (rehabMultiplier !== 1.0) {
-            rehabNote += ', ' + rehabMultiplier.toFixed(2) + 'x remarks adj.';
+            rehabNote += ', ' + rehabMultiplier.toFixed(2) + 'x remarks';
         }
         var baseRehab = r.estimated_rehab_cost - contingency;
         html += kv('Rehab Cost', formatCurrency(baseRehab) + ' <span style="color:#999;font-size:11px">(' + rehabNote + ')</span>');
@@ -1395,7 +1404,7 @@
             'MLS#', 'Address', 'City', 'Total Score', 'Risk Grade',
             'Financial', 'Property', 'Location', 'Market', 'Photo',
             'List Price', 'ARV', 'ARV Confidence', 'Comps',
-            'Rehab Cost', 'Rehab Level', 'Rehab Multiplier', 'Contingency',
+            'Rehab Cost', 'Rehab Level', 'Rehab Multiplier', 'Age Condition Mult', 'Contingency',
             'MAO', 'Cash Profit', 'Cash ROI',
             'Financing Costs', 'Holding Costs', 'Hold Months',
             'Financed Profit', 'Cash-on-Cash ROI', 'Annualized ROI',
@@ -1425,6 +1434,7 @@
                 r.estimated_rehab_cost.toFixed(0),
                 r.rehab_level || '',
                 (r.rehab_multiplier || 1).toFixed(2),
+                (r.age_condition_multiplier || 1).toFixed(2),
                 (r.rehab_contingency || 0).toFixed(0),
                 r.mao.toFixed(0),
                 (r.cash_profit || 0).toFixed(0),

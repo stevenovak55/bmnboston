@@ -1,8 +1,8 @@
 # BMN Flip Analyzer - Development Log
 
-## Current Version: 0.8.0
+## Current Version: 0.11.1
 
-## Status: Phase 3.8 Complete (ARV & Financial Model Overhaul) - Pre-Phase 4 (iOS)
+## Status: Phase 4.1 Complete (Renovation Potential Guard + Logic Audit) - Pre-Phase 5 (iOS)
 
 ---
 
@@ -20,7 +20,9 @@
 | 7.5 | ARV & Financial overhaul | Complete | Phase 3.5 - Comp adjustments, financing model |
 | 7.7 | Market-adaptive thresholds | Complete | Phase 3.7 - Adaptive DQ, near-viable |
 | 7.8 | ARV & Financial Model Overhaul | Complete | Phase 3.8 - ARV fixes, financial model v2, risk analysis |
-| 8 | iOS data model + API | Pending | Phase 4 - SwiftUI ViewModel |
+| 7.9 | Pre-Analysis Filters + Force Analyze | Complete | Phase 4.0 - 17 filters, force DQ bypass, CLI flags, PDF v2 |
+| 8.0 | Renovation Potential Guard | Complete | Phase 4.1 - New construction DQ, inverted scoring, age rehab multiplier |
+| 9 | iOS data model + API | Pending | Phase 5 - SwiftUI ViewModel |
 | 9 | iOS UI views | Pending | Phase 4 - FlipAnalyzerSheet |
 | 10 | Testing + tuning | Pending | Phase 5 - Score validation |
 
@@ -418,6 +420,96 @@
 
 - Version bump to 0.8.0
 
+### Session 10 - 2026-02-06
+
+**What was done (v0.9.0 → v0.10.0 — Pre-Analysis Filters + Force Analyze + PDF v2):**
+
+*(Session log retroactively added — see CLAUDE.md for full feature list)*
+
+- 17 configurable pre-analysis filters (property type, status, price/sqft/DOM/year ranges, sewer, garage, beds/baths)
+- Filters stored as WP option `bmn_flip_analysis_filters`, persistent across sessions
+- Closed status queries `bme_listing_summary_archive` via UNION
+- Collapsible "Analysis Filters" panel on dashboard with save/reset
+- CLI filter override flags (don't persist)
+- Force Analyze button on DQ'd rows — bypasses all DQ checks, runs full pipeline
+- `force_analyze_single()` public method on Flip_Analyzer
+- PDF report v2: photo thumbnail strip, circular score gauge, stacked bar chart, sensitivity line chart, comp photo cards
+- Version bump to 0.10.0
+
+### Session 11 - 2026-02-06
+
+**What was done (v0.11.0 — Renovation Potential Guard):**
+
+**Problem:** Two condos in Reading passed with high scores despite having zero renovation potential:
+- **48 Village St** — Built 2024, brand new construction. Nothing to renovate.
+- **30 Taylor** — Built 2015. Very little value-add unless distressed.
+
+Five root causes identified: (1) year-built scoring was backwards (newer = higher), (2) no new construction DQ existed, (3) rehab formula created phantom profit via $12/sqft minimum on new homes, (4) remarks penalty was negligible (~1.5pts), (5) no renovation need assessment.
+
+- **Database migration** (`class-flip-database.php`):
+  - New column: `age_condition_multiplier DECIMAL(4,2) DEFAULT 1.00`
+  - `migrate_v0110()` method with version-check trigger
+
+- **Pipeline reorder + new construction DQ** (`class-flip-analyzer.php`):
+  - Moved `Flip_Market_Scorer::get_remarks()` call before `check_disqualifiers()` (was after)
+  - Added `get_property_condition()` query to `bme_listing_details` (previously unused field)
+  - New construction auto-DQ: age ≤5 years unless distress keywords or poor condition
+  - Pristine condition DQ: "New Construction"/"Excellent" condition on properties <15 years old
+  - 5 new helper methods: `get_property_condition()`, `has_distress_signals()` (17 keywords), `condition_indicates_distress()`, `condition_indicates_pristine()`, `get_age_condition_multiplier()`
+  - Updated `check_disqualifiers()` signature to accept `$remarks` and `$property_condition`
+
+- **Age-based rehab condition multiplier** (`class-flip-analyzer.php`):
+  - New multiplier in `calculate_financials()`: 0.10x (age ≤5), 0.30x (≤10), 0.50x (≤15), 0.75x (≤20), 1.0x (21+)
+  - Stacks with existing remarks multiplier: `effective = base × age_mult × remarks_mult`
+  - Lowered rehab floor: $12/sqft → $5/sqft for realistic near-zero on new properties
+  - Added `age_condition_multiplier` to `build_result_data()` and `store_disqualified()`
+
+- **Inverted property scorer** (`class-flip-property-scorer.php`):
+  - Renamed `score_year_built_systems()` → `score_renovation_need()`
+  - Inverted curve: age ≤5 → 5pts, 41-70 → 95pts (sweet spot), 100+ → 70pts
+  - Factor key renamed `year_built` → `renovation_need`
+
+- **Enhanced market scorer** (`class-flip-market-scorer.php`):
+  - Converted flat keyword arrays to weighted arrays (2-5 pts per keyword)
+  - Cap increased: ±15 → ±25
+  - New positive keywords: "original condition", "dated kitchen/bath", "contractor special", "tear down"
+  - New negative keywords: "just built", "newly built", "recently completed", "like new", "new build"
+
+- **Dashboard + CLI** (`flip-dashboard.js`, `flip-dashboard.css`, `class-flip-cli.php`):
+  - Age condition multiplier display in rehab note section
+  - "NEW" badge (red) on DQ reason for new construction DQs
+  - Age condition multiplier in CSV export
+  - CLI `wp flip property` shows age condition discount
+
+- **Admin dashboard** (`class-flip-admin-dashboard.php`):
+  - Added `age_condition_multiplier` to `format_result()`
+
+- Version bump to 0.11.0
+
+**Expected results:**
+| Property | Before | After |
+|----------|--------|-------|
+| 48 Village St (2024) | Passed with high score | Auto-DQ'd: "Recent construction (2024)" |
+| 30 Taylor (2015) | Passed with high score | Renovation need 100→35, rehab ~50% lower |
+| Typical 1970s target | Score ~70 | Score slightly higher (renovation need 70→95) |
+
+**Files modified (9):**
+1. `includes/class-flip-analyzer.php` — pipeline reorder, DQ, age multiplier, helpers, lower floor
+2. `includes/class-flip-property-scorer.php` — inverted renovation need curve
+3. `includes/class-flip-market-scorer.php` — weighted keywords, new terms, higher cap
+4. `includes/class-flip-database.php` — migration for age_condition_multiplier column
+5. `admin/class-flip-admin-dashboard.php` — format_result() update
+6. `assets/js/flip-dashboard.js` — age condition display, NEW badge, CSV
+7. `assets/css/flip-dashboard.css` — NEW badge and age-mult styling
+8. `includes/class-flip-cli.php` — age condition in property command
+9. `bmn-flip-analyzer.php` — version bump + migration registration
+
+**Next steps:**
+1. Deploy to production and run `wp flip analyze --city=Reading`
+2. Verify 48 Village St is DQ'd, 30 Taylor has reduced scores
+3. Verify typical 1970s properties still score well
+4. Phase 5: iOS SwiftUI integration
+
 ---
 
 ## Known Bugs
@@ -463,6 +555,51 @@
 | Annualized ROI | Comparing 15% over 4 months vs 15% over 12 months requires annualization | 2026-02-06 |
 | Deal risk grade | Composite A-F grade gives instant deal quality signal for dashboard scanning | 2026-02-06 |
 | Remove tax rate from location | Already captured in holding costs; double-counting inflated location penalty | 2026-02-06 |
+| New construction auto-DQ | Properties ≤5 years old have nothing to renovate; distress keyword escape hatch prevents false positives | 2026-02-06 |
+| Inverted renovation need scoring | Flip targets need renovation — older properties score higher (sweet spot 41-70 years) | 2026-02-06 |
+| Age-based rehab multiplier | 0.10x for age ≤5 to 1.0x for 21+; prevents phantom profit on near-new properties | 2026-02-06 |
+| Lowered rehab floor $12→$5 | $12 minimum created $18K fake rehab on brand-new homes; $5 floor + 0.10x multiplier = realistic $750 | 2026-02-06 |
+| Weighted remarks keywords | Strongest signals ("new construction", "as-is") deserve more impact than weak signals ("updated") | 2026-02-06 |
+| Property condition from bme_listing_details | Free supplementary signal; catches "New Construction"/"Excellent" even when remarks are vague | 2026-02-06 |
+| Pipeline reorder (remarks before DQ) | New construction DQ needs remarks for distress keyword escape hatch | 2026-02-06 |
+| ARV confidence discount on DQ thresholds | Low/none confidence means profit estimate is unreliable; require 25-50% more to pass | 2026-02-06 |
+| Pre-DQ rehab with full multipliers | Base-only estimate missed age+remarks adjustments; new construction got inflated rehab in DQ check | 2026-02-06 |
+| Scope-based contingency rate | Contingency should reflect work complexity (base × remarks), not age-discounted cost | 2026-02-06 |
+| Scope-based hold period | Age discount reduces cost, not timeline; a property needing work takes the same time regardless of age discount | 2026-02-06 |
+| Market strength data-limited guard | <3 sale-to-list data points is insufficient to claim hot/very_hot; default to balanced | 2026-02-06 |
+| Distressed comp downweighting | Foreclosure/short-sale comps sell below market; 0.3x weight prevents ARV depression | 2026-02-06 |
+| Expansion potential capped for condos | Condos/townhouses share lot space; raw lot-to-building ratio is misleading | 2026-02-06 |
+| Post-multiplier rehab floor $2/sqft | Multiplier stacking can produce sub-$1/sqft rehab which is unrealistic | 2026-02-06 |
+| Word-boundary distress detection | "fixer" shouldn't match "prefixed"; expanded context window 80→120 chars | 2026-02-06 |
+
+### Session 12 - 2026-02-06
+
+**What was done (v0.11.1 — Logic Audit Fixes):**
+
+**Problem:** Comprehensive code audit identified 11 logical loopholes across all scoring/calculation files.
+
+**Root causes and fixes:**
+1. **ARV confidence not used in profit DQ** — low/none confidence now requires 25-50% higher profit/ROI to pass post-calc DQ
+2. **Pre-DQ rehab ignored multipliers** — rehab estimate in `check_disqualifiers()` now applies age_condition_mult × remarks_mult
+3. **Missing $/sqft got neutral 50** — changed to penalty score 30 (missing data shouldn't equal average)
+4. **Ceiling type fallback untracked** — added `ceiling_type_mixed` flag when using all-types ceiling fallback
+5. **Contingency rate used age-discounted $/sqft** — now uses `scope_per_sqft = base × remarks_mult` (scope, not cost)
+6. **Hold period used raw base $/sqft** — now uses scope_per_sqft (age discount reduces cost, not work timeline)
+7. **Market strength defaulted silently** — <3 STL data points caps market at balanced (can't claim hot)
+8. **Distress detection brittle** — word-boundary matching, 120-char context, 16 negation phrases
+9. **Sub-$1/sqft rehab possible** — added `max(2.0, ...)` floor after all multipliers
+10. **No arm's-length comp validation** — foreclosure/short-sale comps get 0.3x weight via `is_distressed` flag
+11. **Expansion potential ignored property type** — condos/townhouses capped at 40 score
+
+**Files modified:** `class-flip-analyzer.php`, `class-flip-arv-calculator.php`, `class-flip-financial-scorer.php`, `class-flip-property-scorer.php`, `bmn-flip-analyzer.php`
+
+**Verification:**
+- Reading: 18 properties, 17 DQ'd, 1 passed (30 Taylor)
+- Billerica: 23 properties, all DQ'd
+- 48 Village St still correctly DQ'd (new construction)
+- 41 Boston Rd shows `[low ARV confidence]` in DQ reason (fix #1)
+- 216 Rangeway uses condo comps (ARV $577K, not SFR $1M+)
+- Market strength properly constrained with limited data (fix #7)
 
 ---
 
