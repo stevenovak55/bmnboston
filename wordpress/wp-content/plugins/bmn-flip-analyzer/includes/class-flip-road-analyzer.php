@@ -248,6 +248,29 @@ class Flip_Road_Analyzer {
         ];
     }
 
+    /** Road significance ranking — higher number = more significant road */
+    const HIGHWAY_SIGNIFICANCE = [
+        'motorway'       => 100,
+        'motorway_link'  => 95,
+        'trunk'          => 90,
+        'trunk_link'     => 85,
+        'primary'        => 80,
+        'primary_link'   => 75,
+        'secondary'      => 70,
+        'secondary_link' => 65,
+        'tertiary'       => 60,
+        'tertiary_link'  => 55,
+        'unclassified'   => 50,
+        'residential'    => 40,
+        'living_street'  => 30,
+        'service'        => 20,
+        'pedestrian'     => 10,
+        'footway'        => 5,
+        'path'           => 4,
+        'cycleway'       => 3,
+        'steps'          => 2,
+    ];
+
     /**
      * Query OpenStreetMap Overpass API for road type.
      *
@@ -269,26 +292,34 @@ class Flip_Road_Analyzer {
             return null;
         }
 
-        // Find the closest/most relevant road
-        // Prioritize named roads over service roads
+        // Find the most significant road nearby
+        // Prefer higher-classification roads (secondary > residential)
+        // because the property frontage road matters most for scoring
         $best_road = null;
+        $best_significance = -1;
         foreach ($data['elements'] as $element) {
             if (!isset($element['tags']['highway'])) continue;
 
             $highway = $element['tags']['highway'];
             $name = $element['tags']['name'] ?? '';
+            $significance = self::HIGHWAY_SIGNIFICANCE[$highway] ?? 0;
 
-            // Skip footways and paths unless they're the only option
+            // Skip footways/paths unless they're the only option
             if (in_array($highway, ['footway', 'path', 'cycleway', 'steps'])) {
                 if (!$best_road) {
                     $best_road = ['highway' => $highway, 'name' => $name];
+                    $best_significance = $significance;
                 }
                 continue;
             }
 
-            // Prefer named roads
-            if (!empty($name) || !$best_road) {
+            // Pick the most significant named road; unnamed roads only if nothing better
+            if (!empty($name) && $significance > $best_significance) {
                 $best_road = ['highway' => $highway, 'name' => $name];
+                $best_significance = $significance;
+            } elseif (!$best_road) {
+                $best_road = ['highway' => $highway, 'name' => $name];
+                $best_significance = $significance;
             }
         }
 

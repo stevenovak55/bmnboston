@@ -1,8 +1,8 @@
 # BMN Flip Analyzer - Development Log
 
-## Current Version: 0.3.1
+## Current Version: 0.5.0
 
-## Status: Phase 2.5 Complete - Ready for Phase 3 (Web Dashboard)
+## Status: Phase 3 Complete + Accuracy Overhaul - Pre-Phase 4 (iOS)
 
 ---
 
@@ -16,7 +16,7 @@
 | 4 | Orchestrator + CLI | Complete | Full pipeline, 7 WP-CLI commands |
 | 5 | Photo analyzer | Complete | Claude Vision API integration |
 | 6 | REST API endpoints | Complete | 6 endpoints for web + iOS |
-| 7 | Web admin dashboard | Pending | Phase 3 - Chart.js + PHP template |
+| 7 | Web admin dashboard | Complete | Phase 3 - Chart.js + PHP template |
 | 8 | iOS data model + API | Pending | Phase 4 - SwiftUI ViewModel |
 | 9 | iOS UI views | Pending | Phase 4 - FlipAnalyzerSheet |
 | 10 | Testing + tuning | Pending | Phase 5 - Score validation |
@@ -160,6 +160,78 @@
 2. Consider expanding target cities or loosening disqualifier thresholds
 3. Investigate low comp counts — may need to expand comp search radius or time window
 
+### Session 5 - 2026-02-05
+
+**What was done:**
+- **Phase 3: Web Admin Dashboard** — complete implementation:
+  - `admin/class-flip-admin-dashboard.php` — admin menu page, AJAX handlers, data formatting
+  - `admin/views/dashboard.php` — HTML template with stat cards, chart canvas, filters, table
+  - `assets/js/flip-dashboard.js` — Chart.js grouped bar chart, expandable table rows, client-side filters, run analysis AJAX, CSV export
+  - `assets/css/flip-dashboard.css` — card-based layout, score badges, road type badges, detail grid, responsive
+- Dashboard features:
+  1. Summary stat cards (total analyzed, viable, avg score, avg ROI, disqualified)
+  2. Chart.js city breakdown (viable vs disqualified per city, with avg score tooltip)
+  3. Client-side filters: city dropdown, min score slider (0-100), sort by (score/profit/ROI/price/ARV), show (viable/all/DQ)
+  4. Results table with expandable rows showing:
+     - Score breakdown with colored horizontal bars (financial/property/location/market/photo)
+     - Financial summary (ARV, confidence, rehab, MAO, profit, ROI)
+     - Property details (beds/baths, sqft, year, lot, road type, ceiling)
+     - Comparable sales table (address, price, $/sqft, distance, sold date)
+     - Photo analysis details (condition, renovation level, area scores, concerns)
+     - Remarks signals (positive/negative keyword badges)
+  5. "Run Analysis" button with AJAX + progress modal (5-min timeout)
+  6. "Export CSV" button (client-side generation from filtered results)
+- Updated main plugin file to load admin class on admin pages
+- Version bump to 0.4.0
+
+**Architecture decisions:**
+- Used AJAX with nonce auth instead of REST API (admin cookie auth, avoids JWT requirement)
+- All data loaded on initial page render via `wp_localize_script` (no AJAX for initial display)
+- Client-side filtering (fast for ~200 properties, avoids unnecessary server roundtrips)
+- Photo analysis remains CLI-only (cost control)
+
+**Next steps:**
+1. Deploy to production and test dashboard
+2. Begin Phase 4 (iOS SwiftUI integration)
+3. Consider adding photo analysis trigger button (with cost warning)
+
+### Session 6 - 2026-02-05
+
+**What was done (v0.4.1 → v0.5.0):**
+- **Dashboard refinements** (v0.4.1):
+  - Fixed road type misclassification: added HIGHWAY_SIGNIFICANCE ranking to OSM parser
+  - Filtered out rental properties (`property_type = 'Residential'`)
+  - Added road type ARV discount (-15% busy, -25% highway)
+  - Added "Run Photo Analysis" button with cost estimate dialog
+  - Added floor/mid/ceiling valuation range in financial section
+  - Added DOM column and "View" property link to results table
+
+- **Accuracy Overhaul** (v0.5.0):
+  1. Age-scaled rehab costs replacing flat $30/sqft ($15-60/sqft based on property age)
+  2. Comp address deduplication (removes pre-flip sales like 42 Hancock Rd $706K→$883K)
+  3. Renovation-weighted ARV (renovated comps get 2x distance weight)
+  4. Broken-down holding/closing costs (purchase 1.5%, sale 6%, holding 0.8%/mo × 6)
+
+- **ARV improvements**:
+  - Widened comp criteria: ±30% sqft, 12-month lookback, 10-comp limit
+  - Expanding radius: 0.5mi → 1.0mi → 2.0mi with distance weighting
+  - Fixed `$count` undefined bug in `calculate()` method
+  - ARV projection calculator with preset scenarios + custom editable row
+  - Confidence-based valuation range (replaces broken min/max ppsf approach)
+
+**Impact on 25 Juniper Ave (example):**
+| Metric | Before | After |
+|--------|--------|-------|
+| Rehab | $71K ($30/sqft) | $142K ($60/sqft, 1957 house) |
+| Comps | 10 (w/ duplicate) | 9 (deduped) |
+| Profit | -$37K | -$109K |
+| ROI | -3.9% | -10.1% |
+
+**Next steps:**
+1. Phase 4: iOS SwiftUI integration
+2. Run photo analysis on viable candidates to refine rehab estimates further
+3. Consider tuning scoring weights based on real deal outcomes
+
 ---
 
 ## Known Bugs
@@ -177,7 +249,10 @@
 | Standalone plugin vs MLD module | Separation of concerns, independent activation | 2026-02-05 |
 | Two-pass photo analysis | Cost control — only analyze top 50 candidates (~$1.50-2.50/run) | 2026-02-05 |
 | Reuse `mld_claude_api_key` | Avoid duplicate API key management | 2026-02-05 |
-| Default rehab $30/sqft | Industry standard baseline, refined by photo analysis | 2026-02-05 |
+| Age-scaled rehab costs | $15-60/sqft based on property age; flat $30 was unrealistic for older homes | 2026-02-05 |
+| Broken-down costs | Purchase closing + sale costs + holding replaces opaque 12% of ARV | 2026-02-05 |
+| Renovation-weighted ARV | Renovated comps get 2x weight — flip ARV should reflect post-reno values | 2026-02-05 |
+| Comp address dedup | Same property sold twice (pre/post flip) should only count the post-flip sale | 2026-02-05 |
 | School lookup via REST API | Reuses BMN Schools integration, adds caching | 2026-02-05 |
 | Remarks keyword analysis | Free signal (no API call), adds ±15 points | 2026-02-05 |
 | OSM Overpass API for road type | Free, accurate road classification; avoids Google Maps API costs | 2026-02-05 |
@@ -238,15 +313,15 @@ bmn-flip-analyzer/
 │   ├── class-flip-photo-analyzer.php  # Claude Vision API
 │   ├── class-flip-rest-api.php        # REST API endpoints
 │   └── class-flip-road-analyzer.php   # OSM road type detection
-├── admin/                          # (future) Admin dashboard
-│   ├── class-flip-admin-dashboard.php
+├── admin/                          # Admin dashboard (v0.4.0)
+│   ├── class-flip-admin-dashboard.php  # Menu, AJAX handlers, data
 │   └── views/
-│       └── dashboard.php
-└── assets/                         # (future) CSS/JS
+│       └── dashboard.php               # HTML template
+└── assets/
     ├── css/
-    │   └── flip-dashboard.css
+    │   └── flip-dashboard.css          # Dashboard styles
     └── js/
-        └── flip-dashboard.js
+        └── flip-dashboard.js           # Chart.js, table, filters, export
 ```
 
 ---
@@ -282,10 +357,37 @@ bmn-flip-analyzer/
 - Store ceiling data in disqualified property records
 - Photo analysis tested on top 4 candidates
 
-### v0.4.0 (Planned)
-- Web admin dashboard with Chart.js
+### v0.4.0 (Complete)
+- Web admin dashboard under Flip Analyzer menu
+- Chart.js grouped bar chart (viable vs disqualified per city)
+- Results table with expandable detail rows (scores, financials, comps, photos)
+- Run Analysis button with AJAX progress modal
+- Export CSV with all scored property data
+- Client-side filters: city, min score, sort, show mode
 
-### v0.5.0 (Planned)
+### v0.4.1 (Complete)
+- Dashboard: "Run Photo Analysis" button with cost estimate confirmation
+- Dashboard: Days on Market (DOM) column
+- Dashboard: "View" link to property detail page per property
+- Floor/Mid/Ceiling valuation range in expanded detail rows
+- Road type ARV discount: -15% busy road, -25% highway-adjacent
+- Fixed road type misclassification (highway significance ranking in OSM parser)
+- Filtered rental properties (`property_type = 'Residential'` filter)
+- Added `days_on_market` column to DB schema
+
+### v0.5.0 (Complete)
+- **Accuracy Overhaul** — 4 major improvements to financial calculations:
+  1. Age-scaled rehab costs: $15/sqft (0-10yr), $30 (11-25yr), $45 (26-50yr), $60 (50+yr)
+  2. Comp deduplication by address (removes pre-flip sales polluting ARV)
+  3. Renovation-weighted ARV: renovated comps get 2x weight, new construction 1.5x
+  4. Broken-down costs: purchase closing (1.5%), sale commission (5%), seller closing (1%), holding costs (0.8%/mo × 6 months)
+- Wider comp criteria: ±30% sqft, 12-month lookback, expanding radius 0.5→1.0→2.0mi
+- Distance-weighted comp average (1/distance² formula)
+- ARV projection calculator with 3 presets + custom editable row
+- Confidence-based valuation range: ±10% (high), ±15% (medium), ±20% (low)
+- "Max Offer Price" replaces "MAO" label for clarity
+
+### v0.6.0 (Planned)
 - iOS SwiftUI integration
 
 ### v1.0.0 (Planned)

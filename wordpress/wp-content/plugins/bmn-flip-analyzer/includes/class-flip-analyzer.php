@@ -18,14 +18,21 @@ class Flip_Analyzer {
     const WEIGHT_LOCATION  = 0.25;
     const WEIGHT_MARKET    = 0.10;
 
-    /** Default rehab cost per sqft when photo analysis hasn't run */
-    const DEFAULT_REHAB_COST_PER_SQFT = 30;
-
-    /** Holding/closing cost as percentage of ARV */
-    const CLOSING_HOLDING_PCT = 0.12;
+    /** Cost breakdown constants */
+    const PURCHASE_CLOSING_PCT = 0.015;       // 1.5% of purchase price
+    const SALE_COMMISSION_PCT  = 0.05;        // 5% of ARV (buyer's + listing agent)
+    const SALE_CLOSING_PCT     = 0.01;        // 1% seller closing costs
+    const HOLDING_MONTHLY_PCT  = 0.008;       // 0.8% of total investment per month
+    const DEFAULT_HOLD_MONTHS  = 6;           // Average flip timeline
 
     /** Minimum list price to exclude lease/land anomalies */
     const MIN_LIST_PRICE = 100000;
+
+    /** ARV discount by road type — busy road comps overstate value */
+    const ROAD_ARV_DISCOUNT = [
+        'busy-road'        => 0.15,  // 15% discount
+        'highway-adjacent' => 0.25,  // 25% discount
+    ];
 
     /**
      * Run the full analysis pipeline (Pass 1: data-only scoring).
@@ -56,7 +63,7 @@ class Flip_Analyzer {
 
         // Step 2: Fetch active SFR listings in target cities
         $properties = self::fetch_properties($cities, $limit);
-        $log("Found " . count($properties) . " Single Family Residences in target cities.");
+        $log("Found " . count($properties) . " Residential SFR listings in target cities.");
 
         if (empty($properties)) {
             return ['analyzed' => 0, 'disqualified' => 0, 'run_date' => $run_date];
@@ -127,21 +134,32 @@ class Flip_Analyzer {
 
             // Financial calculations
             $sqft = (int) $property->building_area_total;
-            $rehab_cost = $sqft * self::DEFAULT_REHAB_COST_PER_SQFT;
-            $arv = (float) $arv_data['estimated_arv'];
+            $year_built = (int) $property->year_built;
+            $rehab_per_sqft = self::get_rehab_per_sqft($year_built);
+            $rehab_cost = $sqft * $rehab_per_sqft;
+            $raw_arv = (float) $arv_data['estimated_arv'];
             $list_price = (float) $property->list_price;
+
+            // Apply road type discount — comps on quiet streets overstate ARV for busy road properties
+            $road_discount = self::ROAD_ARV_DISCOUNT[$road_analysis['road_type']] ?? 0;
+            $arv = $road_discount > 0 ? round($raw_arv * (1 - $road_discount), 2) : $raw_arv;
+
+            // Broken-down costs
+            $purchase_closing = $list_price * self::PURCHASE_CLOSING_PCT;
+            $sale_costs = $arv * (self::SALE_COMMISSION_PCT + self::SALE_CLOSING_PCT);
+            $holding_costs = ($list_price + $rehab_cost) * self::HOLDING_MONTHLY_PCT * self::DEFAULT_HOLD_MONTHS;
+
             $mao = ($arv * 0.70) - $rehab_cost;
-            $profit = $arv - $list_price - $rehab_cost - ($arv * self::CLOSING_HOLDING_PCT);
-            $total_investment = $list_price + $rehab_cost;
+            $profit = $arv - $list_price - $rehab_cost - $purchase_closing - $sale_costs - $holding_costs;
+            $total_investment = $list_price + $rehab_cost + $purchase_closing + $holding_costs;
             $roi = $total_investment > 0 ? ($profit / $total_investment) * 100 : 0;
 
-            // Determine rehab level from default estimate
-            $rehab_per_sqft = self::DEFAULT_REHAB_COST_PER_SQFT;
+            // Determine rehab level from age-based estimate
             $rehab_level = match (true) {
-                $rehab_per_sqft <= 25 => 'cosmetic',
-                $rehab_per_sqft <= 50 => 'moderate',
-                $rehab_per_sqft <= 80 => 'major',
-                default               => 'gut',
+                $rehab_per_sqft <= 20 => 'cosmetic',
+                $rehab_per_sqft <= 35 => 'moderate',
+                $rehab_per_sqft <= 50 => 'significant',
+                default               => 'major',
             };
 
             // Build comp details for storage
@@ -177,14 +195,15 @@ class Flip_Analyzer {
                 'avg_comp_ppsf'        => $arv_data['avg_comp_ppsf'],
                 'comp_details_json'    => json_encode($comp_details),
                 'neighborhood_ceiling' => round($arv_data['neighborhood_ceiling'] ?? 0, 2),
-                'ceiling_pct'          => $arv_data['ceiling_pct'] ?? 0,
-                'ceiling_warning'      => ($arv_data['ceiling_warning'] ?? false) ? 1 : 0,
+                'ceiling_pct'          => $arv_data['neighborhood_ceiling'] > 0 ? round(($arv / $arv_data['neighborhood_ceiling']) * 100, 1) : 0,
+                'ceiling_warning'      => $arv_data['neighborhood_ceiling'] > 0 && ($arv / $arv_data['neighborhood_ceiling']) > 0.9 ? 1 : 0,
                 'estimated_rehab_cost' => round($rehab_cost, 2),
                 'rehab_level'          => $rehab_level,
                 'mao'                  => round($mao, 2),
                 'estimated_profit'     => round($profit, 2),
                 'estimated_roi'        => round($roi, 2),
                 'road_type'            => $road_analysis['road_type'],
+                'days_on_market'       => (int) ($property->days_on_market ?? 0),
                 'list_price'           => $list_price,
                 'original_list_price'  => (float) ($property->original_list_price ?? 0),
                 'price_per_sqft'       => (float) ($property->price_per_sqft ?? 0),
@@ -226,7 +245,8 @@ class Flip_Analyzer {
 
         return $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM {$summary_table}
-            WHERE property_sub_type = 'Single Family Residence'
+            WHERE property_type = 'Residential'
+              AND property_sub_type = 'Single Family Residence'
               AND standard_status = 'Active'
               AND list_price > 0
               AND building_area_total > 0
@@ -268,8 +288,9 @@ class Flip_Analyzer {
         }
 
         // Estimated rehab too expensive relative to ARV
-        $default_rehab = $sqft * self::DEFAULT_REHAB_COST_PER_SQFT;
-        if ($arv > 0 && $default_rehab > $arv * 0.35) {
+        $year_built = (int) $property->year_built;
+        $estimated_rehab = $sqft * self::get_rehab_per_sqft($year_built);
+        if ($arv > 0 && $estimated_rehab > $arv * 0.35) {
             return 'Default rehab estimate exceeds 35% of ARV';
         }
 
@@ -309,6 +330,7 @@ class Flip_Analyzer {
             'mao'                 => 0,
             'estimated_profit'    => 0,
             'estimated_roi'       => 0,
+            'days_on_market'      => (int) ($property->days_on_market ?? 0),
             'list_price'          => (float) $property->list_price,
             'original_list_price' => (float) ($property->original_list_price ?? 0),
             'price_per_sqft'      => (float) ($property->price_per_sqft ?? 0),
@@ -325,5 +347,19 @@ class Flip_Analyzer {
         ];
 
         Flip_Database::upsert_result($data);
+    }
+
+    /**
+     * Get rehab cost per sqft based on property age.
+     * Older homes need more work: electrical, plumbing, insulation, etc.
+     */
+    private static function get_rehab_per_sqft(int $year_built): int {
+        if ($year_built <= 0) return 45; // Unknown age, assume significant
+        $age = (int) date('Y') - $year_built;
+
+        if ($age <= 10)  return 15;  // Cosmetic: paint, staging, minor updates
+        if ($age <= 25)  return 30;  // Moderate: kitchen/bath refresh, flooring
+        if ($age <= 50)  return 45;  // Significant: kitchen/bath gut, systems updates
+        return 60;                    // Major: everything + possible structural
     }
 }

@@ -56,6 +56,7 @@ class Flip_Database {
             estimated_profit DECIMAL(12,2) DEFAULT 0,
             estimated_roi DECIMAL(8,2) DEFAULT 0,
             road_type VARCHAR(30) DEFAULT 'unknown',
+            days_on_market INT DEFAULT 0,
 
             list_price DECIMAL(12,2) DEFAULT 0,
             original_list_price DECIMAL(12,2) DEFAULT 0,

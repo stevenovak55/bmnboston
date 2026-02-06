@@ -1,17 +1,20 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.3.1
+**Current Version:** 0.5.0
 **Last Updated:** 2026-02-05
 
 ## Overview
 
 Standalone WordPress plugin that identifies Single Family Residence flip candidates by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates.
 
-**v0.3.0 Enhancements:**
-- Road type detection via OpenStreetMap Overpass API (cul-de-sac, busy-road, etc.)
-- Neighborhood ceiling check (compares ARV to max sale in area)
-- Revised property scoring: focuses on lot size & expansion potential
-- Removed bed/bath penalties (they can always be added)
+**v0.5.0 Enhancements (Accuracy Overhaul):**
+- Age-scaled rehab costs: $15-60/sqft based on property age (replaces flat $30)
+- Distance + renovation weighted ARV: renovated comps get 2x influence
+- Comp deduplication: removes pre-flip sales that pollute ARV
+- Broken-down costs: purchase closing, sale commission, holding costs (replaces opaque 12%)
+- Road type ARV discount: -15% busy road, -25% highway-adjacent
+- ARV projection calculator: interactive scenarios with custom bed/bath/sqft inputs
+- Dashboard enhancements: photo analysis button, DOM column, property View links, floor/mid/ceiling range
 
 ## Architecture
 
@@ -37,6 +40,10 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 | `includes/class-flip-database.php` | Table creation, queries, CRUD |
 | `includes/class-flip-rest-api.php` | REST API endpoints (6 endpoints) |
 | `includes/class-flip-photo-analyzer.php` | Claude Vision photo analysis |
+| `admin/class-flip-admin-dashboard.php` | Admin page, AJAX handlers |
+| `admin/views/dashboard.php` | Dashboard HTML template |
+| `assets/js/flip-dashboard.js` | Chart.js, table, filters, CSV export |
+| `assets/css/flip-dashboard.css` | Dashboard styles |
 
 ## Database
 
@@ -100,9 +107,13 @@ Uses OpenStreetMap Overpass API to classify roads by highway tag:
 ## Important Patterns
 
 ### ARV Calculation
-- Comps from `bme_listing_summary_archive` (sold SFR within 6 months)
-- ±1 bedroom, ±20% sqft, within 0.5mi (expands to 1.0mi if needed)
-- ARV = median comp $/sqft × subject sqft
+- Comps from `bme_listing_summary_archive` (sold SFR within 12 months)
+- ±1 bedroom, ±30% sqft, expanding radius: 0.5mi → 1.0mi → 2.0mi
+- Distance-weighted + renovation-weighted average $/sqft × subject sqft
+  - Distance weight: 1/(distance+0.1)² — closer comps dominate
+  - Renovation multiplier: renovated=2x, new construction=1.5x, unknown=1x
+- Comps deduped by address (keeps most recent sale, removes pre-flip purchases)
+- Road type discount: -15% busy road, -25% highway-adjacent
 - Confidence: 5+ = high, 3-4 = medium, 1-2 = low, 0 = disqualify
 
 ### School Rating
@@ -111,10 +122,13 @@ Uses OpenStreetMap Overpass API to classify roads by highway tag:
 
 ### Financial Calculations
 ```
-Rehab = sqft × $30/sqft (default, refined by photo analysis)
-MAO = (ARV × 0.70) - Rehab
-Profit = ARV - list_price - rehab - (ARV × 0.12)
-ROI = Profit / (list_price + rehab) × 100
+Rehab = sqft × age-based $/sqft (0-10yr: $15, 11-25yr: $30, 26-50yr: $45, 50+yr: $60)
+Purchase Closing = list_price × 1.5%
+Sale Costs = ARV × 6% (5% commission + 1% closing)
+Holding Costs = (list_price + rehab) × 0.8%/month × 6 months
+MAO (Max Offer Price) = (ARV × 0.70) - Rehab
+Profit = ARV - list_price - rehab - purchase_closing - sale_costs - holding_costs
+ROI = Profit / (list_price + rehab + purchase_closing + holding_costs) × 100
 ```
 
 ## Dependencies
@@ -171,12 +185,30 @@ Uses Claude Vision API (`claude-sonnet-4-5-20250929`) to analyze up to 5 photos 
 |-------|--------|-------------|
 | 1 - Backend Core | Complete | Plugin scaffold, ARV, scorers, CLI |
 | 2 - Photo + API | Complete | Claude Vision, REST endpoints |
-| 2.5 - Enhanced Location | In Progress | Road type, ceiling check, expansion scoring |
-| 3 - Web Dashboard | Pending | Admin page with Chart.js |
+| 2.5 - Enhanced Location | Complete | Road type, ceiling check, expansion scoring |
+| 3 - Web Dashboard | Complete | Admin page with Chart.js, filters, CSV export |
 | 4 - iOS | Pending | SwiftUI views, ViewModel, API |
 | 5 - Polish | Pending | Testing, weight tuning |
 
 See `DEVELOPMENT.md` for detailed progress tracking.
+
+## Admin Dashboard (v0.4.0)
+
+Access via **Flip Analyzer** in the WordPress admin sidebar menu.
+
+**Features:**
+- Summary stat cards (total, viable, avg score, avg ROI, disqualified)
+- Chart.js grouped bar chart: viable vs disqualified per city
+- Client-side filters: city dropdown, min score slider, sort, show viable/all/DQ
+- Results table with expandable rows showing score breakdown, financials, comps, photo analysis
+- "Run Analysis" button — triggers Pass 1 via AJAX (1-3 min)
+- "Export CSV" — downloads currently filtered results
+
+**AJAX Actions:**
+- `flip_run_analysis` — runs `Flip_Analyzer::run()` with 5-min timeout
+- `flip_refresh_data` — reloads dashboard data without re-running analysis
+
+**Note:** Photo analysis remains CLI-only (`wp flip analyze_photos`) due to API costs.
 
 ## Known Issues (v0.3.1)
 

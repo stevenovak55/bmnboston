@@ -50,7 +50,7 @@ class Flip_ARV_Calculator {
             return $result;
         }
 
-        // Try 0.5 mile radius first, then expand to 1.0 mile
+        // Try expanding radius until we have enough comps: 0.5mi → 1.0mi → 2.0mi
         $comps = self::find_comps($lat, $lng, $sqft, $beds, 0.5);
         $confidence = self::calc_confidence(count($comps));
 
@@ -58,7 +58,15 @@ class Flip_ARV_Calculator {
             $comps_expanded = self::find_comps($lat, $lng, $sqft, $beds, 1.0);
             if (count($comps_expanded) > count($comps)) {
                 $comps = $comps_expanded;
-                $confidence = count($comps) >= 3 ? 'low' : self::calc_confidence(count($comps));
+                $confidence = count($comps) >= 5 ? 'medium' : (count($comps) >= 3 ? 'low' : self::calc_confidence(count($comps)));
+            }
+        }
+
+        if (count($comps) < 3) {
+            $comps_expanded = self::find_comps($lat, $lng, $sqft, $beds, 2.0);
+            if (count($comps_expanded) > count($comps)) {
+                $comps = $comps_expanded;
+                $confidence = 'low'; // 2mi comps are always low confidence
             }
         }
 
@@ -66,21 +74,26 @@ class Flip_ARV_Calculator {
             return $result;
         }
 
-        // Calculate median $/sqft from comps
-        $ppsf_values = array_map(function ($c) {
-            return (float) $c->ppsf;
-        }, $comps);
-        sort($ppsf_values);
-
-        $count = count($ppsf_values);
-        if ($count % 2 === 0) {
-            $median_ppsf = ($ppsf_values[$count / 2 - 1] + $ppsf_values[$count / 2]) / 2;
-        } else {
-            $median_ppsf = $ppsf_values[floor($count / 2)];
+        // Distance-weighted average $/sqft — closer + renovated comps have more influence
+        // Distance weight = 1 / (distance + 0.1)²
+        // Renovation multiplier: renovated=2x, new construction=1.5x, unknown=1x
+        $weighted_ppsf_sum = 0;
+        $weight_sum = 0;
+        foreach ($comps as $c) {
+            $dist = max(0.05, (float) $c->distance_miles); // floor at 0.05mi
+            $reno_mult = match ((int) ($c->reno_priority ?? 0)) {
+                2 => 2.0,       // Renovated keywords in remarks
+                1 => 1.5,       // New construction (year_built recent)
+                default => 1.0, // Unknown condition
+            };
+            $weight = $reno_mult / pow($dist + 0.1, 2);
+            $weighted_ppsf_sum += (float) $c->ppsf * $weight;
+            $weight_sum += $weight;
         }
 
-        $estimated_arv = round($median_ppsf * $sqft, 2);
-        $avg_ppsf = round(array_sum($ppsf_values) / $count, 2);
+        $weighted_ppsf = $weight_sum > 0 ? $weighted_ppsf_sum / $weight_sum : 0;
+        $estimated_arv = round($weighted_ppsf * $sqft, 2);
+        $avg_ppsf = round($weighted_ppsf, 2);
 
         // Get neighborhood ceiling (max sale in area)
         $ceiling = self::get_neighborhood_ceiling($lat, $lng, 0.5);
@@ -99,7 +112,7 @@ class Flip_ARV_Calculator {
 
         $result['estimated_arv']         = $estimated_arv;
         $result['arv_confidence']        = $confidence;
-        $result['comp_count']            = $count;
+        $result['comp_count']            = count($comps);
         $result['avg_comp_ppsf']         = $avg_ppsf;
         $result['comps']                 = $comps;
         $result['neighborhood_avg_ppsf'] = $avg_ppsf;
@@ -168,8 +181,8 @@ class Flip_ARV_Calculator {
         $lng_min = $lng - $lng_delta;
         $lng_max = $lng + $lng_delta;
 
-        $sqft_min = (int) ($sqft * 0.8);
-        $sqft_max = (int) ($sqft * 1.2);
+        $sqft_min = (int) ($sqft * 0.7);
+        $sqft_max = (int) ($sqft * 1.3);
         $beds_min = max(1, $beds - 1);
         $beds_max = $beds + 1;
 
@@ -214,7 +227,7 @@ class Flip_ARV_Calculator {
             LEFT JOIN {$listings_archive} l ON s.listing_id = l.listing_id
             WHERE s.standard_status = 'Closed'
               AND s.property_sub_type = 'Single Family Residence'
-              AND s.close_date >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+              AND s.close_date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
               AND s.close_price > 0
               AND s.building_area_total > 0
               AND s.building_area_total BETWEEN %d AND %d
@@ -222,8 +235,8 @@ class Flip_ARV_Calculator {
               AND s.latitude BETWEEN %f AND %f
               AND s.longitude BETWEEN %f AND %f
             HAVING distance_miles <= %f
-            ORDER BY reno_priority DESC, s.close_date DESC
-            LIMIT 6",
+            ORDER BY reno_priority DESC, distance_miles ASC, s.close_date DESC
+            LIMIT 10",
             $lat, $lng, $lat,
             $new_construction_year,
             $sqft_min, $sqft_max,
@@ -234,7 +247,30 @@ class Flip_ARV_Calculator {
         );
 
         $results = $wpdb->get_results($sql);
-        return is_array($results) ? $results : [];
+        if (!is_array($results)) return [];
+
+        // Dedup by address — if same property sold multiple times (e.g. a flip),
+        // keep only the most recent sale to avoid pre-flip prices polluting the ARV
+        $seen = [];
+        $deduped = [];
+        foreach ($results as $comp) {
+            $addr = strtolower(trim($comp->address ?? ''));
+            if (empty($addr)) {
+                $deduped[] = $comp;
+                continue;
+            }
+            if (isset($seen[$addr])) {
+                // Keep the more recent sale
+                $idx = $seen[$addr];
+                if ($comp->close_date > $deduped[$idx]->close_date) {
+                    $deduped[$idx] = $comp;
+                }
+            } else {
+                $seen[$addr] = count($deduped);
+                $deduped[] = $comp;
+            }
+        }
+        return $deduped;
     }
 
     /**

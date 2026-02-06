@@ -1,0 +1,593 @@
+/**
+ * Flip Analyzer Dashboard Styles
+ */
+
+/* ── Layout ─────────────────────────────────── */
+
+.flip-dashboard {
+    max-width: 1400px;
+    margin-right: 20px;
+}
+
+.flip-dashboard h1 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.flip-dashboard h1 .dashicons {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+}
+
+/* ── Action Buttons ─────────────────────────── */
+
+.flip-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 16px 0 20px;
+}
+
+.flip-actions .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.flip-actions .button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 1;
+}
+
+.flip-last-run {
+    color: #666;
+    font-size: 13px;
+    margin-left: 8px;
+}
+
+/* ── Stat Cards ─────────────────────────────── */
+
+.flip-stats-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.flip-stat-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+    border-top: 3px solid #2271b1;
+}
+
+.flip-stat-card.flip-stat-viable {
+    border-top-color: #00a32a;
+}
+
+.flip-stat-card.flip-stat-dq {
+    border-top-color: #cc1818;
+}
+
+.flip-stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1d2327;
+    line-height: 1.2;
+}
+
+.flip-stat-label {
+    font-size: 13px;
+    color: #666;
+    margin-top: 4px;
+}
+
+/* ── Cards ──────────────────────────────────── */
+
+.flip-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.flip-card-header {
+    padding: 16px 20px 0;
+}
+
+.flip-card-header h2 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.flip-card-body {
+    padding: 16px 20px 20px;
+}
+
+.flip-card-body-table {
+    padding: 0;
+    overflow-x: auto;
+}
+
+#flip-chart-container {
+    position: relative;
+    max-height: 350px;
+}
+
+.flip-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+    font-size: 14px;
+}
+
+/* ── Filters ────────────────────────────────── */
+
+.flip-filters {
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    margin-bottom: 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 16px 20px;
+}
+
+.flip-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.flip-filter-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.flip-filter-group select {
+    min-width: 150px;
+}
+
+.flip-filter-score {
+    min-width: 180px;
+}
+
+.flip-filter-score input[type="range"] {
+    width: 100%;
+}
+
+.flip-result-count {
+    font-size: 13px;
+    font-weight: 400;
+    color: #888;
+}
+
+/* ── Results Table ──────────────────────────── */
+
+.flip-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.flip-table thead th {
+    background: #f6f7f7;
+    border-bottom: 1px solid #ddd;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #555;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.flip-table tbody tr {
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.flip-table tbody tr:hover {
+    background-color: #f0f6fc;
+}
+
+.flip-table tbody tr.flip-row-dq {
+    opacity: 0.6;
+}
+
+.flip-table tbody tr.flip-row-dq:hover {
+    opacity: 0.85;
+}
+
+.flip-table tbody tr.flip-row-expanded {
+    background-color: #f0f6fc;
+    border-bottom: none;
+}
+
+.flip-table td {
+    padding: 10px 12px;
+    vertical-align: middle;
+}
+
+.flip-col-toggle {
+    width: 32px;
+    text-align: center;
+}
+
+.flip-col-num {
+    text-align: right !important;
+}
+
+.flip-table td.flip-col-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Toggle button */
+.flip-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    background: #f0f0f0;
+    color: #666;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    transition: all 0.15s;
+    border: none;
+    cursor: pointer;
+}
+
+.flip-toggle:hover {
+    background: #2271b1;
+    color: #fff;
+}
+
+/* Property cell */
+.flip-property-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.flip-property-address {
+    font-weight: 500;
+    color: #1d2327;
+}
+
+.flip-property-mls {
+    font-size: 11px;
+    color: #999;
+}
+
+.flip-view-link {
+    color: #2271b1;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.flip-view-link:hover {
+    text-decoration: underline;
+}
+
+.flip-dq-reason {
+    font-size: 11px;
+    color: #cc1818;
+    margin-top: 2px;
+}
+
+/* ── Score Badge ────────────────────────────── */
+
+.flip-score-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 12px;
+    color: #fff;
+    min-width: 36px;
+    text-align: center;
+}
+
+.flip-score-high    { background: #00a32a; }
+.flip-score-good    { background: #4ab866; }
+.flip-score-mid     { background: #dba617; }
+.flip-score-low     { background: #e67e22; }
+.flip-score-poor    { background: #cc1818; }
+
+/* ── Road Badge ─────────────────────────────── */
+
+.flip-road-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.flip-road-culdesac         { background: #d4edda; color: #155724; }
+.flip-road-quiet            { background: #d1ecf1; color: #0c5460; }
+.flip-road-moderate         { background: #fff3cd; color: #856404; }
+.flip-road-busy             { background: #f8d7da; color: #721c24; }
+.flip-road-highway          { background: #e2e3e5; color: #383d41; }
+.flip-road-unknown          { background: #f0f0f0; color: #999; }
+
+/* ── Confidence Badge ───────────────────────── */
+
+.flip-conf-high   { color: #00a32a; font-weight: 600; }
+.flip-conf-medium { color: #dba617; font-weight: 600; }
+.flip-conf-low    { color: #cc1818; font-weight: 600; }
+
+/* ── Expanded Detail Row ────────────────────── */
+
+.flip-detail-row td {
+    padding: 0 !important;
+    background: #f9fbfd;
+    border-bottom: 2px solid #2271b1;
+}
+
+.flip-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    padding: 20px;
+}
+
+.flip-section {
+    margin-bottom: 16px;
+}
+
+.flip-section:last-child {
+    margin-bottom: 0;
+}
+
+.flip-section h4 {
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d2327;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 6px;
+}
+
+/* Score bars */
+.flip-score-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.flip-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.flip-bar-label {
+    font-size: 12px;
+    color: #555;
+    min-width: 100px;
+    text-align: right;
+}
+
+.flip-bar-track {
+    flex: 1;
+    height: 20px;
+    background: #e8e8e8;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.flip-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    min-width: 28px;
+}
+
+/* Detail key-value pairs */
+.flip-kv-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.flip-kv {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 13px;
+    padding: 3px 0;
+    border-bottom: 1px dotted #e0e0e0;
+}
+
+.flip-kv:last-child {
+    border-bottom: none;
+}
+
+.flip-kv-key {
+    color: #666;
+}
+
+.flip-kv-val {
+    font-weight: 500;
+    color: #1d2327;
+    text-align: right;
+}
+
+.flip-kv-val.flip-positive {
+    color: #00a32a;
+}
+
+.flip-kv-val.flip-negative {
+    color: #cc1818;
+}
+
+/* Comp mini-table */
+.flip-comp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.flip-comp-table th {
+    background: #eef3f7;
+    padding: 6px 8px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    border-bottom: 1px solid #ddd;
+}
+
+.flip-comp-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.flip-comp-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Photo analysis detail */
+.flip-photo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.flip-photo-thumb {
+    width: 100%;
+    max-width: 200px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+/* Remarks signals */
+.flip-signal {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    margin: 2px;
+}
+
+.flip-signal-positive { background: #d4edda; color: #155724; }
+.flip-signal-negative { background: #f8d7da; color: #721c24; }
+
+/* ── Progress Modal ─────────────────────────── */
+
+.flip-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flip-modal {
+    background: #fff;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 420px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.flip-modal-icon {
+    margin-bottom: 16px;
+}
+
+.flip-modal-icon .dashicons {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #2271b1;
+}
+
+.flip-modal h3 {
+    margin: 0 0 12px;
+    font-size: 18px;
+}
+
+.flip-modal p {
+    margin: 0 0 8px;
+    color: #555;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.flip-modal-note {
+    font-weight: 600;
+    color: #333 !important;
+}
+
+@keyframes flip-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.flip-spin {
+    animation: flip-spin 1.2s linear infinite;
+    display: inline-block;
+}
+
+/* ── Responsive ─────────────────────────────── */
+
+@media (max-width: 1200px) {
+    .flip-stats-row {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .flip-details {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 782px) {
+    .flip-stats-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .flip-filters {
+        flex-wrap: wrap;
+    }
+
+    .flip-details {
+        grid-template-columns: 1fr;
+    }
+}

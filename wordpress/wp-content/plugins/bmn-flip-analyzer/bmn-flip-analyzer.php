@@ -2,9 +2,16 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies Single Family Residence flip candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis.
- * Version: 0.3.1
+ * Version: 0.5.0
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.4.0 - Web Admin Dashboard
+ * - Admin dashboard page with Chart.js city breakdown chart
+ * - Results table with expandable rows showing score/financial/comp details
+ * - Run Analysis button with AJAX progress modal
+ * - Export CSV with all scored property data
+ * - Client-side filters: city, min score, sort, show viable/all/disqualified
  *
  * Version 0.3.1 - Robustness & Quality Improvements
  * - Overpass API retry logic with exponential backoff for 429/503 errors
@@ -32,7 +39,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.3.1');
+define('FLIP_VERSION', '0.5.0');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -54,6 +61,12 @@ if (defined('WP_CLI') && WP_CLI) {
 
 // Load REST API
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-rest-api.php';
+
+// Load admin dashboard
+if (is_admin()) {
+    require_once FLIP_PLUGIN_PATH . 'admin/class-flip-admin-dashboard.php';
+    Flip_Admin_Dashboard::init();
+}
 
 // Register REST API routes
 add_action('rest_api_init', function () {
