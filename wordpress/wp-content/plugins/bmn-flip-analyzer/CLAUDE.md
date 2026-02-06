@@ -382,6 +382,53 @@ Stored as WP option `bmn_flip_analysis_filters` (JSON). Defaults: SFR + Active o
 - Available property_sub_types are queried dynamically from `bme_listing_summary` via `Flip_Database::get_available_property_sub_types()`
 - CLI flags override saved filters for that run only (don't persist)
 
+## Deployment
+
+```bash
+# Deploy includes files
+SSHPASS='cFDIB2uPBj5LydX' sshpass -e scp -o StrictHostKeyChecking=no -P 57105 \
+  includes/*.php stevenovakcom@35.236.219.140:~/public/wp-content/plugins/bmn-flip-analyzer/includes/
+
+# Deploy main plugin file
+SSHPASS='cFDIB2uPBj5LydX' sshpass -e scp -o StrictHostKeyChecking=no -P 57105 \
+  bmn-flip-analyzer.php stevenovakcom@35.236.219.140:~/public/wp-content/plugins/bmn-flip-analyzer/
+
+# Deploy CSS/JS (fix permissions after!)
+SSHPASS='cFDIB2uPBj5LydX' sshpass -e scp -o StrictHostKeyChecking=no -P 57105 \
+  assets/css/*.css assets/js/*.js stevenovakcom@35.236.219.140:~/public/wp-content/plugins/bmn-flip-analyzer/assets/
+SSHPASS='cFDIB2uPBj5LydX' sshpass -e ssh -o StrictHostKeyChecking=no -p 57105 stevenovakcom@35.236.219.140 \
+  "chmod 644 ~/public/wp-content/plugins/bmn-flip-analyzer/assets/css/*.css ~/public/wp-content/plugins/bmn-flip-analyzer/assets/js/*.js"
+```
+
+## Verification Commands
+
+```bash
+# Verify version on production
+SSHPASS='cFDIB2uPBj5LydX' sshpass -e ssh -o StrictHostKeyChecking=no -p 57105 stevenovakcom@35.236.219.140 \
+  "cd ~/public && wp eval \"echo FLIP_VERSION;\""
+
+# Run analysis for a city
+SSHPASS='cFDIB2uPBj5LydX' sshpass -e ssh -o StrictHostKeyChecking=no -p 57105 stevenovakcom@35.236.219.140 \
+  "cd ~/public && wp flip analyze --city=Reading"
+
+# Check results
+SSHPASS='cFDIB2uPBj5LydX' sshpass -e ssh -o StrictHostKeyChecking=no -p 57105 stevenovakcom@35.236.219.140 \
+  "cd ~/public && wp flip results --city=Reading --format=table"
+
+# Deep-dive a specific property
+SSHPASS='cFDIB2uPBj5LydX' sshpass -e ssh -o StrictHostKeyChecking=no -p 57105 stevenovakcom@35.236.219.140 \
+  "cd ~/public && wp flip property <listing_id> --verbose"
+```
+
+**Note:** `wp eval` requires `global $wpdb;` — it's not in scope by default.
+
+## Design Principles
+
+- **Scope vs cost:** Age discount reduces *cost* (what you pay), not *scope* (what work needs doing). Contingency rates and hold periods use scope (`base * remarks_mult`), not age-discounted cost (`base * age_mult * remarks_mult`).
+- **Multiplier stacking floors:** When multipliers stack (age x remarks x base), always apply `max()` floor to prevent unrealistic sub-$1/sqft values. Current floor: `$2/sqft`.
+- **Comp type matching:** SFR comps must not be used for condos/townhouses. `COMPATIBLE_TYPES` in `class-flip-arv-calculator.php` handles fallback grouping.
+- **ARV confidence safety margin:** Low/none confidence requires 25-50% higher profit/ROI to pass DQ — unreliable estimates need wider margin.
+
 ## Known Issues (v0.3.1)
 
 1. ~~**Overpass API rate limiting**~~ - Fixed in v0.3.1: retry with exponential backoff (1s, 2s, 4s) for 429/408/503/504
