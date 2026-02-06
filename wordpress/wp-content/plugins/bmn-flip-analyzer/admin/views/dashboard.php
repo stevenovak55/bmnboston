@@ -109,7 +109,8 @@ if (!defined('ABSPATH')) {
             <select id="filter-sort">
                 <option value="total_score">Total Score</option>
                 <option value="estimated_profit">Profit</option>
-                <option value="estimated_roi">ROI</option>
+                <option value="annualized_roi">Annualized ROI</option>
+                <option value="estimated_roi">Cash-on-Cash ROI</option>
                 <option value="list_price">List Price</option>
                 <option value="estimated_arv">ARV</option>
             </select>
@@ -138,10 +139,11 @@ if (!defined('ABSPATH')) {
                         <th>Property</th>
                         <th>City</th>
                         <th class="flip-col-num">Score</th>
+                        <th>Risk</th>
                         <th class="flip-col-num">List Price</th>
                         <th class="flip-col-num">ARV</th>
                         <th class="flip-col-num">Profit</th>
-                        <th class="flip-col-num">ROI</th>
+                        <th class="flip-col-num">Ann. ROI</th>
                         <th>Road</th>
                         <th class="flip-col-num">DOM</th>
                         <th class="flip-col-num">Photo</th>

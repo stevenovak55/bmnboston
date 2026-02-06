@@ -40,38 +40,40 @@ class Flip_Location_Scorer {
     ): array {
         $factors = [];
 
-        // Factor 1: Road Type (25% of location score) - NEW
+        // Factor 1: Road Type (25% of location score)
         // Busy roads significantly hurt resale value
         $road_type = $photo_analysis['road_type'] ?? 'unknown';
         $factors['road_type'] = self::score_road_type($road_type);
 
-        // Factor 2: Neighborhood Ceiling Support (20% of location score) - NEW
-        // Does the neighborhood support the projected ARV?
+        // Factor 2: Neighborhood Ceiling Support (25% of location score)
+        // Does the neighborhood support the projected ARV? Critical for flip risk.
         $ceiling_pct = $arv_data['ceiling_pct'] ?? 0;
         $factors['ceiling_support'] = self::score_ceiling_support($ceiling_pct);
 
-        // Factor 3: School rating (20%)
+        // Factor 3: Neighborhood price trend (25%)
+        // Appreciation signal matters most for flip timing
+        $factors['price_trend'] = self::score_price_trend($price_trend);
+
+        // Factor 4: Comp density (15%)
+        // More data = more confidence in ARV
+        $factors['comp_density'] = self::score_comp_density($comp_density);
+
+        // Factor 5: School rating (10%)
+        // Resale appeal factor (less relevant for flip decision than buy-and-hold)
         $factors['school_rating'] = self::score_school_rating(
             (float) $property->latitude,
             (float) $property->longitude
         );
 
-        // Factor 4: Neighborhood price trend (15%)
-        $factors['price_trend'] = self::score_price_trend($price_trend);
-
-        // Factor 5: Comp density (10%)
-        $factors['comp_density'] = self::score_comp_density($comp_density);
-
-        // Factor 6: Property tax rate (10%)
-        $factors['tax_rate'] = self::score_tax_rate($property);
+        // Note: tax_rate factor removed in v0.8.0 — already captured in holding costs
+        // (scoring it here would double-count its impact)
 
         // Weighted composite
         $score = ($factors['road_type'] * 0.25)
-               + ($factors['ceiling_support'] * 0.20)
-               + ($factors['school_rating'] * 0.20)
-               + ($factors['price_trend'] * 0.15)
-               + ($factors['comp_density'] * 0.10)
-               + ($factors['tax_rate'] * 0.10);
+               + ($factors['ceiling_support'] * 0.25)
+               + ($factors['price_trend'] * 0.25)
+               + ($factors['comp_density'] * 0.15)
+               + ($factors['school_rating'] * 0.10);
 
         return [
             'score'   => round($score, 2),

@@ -23,17 +23,19 @@ class Flip_Analyzer {
 
     /** Transaction cost constants */
     const PURCHASE_CLOSING_PCT = 0.015;       // 1.5% of purchase price
-    const SALE_COMMISSION_PCT  = 0.05;        // 5% of ARV (buyer's + listing agent)
+    const SALE_COMMISSION_PCT  = 0.045;       // 4.5% of ARV (post-NAR settlement)
     const SALE_CLOSING_PCT     = 0.01;        // 1% seller closing costs
+    const MA_TRANSFER_TAX_RATE = 0.00456;     // MA deed excise tax: $4.56 per $1,000
 
     /** Financing constants (hard money loan) */
-    const HARD_MONEY_RATE      = 0.12;        // 12% annual interest rate
+    const HARD_MONEY_RATE      = 0.105;       // 10.5% annual interest rate (2025-2026 market)
     const HARD_MONEY_POINTS    = 0.02;        // 2 origination points
     const HARD_MONEY_LTV       = 0.80;        // 80% loan-to-value
 
     /** Rehab & holding constants */
-    const CONTINGENCY_PCT      = 0.10;        // 10% rehab contingency
-    const ANNUAL_TAX_RATE      = 0.013;       // 1.3% of purchase price (MA average)
+    const ANNUAL_TAX_RATE      = 0.013;       // 1.3% of purchase price (MA average fallback)
+    const LEAD_PAINT_ALLOWANCE = 8000;        // $8K flat for pre-1978 properties
+    const LEAD_PAINT_YEAR      = 1978;
     const ANNUAL_INSURANCE_RATE = 0.005;      // 0.5% builder's risk insurance
     const MONTHLY_UTILITIES    = 350;         // Electric, water, heat during rehab
 
@@ -126,6 +128,7 @@ class Flip_Analyzer {
      * @param int    $year_built     Year the property was built.
      * @param string|null $remarks   Public remarks for rehab signal analysis.
      * @param float  $area_avg_dom   City average days on market (for hold estimate).
+     * @param float|null $actual_tax_rate Actual property tax rate from MLS data (null = use MA average).
      * @return array Financial breakdown with cash and financed scenarios.
      */
     public static function calculate_financials(
@@ -134,20 +137,35 @@ class Flip_Analyzer {
         int $sqft,
         int $year_built,
         ?string $remarks = null,
-        float $area_avg_dom = 30
+        float $area_avg_dom = 30,
+        ?float $actual_tax_rate = null
     ): array {
-        // Rehab with remarks adjustment + contingency
-        $rehab_per_sqft  = self::get_rehab_per_sqft($year_built);
+        // Rehab with remarks adjustment
+        $rehab_per_sqft   = self::get_rehab_per_sqft($year_built);
         $rehab_multiplier = self::get_remarks_rehab_multiplier($remarks);
-        $base_rehab       = $sqft * $rehab_per_sqft * $rehab_multiplier;
-        $rehab_contingency = $base_rehab * self::CONTINGENCY_PCT;
-        $rehab_cost       = round($base_rehab + $rehab_contingency, 2);
+        $effective_per_sqft = $rehab_per_sqft * $rehab_multiplier;
+        $base_rehab       = $sqft * $effective_per_sqft;
+
+        // Lead paint allowance for pre-1978 (skip if remarks already mention it)
+        $lead_paint_flag = ($year_built > 0 && $year_built < self::LEAD_PAINT_YEAR);
+        $lead_paint_cost = 0;
+        if ($lead_paint_flag) {
+            $remarks_lower = strtolower($remarks ?? '');
+            if (!str_contains($remarks_lower, 'lead paint') && !str_contains($remarks_lower, 'deleading')) {
+                $lead_paint_cost = self::LEAD_PAINT_ALLOWANCE;
+                $base_rehab += $lead_paint_cost;
+            }
+        }
+
+        // Scaled contingency by rehab scope
+        $contingency_rate  = self::get_contingency_rate($effective_per_sqft);
+        $rehab_contingency = $base_rehab * $contingency_rate;
+        $rehab_cost        = round($base_rehab + $rehab_contingency, 2);
 
         // Dynamic hold period
         $hold_months = self::estimate_hold_months($rehab_per_sqft, $area_avg_dom);
 
         // Rehab level
-        $effective_per_sqft = $rehab_per_sqft * $rehab_multiplier;
         $rehab_level = match (true) {
             $effective_per_sqft <= 20 => 'cosmetic',
             $effective_per_sqft <= 35 => 'moderate',
@@ -155,12 +173,17 @@ class Flip_Analyzer {
             default                   => 'major',
         };
 
-        // Transaction costs
-        $purchase_closing = $list_price * self::PURCHASE_CLOSING_PCT;
-        $sale_costs = $arv * (self::SALE_COMMISSION_PCT + self::SALE_CLOSING_PCT);
+        // MA transfer tax (deed excise tax) on both buy and sell
+        $transfer_tax_buy  = $list_price * self::MA_TRANSFER_TAX_RATE;
+        $transfer_tax_sell = $arv * self::MA_TRANSFER_TAX_RATE;
+
+        // Transaction costs (including transfer tax)
+        $purchase_closing = ($list_price * self::PURCHASE_CLOSING_PCT) + $transfer_tax_buy;
+        $sale_costs = $arv * (self::SALE_COMMISSION_PCT + self::SALE_CLOSING_PCT) + $transfer_tax_sell;
 
         // Holding costs (taxes + insurance + utilities)
-        $monthly_taxes     = ($list_price * self::ANNUAL_TAX_RATE) / 12;
+        $tax_rate = $actual_tax_rate ?? self::ANNUAL_TAX_RATE;
+        $monthly_taxes     = ($list_price * $tax_rate) / 12;
         $monthly_insurance = ($list_price * self::ANNUAL_INSURANCE_RATE) / 12;
         $monthly_holding   = $monthly_taxes + $monthly_insurance + self::MONTHLY_UTILITIES;
         $holding_costs     = round($monthly_holding * $hold_months, 2);
@@ -181,21 +204,41 @@ class Flip_Analyzer {
         $cash_invested   = ($list_price * (1 - self::HARD_MONEY_LTV)) + $rehab_cost + $purchase_closing;
         $cash_on_cash_roi = $cash_invested > 0 ? ($financed_profit / $cash_invested) * 100 : 0;
 
-        // MAO uses 70% rule
+        // MAO: classic 70% rule + adjusted (includes holding + financing)
         $mao = ($arv * 0.70) - $rehab_cost;
+        $adjusted_mao = ($arv * 0.70) - $rehab_cost - $holding_costs - $financing_costs;
+
+        // Breakeven ARV (minimum ARV for $0 financed profit)
+        $sale_cost_pct = self::SALE_COMMISSION_PCT + self::SALE_CLOSING_PCT + self::MA_TRANSFER_TAX_RATE;
+        $breakeven_arv = ($list_price + $rehab_cost + $purchase_closing + $holding_costs + $financing_costs)
+                         / (1 - $sale_cost_pct);
+
+        // Annualized ROI (for comparing deals with different hold periods)
+        $annualized_roi = 0;
+        if ($hold_months > 0 && $cash_on_cash_roi > -100) {
+            $annualized_roi = (pow(1 + $cash_on_cash_roi / 100, 12 / $hold_months) - 1) * 100;
+        }
 
         return [
             'rehab_per_sqft'    => $rehab_per_sqft,
             'rehab_multiplier'  => round($rehab_multiplier, 2),
             'rehab_cost'        => $rehab_cost,
             'rehab_contingency' => round($rehab_contingency, 2),
+            'contingency_rate'  => $contingency_rate,
             'rehab_level'       => $rehab_level,
             'hold_months'       => $hold_months,
             'purchase_closing'  => round($purchase_closing, 2),
             'sale_costs'        => round($sale_costs, 2),
             'holding_costs'     => $holding_costs,
             'financing_costs'   => $financing_costs,
+            'transfer_tax_buy'  => round($transfer_tax_buy, 2),
+            'transfer_tax_sell' => round($transfer_tax_sell, 2),
+            'lead_paint_flag'   => $lead_paint_flag,
+            'lead_paint_cost'   => $lead_paint_cost,
             'mao'               => round($mao, 2),
+            'adjusted_mao'      => round($adjusted_mao, 2),
+            'breakeven_arv'     => round($breakeven_arv, 2),
+            'annualized_roi'    => round($annualized_roi, 2),
             // Cash scenario
             'cash_profit'       => round($cash_profit, 2),
             'cash_roi'          => round($cash_roi, 2),
@@ -310,9 +353,13 @@ class Flip_Analyzer {
             $road_discount = self::ROAD_ARV_DISCOUNT[$road_analysis['road_type']] ?? 0;
             $arv = $road_discount > 0 ? round($raw_arv * (1 - $road_discount), 2) : $raw_arv;
 
+            // Look up actual property tax rate from MLS financial data
+            $actual_tax_rate = self::get_actual_tax_rate($listing_id, $list_price);
+
             $fin = self::calculate_financials(
                 $arv, $list_price, $sqft, $year_built,
-                $remarks, $city_metrics['avg_dom'] ?? 30
+                $remarks, $city_metrics['avg_dom'] ?? 30,
+                $actual_tax_rate
             );
 
             // Compute market-adaptive thresholds
@@ -322,6 +369,16 @@ class Flip_Analyzer {
                 $arv_data['arv_confidence'] ?? 'medium'
             );
             $thresholds_json = json_encode($thresholds);
+
+            // Deal risk grade
+            $deal_risk_grade = self::calculate_deal_risk_grade(
+                $arv_data['arv_confidence'] ?? 'none',
+                $fin['breakeven_arv'],
+                $arv,
+                $arv_data['comps'],
+                (int) ($property->days_on_market ?? 0),
+                $arv_data['comp_count']
+            );
 
             // Post-calculation disqualifier (uses financed numbers + adaptive thresholds)
             $post_dq = self::check_post_calc_disqualifiers($fin['estimated_profit'], $fin['cash_on_cash_roi'], $thresholds);
@@ -340,6 +397,7 @@ class Flip_Analyzer {
                 $data['disqualify_reason'] = $post_dq;
                 $data['near_viable'] = $near_viable ? 1 : 0;
                 $data['applied_thresholds_json'] = $thresholds_json;
+                $data['deal_risk_grade'] = $deal_risk_grade;
                 Flip_Database::upsert_result($data);
                 $disqualified++;
                 $analyzed++;
@@ -353,6 +411,7 @@ class Flip_Analyzer {
                 $arv, $run_date
             );
             $data['applied_thresholds_json'] = $thresholds_json;
+            $data['deal_risk_grade'] = $deal_risk_grade;
             Flip_Database::upsert_result($data);
             $analyzed++;
         }
@@ -451,6 +510,11 @@ class Flip_Analyzer {
             'remarks_signals_json' => json_encode($market['remarks_signals']),
             'disqualified'         => 0,
             'disqualify_reason'    => null,
+            'annualized_roi'       => $fin['annualized_roi'],
+            'breakeven_arv'        => $fin['breakeven_arv'],
+            'lead_paint_flag'      => $fin['lead_paint_flag'] ? 1 : 0,
+            'transfer_tax_buy'     => $fin['transfer_tax_buy'],
+            'transfer_tax_sell'    => $fin['transfer_tax_sell'],
         ];
     }
 
@@ -608,6 +672,12 @@ class Flip_Analyzer {
             'disqualify_reason'   => $reason,
             'near_viable'         => 0,
             'applied_thresholds_json' => json_encode($thresholds),
+            'annualized_roi'      => 0,
+            'breakeven_arv'       => 0,
+            'deal_risk_grade'     => null,
+            'lead_paint_flag'     => ((int) $property->year_built > 0 && (int) $property->year_built < self::LEAD_PAINT_YEAR) ? 1 : 0,
+            'transfer_tax_buy'    => 0,
+            'transfer_tax_sell'   => 0,
         ];
 
         Flip_Database::upsert_result($data);
@@ -615,15 +685,16 @@ class Flip_Analyzer {
 
     /**
      * Get rehab cost per sqft based on property age.
+     *
+     * Uses smooth continuous formula instead of step function to avoid
+     * discontinuities at boundaries (e.g., age 10=$15 → age 11=$30).
+     * Formula: clamp(10 + age × 0.7, 12, 65)
      */
-    public static function get_rehab_per_sqft(int $year_built): int {
-        if ($year_built <= 0) return 45;
+    public static function get_rehab_per_sqft(int $year_built): float {
+        if ($year_built <= 0) return 45.0;
         $age = (int) wp_date('Y') - $year_built;
 
-        if ($age <= 10)  return 15;
-        if ($age <= 25)  return 30;
-        if ($age <= 50)  return 45;
-        return 60;
+        return max(12.0, min(65.0, 10.0 + $age * 0.7));
     }
 
     /**
@@ -684,9 +755,23 @@ class Flip_Analyzer {
     }
 
     /**
+     * Get scaled contingency rate based on rehab scope.
+     *
+     * Industry standard: 8% cosmetic → 20% major/gut renovations.
+     */
+    private static function get_contingency_rate(float $effective_per_sqft): float {
+        return match (true) {
+            $effective_per_sqft <= 20 => 0.08,  // Cosmetic
+            $effective_per_sqft <= 35 => 0.12,  // Moderate
+            $effective_per_sqft <= 50 => 0.15,  // Significant
+            default                   => 0.20,  // Major/Gut
+        };
+    }
+
+    /**
      * Estimate hold period based on rehab scope and local market velocity.
      */
-    private static function estimate_hold_months(int $rehab_per_sqft, float $area_avg_dom = 30): int {
+    private static function estimate_hold_months(float $rehab_per_sqft, float $area_avg_dom = 30): int {
         // Rehab phase
         $rehab_months = match (true) {
             $rehab_per_sqft <= 20 => 1,
@@ -702,5 +787,121 @@ class Flip_Analyzer {
         $permit_months = $rehab_per_sqft > 35 ? 1 : 0;
 
         return $rehab_months + $sale_months + $permit_months;
+    }
+
+    /**
+     * Calculate deal risk grade (A-F) combining multiple risk factors.
+     *
+     * @param string $arv_confidence  ARV confidence level (high, medium, low, none).
+     * @param float  $breakeven_arv   Breakeven ARV from financials.
+     * @param float  $estimated_arv   Estimated ARV.
+     * @param array  $comps           Array of comp objects from ARV calculation.
+     * @param int    $dom             Property days on market.
+     * @param int    $comp_count      Number of comps used.
+     * @return string Grade letter: A, B, C, D, or F.
+     */
+    public static function calculate_deal_risk_grade(
+        string $arv_confidence,
+        float $breakeven_arv,
+        float $estimated_arv,
+        array $comps,
+        int $dom,
+        int $comp_count
+    ): string {
+        // Factor 1: ARV confidence (35%)
+        $confidence_score = match ($arv_confidence) {
+            'high'   => 100,
+            'medium' => 65,
+            'low'    => 30,
+            default  => 10,
+        };
+
+        // Factor 2: Margin cushion (25%) — how far ARV is above breakeven
+        $margin_score = 0;
+        if ($estimated_arv > 0 && $breakeven_arv > 0) {
+            $breakeven_margin = (($estimated_arv - $breakeven_arv) / $estimated_arv) * 100;
+            $margin_score = min(100, max(0, $breakeven_margin * 5));
+        }
+
+        // Factor 3: Comp consistency (20%) — inverse of price variance (CV)
+        $consistency_score = 50; // default when insufficient data
+        if (count($comps) >= 3) {
+            $prices = array_map(function ($c) {
+                return (float) ($c->adjusted_ppsf ?? $c->ppsf ?? 0);
+            }, $comps);
+            $prices = array_filter($prices, fn($p) => $p > 0);
+
+            if (count($prices) >= 3) {
+                $mean = array_sum($prices) / count($prices);
+                if ($mean > 0) {
+                    $variance = array_sum(array_map(fn($p) => pow($p - $mean, 2), $prices)) / count($prices);
+                    $cv = sqrt($variance) / $mean;
+                    // CV of 0 = perfect consistency (100), CV of 0.30+ = very inconsistent (0)
+                    $consistency_score = min(100, max(0, (1 - $cv / 0.30) * 100));
+                }
+            }
+        }
+
+        // Factor 4: Market velocity (10%) — DOM indicates demand
+        $velocity_score = match (true) {
+            $dom <= 15 => 100,
+            $dom <= 30 => 80,
+            $dom <= 60 => 50,
+            $dom <= 90 => 30,
+            default    => 10,
+        };
+
+        // Factor 5: Comp count (10%) — more data = more confidence
+        $count_score = match (true) {
+            $comp_count >= 8 => 100,
+            $comp_count >= 5 => 80,
+            $comp_count >= 3 => 50,
+            default          => 20,
+        };
+
+        // Weighted composite
+        $composite = ($confidence_score * 0.35)
+                   + ($margin_score * 0.25)
+                   + ($consistency_score * 0.20)
+                   + ($velocity_score * 0.10)
+                   + ($count_score * 0.10);
+
+        return match (true) {
+            $composite >= 80 => 'A',
+            $composite >= 65 => 'B',
+            $composite >= 50 => 'C',
+            $composite >= 35 => 'D',
+            default          => 'F',
+        };
+    }
+
+    /**
+     * Look up actual property tax rate from MLS financial data.
+     *
+     * Returns the rate as a decimal (e.g. 0.0142 for 1.42%), or null if
+     * no tax data is available (falls back to MA average in calculate_financials).
+     */
+    private static function get_actual_tax_rate(int $listing_id, float $list_price): ?float {
+        if ($list_price <= 0) {
+            return null;
+        }
+
+        global $wpdb;
+        $financial_table = $wpdb->prefix . 'bme_listing_financial';
+
+        $tax_annual = $wpdb->get_var($wpdb->prepare(
+            "SELECT tax_annual_amount FROM {$financial_table} WHERE listing_id = %d LIMIT 1",
+            $listing_id
+        ));
+
+        if ($tax_annual && (float) $tax_annual > 0) {
+            $rate = (float) $tax_annual / $list_price;
+            // Sanity check: MA rates range from ~0.5% to ~3%
+            if ($rate >= 0.003 && $rate <= 0.04) {
+                return $rate;
+            }
+        }
+
+        return null;
     }
 }

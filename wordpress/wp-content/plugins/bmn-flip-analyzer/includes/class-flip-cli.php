@@ -511,6 +511,68 @@ class Flip_CLI {
     }
 
     /**
+     * Generate a PDF report for a property.
+     *
+     * ## OPTIONS
+     *
+     * <listing_id>
+     * : The MLS listing ID to generate a report for.
+     *
+     * [--output=<path>]
+     * : Save the PDF to a specific path instead of the default uploads directory.
+     *
+     * ## EXAMPLES
+     *
+     *     wp flip pdf 73457035
+     *     wp flip pdf 73457035 --output=/tmp/report.pdf
+     *
+     * @when after_wp_load
+     */
+    public function pdf($args, $assoc_args) {
+        $listing_id = (int) $args[0];
+        if ($listing_id <= 0) {
+            WP_CLI::error('Please provide a valid listing ID.');
+            return;
+        }
+
+        // Check that the property exists
+        $result = Flip_Database::get_result_by_listing($listing_id);
+        if (!$result) {
+            WP_CLI::error("No analysis found for MLS# {$listing_id}. Run 'wp flip analyze' first.");
+            return;
+        }
+
+        WP_CLI::line('');
+        WP_CLI::line("Generating PDF report for MLS# {$listing_id}...");
+
+        // Lazy-load PDF generator
+        require_once FLIP_PLUGIN_PATH . 'includes/class-flip-pdf-generator.php';
+
+        $generator = new Flip_PDF_Generator();
+        $pdf_path = $generator->generate($listing_id);
+
+        if (!$pdf_path) {
+            WP_CLI::error('Failed to generate PDF. Check that TCPDF is available.');
+            return;
+        }
+
+        // If custom output path, move the file
+        if (!empty($assoc_args['output'])) {
+            $dest = $assoc_args['output'];
+            if (copy($pdf_path, $dest)) {
+                unlink($pdf_path);
+                $pdf_path = $dest;
+            } else {
+                WP_CLI::warning("Could not copy to {$dest}. File saved at: {$pdf_path}");
+                return;
+            }
+        }
+
+        WP_CLI::success("PDF saved: {$pdf_path}");
+        WP_CLI::line('');
+    }
+
+    /**
      * Clear old analysis results.
      *
      * ## OPTIONS

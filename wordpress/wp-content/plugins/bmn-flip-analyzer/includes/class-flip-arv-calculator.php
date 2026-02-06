@@ -106,8 +106,8 @@ class Flip_ARV_Calculator {
 
             // Renovation multiplier
             $reno_mult = match ((int) ($c->reno_priority ?? 0)) {
-                2 => 2.0,
-                1 => 1.5,
+                2 => 1.3,   // Renovated — slight emphasis, not over-weighted
+                1 => 1.15,  // New construction / recent build
                 default => 1.0,
             };
 
@@ -270,7 +270,7 @@ class Flip_ARV_Calculator {
         $comp_sqft = (int) ($comp->sqft ?? 0);
         if ($subj_sqft > 0 && $comp_sqft > 0) {
             $sqft_diff = $subj_sqft - $comp_sqft;
-            if (abs($sqft_diff) > $subj_sqft * 0.10) {
+            if (abs($sqft_diff) > $subj_sqft * 0.05) {
                 $adj = $sqft_diff * $sqft_value;
                 $adj = max(-$comp_price * 0.15, min($comp_price * 0.15, $adj));
                 $total_adj += $adj;
@@ -323,7 +323,10 @@ class Flip_ARV_Calculator {
     }
 
     /**
-     * Get the maximum sale price in the neighborhood (ceiling).
+     * Get the P90 (90th percentile) sale price in the neighborhood (ceiling).
+     *
+     * Uses P90 instead of MAX to avoid outlier McMansion sales skewing
+     * the ceiling. Requires minimum 3 sales for meaningful data.
      */
     public static function get_neighborhood_ceiling(float $lat, float $lng, float $radius_miles = 0.5): float {
         global $wpdb;
@@ -332,10 +335,8 @@ class Flip_ARV_Calculator {
         $lat_delta = $radius_miles / 69.0;
         $lng_delta = $radius_miles / (69.0 * cos(deg2rad($lat)));
 
-        $max_price = $wpdb->get_var($wpdb->prepare(
-            "SELECT MAX(close_price)
-            FROM {$archive_table}
-            WHERE standard_status = 'Closed'
+        $where = $wpdb->prepare(
+            "standard_status = 'Closed'
               AND property_sub_type = 'Single Family Residence'
               AND close_date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
               AND close_price > 0
@@ -343,9 +344,25 @@ class Flip_ARV_Calculator {
               AND longitude BETWEEN %f AND %f",
             $lat - $lat_delta, $lat + $lat_delta,
             $lng - $lng_delta, $lng + $lng_delta
-        ));
+        );
 
-        return (float) $max_price;
+        $count = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$archive_table} WHERE {$where}");
+
+        if ($count < 3) {
+            return 0; // Not enough sales for meaningful ceiling
+        }
+
+        // P90: skip top 10% of results
+        $offset = max(0, (int) floor($count * 0.10));
+
+        $p90_price = $wpdb->get_var(
+            "SELECT close_price FROM {$archive_table}
+            WHERE {$where}
+            ORDER BY close_price DESC
+            LIMIT 1 OFFSET {$offset}"
+        );
+
+        return (float) $p90_price;
     }
 
     /**

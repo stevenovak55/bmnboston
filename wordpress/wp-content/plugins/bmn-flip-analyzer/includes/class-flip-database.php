@@ -88,6 +88,13 @@ class Flip_Database {
             near_viable TINYINT(1) DEFAULT 0,
             applied_thresholds_json TEXT DEFAULT NULL,
 
+            annualized_roi DECIMAL(10,2) DEFAULT 0,
+            breakeven_arv DECIMAL(12,2) DEFAULT 0,
+            deal_risk_grade VARCHAR(2) DEFAULT NULL,
+            lead_paint_flag TINYINT(1) DEFAULT 0,
+            transfer_tax_buy DECIMAL(10,2) DEFAULT 0,
+            transfer_tax_sell DECIMAL(10,2) DEFAULT 0,
+
             PRIMARY KEY (id),
             INDEX idx_total_score (total_score DESC),
             INDEX idx_listing_id (listing_id),
@@ -114,6 +121,31 @@ class Flip_Database {
         }
         if (!in_array('applied_thresholds_json', $cols, true)) {
             $wpdb->query("ALTER TABLE {$table} ADD COLUMN applied_thresholds_json TEXT DEFAULT NULL AFTER near_viable");
+        }
+    }
+
+    /**
+     * Add columns for v0.8.0 (ARV & financial model overhaul).
+     */
+    public static function migrate_v080(): void {
+        global $wpdb;
+        $table = self::table_name();
+
+        $cols = $wpdb->get_col("SHOW COLUMNS FROM {$table}", 0);
+
+        $new_columns = [
+            'annualized_roi'    => "ALTER TABLE {$table} ADD COLUMN annualized_roi DECIMAL(10,2) DEFAULT 0 AFTER applied_thresholds_json",
+            'breakeven_arv'     => "ALTER TABLE {$table} ADD COLUMN breakeven_arv DECIMAL(12,2) DEFAULT 0 AFTER annualized_roi",
+            'deal_risk_grade'   => "ALTER TABLE {$table} ADD COLUMN deal_risk_grade VARCHAR(2) DEFAULT NULL AFTER breakeven_arv",
+            'lead_paint_flag'   => "ALTER TABLE {$table} ADD COLUMN lead_paint_flag TINYINT(1) DEFAULT 0 AFTER deal_risk_grade",
+            'transfer_tax_buy'  => "ALTER TABLE {$table} ADD COLUMN transfer_tax_buy DECIMAL(10,2) DEFAULT 0 AFTER lead_paint_flag",
+            'transfer_tax_sell' => "ALTER TABLE {$table} ADD COLUMN transfer_tax_sell DECIMAL(10,2) DEFAULT 0 AFTER transfer_tax_buy",
+        ];
+
+        foreach ($new_columns as $col_name => $sql) {
+            if (!in_array($col_name, $cols, true)) {
+                $wpdb->query($sql);
+            }
         }
     }
 
@@ -206,7 +238,7 @@ class Flip_Database {
             $where[] = "photo_score IS NOT NULL";
         }
 
-        $allowed_sorts = ['total_score', 'estimated_profit', 'estimated_roi', 'cash_on_cash_roi', 'list_price', 'estimated_arv'];
+        $allowed_sorts = ['total_score', 'estimated_profit', 'estimated_roi', 'cash_on_cash_roi', 'annualized_roi', 'list_price', 'estimated_arv', 'deal_risk_grade'];
         $sort = in_array($args['sort'], $allowed_sorts) ? $args['sort'] : 'total_score';
         $order = strtoupper($args['order']) === 'ASC' ? 'ASC' : 'DESC';
 

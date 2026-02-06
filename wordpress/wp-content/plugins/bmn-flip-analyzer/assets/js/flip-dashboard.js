@@ -38,10 +38,16 @@
             toggleRow($(this));
         });
         $tbody.on('click', 'tr.flip-main-row', function (e) {
-            // Don't fire if they clicked the toggle button or a link
+            // Don't fire if they clicked the toggle button, link, or PDF button
             if ($(e.target).closest('.flip-toggle').length) return;
             if ($(e.target).closest('a').length) return;
+            if ($(e.target).closest('.flip-pdf-btn').length) return;
             toggleRow($(this).find('.flip-toggle'));
+        });
+        $(document).on('click', '.flip-pdf-btn', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            generatePDF($(this));
         });
 
         $('#flip-run-analysis').on('click', runAnalysis);
@@ -236,6 +242,14 @@
 
         var profitClass = r.estimated_profit >= 0 ? '' : ' flip-negative';
 
+        // Risk grade badge
+        var riskHtml = r.deal_risk_grade
+            ? '<span class="flip-risk-badge flip-risk-' + r.deal_risk_grade + '">' + r.deal_risk_grade + '</span>'
+            : '<span style="color:#ccc">--</span>';
+
+        // Lead paint badge
+        var leadBadge = r.lead_paint_flag ? '<span class="flip-lead-badge">Pb</span>' : '';
+
         var dqNote = r.disqualified && r.disqualify_reason
             ? '<div class="flip-dq-reason">' + escapeHtml(r.disqualify_reason) + '</div>'
             : '';
@@ -243,20 +257,25 @@
         var propertyUrl = flipData.siteUrl + '/property/' + r.listing_id + '/';
         var domText = r.days_on_market ? r.days_on_market + 'd' : '--';
 
+        // Annualized ROI
+        var annRoiText = r.annualized_roi ? r.annualized_roi.toFixed(0) + '%' : '--';
+        var annRoiClass = r.annualized_roi >= 0 ? '' : ' flip-negative';
+
         var html = '<tr class="flip-main-row' + dqClass + '" data-idx="' + idx + '">'
             + '<td class="flip-col-toggle"><button class="flip-toggle" data-idx="' + idx + '">+</button></td>'
             + '<td><div class="flip-property-cell">'
-            + '<span class="flip-property-address">' + escapeHtml(r.address) + '</span>'
+            + '<span class="flip-property-address">' + escapeHtml(r.address) + leadBadge + '</span>'
             + '<span class="flip-property-mls">MLS# ' + r.listing_id
             + ' &middot; <a href="' + propertyUrl + '" target="_blank" class="flip-view-link">View</a></span>'
             + dqNote
             + '</div></td>'
             + '<td>' + escapeHtml(r.city) + '</td>'
             + '<td class="flip-col-num">' + scoreHtml + '</td>'
+            + '<td>' + riskHtml + '</td>'
             + '<td class="flip-col-num">' + formatCurrency(r.list_price) + '</td>'
             + '<td class="flip-col-num">' + formatCurrency(r.estimated_arv) + '</td>'
             + '<td class="flip-col-num' + profitClass + '">' + formatCurrency(r.estimated_profit) + '</td>'
-            + '<td class="flip-col-num">' + (r.estimated_roi ? r.estimated_roi.toFixed(1) + '%' : '--') + '</td>'
+            + '<td class="flip-col-num' + annRoiClass + '">' + annRoiText + '</td>'
             + '<td>' + roadBadge(r.road_type) + '</td>'
             + '<td class="flip-col-num">' + domText + '</td>'
             + '<td class="flip-col-num">' + photoHtml + '</td>'
@@ -320,7 +339,15 @@
     // ── Expanded Detail Row ────────────────────────
 
     function buildDetailRow(r) {
-        var html = '<tr class="flip-detail-row"><td colspan="11"><div class="flip-details">';
+        var html = '<tr class="flip-detail-row"><td colspan="12">';
+
+        // Toolbar with PDF button
+        html += '<div class="flip-detail-toolbar">'
+            + '<button class="button button-small flip-pdf-btn" data-listing="' + r.listing_id + '">'
+            + '<span class="dashicons dashicons-pdf"></span> Download PDF Report'
+            + '</button></div>';
+
+        html += '<div class="flip-details">';
 
         // Column 1: Score Breakdown + Financial
         html += '<div class="flip-detail-col">';
@@ -380,15 +407,23 @@
         var valuation = calcValuationRange(r);
 
         // Use stored values from PHP financial model
-        var purchaseClosing = r.list_price * 0.015;
-        var saleCosts = r.estimated_arv * 0.06;
         var holdingCosts = r.holding_costs || 0;
         var financingCosts = r.financing_costs || 0;
         var contingency = r.rehab_contingency || 0;
         var holdMonths = r.hold_months || 6;
         var rehabMultiplier = r.rehab_multiplier || 1.0;
+        var transferTaxBuy = r.transfer_tax_buy || 0;
+        var transferTaxSell = r.transfer_tax_sell || 0;
+        var purchaseClosing = r.list_price * 0.015 + transferTaxBuy;
+        var saleCostPct = 0.045 + 0.01; // 4.5% comm + 1% closing
+        var saleCosts = r.estimated_arv * saleCostPct + transferTaxSell;
 
         var html = '<div class="flip-section"><h4>Financial Summary</h4><div class="flip-kv-list">';
+
+        // Risk grade
+        if (r.deal_risk_grade) {
+            html += kv('Deal Risk', '<span class="flip-risk-badge flip-risk-' + r.deal_risk_grade + '">' + r.deal_risk_grade + '</span>');
+        }
 
         // Market strength badge
         if (r.market_strength && r.market_strength !== 'balanced') {
@@ -405,6 +440,15 @@
         }
         html += kv('Mid Value (ARV)', arvLabel);
         html += kv('Ceiling Value', formatCurrency(valuation.ceiling));
+
+        // Breakeven ARV
+        if (r.breakeven_arv && r.estimated_arv > 0) {
+            var beMargin = ((r.estimated_arv - r.breakeven_arv) / r.estimated_arv * 100).toFixed(1);
+            var beCls = beMargin >= 10 ? 'flip-positive' : (beMargin >= 5 ? '' : 'flip-negative');
+            html += kv('Breakeven ARV', formatCurrency(r.breakeven_arv)
+                + ' <span class="' + beCls + '" style="font-size:11px">(' + beMargin + '% margin)</span>');
+        }
+
         html += kv('Comps Used', r.comp_count);
 
         // Cost breakdown
@@ -415,10 +459,21 @@
         if (rehabMultiplier !== 1.0) {
             rehabNote += ', ' + rehabMultiplier.toFixed(2) + 'x remarks adj.';
         }
-        html += kv('Rehab Cost', formatCurrency(r.estimated_rehab_cost - contingency) + ' <span style="color:#999;font-size:11px">(' + rehabNote + ')</span>');
-        html += kv('+ Contingency (10%)', formatCurrency(contingency));
-        html += kv('Purchase Closing', formatCurrency(purchaseClosing) + ' <span style="color:#999;font-size:11px">(1.5%)</span>');
-        html += kv('Sale Costs', formatCurrency(saleCosts) + ' <span style="color:#999;font-size:11px">(5% comm + 1%)</span>');
+        var baseRehab = r.estimated_rehab_cost - contingency;
+        html += kv('Rehab Cost', formatCurrency(baseRehab) + ' <span style="color:#999;font-size:11px">(' + rehabNote + ')</span>');
+
+        // Lead paint
+        if (r.lead_paint_flag) {
+            html += kv('<span class="flip-lead-badge">Pb</span> Lead Paint', '<span style="color:#856404">$8K included in rehab</span>');
+        }
+
+        // Scaled contingency
+        var contPct = contingency > 0 && baseRehab > 0 ? Math.round(contingency / baseRehab * 100) : 10;
+        html += kv('+ Contingency (' + contPct + '%)', formatCurrency(contingency));
+        html += kv('Purchase Closing', formatCurrency(purchaseClosing)
+            + ' <span style="color:#999;font-size:11px">(1.5% + ' + formatCurrency(transferTaxBuy) + ' transfer tax)</span>');
+        html += kv('Sale Costs', formatCurrency(saleCosts)
+            + ' <span style="color:#999;font-size:11px">(4.5% comm + 1% + ' + formatCurrency(transferTaxSell) + ' tax)</span>');
         html += kv('Holding Costs', formatCurrency(holdingCosts) + ' <span style="color:#999;font-size:11px">(' + holdMonths + ' mo: tax+ins+util)</span>');
 
         // Dual profit scenario
@@ -428,14 +483,30 @@
         html += kv('Profit', '<strong class="' + cashProfitCls + '">' + formatCurrency(r.cash_profit) + '</strong>');
         html += kv('ROI', '<strong class="' + cashProfitCls + '">' + (r.cash_roi || 0).toFixed(1) + '%</strong>');
 
-        html += '<div style="font-weight:600;font-size:12px;color:#333;margin:4px 0">Hard Money (12%, 2 pts, 80% LTV):</div>';
+        html += '<div style="font-weight:600;font-size:12px;color:#333;margin:4px 0">Hard Money (10.5%, 2 pts, 80% LTV):</div>';
         html += kv('Financing Costs', formatCurrency(financingCosts));
         var finProfitCls = r.estimated_profit >= 0 ? 'flip-positive' : 'flip-negative';
         html += kv('Profit', '<strong class="' + finProfitCls + '">' + formatCurrency(r.estimated_profit) + '</strong>');
         html += kv('Cash-on-Cash ROI', '<strong class="' + finProfitCls + '">' + (r.cash_on_cash_roi || 0).toFixed(1) + '%</strong>');
+        if (r.annualized_roi) {
+            var annCls = r.annualized_roi >= 0 ? 'flip-positive' : 'flip-negative';
+            html += kv('Annualized ROI', '<strong class="' + annCls + '">' + r.annualized_roi.toFixed(1) + '%</strong>');
+        }
 
         html += '<div style="border-top:1px solid #ddd;margin:4px 0"></div>';
-        html += kv('Max Offer Price', formatCurrency(r.mao) + ' <span style="color:#999;font-size:11px">(70% rule)</span>');
+        html += kv('MAO (70% rule)', formatCurrency(r.mao));
+        if (r.adjusted_mao !== undefined) {
+            html += kv('Adjusted MAO', formatCurrency(r.adjusted_mao || (r.mao - holdingCosts - financingCosts))
+                + ' <span style="color:#999;font-size:11px">(incl. holding+financing)</span>');
+        } else {
+            // Compute adjusted MAO client-side as fallback
+            var adjMao = (r.mao || 0) - holdingCosts - financingCosts;
+            html += kv('Adjusted MAO', formatCurrency(adjMao)
+                + ' <span style="color:#999;font-size:11px">(incl. holding+financing)</span>');
+        }
+
+        // Sensitivity / stress test table
+        html += buildSensitivitySection(r);
 
         // Thresholds applied (show when market-adjusted)
         if (r.applied_thresholds) {
@@ -454,6 +525,40 @@
         }
 
         html += '</div></div>';
+        return html;
+    }
+
+    function buildSensitivitySection(r) {
+        if (r.disqualified || !r.estimated_arv || r.estimated_arv <= 0) return '';
+
+        var scenarios = [
+            { label: 'Base Case', arvMult: 1.00, rehabMult: 1.00 },
+            { label: 'Conservative', arvMult: 0.90, rehabMult: 1.20 },
+            { label: 'Worst Case', arvMult: 0.85, rehabMult: 1.30 },
+        ];
+
+        var html = '<div style="border-top:1px solid #ddd;margin:8px 0 4px;padding-top:6px"></div>';
+        html += '<div style="font-weight:600;font-size:12px;color:#333;margin:4px 0">Sensitivity Analysis:</div>';
+        html += '<table class="flip-comp-table" style="margin-top:4px"><thead><tr>'
+            + '<th>Scenario</th><th>ARV</th><th>Rehab</th><th>Profit</th><th>ROI</th>'
+            + '</tr></thead><tbody>';
+
+        scenarios.forEach(function (s) {
+            var adjArv = Math.round(r.estimated_arv * s.arvMult);
+            var adjRehab = Math.round(r.estimated_rehab_cost * s.rehabMult);
+            var costs = calcProjectionCosts(r.list_price, adjArv, adjRehab - (r.rehab_contingency || 0));
+            var cls = costs.profit >= 0 ? 'flip-positive' : 'flip-negative';
+
+            html += '<tr>'
+                + '<td><strong>' + s.label + '</strong></td>'
+                + '<td>' + formatCurrency(adjArv) + ' <span style="color:#999;font-size:10px">(' + Math.round(s.arvMult * 100) + '%)</span></td>'
+                + '<td>' + formatCurrency(adjRehab) + ' <span style="color:#999;font-size:10px">(' + Math.round(s.rehabMult * 100) + '%)</span></td>'
+                + '<td class="' + cls + '">' + formatCurrency(costs.profit) + '</td>'
+                + '<td class="' + cls + '">' + costs.roi.toFixed(1) + '%</td>'
+                + '</tr>';
+        });
+
+        html += '</tbody></table>';
         return html;
     }
 
@@ -727,19 +832,31 @@
         return html;
     }
 
-    // Shared cost calculation for projections (matches PHP v0.6.0 constants)
+    // Shared cost calculation for projections (matches PHP v0.8.0 constants)
     function calcProjectionCosts(listPrice, arv, rehab) {
-        var contingency = rehab * 0.10;
+        // Scaled contingency based on effective $/sqft (approximate from rehab total)
+        var estSqft = arv > 0 ? arv / 350 : 1500; // rough sqft estimate
+        var effectivePerSqft = rehab / estSqft;
+        var contRate;
+        if (effectivePerSqft <= 20) contRate = 0.08;
+        else if (effectivePerSqft <= 35) contRate = 0.12;
+        else if (effectivePerSqft <= 50) contRate = 0.15;
+        else contRate = 0.20;
+
+        var contingency = rehab * contRate;
         var totalRehab = rehab + contingency;
-        var purchaseClosing = listPrice * 0.015;
-        var saleCosts = arv * 0.06;
+
+        // MA transfer tax (0.456%)
+        var transferTaxBuy = listPrice * 0.00456;
+        var transferTaxSell = arv * 0.00456;
+        var purchaseClosing = listPrice * 0.015 + transferTaxBuy;
+        var saleCosts = arv * (0.045 + 0.01) + transferTaxSell; // 4.5% comm + 1% closing + transfer tax
 
         // Estimate hold months from rehab scope
-        var rehabPerSqft = rehab > 0 && listPrice > 0 ? rehab / (arv / 350) : 30; // rough sqft estimate
         var holdMonths;
-        if (rehabPerSqft <= 20) holdMonths = 3;
-        else if (rehabPerSqft <= 35) holdMonths = 4;
-        else if (rehabPerSqft <= 50) holdMonths = 6;
+        if (effectivePerSqft <= 20) holdMonths = 3;
+        else if (effectivePerSqft <= 35) holdMonths = 4;
+        else if (effectivePerSqft <= 50) holdMonths = 6;
         else holdMonths = 8;
 
         var monthlyTax = (listPrice * 0.013) / 12;
@@ -751,9 +868,9 @@
         var cashInvestment = listPrice + totalRehab + purchaseClosing + holdingCosts;
         var cashRoi = cashInvestment > 0 ? (cashProfit / cashInvestment) * 100 : 0;
 
-        // Hard money scenario
+        // Hard money scenario (10.5%, 2 pts, 80% LTV)
         var loanAmount = listPrice * 0.80;
-        var financingCosts = (loanAmount * 0.02) + (loanAmount * 0.12 / 12 * holdMonths);
+        var financingCosts = (loanAmount * 0.02) + (loanAmount * 0.105 / 12 * holdMonths);
         var finProfit = cashProfit - financingCosts;
         var cashInvested = (listPrice * 0.20) + totalRehab + purchaseClosing;
         var cocRoi = cashInvested > 0 ? (finProfit / cashInvested) * 100 : 0;
@@ -786,6 +903,46 @@
         $('#' + pid + '-profit').attr('class', profitCls).text(formatCurrency(projCosts.profit));
         $('#' + pid + '-roi').attr('class', profitCls).text(projCosts.roi.toFixed(1) + '%');
     });
+
+    // ── PDF Generation ─────────────────────────────
+
+    function generatePDF($btn) {
+        var listingId = $btn.data('listing');
+        $btn.prop('disabled', true).text('Generating PDF...');
+
+        // Open window immediately (user-initiated) to avoid popup blocker
+        var pdfWindow = window.open('about:blank', '_blank');
+
+        $.ajax({
+            url: flipData.ajaxUrl,
+            method: 'POST',
+            timeout: 60000,
+            data: {
+                action: 'flip_generate_pdf',
+                nonce: flipData.nonce,
+                listing_id: listingId,
+            },
+            success: function (response) {
+                $btn.prop('disabled', false).html('<span class="dashicons dashicons-pdf"></span> Download PDF Report');
+                if (response.success) {
+                    if (pdfWindow) {
+                        pdfWindow.location.href = response.data.url;
+                    } else {
+                        // Fallback if popup was still blocked
+                        window.location.href = response.data.url;
+                    }
+                } else {
+                    if (pdfWindow) pdfWindow.close();
+                    alert('PDF generation failed: ' + (response.data || 'Unknown error'));
+                }
+            },
+            error: function (xhr, status, err) {
+                $btn.prop('disabled', false).html('<span class="dashicons dashicons-pdf"></span> Download PDF Report');
+                if (pdfWindow) pdfWindow.close();
+                alert('PDF generation failed: ' + status + (err ? ' - ' + err : ''));
+            }
+        });
+    }
 
     // ── City Management ─────────────────────────────
 
@@ -1027,14 +1184,15 @@
         }
 
         var headers = [
-            'MLS#', 'Address', 'City', 'Total Score',
+            'MLS#', 'Address', 'City', 'Total Score', 'Risk Grade',
             'Financial', 'Property', 'Location', 'Market', 'Photo',
             'List Price', 'ARV', 'ARV Confidence', 'Comps',
             'Rehab Cost', 'Rehab Level', 'Rehab Multiplier', 'Contingency',
             'MAO', 'Cash Profit', 'Cash ROI',
             'Financing Costs', 'Holding Costs', 'Hold Months',
-            'Financed Profit', 'Cash-on-Cash ROI',
-            'Market Strength', 'Sale/List Ratio',
+            'Financed Profit', 'Cash-on-Cash ROI', 'Annualized ROI',
+            'Breakeven ARV', 'Transfer Tax Buy', 'Transfer Tax Sell',
+            'Lead Paint', 'Market Strength', 'Sale/List Ratio',
             'Road Type', 'Ceiling', 'Ceiling %',
             'Beds', 'Baths', 'SqFt', 'Year', 'Lot Acres',
             'Disqualified', 'Near-Viable', 'DQ Reason'
@@ -1046,6 +1204,7 @@
                 '"' + (r.address || '').replace(/"/g, '""') + '"',
                 '"' + (r.city || '').replace(/"/g, '""') + '"',
                 r.total_score.toFixed(2),
+                r.deal_risk_grade || '',
                 r.financial_score.toFixed(2),
                 r.property_score.toFixed(2),
                 r.location_score.toFixed(2),
@@ -1067,6 +1226,11 @@
                 r.hold_months || 6,
                 r.estimated_profit.toFixed(0),
                 (r.cash_on_cash_roi || 0).toFixed(2),
+                (r.annualized_roi || 0).toFixed(2),
+                (r.breakeven_arv || 0).toFixed(0),
+                (r.transfer_tax_buy || 0).toFixed(0),
+                (r.transfer_tax_sell || 0).toFixed(0),
+                r.lead_paint_flag ? 'Yes' : 'No',
                 r.market_strength || 'balanced',
                 (r.avg_sale_to_list || 1).toFixed(3),
                 r.road_type || '',

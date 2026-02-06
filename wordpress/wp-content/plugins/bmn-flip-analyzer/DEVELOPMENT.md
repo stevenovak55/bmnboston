@@ -1,8 +1,8 @@
 # BMN Flip Analyzer - Development Log
 
-## Current Version: 0.7.0
+## Current Version: 0.8.0
 
-## Status: Phase 3.7 Complete (Market-Adaptive Thresholds) - Pre-Phase 4 (iOS)
+## Status: Phase 3.8 Complete (ARV & Financial Model Overhaul) - Pre-Phase 4 (iOS)
 
 ---
 
@@ -19,6 +19,7 @@
 | 7 | Web admin dashboard | Complete | Phase 3 - Chart.js + PHP template |
 | 7.5 | ARV & Financial overhaul | Complete | Phase 3.5 - Comp adjustments, financing model |
 | 7.7 | Market-adaptive thresholds | Complete | Phase 3.7 - Adaptive DQ, near-viable |
+| 7.8 | ARV & Financial Model Overhaul | Complete | Phase 3.8 - ARV fixes, financial model v2, risk analysis |
 | 8 | iOS data model + API | Pending | Phase 4 - SwiftUI ViewModel |
 | 9 | iOS UI views | Pending | Phase 4 - FlipAnalyzerSheet |
 | 10 | Testing + tuning | Pending | Phase 5 - Score validation |
@@ -361,6 +362,62 @@
 3. Check near-viable count and dashboard display
 4. Phase 4: iOS SwiftUI integration
 
+### Session 9 - 2026-02-06
+
+**What was done (v0.8.0 — ARV & Financial Model Overhaul):**
+
+- **Database migration** (`class-flip-database.php`):
+  - 6 new columns: `annualized_roi`, `breakeven_arv`, `deal_risk_grade`, `lead_paint_flag`, `transfer_tax_buy`, `transfer_tax_sell`
+  - `migrate_v080()` method with version-check trigger
+  - Added `annualized_roi` and `deal_risk_grade` to allowed sort fields
+
+- **ARV accuracy fixes** (`class-flip-arv-calculator.php`):
+  1. Sqft adjustment threshold lowered: 10% → 5% (catches 7.5% diffs worth ~$30K)
+  2. Renovation comp weight reduced: 2.0/1.5 → 1.3/1.15 (prevents luxury finishes inflating ARV)
+  3. Neighborhood ceiling: MAX → P90 (90th percentile, min 3 sales required)
+
+- **Smooth rehab cost** (`class-flip-analyzer.php`):
+  - Replaced step-function `get_rehab_per_sqft()` with `clamp(10 + age × 0.7, 12, 65)`
+  - Eliminates 100% jumps at age boundaries (e.g., age 10=$15 → age 11=$30)
+  - Return type changed from `int` to `float`
+
+- **Financial model updates** (`class-flip-analyzer.php`):
+  1. MA transfer tax: `MA_TRANSFER_TAX_RATE = 0.00456` on both buy and sell sides
+  2. Lead paint: $8K flat for pre-1978 (skips if remarks mention "lead paint")
+  3. Scaled contingency: `get_contingency_rate()` method — 8% cosmetic → 20% major/gut
+  4. Hard money rate: 12% → 10.5% (2025-2026 market average)
+  5. Commission: 5% → 4.5% (post-NAR settlement)
+  6. Actual tax rates from `bme_listing_financial.tax_annual_amount` (was flat 1.3%)
+  7. Adjusted MAO: includes holding + financing costs
+  8. Annualized ROI: `(1 + roi)^(12/months) - 1` for comparing different hold periods
+  9. Breakeven ARV: minimum ARV for $0 financed profit
+
+- **Deal risk grade** (`class-flip-analyzer.php`):
+  - `calculate_deal_risk_grade()` method with 5 weighted factors:
+    - ARV confidence (35%), margin cushion (25%), comp consistency (20%), market velocity (10%), comp count (10%)
+  - Score → grade: ≥80=A, ≥65=B, ≥50=C, ≥35=D, <35=F
+
+- **Location scoring rebalance** (`class-flip-location-scorer.php`):
+  - Removed tax_rate factor (double-counts with holding costs)
+  - New weights: road_type 25%, ceiling_support 25%, price_trend 25%, comp_density 15%, school_rating 10%
+
+- **Dashboard updates**:
+  - New table columns: Deal Risk Grade (A-F badge), Annualized ROI
+  - Lead paint "Pb" badge next to address for pre-1978 properties
+  - Sensitivity table: Base Case / Conservative (-10% ARV, +20% rehab) / Worst Case (-15%, +30%)
+  - Breakeven ARV with margin % in financial section
+  - Transfer tax as separate line items in cost breakdown
+  - Adjusted MAO alongside classic 70% rule
+  - Updated labels: "10.5%" rate, "4.5% comm + 1%"
+  - `calcProjectionCosts()` synced with new constants
+  - CSV export: 6 new columns (risk grade, annualized ROI, breakeven, transfer tax, lead paint)
+
+- **REST API** (`class-flip-rest-api.php`):
+  - Added 6 new fields to `format_result()`
+  - Updated sort enum with `annualized_roi`, `deal_risk_grade`
+
+- Version bump to 0.8.0
+
 ---
 
 ## Known Bugs
@@ -397,6 +454,15 @@
 | Dynamic hold period | Rehab scope + area DOM — cosmetic flips take 3mo, gut renos take 8+ | 2026-02-05 |
 | Bathroom filter with fallback | Prevents 3bed/1bath from pulling 3bed/3bath comps, but relaxes if too few comps | 2026-02-05 |
 | $250/sqft addition cost | Massachusetts additions cost $200-400/sqft including permits; $80 was unrealistic | 2026-02-05 |
+| Smooth rehab cost formula | Continuous `10 + age × 0.7` eliminates 100% jumps at step boundaries | 2026-02-06 |
+| P90 neighborhood ceiling | MAX vulnerable to outlier McMansions; P90 filters top 10% of sales | 2026-02-06 |
+| Reduced reno comp weight | 2.0x over-weighted luxury finishes; 1.3x gives mild emphasis without inflating ARV | 2026-02-06 |
+| MA transfer tax | $4.56/$1000 deed excise tax missing from all prior versions | 2026-02-06 |
+| Lead paint $8K flat | MA requires lead-safe renovation for pre-1978; $8K covers testing + remediation | 2026-02-06 |
+| Scaled contingency | 8-20% by scope: cosmetic rehabs need less buffer than gut renovations | 2026-02-06 |
+| Annualized ROI | Comparing 15% over 4 months vs 15% over 12 months requires annualization | 2026-02-06 |
+| Deal risk grade | Composite A-F grade gives instant deal quality signal for dashboard scanning | 2026-02-06 |
+| Remove tax rate from location | Already captured in holding costs; double-counting inflated location penalty | 2026-02-06 |
 
 ---
 
@@ -554,7 +620,22 @@ bmn-flip-analyzer/
   7. DB migration: `near_viable` and `applied_thresholds_json` columns
 - `get_adaptive_thresholds()` public static method on Flip_Analyzer
 
-### v0.8.0 (Planned)
+### v0.8.0 (Complete)
+- **ARV & Financial Model Overhaul** — comprehensive accuracy and risk analysis improvements:
+  1. ARV accuracy: sqft threshold 10%→5%, P90 ceiling (was MAX), reno weight 2.0→1.3
+  2. Smooth continuous rehab cost formula (eliminates step-function discontinuities)
+  3. MA transfer tax (0.456% buy+sell), lead paint flag ($8K for pre-1978)
+  4. Scaled contingency by rehab scope (8% cosmetic → 20% major)
+  5. Updated constants: hard money 10.5% (was 12%), commission 4.5% (was 5%)
+  6. Actual property tax rates from MLS data (was flat 1.3%)
+  7. Annualized ROI, breakeven ARV, adjusted MAO (incl. holding+financing)
+  8. Deal risk grade (A-F) combining ARV confidence, margin, comp consistency, velocity
+  9. Location scoring rebalance: removed tax rate (double-count), boosted price trend/ceiling
+  10. Dashboard: sensitivity table, risk grade column, annualized ROI, lead paint badge
+  11. REST API: 6 new fields, updated sort options
+  12. DB migration: 6 new columns
+
+### v0.9.0 (Planned)
 - iOS SwiftUI integration
 
 ### v1.0.0 (Planned)

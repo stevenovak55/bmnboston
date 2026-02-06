@@ -2,9 +2,37 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies Single Family Residence flip candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis.
- * Version: 0.7.0
+ * Version: 0.9.0
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.9.0 - Investor-Grade PDF Report Redesign
+ * - Full visual rewrite of PDF report generator
+ * - Hero image with clipping (prevents overflow)
+ * - Rounded-corner metric card grids on cover & property pages
+ * - Professional styled tables with blue headers and zebra rows
+ * - Score bars with rounded ends in bordered cards
+ * - Risk grade hero card with coloured circle + explanation
+ * - Side-by-side investment scenario cards with accent bars
+ * - MAO callout box with dual values
+ * - Range bar for ARV floor/mid/ceiling
+ * - Pill badges for MLS remarks signals
+ * - Financial analysis on dedicated page (was crammed with scores)
+ * - Callout boxes for breakeven ARV and structural concerns
+ * - Better typography hierarchy and more white space throughout
+ *
+ * Version 0.8.0 - ARV & Financial Model Overhaul
+ * - ARV accuracy: sqft adjustment threshold 10%→5%, P90 neighborhood ceiling, reno weight 2.0→1.3
+ * - Smooth continuous rehab cost formula (eliminates step-function discontinuities)
+ * - MA transfer tax (0.456% buy+sell), lead paint flag ($8K for pre-1978)
+ * - Scaled contingency by rehab scope (8% cosmetic → 20% major)
+ * - Updated constants: hard money 10.5% (was 12%), commission 4.5% (was 5%)
+ * - Actual property tax rates from MLS data (was flat 1.3%)
+ * - Annualized ROI, breakeven ARV, adjusted MAO (incl. holding+financing)
+ * - Deal risk grade (A-F) combining ARV confidence, margin, comp consistency, velocity
+ * - Location scoring rebalance: removed tax rate (double-count), boosted price trend/ceiling
+ * - Dashboard: sensitivity table, risk grade column, annualized ROI, lead paint badge
+ * - DB migration: 6 new columns
  *
  * Version 0.7.0 - Market-Adaptive Thresholds
  * - Continuous formula thresholds based on avg_sale_to_list with tier guard rails
@@ -65,7 +93,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.7.1');
+define('FLIP_VERSION', '0.9.0');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -104,6 +132,7 @@ register_activation_hook(__FILE__, function () {
     Flip_Database::create_tables();
     Flip_Database::set_default_cities();
     Flip_Database::migrate_v070();
+    Flip_Database::migrate_v080();
 });
 
 // Version-check migration for file-only updates (no deactivate/reactivate)
@@ -112,6 +141,10 @@ add_action('plugins_loaded', function () {
     if (version_compare($db_version, '0.7.0', '<')) {
         Flip_Database::migrate_v070();
         update_option('bmn_flip_db_version', '0.7.0');
+    }
+    if (version_compare($db_version, '0.8.0', '<')) {
+        Flip_Database::migrate_v080();
+        update_option('bmn_flip_db_version', '0.8.0');
     }
 });
 

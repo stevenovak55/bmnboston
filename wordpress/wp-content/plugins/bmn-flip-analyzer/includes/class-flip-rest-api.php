@@ -119,7 +119,7 @@ class Flip_REST_API {
             ],
             'sort' => [
                 'default' => 'total_score',
-                'enum'    => ['total_score', 'estimated_profit', 'estimated_roi', 'list_price', 'estimated_arv'],
+                'enum'    => ['total_score', 'estimated_profit', 'estimated_roi', 'cash_on_cash_roi', 'annualized_roi', 'list_price', 'estimated_arv', 'deal_risk_grade'],
             ],
             'order' => [
                 'default' => 'DESC',
@@ -434,6 +434,12 @@ class Flip_REST_API {
             'mao'                 => (float) $result->mao,
             'estimated_profit'    => (float) $result->estimated_profit,
             'estimated_roi'       => (float) $result->estimated_roi,
+            'annualized_roi'      => (float) ($result->annualized_roi ?? 0),
+            'breakeven_arv'       => (float) ($result->breakeven_arv ?? 0),
+            'deal_risk_grade'     => $result->deal_risk_grade ?? null,
+            'lead_paint_flag'     => (bool) ($result->lead_paint_flag ?? 0),
+            'transfer_tax_buy'    => (float) ($result->transfer_tax_buy ?? 0),
+            'transfer_tax_sell'   => (float) ($result->transfer_tax_sell ?? 0),
             'main_photo_url'      => $result->main_photo_url ?? '',
             'disqualified'        => (bool) $result->disqualified,
             'run_date'            => $result->run_date,

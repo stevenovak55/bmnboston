@@ -1,11 +1,25 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.7.0
+**Current Version:** 0.8.0
 **Last Updated:** 2026-02-06
 
 ## Overview
 
 Standalone WordPress plugin that identifies Single Family Residence flip candidates by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates.
+
+**v0.8.0 Enhancements (ARV & Financial Model Overhaul):**
+- ARV accuracy: sqft adjustment threshold 10%→5%, P90 neighborhood ceiling (was MAX), reno weight 2.0→1.3
+- Smooth continuous rehab cost formula (replaces step-function with discontinuities)
+- MA transfer tax (0.456% buy+sell deed excise tax)
+- Lead paint flag ($8K allowance for pre-1978 properties)
+- Scaled contingency by rehab scope (8% cosmetic → 20% major)
+- Updated constants: hard money 10.5% (was 12%), commission 4.5% (was 5%)
+- Actual property tax rates from MLS data (was flat 1.3%)
+- Annualized ROI, breakeven ARV, adjusted MAO (incl. holding+financing)
+- Deal risk grade (A-F) combining ARV confidence, margin, comp consistency, velocity
+- Location scoring rebalance: removed tax rate (double-count), boosted price trend/ceiling
+- Dashboard: sensitivity table, risk grade column, annualized ROI, lead paint badge
+- DB migration: 6 new columns
 
 **v0.7.0 Enhancements (Market-Adaptive Thresholds):**
 - Market-adaptive thresholds: continuous formula `clamp(2.5 - 1.5 × avg_sale_to_list, 0.4, 1.2)` with tier guard rails
@@ -80,7 +94,8 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 - Neighborhood: `neighborhood_ceiling`, `ceiling_pct`, `ceiling_warning`, `road_type`
 - Property snapshot: `list_price`, `address`, `city`, `bedrooms_total`, etc.
 - JSON fields: `comp_details_json`, `remarks_signals_json`, `photo_analysis_json`
-- Flags: `disqualified`, `disqualify_reason`, `near_viable` (v0.7.0)
+- Flags: `disqualified`, `disqualify_reason`, `near_viable` (v0.7.0), `lead_paint_flag` (v0.8.0)
+- Risk analysis (v0.8.0): `annualized_roi`, `breakeven_arv`, `deal_risk_grade`, `transfer_tax_buy`, `transfer_tax_sell`
 - Thresholds: `applied_thresholds_json` (v0.7.0)
 
 **Source tables (from BME/MLD):**
@@ -108,7 +123,7 @@ wp flip analyze_photos [--top=50] [--min-score=40]  # Pass 2: Claude Vision phot
 |----------|--------|-------------|
 | Financial | 40% | Price/ARV ratio (37.5%), $/sqft vs neighborhood (25%), price reduction (25%), DOM motivation (12.5%) |
 | Property | 25% | Lot size (35%), expansion potential (30%), existing sqft (20%), year/systems (15%) |
-| Location | 25% | Road type (25%), ceiling support (20%), schools (20%), price trend (15%), comp density (10%), tax rate (10%) |
+| Location | 25% | Road type (25%), ceiling support (25%), price trend (25%), comp density (15%), schools (10%) |
 | Market | 10% | Listing DOM (40%), price reduction (30%), season (30%) + remarks bonus (±15) |
 
 ## Road Type Detection
@@ -168,10 +183,10 @@ Uses OpenStreetMap Overpass API to classify roads by highway tag:
 ### Financial Calculations (v0.6.0)
 ```
 Rehab = sqft × age-based $/sqft × remarks_multiplier (0.5x-1.5x)
-Contingency = rehab × 10%
+Contingency = rehab × 8-20% (scaled by scope)
 Total Rehab = rehab + contingency
 Purchase Closing = list_price × 1.5%
-Sale Costs = ARV × 6% (5% commission + 1% closing)
+Sale Costs = ARV × 5.5% (4.5% commission + 1% closing) + transfer tax
 Hold Months = dynamic (1-8 months based on rehab scope + area avg DOM + permit buffer)
 Holding Costs = (monthly_tax + monthly_insurance + $350 utilities) × hold_months
   Monthly Tax = list_price × 1.3% / 12
@@ -182,9 +197,9 @@ Cash Scenario:
   Cash Profit = ARV - list_price - total_rehab - purchase_closing - sale_costs - holding_costs
   Cash ROI = cash_profit / (list_price + total_rehab + purchase_closing + holding_costs) × 100
 
-Hard Money Scenario (12% rate, 2 points, 80% LTV):
+Hard Money Scenario (10.5% rate, 2 points, 80% LTV):
   Loan Amount = list_price × 80%
-  Financing Costs = (loan × 2%) + (loan × 12% / 12 × hold_months)
+  Financing Costs = (loan × 2%) + (loan × 10.5% / 12 × hold_months)
   Financed Profit = cash_profit - financing_costs
   Cash Invested = (list_price × 20%) + total_rehab + purchase_closing
   Cash-on-Cash ROI = financed_profit / cash_invested × 100
@@ -222,7 +237,7 @@ Update in `bmn-flip-analyzer.php`:
 - `page` (default: 1)
 - `min_score` (default: 0)
 - `city` (comma-separated)
-- `sort` (total_score, estimated_profit, estimated_roi, cash_on_cash_roi, list_price, estimated_arv)
+- `sort` (total_score, estimated_profit, estimated_roi, cash_on_cash_roi, list_price, estimated_arv, annualized_roi, deal_risk_grade)
 - `order` (ASC, DESC)
 - `has_photos` (boolean)
 
@@ -250,6 +265,7 @@ Uses Claude Vision API (`claude-sonnet-4-5-20250929`) to analyze up to 5 photos 
 | 3 - Web Dashboard | Complete | Admin page with Chart.js, filters, CSV export |
 | 3.5 - ARV & Financial Overhaul | Complete | Comp adjustments, financing model, market signals |
 | 3.7 - Market-Adaptive Thresholds | Complete | Adaptive DQ thresholds, near-viable category |
+| 3.8 - ARV & Financial Overhaul | Complete | ARV fixes, financial model v2, risk analysis |
 | 4 - iOS | Pending | SwiftUI views, ViewModel, API |
 | 5 - Polish | Pending | Testing, weight tuning |
 
@@ -265,7 +281,7 @@ Access via **Flip Analyzer** in the WordPress admin sidebar menu.
 - Client-side filters: city dropdown, min score slider, sort, show viable/all/near-viable/DQ
 - Results table with expandable rows showing:
   - Score breakdown with weighted bars
-  - Dual financial model: Cash Purchase vs Hard Money (12%, 2 pts, 80% LTV)
+  - Dual financial model: Cash Purchase vs Hard Money (10.5%, 2 pts, 80% LTV)
   - Rehab with contingency, remarks multiplier, dynamic hold period
   - Market strength badge with sale-to-list ratio
   - Comps table with adjusted prices and adjustment breakdown on hover

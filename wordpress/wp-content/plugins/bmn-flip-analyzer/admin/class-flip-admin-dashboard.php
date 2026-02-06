@@ -25,6 +25,7 @@ class Flip_Admin_Dashboard {
         add_action('wp_ajax_flip_run_photo_analysis', [__CLASS__, 'ajax_run_photo_analysis']);
         add_action('wp_ajax_flip_refresh_data', [__CLASS__, 'ajax_refresh_data']);
         add_action('wp_ajax_flip_update_cities', [__CLASS__, 'ajax_update_cities']);
+        add_action('wp_ajax_flip_generate_pdf', [__CLASS__, 'ajax_generate_pdf']);
     }
 
     /**
@@ -128,7 +129,7 @@ class Flip_Admin_Dashboard {
     /**
      * Format a database row for JSON output.
      */
-    private static function format_result(object $row): array {
+    public static function format_result(object $row): array {
         return [
             'listing_id'          => (int) $row->listing_id,
             'address'             => $row->address,
@@ -175,6 +176,12 @@ class Flip_Admin_Dashboard {
             'near_viable'         => (bool) ($row->near_viable ?? 0),
             'applied_thresholds'  => !empty($row->applied_thresholds_json)
                 ? json_decode($row->applied_thresholds_json, true) : null,
+            'annualized_roi'      => (float) ($row->annualized_roi ?? 0),
+            'breakeven_arv'       => (float) ($row->breakeven_arv ?? 0),
+            'deal_risk_grade'     => $row->deal_risk_grade ?? null,
+            'lead_paint_flag'     => (bool) ($row->lead_paint_flag ?? 0),
+            'transfer_tax_buy'    => (float) ($row->transfer_tax_buy ?? 0),
+            'transfer_tax_sell'   => (float) ($row->transfer_tax_sell ?? 0),
             'comps'               => !empty($row->comp_details_json) ? json_decode($row->comp_details_json, true) : [],
             'photo_analysis'      => !empty($row->photo_analysis_json) ? json_decode($row->photo_analysis_json, true) : null,
             'remarks_signals'     => !empty($row->remarks_signals_json) ? json_decode($row->remarks_signals_json, true) : [],
@@ -239,6 +246,45 @@ class Flip_Admin_Dashboard {
         }
 
         wp_send_json_success(self::get_dashboard_data());
+    }
+
+    /**
+     * AJAX: Generate PDF report for a property.
+     */
+    public static function ajax_generate_pdf(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $listing_id = isset($_POST['listing_id']) ? (int) $_POST['listing_id'] : 0;
+        if ($listing_id <= 0) {
+            wp_send_json_error('Invalid listing ID.');
+        }
+
+        // TCPDF needs extra memory in web context
+        @ini_set('memory_limit', '512M');
+        set_time_limit(60);
+
+        // Lazy-load PDF generator
+        require_once FLIP_PLUGIN_PATH . 'includes/class-flip-pdf-generator.php';
+
+        $generator = new Flip_PDF_Generator();
+        $pdf_path = $generator->generate($listing_id);
+
+        if (!$pdf_path) {
+            wp_send_json_error('Failed to generate PDF. Check that the property exists and TCPDF is available.');
+        }
+
+        // Convert file path to URL
+        $upload_dir = wp_upload_dir();
+        $pdf_url = str_replace($upload_dir['basedir'], $upload_dir['baseurl'], $pdf_path);
+
+        wp_send_json_success([
+            'url'     => $pdf_url,
+            'message' => 'PDF report generated.',
+        ]);
     }
 
     /**

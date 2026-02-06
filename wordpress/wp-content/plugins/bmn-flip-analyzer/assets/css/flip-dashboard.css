@@ -115,7 +115,7 @@
 
 .flip-stats-row {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 16px;
     margin-bottom: 20px;
 }
@@ -414,7 +414,66 @@
 .flip-conf-medium { color: #dba617; font-weight: 600; }
 .flip-conf-low    { color: #cc1818; font-weight: 600; }
 
+/* ── Risk Grade Badge ──────────────────────── */
+
+.flip-risk-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 12px;
+    min-width: 24px;
+    text-align: center;
+    color: #fff;
+}
+
+.flip-risk-A { background: #00a32a; }
+.flip-risk-B { background: #4ab866; }
+.flip-risk-C { background: #dba617; }
+.flip-risk-D { background: #e67e22; }
+.flip-risk-F { background: #cc1818; }
+
+/* ── Lead Paint Badge ──────────────────────── */
+
+.flip-lead-badge {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffc107;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
 /* ── Expanded Detail Row ────────────────────── */
+
+.flip-detail-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px 20px 0;
+    background: #f9fbfd;
+}
+
+.flip-pdf-btn {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
+}
+
+.flip-pdf-btn .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 1;
+}
+
+.flip-pdf-btn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
 
 .flip-detail-row td {
     padding: 0 !important;
