@@ -2,9 +2,26 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies Single Family Residence flip candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis.
- * Version: 0.5.0
+ * Version: 0.6.0
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.6.0 - ARV Accuracy & Financial Model Overhaul
+ * - Bathroom filter on comps with graceful fallback
+ * - Appraisal-style comp adjustments (market-scaled: beds, baths, sqft, garage, basement)
+ * - Time-decay comp weighting (half-weight at 6 months)
+ * - Sale-to-list ratio and market strength signal
+ * - Multi-factor ARV confidence score (count + distance + recency + variance)
+ * - Dual financial model: cash purchase AND hard money financing (12%, 2 pts, 80% LTV)
+ * - Remarks-based rehab multiplier (0.5x-1.5x from "new roof", "needs work", etc.)
+ * - Dynamic hold period based on rehab scope + area avg DOM
+ * - 10% rehab contingency, realistic holding costs (tax + insurance + utilities)
+ * - Minimum profit ($25K) and ROI (15%) disqualifiers
+ * - Shared calculate_financials() method (fixes photo analyzer formula divergence)
+ * - Dashboard: dual profit scenarios, comp adjustments table, market strength badges
+ * - Projection calculator: $250/sqft MA addition cost, financing model
+ * - CSV export: 10 new financial columns
+ * - DB migration: 10 new columns for financing/holding/market data
  *
  * Version 0.4.0 - Web Admin Dashboard
  * - Admin dashboard page with Chart.js city breakdown chart
@@ -39,7 +56,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.5.0');
+define('FLIP_VERSION', '0.6.1');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 

@@ -534,41 +534,47 @@ PROMPT;
         $table = Flip_Database::table_name();
 
         $sqft = (int) $result->building_area_total;
-        $rehab_cost_per_sqft = $analysis['rehab_cost_per_sqft'];
-        $rehab_cost = $sqft * $rehab_cost_per_sqft;
-
-        // Recalculate financials with refined rehab estimate
         $arv = (float) $result->estimated_arv;
         $list_price = (float) $result->list_price;
-        $mao = ($arv * 0.70) - $rehab_cost;
-        $profit = $arv - $list_price - $rehab_cost - ($arv * 0.12);
-        $total_investment = $list_price + $rehab_cost;
-        $roi = $total_investment > 0 ? ($profit / $total_investment) * 100 : 0;
+        $year_built = (int) $result->year_built;
+        $city = $result->city ?? '';
 
-        // Update photo score and recalculate total score
+        // Use shared financial calculation (same as main pipeline)
+        $area_avg_dom = Flip_ARV_Calculator::get_area_avg_dom($city);
+        $remarks = Flip_Market_Scorer::get_remarks((int) $result->listing_id);
+        $fin = Flip_Analyzer::calculate_financials($arv, $list_price, $sqft, $year_built, $remarks, $area_avg_dom);
+
         // Photo score is a bonus, adds up to 10 points
         $photo_bonus = ($analysis['photo_score'] / 100) * 10;
         $base_score = (float) $result->total_score;
         $new_total = min(100, $base_score + $photo_bonus);
 
-        // Get road type from photo analysis (or default to unknown)
-        $road_type = $analysis['analysis']['road_type'] ?? 'unknown';
+        // Get road type from photo analysis (or keep existing)
+        $road_type = $analysis['analysis']['road_type'] ?? ($result->road_type ?? 'unknown');
 
         return $wpdb->update(
             $table,
             [
                 'photo_score'          => round($analysis['photo_score'], 2),
                 'photo_analysis_json'  => json_encode($analysis['analysis']),
-                'estimated_rehab_cost' => round($rehab_cost, 2),
+                'estimated_rehab_cost' => $fin['rehab_cost'],
                 'rehab_level'          => $analysis['analysis']['renovation_level'],
+                'rehab_contingency'    => $fin['rehab_contingency'],
+                'rehab_multiplier'     => $fin['rehab_multiplier'],
                 'road_type'            => $road_type,
-                'mao'                  => round($mao, 2),
-                'estimated_profit'     => round($profit, 2),
-                'estimated_roi'        => round($roi, 2),
+                'mao'                  => $fin['mao'],
+                'estimated_profit'     => $fin['estimated_profit'],
+                'estimated_roi'        => $fin['estimated_roi'],
+                'financing_costs'      => $fin['financing_costs'],
+                'holding_costs'        => $fin['holding_costs'],
+                'hold_months'          => $fin['hold_months'],
+                'cash_profit'          => $fin['cash_profit'],
+                'cash_roi'             => $fin['cash_roi'],
+                'cash_on_cash_roi'     => $fin['cash_on_cash_roi'],
                 'total_score'          => round($new_total, 2),
             ],
             ['id' => $result->id],
-            ['%f', '%s', '%f', '%s', '%s', '%f', '%f', '%f', '%f'],
+            null,
             ['%d']
         ) !== false;
     }

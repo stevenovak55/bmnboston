@@ -1,8 +1,8 @@
 # BMN Flip Analyzer - Development Log
 
-## Current Version: 0.5.0
+## Current Version: 0.6.0
 
-## Status: Phase 3 Complete + Accuracy Overhaul - Pre-Phase 4 (iOS)
+## Status: Phase 3.5 Complete (ARV & Financial Overhaul) - Pre-Phase 4 (iOS)
 
 ---
 
@@ -17,6 +17,7 @@
 | 5 | Photo analyzer | Complete | Claude Vision API integration |
 | 6 | REST API endpoints | Complete | 6 endpoints for web + iOS |
 | 7 | Web admin dashboard | Complete | Phase 3 - Chart.js + PHP template |
+| 7.5 | ARV & Financial overhaul | Complete | Phase 3.5 - Comp adjustments, financing model |
 | 8 | iOS data model + API | Pending | Phase 4 - SwiftUI ViewModel |
 | 9 | iOS UI views | Pending | Phase 4 - FlipAnalyzerSheet |
 | 10 | Testing + tuning | Pending | Phase 5 - Score validation |
@@ -232,6 +233,70 @@
 2. Run photo analysis on viable candidates to refine rehab estimates further
 3. Consider tuning scoring weights based on real deal outcomes
 
+### Session 7 - 2026-02-05
+
+**What was done (v0.6.0 — ARV Accuracy & Financial Model Overhaul):**
+
+- **Database schema migration** — 10 new columns:
+  - `financing_costs`, `holding_costs`, `rehab_contingency`, `hold_months`
+  - `cash_profit`, `cash_roi`, `cash_on_cash_roi`
+  - `market_strength`, `avg_sale_to_list`, `rehab_multiplier`
+  - Added `cash_on_cash_roi` to allowed sort fields
+
+- **ARV calculator overhaul** (`class-flip-arv-calculator.php`):
+  1. Bathroom filter on comps (±1.0 range) with fallback if <3 comps
+  2. Appraisal-style comp adjustments scaled with city avg $/sqft:
+     - Bedroom: ppsf×40, Full bath: ppsf×55, Half bath: ppsf×25
+     - Sqft: ppsf×0.5/sqft (capped ±15%), Garage: ppsf×40, Basement: ppsf×28
+     - Total adjustment capped at ±25% of comp price
+  3. Time-decay weighting: `exp(-0.115 × months_ago)` (half-weight at 6 months)
+  4. Time-adjusted comp prices using measured price trend
+  5. Sale-to-list ratio: very_hot/hot/balanced/soft/cold classification
+  6. Multi-factor confidence score: count (0-40) + distance (0-30) + recency (0-20) + variance (0-10)
+  7. SQL now queries `garage_spaces`, `has_basement`, `list_price` from comps
+  8. Fixed `date('Y')` → `wp_date('Y')` timezone pitfall
+
+- **Financial model overhaul** (`class-flip-analyzer.php`):
+  1. Shared `calculate_financials()` static method (used by main pipeline + photo analyzer)
+  2. Dual scenarios: cash purchase AND hard money (12% rate, 2 pts, 80% LTV)
+  3. Remarks-based rehab multiplier (14 cost reducers, 13 cost increasers, clamped 0.5x-1.5x)
+  4. Dynamic hold period: rehab scope (1-6 mo) + area avg DOM/30 + permit buffer
+  5. 10% rehab contingency
+  6. Realistic holding costs: property tax (1.3%/yr) + insurance (0.5%/yr) + utilities ($350/mo)
+  7. Post-calculation disqualifiers: min $25K profit, min 15% ROI (uses financed numbers)
+  8. Extracted `build_result_data()` method
+
+- **Photo analyzer fix** (`class-flip-photo-analyzer.php`):
+  - Replaced stale `$arv × 0.12` formula with shared `Flip_Analyzer::calculate_financials()`
+  - Now updates all new financial columns
+
+- **Property scorer fix** (`class-flip-property-scorer.php`):
+  - Fixed `date('Y')` → `wp_date('Y')` timezone pitfall
+
+- **Dashboard admin** (`class-flip-admin-dashboard.php`):
+  - Updated `format_result()` with 10 new fields for JSON output
+
+- **Dashboard JS** (`assets/js/flip-dashboard.js`):
+  1. Dual profit scenarios in financial section (Cash Purchase vs Hard Money)
+  2. Market strength badge with sale-to-list ratio
+  3. Rehab with contingency breakdown and remarks multiplier
+  4. Comps table with adjusted prices and adjustment breakdown on hover
+  5. Projection calculator: $250/sqft MA addition cost (was $80)
+  6. Projection calculator: updated to match new financial model with financing
+  7. CSV export: 10 new columns (financing, holding, cash profit, market strength, etc.)
+  8. Added `marketStrengthBadge()` helper function
+
+- Version bump to 0.6.0
+
+**Timezone pitfalls fixed:**
+- `class-flip-arv-calculator.php`: `date('Y')` → `wp_date('Y')` for new construction year
+- `class-flip-property-scorer.php`: `date('Y')` → `wp_date('Y')` for age calculation
+
+**Next steps:**
+1. Deploy to production and run analysis to validate new financial model
+2. Compare ARV before/after for known properties (verify comp adjustments)
+3. Phase 4: iOS SwiftUI integration
+
 ---
 
 ## Known Bugs
@@ -258,6 +323,13 @@
 | OSM Overpass API for road type | Free, accurate road classification; avoids Google Maps API costs | 2026-02-05 |
 | Expansion potential over bed/bath | Beds/baths can be added; lot size is fixed — focus on potential | 2026-02-05 |
 | Neighborhood ceiling check | ARV must be realistic for the area; flags over-optimistic projections | 2026-02-05 |
+| Market-scaled comp adjustments | Adjustment values scale with local $/sqft — same formula works in $200 vs $500 markets | 2026-02-05 |
+| Dual financial model | Show both cash and financed scenarios; score/DQ uses financed (more conservative) | 2026-02-05 |
+| Shared calculate_financials() | Single source of truth prevents photo analyzer from diverging from main pipeline | 2026-02-05 |
+| Post-calc disqualifiers | $25K min profit, 15% min ROI — prevents "technically profitable" bad deals | 2026-02-05 |
+| Dynamic hold period | Rehab scope + area DOM — cosmetic flips take 3mo, gut renos take 8+ | 2026-02-05 |
+| Bathroom filter with fallback | Prevents 3bed/1bath from pulling 3bed/3bath comps, but relaxes if too few comps | 2026-02-05 |
+| $250/sqft addition cost | Massachusetts additions cost $200-400/sqft including permits; $80 was unrealistic | 2026-02-05 |
 
 ---
 
@@ -387,7 +459,24 @@ bmn-flip-analyzer/
 - Confidence-based valuation range: ±10% (high), ±15% (medium), ±20% (low)
 - "Max Offer Price" replaces "MAO" label for clarity
 
-### v0.6.0 (Planned)
+### v0.6.0 (Complete)
+- **ARV Accuracy & Financial Model Overhaul** — 13 major improvements:
+  1. Bathroom filter on comps (±1.0 range) with graceful fallback
+  2. Appraisal-style comp adjustments (market-scaled: beds, baths, sqft, garage, basement)
+  3. Time-decay comp weighting (half-weight at 6 months via exponential decay)
+  4. Sale-to-list ratio and market strength signal (very_hot to cold)
+  5. Multi-factor ARV confidence score (count + distance + recency + variance)
+  6. Dual financial model: cash purchase AND hard money (12%, 2 pts, 80% LTV)
+  7. Remarks-based rehab multiplier (0.5x-1.5x from keyword analysis)
+  8. Dynamic hold period (rehab scope + area DOM + permit buffer)
+  9. 10% rehab contingency + realistic holding costs (tax + insurance + utilities)
+  10. Minimum profit ($25K) and ROI (15%) post-calculation disqualifiers
+  11. Shared `calculate_financials()` method (fixes photo analyzer formula divergence)
+  12. Dashboard updates: dual scenarios, comp adjustments, market badges, $250/sqft additions
+  13. DB migration: 10 new columns for financing/holding/market data
+- Fixed `date('Y')` → `wp_date('Y')` timezone pitfall in ARV calculator and property scorer
+
+### v0.7.0 (Planned)
 - iOS SwiftUI integration
 
 ### v1.0.0 (Planned)

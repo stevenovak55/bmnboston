@@ -135,7 +135,7 @@ class Flip_Property_Scorer {
     private static function score_year_built_systems(int $year): float {
         if ($year <= 0) return 50; // Unknown
 
-        $age = (int) date('Y') - $year;
+        $age = (int) wp_date('Y') - $year;
 
         return match (true) {
             $age <= 20  => 100, // Modern systems, likely up to code

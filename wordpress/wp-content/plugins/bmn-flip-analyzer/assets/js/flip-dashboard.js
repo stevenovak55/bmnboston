@@ -25,6 +25,7 @@
             renderStats(dashData.summary);
             renderChart(dashData.summary.cities || []);
             populateCityFilter(dashData.cities || []);
+            renderCityTags(dashData.cities || []);
             applyFilters();
         } catch (e) {
             console.error('[FlipDashboard] Init error:', e);
@@ -46,6 +47,10 @@
         $('#flip-run-analysis').on('click', runAnalysis);
         $('#flip-run-photos').on('click', runPhotoAnalysis);
         $('#flip-export-csv').on('click', exportCSV);
+        $('#flip-city-add-btn').on('click', addCity);
+        $('#flip-city-input').on('keypress', function (e) {
+            if (e.which === 13) { e.preventDefault(); addCity(); }
+        });
         $('#filter-city, #filter-sort, #filter-show').on('change', applyFilters);
         $('#filter-score').on('input', function () {
             $('#score-display').text(this.value);
@@ -153,9 +158,12 @@
 
     function populateCityFilter(cities) {
         var $select = $('#filter-city');
+        var current = $select.val();
+        $select.find('option:not(:first)').remove();
         cities.forEach(function (city) {
             $select.append('<option value="' + escapeHtml(city) + '">' + escapeHtml(city) + '</option>');
         });
+        if (current) $select.val(current);
     }
 
     // ── Filter & Render Table ──────────────────────
@@ -364,17 +372,24 @@
     }
 
     function buildFinancialSection(r) {
-        var profitClass = r.estimated_profit >= 0 ? 'flip-positive' : 'flip-negative';
-        var roiClass = r.estimated_roi >= 0 ? 'flip-positive' : 'flip-negative';
         var valuation = calcValuationRange(r);
 
-        // Cost breakdown (matches PHP constants)
+        // Use stored values from PHP financial model
         var purchaseClosing = r.list_price * 0.015;
         var saleCosts = r.estimated_arv * 0.06;
-        var holdingCosts = (r.list_price + r.estimated_rehab_cost) * 0.008 * 6;
-        var totalAllIn = r.list_price + r.estimated_rehab_cost + purchaseClosing + saleCosts + holdingCosts;
+        var holdingCosts = r.holding_costs || 0;
+        var financingCosts = r.financing_costs || 0;
+        var contingency = r.rehab_contingency || 0;
+        var holdMonths = r.hold_months || 6;
+        var rehabMultiplier = r.rehab_multiplier || 1.0;
 
         var html = '<div class="flip-section"><h4>Financial Summary</h4><div class="flip-kv-list">';
+
+        // Market strength badge
+        if (r.market_strength && r.market_strength !== 'balanced') {
+            var msBadge = marketStrengthBadge(r.market_strength);
+            html += kv('Market Signal', msBadge + ' <span style="color:#999;font-size:11px">(S/L: ' + (r.avg_sale_to_list || 1).toFixed(3) + ')</span>');
+        }
 
         // Valuation
         html += kv('Floor Value', formatCurrency(valuation.floor));
@@ -390,16 +405,31 @@
         // Cost breakdown
         html += '<div style="border-top:1px solid #ddd;margin:8px 0 4px;padding-top:6px"></div>';
         html += kv('Purchase Price', formatCurrency(r.list_price));
-        html += kv('Rehab Cost', formatCurrency(r.estimated_rehab_cost) + ' <span style="color:#999;font-size:11px">(' + (r.rehab_level || '?') + ')</span>');
+
+        var rehabNote = r.rehab_level || '?';
+        if (rehabMultiplier !== 1.0) {
+            rehabNote += ', ' + rehabMultiplier.toFixed(2) + 'x remarks adj.';
+        }
+        html += kv('Rehab Cost', formatCurrency(r.estimated_rehab_cost - contingency) + ' <span style="color:#999;font-size:11px">(' + rehabNote + ')</span>');
+        html += kv('+ Contingency (10%)', formatCurrency(contingency));
         html += kv('Purchase Closing', formatCurrency(purchaseClosing) + ' <span style="color:#999;font-size:11px">(1.5%)</span>');
         html += kv('Sale Costs', formatCurrency(saleCosts) + ' <span style="color:#999;font-size:11px">(5% comm + 1%)</span>');
-        html += kv('Holding Costs', formatCurrency(holdingCosts) + ' <span style="color:#999;font-size:11px">(6 mo)</span>');
+        html += kv('Holding Costs', formatCurrency(holdingCosts) + ' <span style="color:#999;font-size:11px">(' + holdMonths + ' mo: tax+ins+util)</span>');
 
-        // Bottom line
+        // Dual profit scenario
         html += '<div style="border-top:1px solid #ddd;margin:4px 0"></div>';
-        html += kv('Total All-In', '<strong>' + formatCurrency(totalAllIn) + '</strong>');
-        html += kv('Est. Profit', '<strong class="' + profitClass + '">' + formatCurrency(r.estimated_profit) + '</strong>');
-        html += kv('Est. ROI', '<strong class="' + roiClass + '">' + r.estimated_roi.toFixed(1) + '%</strong>');
+        html += '<div style="font-weight:600;font-size:12px;color:#333;margin:4px 0">Cash Purchase:</div>';
+        var cashProfitCls = (r.cash_profit || 0) >= 0 ? 'flip-positive' : 'flip-negative';
+        html += kv('Profit', '<strong class="' + cashProfitCls + '">' + formatCurrency(r.cash_profit) + '</strong>');
+        html += kv('ROI', '<strong class="' + cashProfitCls + '">' + (r.cash_roi || 0).toFixed(1) + '%</strong>');
+
+        html += '<div style="font-weight:600;font-size:12px;color:#333;margin:4px 0">Hard Money (12%, 2 pts, 80% LTV):</div>';
+        html += kv('Financing Costs', formatCurrency(financingCosts));
+        var finProfitCls = r.estimated_profit >= 0 ? 'flip-positive' : 'flip-negative';
+        html += kv('Profit', '<strong class="' + finProfitCls + '">' + formatCurrency(r.estimated_profit) + '</strong>');
+        html += kv('Cash-on-Cash ROI', '<strong class="' + finProfitCls + '">' + (r.cash_on_cash_roi || 0).toFixed(1) + '%</strong>');
+
+        html += '<div style="border-top:1px solid #ddd;margin:4px 0"></div>';
         html += kv('Max Offer Price', formatCurrency(r.mao) + ' <span style="color:#999;font-size:11px">(70% rule)</span>');
 
         html += '</div></div>';
@@ -454,16 +484,55 @@
             return '<div class="flip-section"><h4>Comparables</h4><p style="color:#999;font-size:12px">No comp data available.</p></div>';
         }
 
+        var hasAdjustments = r.comps.some(function (c) { return c.adjusted_price; });
+
         var html = '<div class="flip-section"><h4>Comparables (' + r.comps.length + ')</h4>';
         html += '<table class="flip-comp-table"><thead><tr>'
-            + '<th>Address</th><th>Price</th><th>$/SqFt</th><th>Dist</th><th>Sold</th>'
+            + '<th>Address</th><th>Sold</th><th>$/SqFt</th>';
+        if (hasAdjustments) {
+            html += '<th>Adj. Price</th>';
+        }
+        html += '<th>Dist</th><th>Date</th>'
             + '</tr></thead><tbody>';
 
         r.comps.forEach(function (c) {
+            var adjCell = '';
+            if (hasAdjustments) {
+                if (c.adjusted_price && c.total_adjustment) {
+                    var adjSign = c.total_adjustment >= 0 ? '+' : '';
+                    var adjColor = c.total_adjustment >= 0 ? '#2e7d32' : '#c62828';
+                    adjCell = '<td>' + formatCurrency(c.adjusted_price)
+                        + ' <span style="color:' + adjColor + ';font-size:10px">(' + adjSign + formatCurrency(c.total_adjustment) + ')</span>';
+
+                    // Show adjustment breakdown on hover via title
+                    if (c.adjustments && typeof c.adjustments === 'object') {
+                        var details = [];
+                        for (var key in c.adjustments) {
+                            if (c.adjustments.hasOwnProperty(key) && c.adjustments[key] !== 0) {
+                                var label = key.replace(/_/g, ' ');
+                                var val = c.adjustments[key];
+                                details.push(label + ': ' + (val >= 0 ? '+' : '') + '$' + Math.abs(Math.round(val)).toLocaleString());
+                            }
+                        }
+                        if (details.length > 0) {
+                            adjCell = '<td title="' + escapeHtml(details.join('\n')) + '">'
+                                + formatCurrency(c.adjusted_price)
+                                + ' <span style="color:' + adjColor + ';font-size:10px">(' + adjSign + formatCurrency(c.total_adjustment) + ')</span>';
+                        }
+                    }
+                    adjCell += '</td>';
+                } else {
+                    adjCell = '<td>' + formatCurrency(c.close_price) + '</td>';
+                }
+            }
+
+            var ppsf = c.adjusted_ppsf || c.ppsf;
+
             html += '<tr>'
                 + '<td>' + escapeHtml(c.address || 'N/A') + '</td>'
                 + '<td>' + formatCurrency(c.close_price) + '</td>'
-                + '<td>$' + (c.ppsf ? c.ppsf.toFixed(0) : '--') + '</td>'
+                + '<td>$' + (ppsf ? ppsf.toFixed(0) : '--') + '</td>'
+                + adjCell
                 + '<td>' + (c.distance_miles ? c.distance_miles.toFixed(2) + 'mi' : '--') + '</td>'
                 + '<td>' + (c.close_date || '--') + '</td>'
                 + '</tr>';
@@ -591,7 +660,7 @@
         scenarios.forEach(function (s) {
             var projArv = Math.round(ppsf * s.sqft * discount);
             var addedSqft = Math.max(0, s.sqft - curSqft);
-            var totalRehab = Math.round(rehabPerSqft * curSqft + addedSqft * 80);
+            var totalRehab = Math.round(rehabPerSqft * curSqft + addedSqft * 250);
             var projCosts = calcProjectionCosts(listPrice, projArv, totalRehab);
             var profitCls = projCosts.profit >= 0 ? 'flip-positive' : 'flip-negative';
 
@@ -632,15 +701,38 @@
         return html;
     }
 
-    // Shared cost calculation for projections (matches PHP constants)
+    // Shared cost calculation for projections (matches PHP v0.6.0 constants)
     function calcProjectionCosts(listPrice, arv, rehab) {
+        var contingency = rehab * 0.10;
+        var totalRehab = rehab + contingency;
         var purchaseClosing = listPrice * 0.015;
         var saleCosts = arv * 0.06;
-        var holdingCosts = (listPrice + rehab) * 0.008 * 6;
-        var profit = arv - listPrice - rehab - purchaseClosing - saleCosts - holdingCosts;
-        var investment = listPrice + rehab + purchaseClosing + holdingCosts;
-        var roi = investment > 0 ? (profit / investment) * 100 : 0;
-        return { profit: profit, roi: roi };
+
+        // Estimate hold months from rehab scope
+        var rehabPerSqft = rehab > 0 && listPrice > 0 ? rehab / (arv / 350) : 30; // rough sqft estimate
+        var holdMonths;
+        if (rehabPerSqft <= 20) holdMonths = 3;
+        else if (rehabPerSqft <= 35) holdMonths = 4;
+        else if (rehabPerSqft <= 50) holdMonths = 6;
+        else holdMonths = 8;
+
+        var monthlyTax = (listPrice * 0.013) / 12;
+        var monthlyIns = (listPrice * 0.005) / 12;
+        var holdingCosts = (monthlyTax + monthlyIns + 350) * holdMonths;
+
+        // Cash scenario
+        var cashProfit = arv - listPrice - totalRehab - purchaseClosing - saleCosts - holdingCosts;
+        var cashInvestment = listPrice + totalRehab + purchaseClosing + holdingCosts;
+        var cashRoi = cashInvestment > 0 ? (cashProfit / cashInvestment) * 100 : 0;
+
+        // Hard money scenario
+        var loanAmount = listPrice * 0.80;
+        var financingCosts = (loanAmount * 0.02) + (loanAmount * 0.12 / 12 * holdMonths);
+        var finProfit = cashProfit - financingCosts;
+        var cashInvested = (listPrice * 0.20) + totalRehab + purchaseClosing;
+        var cocRoi = cashInvested > 0 ? (finProfit / cashInvested) * 100 : 0;
+
+        return { profit: finProfit, roi: cocRoi, cashProfit: cashProfit, cashRoi: cashRoi };
     }
 
     // Live-update custom projection row when inputs change
@@ -660,7 +752,7 @@
         var targetSqft = parseInt($('#' + pid + '-sqft').val()) || curSqft;
         var projArv = Math.round(ppsf * targetSqft * discount);
         var addedSqft = Math.max(0, targetSqft - curSqft);
-        var totalRehab = Math.round(rehabPerSqft * curSqft + addedSqft * 80);
+        var totalRehab = Math.round(rehabPerSqft * curSqft + addedSqft * 250);
         var projCosts = calcProjectionCosts(listPrice, projArv, totalRehab);
         var profitCls = projCosts.profit >= 0 ? 'flip-positive' : 'flip-negative';
 
@@ -668,6 +760,86 @@
         $('#' + pid + '-profit').attr('class', profitCls).text(formatCurrency(projCosts.profit));
         $('#' + pid + '-roi').attr('class', profitCls).text(projCosts.roi.toFixed(1) + '%');
     });
+
+    // ── City Management ─────────────────────────────
+
+    function renderCityTags(cities) {
+        var $container = $('#flip-city-tags');
+        $container.empty();
+
+        cities.forEach(function (city) {
+            var $tag = $('<span class="flip-city-tag">'
+                + escapeHtml(city)
+                + '<button class="flip-city-remove" data-city="' + escapeHtml(city) + '" title="Remove ' + escapeHtml(city) + '">&times;</button>'
+                + '</span>');
+            $container.append($tag);
+        });
+
+        // Bind remove buttons
+        $container.find('.flip-city-remove').on('click', function () {
+            var cityToRemove = $(this).data('city');
+            removeCity(cityToRemove);
+        });
+    }
+
+    function addCity() {
+        var city = $.trim($('#flip-city-input').val());
+        if (!city) return;
+
+        // Title case
+        city = city.replace(/\w\S*/g, function (txt) {
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        });
+
+        var cities = dashData.cities || [];
+        if (cities.indexOf(city) !== -1) {
+            $('#flip-city-status').text(city + ' is already in the list.').css('color', '#cc1818');
+            setTimeout(function () { $('#flip-city-status').text(''); }, 3000);
+            return;
+        }
+
+        cities.push(city);
+        saveCities(cities);
+        $('#flip-city-input').val('');
+    }
+
+    function removeCity(city) {
+        var cities = (dashData.cities || []).filter(function (c) { return c !== city; });
+        if (cities.length === 0) {
+            alert('You must have at least one target city.');
+            return;
+        }
+        saveCities(cities);
+    }
+
+    function saveCities(cities) {
+        $('#flip-city-status').text('Saving...').css('color', '#666');
+
+        $.ajax({
+            url: flipData.ajaxUrl,
+            method: 'POST',
+            data: {
+                action: 'flip_update_cities',
+                nonce: flipData.nonce,
+                cities: cities.join(','),
+            },
+            success: function (response) {
+                if (response.success) {
+                    dashData.cities = response.data.cities;
+                    renderCityTags(dashData.cities);
+                    populateCityFilter(dashData.cities);
+                    $('#flip-city-status').text(response.data.message).css('color', '#00a32a');
+                } else {
+                    $('#flip-city-status').text('Error: ' + (response.data || 'Unknown')).css('color', '#cc1818');
+                }
+                setTimeout(function () { $('#flip-city-status').text(''); }, 3000);
+            },
+            error: function () {
+                $('#flip-city-status').text('Request failed.').css('color', '#cc1818');
+                setTimeout(function () { $('#flip-city-status').text(''); }, 3000);
+            }
+        });
+    }
 
     // ── Run Analysis ───────────────────────────────
 
@@ -832,7 +1004,11 @@
             'MLS#', 'Address', 'City', 'Total Score',
             'Financial', 'Property', 'Location', 'Market', 'Photo',
             'List Price', 'ARV', 'ARV Confidence', 'Comps',
-            'Rehab Cost', 'Rehab Level', 'MAO', 'Profit', 'ROI',
+            'Rehab Cost', 'Rehab Level', 'Rehab Multiplier', 'Contingency',
+            'MAO', 'Cash Profit', 'Cash ROI',
+            'Financing Costs', 'Holding Costs', 'Hold Months',
+            'Financed Profit', 'Cash-on-Cash ROI',
+            'Market Strength', 'Sale/List Ratio',
             'Road Type', 'Ceiling', 'Ceiling %',
             'Beds', 'Baths', 'SqFt', 'Year', 'Lot Acres',
             'Disqualified', 'DQ Reason'
@@ -855,9 +1031,18 @@
                 r.comp_count,
                 r.estimated_rehab_cost.toFixed(0),
                 r.rehab_level || '',
+                (r.rehab_multiplier || 1).toFixed(2),
+                (r.rehab_contingency || 0).toFixed(0),
                 r.mao.toFixed(0),
+                (r.cash_profit || 0).toFixed(0),
+                (r.cash_roi || 0).toFixed(2),
+                (r.financing_costs || 0).toFixed(0),
+                (r.holding_costs || 0).toFixed(0),
+                r.hold_months || 6,
                 r.estimated_profit.toFixed(0),
-                r.estimated_roi.toFixed(2),
+                (r.cash_on_cash_roi || 0).toFixed(2),
+                r.market_strength || 'balanced',
+                (r.avg_sale_to_list || 1).toFixed(3),
                 r.road_type || '',
                 r.neighborhood_ceiling ? r.neighborhood_ceiling.toFixed(0) : '',
                 r.ceiling_pct ? r.ceiling_pct.toFixed(1) : '',
@@ -907,6 +1092,26 @@
         if (score >= 50) return 'flip-score-mid';
         if (score >= 30) return 'flip-score-low';
         return 'flip-score-poor';
+    }
+
+    function marketStrengthBadge(strength) {
+        var labels = {
+            'very_hot': 'Very Hot',
+            'hot': 'Hot',
+            'balanced': 'Balanced',
+            'soft': 'Soft',
+            'cold': 'Cold',
+        };
+        var colors = {
+            'very_hot': '#d63384',
+            'hot': '#dc3545',
+            'balanced': '#6c757d',
+            'soft': '#0d6efd',
+            'cold': '#0dcaf0',
+        };
+        var label = labels[strength] || strength;
+        var color = colors[strength] || '#6c757d';
+        return '<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:600;color:#fff;background:' + color + '">' + escapeHtml(label) + '</span>';
     }
 
     function roadBadge(type) {

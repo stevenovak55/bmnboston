@@ -24,6 +24,7 @@ class Flip_Admin_Dashboard {
         add_action('wp_ajax_flip_run_analysis', [__CLASS__, 'ajax_run_analysis']);
         add_action('wp_ajax_flip_run_photo_analysis', [__CLASS__, 'ajax_run_photo_analysis']);
         add_action('wp_ajax_flip_refresh_data', [__CLASS__, 'ajax_refresh_data']);
+        add_action('wp_ajax_flip_update_cities', [__CLASS__, 'ajax_update_cities']);
     }
 
     /**
@@ -144,9 +145,19 @@ class Flip_Admin_Dashboard {
             'comp_count'          => (int) $row->comp_count,
             'estimated_rehab_cost' => (float) $row->estimated_rehab_cost,
             'rehab_level'         => $row->rehab_level,
+            'rehab_contingency'   => (float) ($row->rehab_contingency ?? 0),
+            'rehab_multiplier'    => (float) ($row->rehab_multiplier ?? 1.0),
             'mao'                 => (float) $row->mao,
             'estimated_profit'    => (float) $row->estimated_profit,
             'estimated_roi'       => (float) $row->estimated_roi,
+            'financing_costs'     => (float) ($row->financing_costs ?? 0),
+            'holding_costs'       => (float) ($row->holding_costs ?? 0),
+            'hold_months'         => (int) ($row->hold_months ?? 6),
+            'cash_profit'         => (float) ($row->cash_profit ?? 0),
+            'cash_roi'            => (float) ($row->cash_roi ?? 0),
+            'cash_on_cash_roi'    => (float) ($row->cash_on_cash_roi ?? 0),
+            'market_strength'     => $row->market_strength ?? 'balanced',
+            'avg_sale_to_list'    => (float) ($row->avg_sale_to_list ?? 1.0),
             'road_type'           => $row->road_type ?? 'unknown',
             'road_arv_discount'   => Flip_Analyzer::ROAD_ARV_DISCOUNT[$row->road_type ?? ''] ?? 0,
             'days_on_market'      => (int) ($row->days_on_market ?? 0),
@@ -225,5 +236,30 @@ class Flip_Admin_Dashboard {
         }
 
         wp_send_json_success(self::get_dashboard_data());
+    }
+
+    /**
+     * AJAX: Update target cities list.
+     */
+    public static function ajax_update_cities(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $cities_raw = isset($_POST['cities']) ? sanitize_text_field(wp_unslash($_POST['cities'])) : '';
+        $cities = array_values(array_unique(array_filter(array_map('trim', explode(',', $cities_raw)))));
+
+        if (empty($cities)) {
+            wp_send_json_error('At least one city is required.');
+        }
+
+        Flip_Database::set_target_cities($cities);
+
+        wp_send_json_success([
+            'cities'  => $cities,
+            'message' => count($cities) . ' target cities saved.',
+        ]);
     }
 }

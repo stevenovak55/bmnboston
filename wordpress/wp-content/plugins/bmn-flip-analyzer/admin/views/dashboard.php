@@ -56,6 +56,23 @@ if (!defined('ABSPATH')) {
         </div>
     </div>
 
+    <!-- Target Cities -->
+    <div class="flip-card flip-cities-card">
+        <div class="flip-card-header">
+            <h2>Target Cities</h2>
+        </div>
+        <div class="flip-card-body">
+            <div id="flip-city-tags" class="flip-city-tags"></div>
+            <div class="flip-city-add">
+                <input type="text" id="flip-city-input" placeholder="Add city name..." class="regular-text" style="width:200px">
+                <button id="flip-city-add-btn" class="button button-small">
+                    <span class="dashicons dashicons-plus-alt2" style="font-size:14px;width:14px;height:14px;vertical-align:middle"></span> Add
+                </button>
+                <span id="flip-city-status" style="margin-left:8px;font-size:12px;color:#666"></span>
+            </div>
+        </div>
+    </div>
+
     <!-- City Breakdown Chart -->
     <div class="flip-card">
         <div class="flip-card-header">
@@ -96,8 +113,8 @@ if (!defined('ABSPATH')) {
         <div class="flip-filter-group">
             <label for="filter-show">Show</label>
             <select id="filter-show">
-                <option value="viable">Viable Only</option>
                 <option value="all">All Results</option>
+                <option value="viable">Viable Only</option>
                 <option value="disqualified">Disqualified Only</option>
             </select>
         </div>

@@ -55,6 +55,16 @@ class Flip_Database {
             mao DECIMAL(12,2) DEFAULT 0,
             estimated_profit DECIMAL(12,2) DEFAULT 0,
             estimated_roi DECIMAL(8,2) DEFAULT 0,
+            financing_costs DECIMAL(12,2) DEFAULT 0,
+            holding_costs DECIMAL(12,2) DEFAULT 0,
+            rehab_contingency DECIMAL(12,2) DEFAULT 0,
+            hold_months INT DEFAULT 6,
+            cash_profit DECIMAL(12,2) DEFAULT 0,
+            cash_roi DECIMAL(8,2) DEFAULT 0,
+            cash_on_cash_roi DECIMAL(8,2) DEFAULT 0,
+            market_strength VARCHAR(20) DEFAULT 'balanced',
+            avg_sale_to_list DECIMAL(5,3) DEFAULT 1.000,
+            rehab_multiplier DECIMAL(4,2) DEFAULT 1.00,
             road_type VARCHAR(30) DEFAULT 'unknown',
             days_on_market INT DEFAULT 0,
 
@@ -177,7 +187,7 @@ class Flip_Database {
             $where[] = "photo_score IS NOT NULL";
         }
 
-        $allowed_sorts = ['total_score', 'estimated_profit', 'estimated_roi', 'list_price', 'estimated_arv'];
+        $allowed_sorts = ['total_score', 'estimated_profit', 'estimated_roi', 'cash_on_cash_roi', 'list_price', 'estimated_arv'];
         $sort = in_array($args['sort'], $allowed_sorts) ? $args['sort'] : 'total_score';
         $order = strtoupper($args['order']) === 'ASC' ? 'ASC' : 'DESC';
 
