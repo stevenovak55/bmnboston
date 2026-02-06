@@ -1,17 +1,26 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.6.1
-**Last Updated:** 2026-02-05
+**Current Version:** 0.7.0
+**Last Updated:** 2026-02-06
 
 ## Overview
 
 Standalone WordPress plugin that identifies Single Family Residence flip candidates by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates.
 
+**v0.7.0 Enhancements (Market-Adaptive Thresholds):**
+- Market-adaptive thresholds: continuous formula `clamp(2.5 - 1.5 × avg_sale_to_list, 0.4, 1.2)` with tier guard rails
+- Thresholds scale by market_strength: very_hot ($10-20K profit, 5-8% ROI) → cold ($28-35K, 16-22%)
+- Pre-calc DQ uses market-adaptive price/ARV ratio (0.78 cold → 0.92 very_hot)
+- Near-viable category: properties within 80% of adjusted thresholds (amber on dashboard)
+- Low-confidence guard: ARV confidence low/none prevents threshold relaxation below balanced
+- Dashboard: near-viable stat card, filter dropdown, amber row styling, threshold display in expanded rows
+- DB migration: `near_viable` and `applied_thresholds_json` columns
+
 **v0.6.0 Enhancements (ARV Accuracy & Financial Model Overhaul):**
 - Bathroom filter on comps (±1.0 range) with graceful fallback when too few comps
 - Appraisal-style comp adjustments: market-scaled values for beds, baths, sqft, garage, basement
 - Time-decay comp weighting: exponential decay (half-weight at 6 months)
-- Sale-to-list ratio: market strength signal (very_hot/hot/balanced/soft/cold)
+- Sale-to-list ratio: market strength signal (very_hot ≥1.04/hot ≥1.01/balanced ≥0.97/soft ≥0.93/cold)
 - Multi-factor ARV confidence: comp count + avg distance + avg recency + price variance
 - Dual financial model: cash purchase AND hard money (12% rate, 2 pts, 80% LTV)
 - Remarks-based rehab multiplier (0.5x-1.5x): "new roof" reduces, "needs work" increases
@@ -71,7 +80,8 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 - Neighborhood: `neighborhood_ceiling`, `ceiling_pct`, `ceiling_warning`, `road_type`
 - Property snapshot: `list_price`, `address`, `city`, `bedrooms_total`, etc.
 - JSON fields: `comp_details_json`, `remarks_signals_json`, `photo_analysis_json`
-- Flags: `disqualified`, `disqualify_reason`
+- Flags: `disqualified`, `disqualify_reason`, `near_viable` (v0.7.0)
+- Thresholds: `applied_thresholds_json` (v0.7.0)
 
 **Source tables (from BME/MLD):**
 - `bme_listing_summary` — active SFR listings
@@ -119,13 +129,19 @@ Uses OpenStreetMap Overpass API to classify roads by highway tag:
 
 **Pre-calculation:**
 - 0 comps within 1 mile
-- `list_price > ARV * 0.85`
+- `list_price > ARV * max_price_arv` (market-adaptive: 0.78 cold → 0.92 very_hot)
 - Default rehab estimate > 35% of ARV
 - `building_area_total < 600` sqft
 
-**Post-calculation (v0.6.0):**
-- Financed profit < $25,000
-- Financed ROI < 15%
+**Post-calculation (v0.7.0 — market-adaptive):**
+- Financed profit < min_profit (market-adaptive: $10K very_hot → $35K cold; base $25K)
+- Financed ROI < min_roi (market-adaptive: 5% very_hot → 22% cold; base 15%)
+- Thresholds computed via `get_adaptive_thresholds(market_strength, avg_sale_to_list, arv_confidence)`
+- Low-confidence guard: ARV confidence low/none uses balanced bounds as floor
+
+**Near-viable (v0.7.0):**
+- Properties within 80% of adjusted min_profit AND min_roi thresholds
+- Stored as `near_viable` flag, shown in amber on dashboard
 
 ## Important Patterns
 
@@ -142,7 +158,7 @@ Uses OpenStreetMap Overpass API to classify roads by highway tag:
 - Combined weight: `reno_mult × time_weight / (distance + 0.1)²`
 - Comps deduped by address (keeps most recent sale, removes pre-flip purchases)
 - Road type discount: -15% busy road, -25% highway-adjacent
-- **Sale-to-list ratio**: very_hot (≥1.05), hot (≥1.01), balanced (≥0.97), soft (≥0.93), cold (<0.93)
+- **Sale-to-list ratio**: very_hot (≥1.04), hot (≥1.01), balanced (≥0.97), soft (≥0.93), cold (<0.93)
 - **Multi-factor confidence**: comp count (0-40) + avg distance (0-30) + avg recency (0-20) + price variance CV (0-10)
 
 ### School Rating
@@ -233,19 +249,20 @@ Uses Claude Vision API (`claude-sonnet-4-5-20250929`) to analyze up to 5 photos 
 | 2.5 - Enhanced Location | Complete | Road type, ceiling check, expansion scoring |
 | 3 - Web Dashboard | Complete | Admin page with Chart.js, filters, CSV export |
 | 3.5 - ARV & Financial Overhaul | Complete | Comp adjustments, financing model, market signals |
+| 3.7 - Market-Adaptive Thresholds | Complete | Adaptive DQ thresholds, near-viable category |
 | 4 - iOS | Pending | SwiftUI views, ViewModel, API |
 | 5 - Polish | Pending | Testing, weight tuning |
 
 See `DEVELOPMENT.md` for detailed progress tracking.
 
-## Admin Dashboard (v0.6.0)
+## Admin Dashboard (v0.7.0)
 
 Access via **Flip Analyzer** in the WordPress admin sidebar menu.
 
 **Features:**
-- Summary stat cards (total, viable, avg score, avg ROI, disqualified)
+- Summary stat cards (total, viable, avg score, avg ROI, near-viable, disqualified)
 - Chart.js grouped bar chart: viable vs disqualified per city
-- Client-side filters: city dropdown, min score slider, sort, show viable/all/DQ
+- Client-side filters: city dropdown, min score slider, sort, show viable/all/near-viable/DQ
 - Results table with expandable rows showing:
   - Score breakdown with weighted bars
   - Dual financial model: Cash Purchase vs Hard Money (12%, 2 pts, 80% LTV)

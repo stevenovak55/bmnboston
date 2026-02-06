@@ -65,6 +65,7 @@
         $('#stat-viable').text(summary.viable || 0);
         $('#stat-avg-score').text(summary.avg_score ? summary.avg_score.toFixed(1) : '--');
         $('#stat-avg-roi').text(summary.avg_roi ? summary.avg_roi.toFixed(1) + '%' : '--');
+        $('#stat-near-viable').text(summary.near_viable || 0);
         $('#stat-disqualified').text(summary.disqualified || 0);
 
         if (summary.last_run) {
@@ -177,6 +178,7 @@
         var filtered = (dashData.results || []).filter(function (r) {
             // Show filter
             if (show === 'viable' && r.disqualified) return false;
+            if (show === 'near_viable' && !(r.disqualified && r.near_viable)) return false;
             if (show === 'disqualified' && !r.disqualified) return false;
 
             // City filter
@@ -221,9 +223,11 @@
     }
 
     function buildRow(r, idx) {
-        var dqClass = r.disqualified ? ' flip-row-dq' : '';
+        var dqClass = r.disqualified ? (r.near_viable ? ' flip-row-near-viable' : ' flip-row-dq') : '';
         var scoreHtml = r.disqualified
-            ? '<span class="flip-score-badge flip-score-poor">DQ</span>'
+            ? (r.near_viable
+                ? '<span class="flip-score-badge flip-score-near">NV</span>'
+                : '<span class="flip-score-badge flip-score-poor">DQ</span>')
             : '<span class="flip-score-badge ' + scoreClass(r.total_score) + '">' + r.total_score.toFixed(1) + '</span>';
 
         var photoHtml = r.photo_score !== null
@@ -299,6 +303,7 @@
 
         var filtered = (dashData.results || []).filter(function (r) {
             if (show === 'viable' && r.disqualified) return false;
+            if (show === 'near_viable' && !(r.disqualified && r.near_viable)) return false;
             if (show === 'disqualified' && !r.disqualified) return false;
             if (city && r.city !== city) return false;
             if (!r.disqualified && minScore > 0 && r.total_score < minScore) return false;
@@ -432,6 +437,22 @@
         html += '<div style="border-top:1px solid #ddd;margin:4px 0"></div>';
         html += kv('Max Offer Price', formatCurrency(r.mao) + ' <span style="color:#999;font-size:11px">(70% rule)</span>');
 
+        // Thresholds applied (show when market-adjusted)
+        if (r.applied_thresholds) {
+            var t = r.applied_thresholds;
+            html += '<div style="border-top:1px solid #ddd;margin:8px 0 4px;padding-top:6px"></div>';
+            html += '<div style="font-weight:600;font-size:12px;color:#333;margin:4px 0">Thresholds Applied:</div>';
+            var profitNote = t.market_strength !== 'balanced'
+                ? ' <span style="color:#856404;font-size:11px">(adj. from $25K)</span>' : '';
+            var roiNote = t.market_strength !== 'balanced'
+                ? ' <span style="color:#856404;font-size:11px">(adj. from 15%)</span>' : '';
+            html += kv('Min Profit', formatCurrency(t.min_profit) + profitNote);
+            html += kv('Min ROI', t.min_roi.toFixed(1) + '%' + roiNote);
+            html += kv('Max Price/ARV', (t.max_price_arv * 100).toFixed(0) + '%');
+            html += kv('Market', marketStrengthBadge(t.market_strength)
+                + ' <span style="color:#999;font-size:11px">(x' + t.multiplier.toFixed(3) + ')</span>');
+        }
+
         html += '</div></div>';
         return html;
     }
@@ -528,8 +549,13 @@
 
             var ppsf = c.adjusted_ppsf || c.ppsf;
 
+            var compAddr = escapeHtml(c.address || 'N/A');
+            if (c.listing_id) {
+                compAddr = '<a href="' + flipData.siteUrl + '/property/' + c.listing_id + '/" target="_blank" class="flip-view-link">' + compAddr + '</a>';
+            }
+
             html += '<tr>'
-                + '<td>' + escapeHtml(c.address || 'N/A') + '</td>'
+                + '<td>' + compAddr + '</td>'
                 + '<td>' + formatCurrency(c.close_price) + '</td>'
                 + '<td>$' + (ppsf ? ppsf.toFixed(0) : '--') + '</td>'
                 + adjCell
@@ -1011,7 +1037,7 @@
             'Market Strength', 'Sale/List Ratio',
             'Road Type', 'Ceiling', 'Ceiling %',
             'Beds', 'Baths', 'SqFt', 'Year', 'Lot Acres',
-            'Disqualified', 'DQ Reason'
+            'Disqualified', 'Near-Viable', 'DQ Reason'
         ];
 
         var rows = results.map(function (r) {
@@ -1052,6 +1078,7 @@
                 r.year_built || '',
                 r.lot_size_acres ? r.lot_size_acres.toFixed(2) : '',
                 r.disqualified ? 'Yes' : 'No',
+                r.near_viable ? 'Yes' : 'No',
                 '"' + (r.disqualify_reason || '').replace(/"/g, '""') + '"'
             ].join(',');
         });

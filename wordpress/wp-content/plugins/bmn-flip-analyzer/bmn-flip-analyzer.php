@@ -2,9 +2,18 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies Single Family Residence flip candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis.
- * Version: 0.6.0
+ * Version: 0.7.0
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.7.0 - Market-Adaptive Thresholds
+ * - Continuous formula thresholds based on avg_sale_to_list with tier guard rails
+ * - Thresholds scale by market_strength: very_hot → cold (profit $10-35K, ROI 5-22%)
+ * - Pre-calc DQ uses market-adaptive price/ARV ratio (0.78-0.92)
+ * - Near-viable category for properties within 80% of adjusted thresholds
+ * - Low-confidence guard: don't relax below balanced when ARV confidence is low
+ * - Dashboard: near-viable stat card, filter option, amber row styling, threshold display
+ * - DB migration: near_viable and applied_thresholds_json columns
  *
  * Version 0.6.0 - ARV Accuracy & Financial Model Overhaul
  * - Bathroom filter on comps with graceful fallback
@@ -56,7 +65,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.6.1');
+define('FLIP_VERSION', '0.7.1');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -94,6 +103,16 @@ add_action('rest_api_init', function () {
 register_activation_hook(__FILE__, function () {
     Flip_Database::create_tables();
     Flip_Database::set_default_cities();
+    Flip_Database::migrate_v070();
+});
+
+// Version-check migration for file-only updates (no deactivate/reactivate)
+add_action('plugins_loaded', function () {
+    $db_version = get_option('bmn_flip_db_version', '0');
+    if (version_compare($db_version, '0.7.0', '<')) {
+        Flip_Database::migrate_v070();
+        update_option('bmn_flip_db_version', '0.7.0');
+    }
 });
 
 // Deactivation hook

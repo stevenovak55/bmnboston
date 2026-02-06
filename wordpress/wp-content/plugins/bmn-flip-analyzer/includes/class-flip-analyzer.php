@@ -37,9 +37,24 @@ class Flip_Analyzer {
     const ANNUAL_INSURANCE_RATE = 0.005;      // 0.5% builder's risk insurance
     const MONTHLY_UTILITIES    = 350;         // Electric, water, heat during rehab
 
-    /** Profit thresholds (using financed numbers) */
+    /** Profit thresholds — baseline values (used in balanced markets) */
     const MIN_PROFIT_THRESHOLD = 25000;       // $25K minimum
     const MIN_ROI_THRESHOLD    = 15;          // 15% minimum
+
+    /** Market-adaptive threshold guard rails: [floor, ceiling] per tier */
+    const MARKET_THRESHOLD_BOUNDS = [
+        'very_hot' => ['min_profit' => [10000, 20000], 'min_roi' => [5, 8]],
+        'hot'      => ['min_profit' => [15000, 25000], 'min_roi' => [8, 12]],
+        'balanced' => ['min_profit' => [25000, 25000], 'min_roi' => [15, 15]],
+        'soft'     => ['min_profit' => [25000, 30000], 'min_roi' => [15, 18]],
+        'cold'     => ['min_profit' => [28000, 35000], 'min_roi' => [16, 22]],
+    ];
+
+    /** Market-adaptive max list_price / ARV ratio for pre-calc DQ */
+    const MARKET_MAX_PRICE_ARV_RATIO = [
+        'very_hot' => 0.92, 'hot' => 0.90, 'balanced' => 0.85,
+        'soft' => 0.82, 'cold' => 0.78,
+    ];
 
     /** Minimum list price to exclude lease/land anomalies */
     const MIN_LIST_PRICE = 100000;
@@ -49,6 +64,56 @@ class Flip_Analyzer {
         'busy-road'        => 0.15,
         'highway-adjacent' => 0.25,
     ];
+
+    /**
+     * Calculate market-adaptive thresholds for profit and ROI.
+     *
+     * Uses a continuous formula based on avg_sale_to_list, clamped by
+     * market_strength tier guard rails. Low-confidence ARV prevents
+     * thresholds from relaxing below balanced levels.
+     *
+     * @param string $market_strength  Market tier (very_hot, hot, balanced, soft, cold).
+     * @param float  $avg_sale_to_list Sale-to-list ratio (e.g. 1.07).
+     * @param string $arv_confidence   ARV confidence level (high, medium, low, none).
+     * @return array Adaptive thresholds with min_profit, min_roi, max_price_arv.
+     */
+    public static function get_adaptive_thresholds(
+        string $market_strength,
+        float $avg_sale_to_list,
+        string $arv_confidence = 'medium'
+    ): array {
+        // Continuous multiplier: 1.0 at STL=1.00, lower for hot, higher for cold
+        $multiplier = max(0.4, min(1.2, 2.5 - (1.5 * $avg_sale_to_list)));
+
+        // Raw scaled thresholds from baseline
+        $raw_profit = self::MIN_PROFIT_THRESHOLD * $multiplier;
+        $raw_roi    = self::MIN_ROI_THRESHOLD * $multiplier;
+
+        // Determine tier bounds — low-confidence ARV uses balanced (no relaxation)
+        $use_tier = $market_strength;
+        if (in_array($arv_confidence, ['low', 'none'], true)) {
+            // Don't relax below balanced when ARV data is weak
+            if (in_array($market_strength, ['very_hot', 'hot'], true)) {
+                $use_tier = 'balanced';
+            }
+        }
+
+        $bounds = self::MARKET_THRESHOLD_BOUNDS[$use_tier] ?? self::MARKET_THRESHOLD_BOUNDS['balanced'];
+        $min_profit = max($bounds['min_profit'][0], min($bounds['min_profit'][1], $raw_profit));
+        $min_roi    = max($bounds['min_roi'][0], min($bounds['min_roi'][1], $raw_roi));
+
+        $max_price_arv = self::MARKET_MAX_PRICE_ARV_RATIO[$market_strength]
+            ?? self::MARKET_MAX_PRICE_ARV_RATIO['balanced'];
+
+        return [
+            'min_profit'      => round($min_profit),
+            'min_roi'         => round($min_roi, 1),
+            'max_price_arv'   => $max_price_arv,
+            'market_strength' => $market_strength,
+            'avg_sale_to_list' => round($avg_sale_to_list, 3),
+            'multiplier'      => round($multiplier, 3),
+        ];
+    }
 
     /**
      * Calculate all financial metrics for a property.
@@ -250,9 +315,21 @@ class Flip_Analyzer {
                 $remarks, $city_metrics['avg_dom'] ?? 30
             );
 
-            // Post-calculation disqualifier (uses financed numbers)
-            $post_dq = self::check_post_calc_disqualifiers($fin['estimated_profit'], $fin['cash_on_cash_roi']);
+            // Compute market-adaptive thresholds
+            $thresholds = self::get_adaptive_thresholds(
+                $arv_data['market_strength'] ?? 'balanced',
+                $arv_data['avg_sale_to_list'] ?? 1.0,
+                $arv_data['arv_confidence'] ?? 'medium'
+            );
+            $thresholds_json = json_encode($thresholds);
+
+            // Post-calculation disqualifier (uses financed numbers + adaptive thresholds)
+            $post_dq = self::check_post_calc_disqualifiers($fin['estimated_profit'], $fin['cash_on_cash_roi'], $thresholds);
             if ($post_dq) {
+                // Check if near-viable (within 80% of adjusted thresholds)
+                $near_viable = ($fin['estimated_profit'] >= $thresholds['min_profit'] * 0.8)
+                            && ($fin['cash_on_cash_roi'] >= $thresholds['min_roi'] * 0.8);
+
                 // Still store full data so dashboard shows why it was DQ'd
                 $data = self::build_result_data(
                     $property, $arv_data, $road_analysis, $fin,
@@ -261,18 +338,21 @@ class Flip_Analyzer {
                 );
                 $data['disqualified'] = 1;
                 $data['disqualify_reason'] = $post_dq;
+                $data['near_viable'] = $near_viable ? 1 : 0;
+                $data['applied_thresholds_json'] = $thresholds_json;
                 Flip_Database::upsert_result($data);
                 $disqualified++;
                 $analyzed++;
                 continue;
             }
 
-            // Store result
+            // Store viable result
             $data = self::build_result_data(
                 $property, $arv_data, $road_analysis, $fin,
                 $total_score, $financial, $prop_score, $location, $market,
                 $arv, $run_date
             );
+            $data['applied_thresholds_json'] = $thresholds_json;
             Flip_Database::upsert_result($data);
             $analyzed++;
         }
@@ -421,8 +501,12 @@ class Flip_Analyzer {
             return 'Building area too small (' . $sqft . ' sqft)';
         }
 
-        if ($arv > 0 && $list_price > $arv * 0.85) {
-            return 'List price too close to ARV (ratio: ' . round($list_price / $arv, 2) . ')';
+        $market_str = $arv_data['market_strength'] ?? 'balanced';
+        $max_ratio = self::MARKET_MAX_PRICE_ARV_RATIO[$market_str] ?? 0.85;
+        if ($arv > 0 && $list_price > $arv * $max_ratio) {
+            $ratio = round($list_price / $arv, 2);
+            $pct = round($max_ratio * 100);
+            return "List price too close to ARV (ratio: {$ratio}, max: {$pct}% [{$market_str}])";
         }
 
         $year_built = (int) $property->year_built;
@@ -442,28 +526,41 @@ class Flip_Analyzer {
     }
 
     /**
-     * Post-calculation disqualifier using financed numbers.
+     * Post-calculation disqualifier using financed numbers and adaptive thresholds.
      *
      * @return string|null Reason for disqualification, or null if passed.
      */
-    private static function check_post_calc_disqualifiers(float $profit, float $roi): ?string {
-        if ($profit < self::MIN_PROFIT_THRESHOLD) {
+    private static function check_post_calc_disqualifiers(float $profit, float $roi, array $thresholds): ?string {
+        $min_profit = $thresholds['min_profit'];
+        $min_roi    = $thresholds['min_roi'];
+        $market     = $thresholds['market_strength'];
+        $suffix     = ($market !== 'balanced')
+            ? ' [' . $market . ' market]'
+            : '';
+
+        if ($profit < $min_profit) {
             return 'Estimated profit ($' . number_format($profit) . ') below minimum ($'
-                . number_format(self::MIN_PROFIT_THRESHOLD) . ')';
+                . number_format($min_profit) . ')' . $suffix;
         }
 
-        if ($roi < self::MIN_ROI_THRESHOLD) {
+        if ($roi < $min_roi) {
             return 'Estimated ROI (' . round($roi, 1) . '%) below minimum ('
-                . self::MIN_ROI_THRESHOLD . '%)';
+                . round($min_roi, 1) . '%)' . $suffix;
         }
 
         return null;
     }
 
     /**
-     * Store a disqualified property result.
+     * Store a disqualified property result (pre-calculation DQ).
      */
     private static function store_disqualified(object $property, array $arv_data, string $reason, string $run_date): void {
+        $thresholds = self::get_adaptive_thresholds(
+            $arv_data['market_strength'] ?? 'balanced',
+            $arv_data['avg_sale_to_list'] ?? 1.0,
+            $arv_data['arv_confidence'] ?? 'medium'
+        );
+
         $data = [
             'listing_id'          => (int) $property->listing_id,
             'listing_key'         => $property->listing_key ?? '',
@@ -509,6 +606,8 @@ class Flip_Analyzer {
             'main_photo_url'      => $property->main_photo_url ?? '',
             'disqualified'        => 1,
             'disqualify_reason'   => $reason,
+            'near_viable'         => 0,
+            'applied_thresholds_json' => json_encode($thresholds),
         ];
 
         Flip_Database::upsert_result($data);

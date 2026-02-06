@@ -172,6 +172,9 @@ class Flip_Admin_Dashboard {
             'main_photo_url'      => $row->main_photo_url ?? '',
             'disqualified'        => (bool) $row->disqualified,
             'disqualify_reason'   => $row->disqualify_reason,
+            'near_viable'         => (bool) ($row->near_viable ?? 0),
+            'applied_thresholds'  => !empty($row->applied_thresholds_json)
+                ? json_decode($row->applied_thresholds_json, true) : null,
             'comps'               => !empty($row->comp_details_json) ? json_decode($row->comp_details_json, true) : [],
             'photo_analysis'      => !empty($row->photo_analysis_json) ? json_decode($row->photo_analysis_json, true) : null,
             'remarks_signals'     => !empty($row->remarks_signals_json) ? json_decode($row->remarks_signals_json, true) : [],

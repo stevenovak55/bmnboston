@@ -50,6 +50,10 @@ if (!defined('ABSPATH')) {
             <div class="flip-stat-value" id="stat-avg-roi">--</div>
             <div class="flip-stat-label">Avg ROI</div>
         </div>
+        <div class="flip-stat-card flip-stat-near">
+            <div class="flip-stat-value" id="stat-near-viable">--</div>
+            <div class="flip-stat-label">Near-Viable</div>
+        </div>
         <div class="flip-stat-card flip-stat-dq">
             <div class="flip-stat-value" id="stat-disqualified">--</div>
             <div class="flip-stat-label">Disqualified</div>
@@ -115,6 +119,7 @@ if (!defined('ABSPATH')) {
             <select id="filter-show">
                 <option value="all">All Results</option>
                 <option value="viable">Viable Only</option>
+                <option value="near_viable">Near-Viable</option>
                 <option value="disqualified">Disqualified Only</option>
             </select>
         </div>

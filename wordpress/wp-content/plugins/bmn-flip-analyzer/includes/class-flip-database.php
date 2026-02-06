@@ -85,6 +85,8 @@ class Flip_Database {
 
             disqualified TINYINT(1) DEFAULT 0,
             disqualify_reason VARCHAR(255) DEFAULT NULL,
+            near_viable TINYINT(1) DEFAULT 0,
+            applied_thresholds_json TEXT DEFAULT NULL,
 
             PRIMARY KEY (id),
             INDEX idx_total_score (total_score DESC),
@@ -96,6 +98,23 @@ class Flip_Database {
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
+    }
+
+    /**
+     * Add columns for v0.7.0 (market-adaptive thresholds).
+     */
+    public static function migrate_v070(): void {
+        global $wpdb;
+        $table = self::table_name();
+
+        $cols = $wpdb->get_col("SHOW COLUMNS FROM {$table}", 0);
+
+        if (!in_array('near_viable', $cols, true)) {
+            $wpdb->query("ALTER TABLE {$table} ADD COLUMN near_viable TINYINT(1) DEFAULT 0 AFTER disqualify_reason");
+        }
+        if (!in_array('applied_thresholds_json', $cols, true)) {
+            $wpdb->query("ALTER TABLE {$table} ADD COLUMN applied_thresholds_json TEXT DEFAULT NULL AFTER near_viable");
+        }
     }
 
     /**
@@ -232,7 +251,8 @@ class Flip_Database {
                 SUM(CASE WHEN disqualified = 0 AND total_score >= 60 THEN 1 ELSE 0 END) as viable,
                 AVG(CASE WHEN disqualified = 0 THEN total_score END) as avg_score,
                 AVG(CASE WHEN disqualified = 0 AND estimated_roi > 0 THEN estimated_roi END) as avg_roi,
-                SUM(CASE WHEN disqualified = 1 THEN 1 ELSE 0 END) as disqualified
+                SUM(CASE WHEN disqualified = 1 THEN 1 ELSE 0 END) as disqualified,
+                SUM(CASE WHEN disqualified = 1 AND near_viable = 1 THEN 1 ELSE 0 END) as near_viable
             FROM {$table} WHERE run_date = %s",
             $latest_run
         ));
@@ -256,6 +276,7 @@ class Flip_Database {
             'avg_score'    => round((float) $totals->avg_score, 1),
             'avg_roi'      => round((float) $totals->avg_roi, 1),
             'disqualified' => (int) $totals->disqualified,
+            'near_viable'  => (int) ($totals->near_viable ?? 0),
             'last_run'     => $latest_run,
             'cities'       => $city_breakdown,
         ];

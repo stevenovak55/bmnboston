@@ -157,7 +157,7 @@ class Flip_ARV_Calculator {
         }
         $avg_stl = $stl_count > 0 ? round($stl_sum / $stl_count, 3) : 1.0;
         $market_strength = match (true) {
-            $avg_stl >= 1.05 => 'very_hot',
+            $avg_stl >= 1.04 => 'very_hot',
             $avg_stl >= 1.01 => 'hot',
             $avg_stl >= 0.97 => 'balanced',
             $avg_stl >= 0.93 => 'soft',

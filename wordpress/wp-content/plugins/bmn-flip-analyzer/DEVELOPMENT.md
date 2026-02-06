@@ -1,8 +1,8 @@
 # BMN Flip Analyzer - Development Log
 
-## Current Version: 0.6.1
+## Current Version: 0.7.0
 
-## Status: Phase 3.5 Complete (ARV & Financial Overhaul) - Pre-Phase 4 (iOS)
+## Status: Phase 3.7 Complete (Market-Adaptive Thresholds) - Pre-Phase 4 (iOS)
 
 ---
 
@@ -18,6 +18,7 @@
 | 6 | REST API endpoints | Complete | 6 endpoints for web + iOS |
 | 7 | Web admin dashboard | Complete | Phase 3 - Chart.js + PHP template |
 | 7.5 | ARV & Financial overhaul | Complete | Phase 3.5 - Comp adjustments, financing model |
+| 7.7 | Market-adaptive thresholds | Complete | Phase 3.7 - Adaptive DQ, near-viable |
 | 8 | iOS data model + API | Pending | Phase 4 - SwiftUI ViewModel |
 | 9 | iOS UI views | Pending | Phase 4 - FlipAnalyzerSheet |
 | 10 | Testing + tuning | Pending | Phase 5 - Score validation |
@@ -297,6 +298,69 @@
 2. Compare ARV before/after for known properties (verify comp adjustments)
 3. Phase 4: iOS SwiftUI integration
 
+### Session 8 - 2026-02-06
+
+**What was done (v0.7.0 — Market-Adaptive Thresholds):**
+
+**Problem:** All 61 properties across 7 MA cities were disqualified because fixed thresholds (15% ROI, $25K profit) don't account for market heat. In "very hot" markets where homes sell 5-8% above asking, flip margins are naturally compressed — but deals like 4 Waite Ave (8.3% ROI, $43K profit) are still viable.
+
+- **Database migration** (`class-flip-database.php`):
+  - Added `near_viable TINYINT(1)` and `applied_thresholds_json TEXT` columns
+  - `migrate_v070()` method with ALTER TABLE for existing installs
+  - Updated `get_summary()` to count near_viable properties
+  - Version-check migration via `plugins_loaded` hook (no deactivate/reactivate needed)
+
+- **Core adaptive thresholds** (`class-flip-analyzer.php`):
+  - `MARKET_THRESHOLD_BOUNDS` constant: tier guard rails (very_hot through cold)
+  - `MARKET_MAX_PRICE_ARV_RATIO` constant: pre-calc DQ ratios (0.78-0.92)
+  - `get_adaptive_thresholds()` public static method:
+    - Continuous formula: `clamp(2.5 - 1.5 × avg_sale_to_list, 0.4, 1.2)`
+    - Clamps by tier bounds to prevent dangerous extremes
+    - Low-confidence guard: don't relax below balanced when ARV confidence is low/none
+  - Updated `check_disqualifiers()`: market-adaptive price/ARV ratio
+  - Updated `check_post_calc_disqualifiers()`: accepts `$thresholds` array
+  - Updated `run()` pipeline: computes thresholds, detects near-viable (80% of limits), stores JSON
+  - Updated `store_disqualified()`: includes near_viable and applied_thresholds_json
+
+- **Dashboard admin** (`class-flip-admin-dashboard.php`):
+  - Added `near_viable` and `applied_thresholds` to `format_result()`
+
+- **Dashboard HTML** (`admin/views/dashboard.php`):
+  - Added Near-Viable stat card (amber border)
+  - Added "Near-Viable" option to Show filter dropdown
+
+- **Dashboard JS** (`assets/js/flip-dashboard.js`):
+  - `renderStats()`: populates near-viable stat card
+  - `applyFilters()` / `getFilteredResults()`: near_viable filter option
+  - `buildRow()`: near-viable rows get amber styling and "NV" badge
+  - `buildFinancialSection()`: "Thresholds Applied" section showing market-adjusted values
+  - `exportCSV()`: added Near-Viable column
+
+- **Dashboard CSS** (`assets/css/flip-dashboard.css`):
+  - `.flip-stat-card.flip-stat-near`: amber border
+  - `.flip-row-near-viable`: amber background, 0.85 opacity
+  - `.flip-score-near`: amber score badge
+
+- Version bump to 0.7.0
+
+**Threshold table:**
+
+| avg_sale_to_list | market_strength | Min Profit | Min ROI | Max Price/ARV |
+|---|---|---|---|---|
+| 1.08 | very_hot | $15K | 8% | 92% |
+| 1.02 | hot | $18K | 10% | 90% |
+| 1.00 | balanced | $25K | 15% | 85% |
+| 0.95 | soft | $27K | 16% | 82% |
+| 0.90 | cold | $30K | 18% | 78% |
+
+**4 Waite Ave validation:** avg_sale_to_list ~1.07 → multiplier 0.895 → clamped to very_hot ceiling → 8% ROI threshold → 8.3% **PASSES**
+
+**Next steps:**
+1. Deploy to production and run analysis to validate adaptive thresholds
+2. Verify 4 Waite Ave now shows as viable
+3. Check near-viable count and dashboard display
+4. Phase 4: iOS SwiftUI integration
+
 ---
 
 ## Known Bugs
@@ -327,6 +391,9 @@
 | Dual financial model | Show both cash and financed scenarios; score/DQ uses financed (more conservative) | 2026-02-05 |
 | Shared calculate_financials() | Single source of truth prevents photo analyzer from diverging from main pipeline | 2026-02-05 |
 | Post-calc disqualifiers | $25K min profit, 15% min ROI — prevents "technically profitable" bad deals | 2026-02-05 |
+| Market-adaptive thresholds | Continuous formula + tier guard rails: avoids cliff effects while preventing dangerously low thresholds | 2026-02-06 |
+| Near-viable category | 80% of adjusted thresholds — gives visibility into borderline properties without lowering pass bar | 2026-02-06 |
+| Low-confidence guard | Don't relax thresholds when ARV confidence is low/none — unreliable data shouldn't loosen DQ gates | 2026-02-06 |
 | Dynamic hold period | Rehab scope + area DOM — cosmetic flips take 3mo, gut renos take 8+ | 2026-02-05 |
 | Bathroom filter with fallback | Prevents 3bed/1bath from pulling 3bed/3bath comps, but relaxes if too few comps | 2026-02-05 |
 | $250/sqft addition cost | Massachusetts additions cost $200-400/sqft including permits; $80 was unrealistic | 2026-02-05 |
@@ -476,7 +543,18 @@ bmn-flip-analyzer/
   13. DB migration: 10 new columns for financing/holding/market data
 - Fixed `date('Y')` → `wp_date('Y')` timezone pitfall in ARV calculator and property scorer
 
-### v0.7.0 (Planned)
+### v0.7.0 (Complete)
+- **Market-Adaptive Thresholds** — fixes all 61 properties being DQ'd in hot MA markets:
+  1. Continuous formula `clamp(2.5 - 1.5 × avg_sale_to_list, 0.4, 1.2)` with tier guard rails
+  2. Tier bounds: very_hot ($10-20K, 5-8%), hot ($15-25K, 8-12%), balanced ($25K, 15%), soft ($25-30K, 15-18%), cold ($28-35K, 16-22%)
+  3. Market-adaptive price/ARV ratio for pre-calc DQ (0.78 cold → 0.92 very_hot)
+  4. Near-viable category: properties within 80% of adjusted thresholds (amber on dashboard)
+  5. Low-confidence guard: don't relax below balanced when ARV confidence is low/none
+  6. Dashboard: near-viable stat card, filter option, amber row styling, threshold display
+  7. DB migration: `near_viable` and `applied_thresholds_json` columns
+- `get_adaptive_thresholds()` public static method on Flip_Analyzer
+
+### v0.8.0 (Planned)
 - iOS SwiftUI integration
 
 ### v1.0.0 (Planned)

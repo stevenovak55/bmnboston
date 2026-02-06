@@ -133,6 +133,10 @@
     border-top-color: #00a32a;
 }
 
+.flip-stat-card.flip-stat-near {
+    border-top-color: #dba617;
+}
+
 .flip-stat-card.flip-stat-dq {
     border-top-color: #cc1818;
 }
@@ -277,6 +281,16 @@
     opacity: 0.85;
 }
 
+.flip-table tbody tr.flip-row-near-viable {
+    opacity: 0.85;
+    background: #fffbe6;
+}
+
+.flip-table tbody tr.flip-row-near-viable:hover {
+    opacity: 1;
+    background: #fff8d4;
+}
+
 .flip-table tbody tr.flip-row-expanded {
     background-color: #f0f6fc;
     border-bottom: none;
@@ -375,6 +389,7 @@
 .flip-score-mid     { background: #dba617; }
 .flip-score-low     { background: #e67e22; }
 .flip-score-poor    { background: #cc1818; }
+.flip-score-near    { background: #dba617; }
 
 /* ── Road Badge ─────────────────────────────── */
 
