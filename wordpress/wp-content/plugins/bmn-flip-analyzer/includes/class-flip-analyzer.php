@@ -266,6 +266,9 @@ class Flip_Analyzer {
             return ['analyzed' => 0, 'disqualified' => 0, 'run_date' => '', 'error' => 'No target cities configured.'];
         }
 
+        // Load analysis filters (CLI overrides or saved settings)
+        $filters = $options['filters'] ?? Flip_Database::get_analysis_filters();
+
         $log = $progress ?? function ($msg) {};
         $run_date = current_time('mysql');
 
@@ -273,9 +276,11 @@ class Flip_Analyzer {
         $log("Pre-computing metrics for " . count($cities) . " cities...");
         Flip_Location_Scorer::precompute_city_metrics($cities);
 
-        // Step 2: Fetch active SFR listings in target cities
-        $properties = self::fetch_properties($cities, $limit);
-        $log("Found " . count($properties) . " Residential SFR listings in target cities.");
+        // Step 2: Fetch listings matching filters
+        $properties = self::fetch_properties($cities, $limit, $filters);
+        $sub_types = implode(', ', $filters['property_sub_types'] ?? ['SFR']);
+        $statuses  = implode(', ', $filters['statuses'] ?? ['Active']);
+        $log("Found " . count($properties) . " Residential ({$sub_types}) [{$statuses}] listings in target cities.");
 
         if (empty($properties)) {
             return ['analyzed' => 0, 'disqualified' => 0, 'run_date' => $run_date];
@@ -519,28 +524,263 @@ class Flip_Analyzer {
     }
 
     /**
-     * Fetch active SFR listings from target cities.
+     * Force full analysis on a single property, bypassing all DQ checks.
+     *
+     * @param int         $listing_id MLS listing ID.
+     * @param string|null $run_date   Run date to use (defaults to latest existing run_date).
+     * @return array { success: bool, listing_id: int, total_score: float } or { error: string }
      */
-    private static function fetch_properties(array $cities, int $limit): array {
+    public static function force_analyze_single(int $listing_id, ?string $run_date = null): array {
+        global $wpdb;
+
+        // 1. Fetch property
+        $summary_table = $wpdb->prefix . 'bme_listing_summary';
+        $property = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$summary_table} WHERE listing_id = %d",
+            $listing_id
+        ));
+        if (!$property) {
+            return ['error' => "Listing {$listing_id} not found in bme_listing_summary."];
+        }
+
+        // 2. Determine run_date (use latest batch so it groups on the dashboard)
+        if (!$run_date) {
+            $table = Flip_Database::table_name();
+            $run_date = $wpdb->get_var("SELECT MAX(run_date) FROM {$table}");
+            if (!$run_date) {
+                $run_date = current_time('mysql');
+            }
+        }
+
+        // 3. Precompute city metrics
+        Flip_Location_Scorer::precompute_city_metrics([$property->city]);
+        $city_metrics = Flip_Location_Scorer::get_city_metrics($property->city);
+
+        // 4. Calculate ARV
+        $arv_data = Flip_ARV_Calculator::calculate($property);
+
+        // 5. Run all scorers (NO DQ checks)
+        $financial  = Flip_Financial_Scorer::score($property, $arv_data, $city_metrics['avg_ppsf']);
+        $prop_score = Flip_Property_Scorer::score($property);
+
+        $comp_density = Flip_ARV_Calculator::count_nearby_comps(
+            (float) $property->latitude,
+            (float) $property->longitude
+        );
+
+        $street_name   = trim(($property->street_name ?? '') . ' ' . ($property->street_suffix ?? ''));
+        $road_analysis = Flip_Road_Analyzer::analyze(
+            (float) $property->latitude,
+            (float) $property->longitude,
+            $street_name
+        );
+
+        $location = Flip_Location_Scorer::score(
+            $property,
+            $city_metrics['price_trend'],
+            $city_metrics['avg_dom'],
+            $comp_density,
+            $arv_data,
+            ['road_type' => $road_analysis['road_type']]
+        );
+
+        $remarks = Flip_Market_Scorer::get_remarks($listing_id);
+        $market  = Flip_Market_Scorer::score($property, $remarks);
+
+        // 6. Weighted total
+        $total_score = ($financial['score'] * self::WEIGHT_FINANCIAL)
+                     + ($prop_score['score'] * self::WEIGHT_PROPERTY)
+                     + ($location['score'] * self::WEIGHT_LOCATION)
+                     + ($market['score'] * self::WEIGHT_MARKET);
+
+        // 7. Financial calculations
+        $sqft       = (int) $property->building_area_total;
+        $year_built = (int) $property->year_built;
+        $list_price = (float) $property->list_price;
+        $raw_arv    = (float) $arv_data['estimated_arv'];
+
+        $road_discount = self::ROAD_ARV_DISCOUNT[$road_analysis['road_type']] ?? 0;
+        $arv = $road_discount > 0 ? round($raw_arv * (1 - $road_discount), 2) : $raw_arv;
+
+        $actual_tax_rate = self::get_actual_tax_rate($listing_id, $list_price);
+
+        $fin = self::calculate_financials(
+            $arv, $list_price, $sqft, $year_built,
+            $remarks, $city_metrics['avg_dom'] ?? 30,
+            $actual_tax_rate
+        );
+
+        // 8. Thresholds and risk grade
+        $thresholds = self::get_adaptive_thresholds(
+            $arv_data['market_strength'] ?? 'balanced',
+            $arv_data['avg_sale_to_list'] ?? 1.0,
+            $arv_data['arv_confidence'] ?? 'medium'
+        );
+
+        $deal_risk_grade = self::calculate_deal_risk_grade(
+            $arv_data['arv_confidence'] ?? 'none',
+            $fin['breakeven_arv'],
+            $arv,
+            $arv_data['comps'],
+            (int) ($property->days_on_market ?? 0),
+            $arv_data['comp_count']
+        );
+
+        // 9. Build result and store (disqualified = 0 by default from build_result_data)
+        $data = self::build_result_data(
+            $property, $arv_data, $road_analysis, $fin,
+            $total_score, $financial, $prop_score, $location, $market,
+            $arv, $run_date
+        );
+        $data['applied_thresholds_json'] = json_encode($thresholds);
+        $data['deal_risk_grade']         = $deal_risk_grade;
+
+        Flip_Database::upsert_result($data);
+
+        return [
+            'success'     => true,
+            'listing_id'  => $listing_id,
+            'total_score' => round($total_score, 2),
+        ];
+    }
+
+    /**
+     * Fetch listings matching analysis filters from target cities.
+     */
+    private static function fetch_properties(array $cities, int $limit, array $filters = []): array {
         global $wpdb;
         $summary_table = $wpdb->prefix . 'bme_listing_summary';
 
-        $placeholders = implode(',', array_fill(0, count($cities), '%s'));
-        $params = $cities;
-        $params[] = $limit;
+        $where  = ["s.property_type = 'Residential'", "s.list_price > 0", "s.building_area_total > 0"];
+        $params = [];
+        $join   = '';
 
-        return $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$summary_table}
-            WHERE property_type = 'Residential'
-              AND property_sub_type = 'Single Family Residence'
-              AND standard_status = 'Active'
-              AND list_price > 0
-              AND building_area_total > 0
-              AND city IN ({$placeholders})
-            ORDER BY list_price ASC
-            LIMIT %d",
+        // Property sub types
+        $sub_types = !empty($filters['property_sub_types']) ? $filters['property_sub_types'] : ['Single Family Residence'];
+        $ph = implode(',', array_fill(0, count($sub_types), '%s'));
+        $where[] = "s.property_sub_type IN ({$ph})";
+        $params  = array_merge($params, $sub_types);
+
+        // Statuses
+        $statuses = !empty($filters['statuses']) ? $filters['statuses'] : ['Active'];
+        $ph = implode(',', array_fill(0, count($statuses), '%s'));
+        $where[] = "s.standard_status IN ({$ph})";
+        $params  = array_merge($params, $statuses);
+
+        // Cities
+        $ph = implode(',', array_fill(0, count($cities), '%s'));
+        $where[] = "s.city IN ({$ph})";
+        $params  = array_merge($params, $cities);
+
+        // Sewer (requires JOIN to bme_listing_details)
+        if (!empty($filters['sewer_public_only'])) {
+            $join = "INNER JOIN {$wpdb->prefix}bme_listing_details d ON s.listing_id = d.listing_id";
+            $where[] = "d.sewer LIKE '%%Public Sewer%%'";
+        }
+
+        // Days on market range
+        if (!empty($filters['min_dom'])) {
+            $where[]  = "s.days_on_market >= %d";
+            $params[] = (int) $filters['min_dom'];
+        }
+        if (!empty($filters['max_dom'])) {
+            $where[]  = "s.days_on_market <= %d";
+            $params[] = (int) $filters['max_dom'];
+        }
+
+        // List date range
+        if (!empty($filters['list_date_from'])) {
+            $where[]  = "s.listing_contract_date >= %s";
+            $params[] = $filters['list_date_from'];
+        }
+        if (!empty($filters['list_date_to'])) {
+            $where[]  = "s.listing_contract_date <= %s";
+            $params[] = $filters['list_date_to'];
+        }
+
+        // Year built range
+        if (!empty($filters['year_built_min'])) {
+            $where[]  = "s.year_built >= %d";
+            $params[] = (int) $filters['year_built_min'];
+        }
+        if (!empty($filters['year_built_max'])) {
+            $where[]  = "s.year_built <= %d";
+            $params[] = (int) $filters['year_built_max'];
+        }
+
+        // Price range
+        if (!empty($filters['min_price'])) {
+            $where[]  = "s.list_price >= %f";
+            $params[] = (float) $filters['min_price'];
+        }
+        if (!empty($filters['max_price'])) {
+            $where[]  = "s.list_price <= %f";
+            $params[] = (float) $filters['max_price'];
+        }
+
+        // Sqft range
+        if (!empty($filters['min_sqft'])) {
+            $where[]  = "s.building_area_total >= %d";
+            $params[] = (int) $filters['min_sqft'];
+        }
+        if (!empty($filters['max_sqft'])) {
+            $where[]  = "s.building_area_total <= %d";
+            $params[] = (int) $filters['max_sqft'];
+        }
+
+        // Lot size
+        if (!empty($filters['min_lot_acres'])) {
+            $where[]  = "s.lot_size_acres >= %f";
+            $params[] = (float) $filters['min_lot_acres'];
+        }
+
+        // Beds / baths
+        if (!empty($filters['min_beds'])) {
+            $where[]  = "s.bedrooms_total >= %d";
+            $params[] = (int) $filters['min_beds'];
+        }
+        if (!empty($filters['min_baths'])) {
+            $where[]  = "s.bathrooms_total >= %f";
+            $params[] = (float) $filters['min_baths'];
+        }
+
+        // Garage
+        if (!empty($filters['has_garage'])) {
+            $where[] = "s.garage_spaces > 0";
+        }
+
+        $params[] = $limit;
+        $where_sql = implode(' AND ', $where);
+
+        // Query active listings
+        $results = $wpdb->get_results($wpdb->prepare(
+            "SELECT s.* FROM {$summary_table} s {$join}
+             WHERE {$where_sql}
+             ORDER BY s.list_price ASC
+             LIMIT %d",
             $params
         ));
+
+        // Also query archive table if Closed status is included
+        if (in_array('Closed', $statuses, true)) {
+            $archive_table = $wpdb->prefix . 'bme_listing_summary_archive';
+            $archive_join  = str_replace('bme_listing_details', 'bme_listing_details_archive', $join);
+            $archive_results = $wpdb->get_results($wpdb->prepare(
+                "SELECT s.* FROM {$archive_table} s {$archive_join}
+                 WHERE {$where_sql}
+                 ORDER BY s.list_price ASC
+                 LIMIT %d",
+                $params
+            ));
+            if ($archive_results) {
+                $results = array_merge($results, $archive_results);
+                // Re-sort by list_price and apply limit
+                usort($results, fn($a, $b) => (float) $a->list_price <=> (float) $b->list_price);
+                $results = array_slice($results, 0, $limit);
+            }
+        }
+
+        return $results;
     }
 
     /**

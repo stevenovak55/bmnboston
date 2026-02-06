@@ -26,6 +26,8 @@ class Flip_Admin_Dashboard {
         add_action('wp_ajax_flip_refresh_data', [__CLASS__, 'ajax_refresh_data']);
         add_action('wp_ajax_flip_update_cities', [__CLASS__, 'ajax_update_cities']);
         add_action('wp_ajax_flip_generate_pdf', [__CLASS__, 'ajax_generate_pdf']);
+        add_action('wp_ajax_flip_force_analyze', [__CLASS__, 'ajax_force_analyze']);
+        add_action('wp_ajax_flip_save_filters', [__CLASS__, 'ajax_save_filters']);
     }
 
     /**
@@ -79,10 +81,12 @@ class Flip_Admin_Dashboard {
 
         // Pass initial data to JS
         wp_localize_script('flip-dashboard', 'flipData', [
-            'ajaxUrl' => admin_url('admin-ajax.php'),
-            'nonce'   => wp_create_nonce('flip_dashboard'),
-            'siteUrl' => home_url(),
-            'data'    => self::get_dashboard_data(),
+            'ajaxUrl'          => admin_url('admin-ajax.php'),
+            'nonce'            => wp_create_nonce('flip_dashboard'),
+            'siteUrl'          => home_url(),
+            'data'             => self::get_dashboard_data(),
+            'filters'          => Flip_Database::get_analysis_filters(),
+            'propertySubTypes' => Flip_Database::get_available_property_sub_types(),
         ]);
     }
 
@@ -202,7 +206,8 @@ class Flip_Admin_Dashboard {
         set_time_limit(300);
 
         $messages = [];
-        $result = Flip_Analyzer::run([], function ($msg) use (&$messages) {
+        $filters = Flip_Database::get_analysis_filters();
+        $result = Flip_Analyzer::run(['filters' => $filters], function ($msg) use (&$messages) {
             $messages[] = $msg;
         });
 
@@ -284,6 +289,75 @@ class Flip_Admin_Dashboard {
         wp_send_json_success([
             'url'     => $pdf_url,
             'message' => 'PDF report generated.',
+        ]);
+    }
+
+    /**
+     * AJAX: Force full analysis on a single DQ'd property.
+     */
+    public static function ajax_force_analyze(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $listing_id = isset($_POST['listing_id']) ? (int) $_POST['listing_id'] : 0;
+        if ($listing_id <= 0) {
+            wp_send_json_error('Invalid listing ID.');
+        }
+
+        set_time_limit(120);
+
+        // Use latest run_date so the result groups with the current batch
+        global $wpdb;
+        $table    = Flip_Database::table_name();
+        $run_date = $wpdb->get_var("SELECT MAX(run_date) FROM {$table}");
+
+        $result = Flip_Analyzer::force_analyze_single($listing_id, $run_date);
+
+        if (!empty($result['error'])) {
+            wp_send_json_error($result['error']);
+        }
+
+        // Fetch the fresh row and format for JS
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$table} WHERE listing_id = %d AND run_date = %s",
+            $listing_id, $run_date
+        ));
+
+        if (!$row) {
+            wp_send_json_error('Analysis completed but result not found in database.');
+        }
+
+        wp_send_json_success([
+            'result'  => self::format_result($row),
+            'message' => 'Full analysis complete (DQ bypassed). Score: ' . $result['total_score'],
+        ]);
+    }
+
+    /**
+     * AJAX: Save analysis filters.
+     */
+    public static function ajax_save_filters(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $raw = isset($_POST['filters']) ? wp_unslash($_POST['filters']) : '{}';
+        $filters = json_decode($raw, true);
+
+        if (!is_array($filters)) {
+            wp_send_json_error('Invalid filter data.');
+        }
+
+        Flip_Database::set_analysis_filters($filters);
+
+        wp_send_json_success([
+            'filters' => Flip_Database::get_analysis_filters(),
+            'message' => 'Analysis filters saved.',
         ]);
     }
 

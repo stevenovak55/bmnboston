@@ -31,6 +31,9 @@
             console.error('[FlipDashboard] Init error:', e);
         }
 
+        // Analysis filters panel
+        initAnalysisFilters();
+
         // Event handlers - use delegation on tbody for dynamic rows
         var $tbody = $('#flip-results-body');
         $tbody.on('click', '.flip-toggle', function (e) {
@@ -42,12 +45,18 @@
             if ($(e.target).closest('.flip-toggle').length) return;
             if ($(e.target).closest('a').length) return;
             if ($(e.target).closest('.flip-pdf-btn').length) return;
+            if ($(e.target).closest('.flip-force-btn').length) return;
             toggleRow($(this).find('.flip-toggle'));
         });
         $(document).on('click', '.flip-pdf-btn', function (e) {
             e.preventDefault();
             e.stopPropagation();
             generatePDF($(this));
+        });
+        $(document).on('click', '.flip-force-btn', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            forceAnalyze($(this));
         });
 
         $('#flip-run-analysis').on('click', runAnalysis);
@@ -63,6 +72,153 @@
             applyFilters();
         });
     });
+
+    // ── Analysis Filters Panel ────────────────────────
+
+    function initAnalysisFilters() {
+        var filters = flipData.filters || {};
+        var subTypes = flipData.propertySubTypes || [];
+
+        // Build property sub type checkboxes
+        var $container = $('#flip-af-subtypes');
+        var checked = filters.property_sub_types || ['Single Family Residence'];
+        subTypes.forEach(function (st) {
+            var isChecked = checked.indexOf(st) !== -1 ? ' checked' : '';
+            $container.append('<label><input type="checkbox" name="af-subtype" value="' + escapeHtml(st) + '"' + isChecked + '> ' + escapeHtml(st) + '</label>');
+        });
+
+        // Populate status checkboxes
+        var statuses = filters.statuses || ['Active'];
+        $('input[name="af-status"]').each(function () {
+            $(this).prop('checked', statuses.indexOf($(this).val()) !== -1);
+        });
+
+        // Populate range inputs
+        $('#af-min-price').val(filters.min_price || '');
+        $('#af-max-price').val(filters.max_price || '');
+        $('#af-min-sqft').val(filters.min_sqft || '');
+        $('#af-max-sqft').val(filters.max_sqft || '');
+        $('#af-year-min').val(filters.year_built_min || '');
+        $('#af-year-max').val(filters.year_built_max || '');
+        $('#af-min-dom').val(filters.min_dom || '');
+        $('#af-max-dom').val(filters.max_dom || '');
+        $('#af-list-from').val(filters.list_date_from || '');
+        $('#af-list-to').val(filters.list_date_to || '');
+        $('#af-min-beds').val(filters.min_beds || '');
+        $('#af-min-baths').val(filters.min_baths || '');
+        $('#af-min-lot').val(filters.min_lot_acres || '');
+
+        // Populate boolean checkboxes
+        $('#af-sewer-public').prop('checked', !!filters.sewer_public_only);
+        $('#af-has-garage').prop('checked', !!filters.has_garage);
+
+        // Toggle panel
+        $('#flip-af-toggle').on('click', function () {
+            var $body = $('#flip-af-body');
+            var $arrow = $(this).find('.flip-af-arrow');
+            $body.slideToggle(200);
+            $arrow.toggleClass('flip-af-arrow-open');
+        });
+
+        // Save filters
+        $('#flip-save-filters').on('click', saveAnalysisFilters);
+
+        // Reset filters
+        $('#flip-reset-filters').on('click', resetAnalysisFilters);
+    }
+
+    function collectAnalysisFilters() {
+        var filters = {};
+
+        // Property sub types
+        filters.property_sub_types = [];
+        $('input[name="af-subtype"]:checked').each(function () {
+            filters.property_sub_types.push($(this).val());
+        });
+        if (filters.property_sub_types.length === 0) {
+            filters.property_sub_types = ['Single Family Residence'];
+        }
+
+        // Statuses
+        filters.statuses = [];
+        $('input[name="af-status"]:checked').each(function () {
+            filters.statuses.push($(this).val());
+        });
+        if (filters.statuses.length === 0) {
+            filters.statuses = ['Active'];
+        }
+
+        // Range values
+        filters.min_price = $('#af-min-price').val() || null;
+        filters.max_price = $('#af-max-price').val() || null;
+        filters.min_sqft = $('#af-min-sqft').val() || null;
+        filters.max_sqft = $('#af-max-sqft').val() || null;
+        filters.year_built_min = $('#af-year-min').val() || null;
+        filters.year_built_max = $('#af-year-max').val() || null;
+        filters.min_dom = $('#af-min-dom').val() || null;
+        filters.max_dom = $('#af-max-dom').val() || null;
+        filters.list_date_from = $('#af-list-from').val() || null;
+        filters.list_date_to = $('#af-list-to').val() || null;
+        filters.min_beds = $('#af-min-beds').val() || null;
+        filters.min_baths = $('#af-min-baths').val() || null;
+        filters.min_lot_acres = $('#af-min-lot').val() || null;
+
+        // Booleans
+        filters.sewer_public_only = $('#af-sewer-public').is(':checked');
+        filters.has_garage = $('#af-has-garage').is(':checked');
+
+        return filters;
+    }
+
+    function saveAnalysisFilters() {
+        var filters = collectAnalysisFilters();
+        var $status = $('#flip-af-status');
+        $status.text('Saving...').css('color', '#666').show();
+
+        $.ajax({
+            url: flipData.ajaxUrl,
+            method: 'POST',
+            data: {
+                action: 'flip_save_filters',
+                nonce: flipData.nonce,
+                filters: JSON.stringify(filters),
+            },
+            success: function (response) {
+                if (response.success) {
+                    flipData.filters = response.data.filters;
+                    $status.text('Filters saved.').css('color', '#00a32a');
+                } else {
+                    $status.text('Error: ' + (response.data || 'Unknown')).css('color', '#cc1818');
+                }
+                setTimeout(function () { $status.fadeOut(); }, 3000);
+            },
+            error: function () {
+                $status.text('Request failed.').css('color', '#cc1818');
+                setTimeout(function () { $status.fadeOut(); }, 3000);
+            }
+        });
+    }
+
+    function resetAnalysisFilters() {
+        // Reset checkboxes: only SFR checked
+        $('input[name="af-subtype"]').prop('checked', false);
+        $('input[name="af-subtype"][value="Single Family Residence"]').prop('checked', true);
+
+        // Reset status: only Active checked
+        $('input[name="af-status"]').prop('checked', false);
+        $('input[name="af-status"][value="Active"]').prop('checked', true);
+
+        // Clear all range inputs
+        $('#af-min-price, #af-max-price, #af-min-sqft, #af-max-sqft').val('');
+        $('#af-year-min, #af-year-max, #af-min-dom, #af-max-dom').val('');
+        $('#af-list-from, #af-list-to, #af-min-beds, #af-min-baths, #af-min-lot').val('');
+
+        // Reset booleans
+        $('#af-sewer-public, #af-has-garage').prop('checked', false);
+
+        // Auto-save the defaults
+        saveAnalysisFilters();
+    }
 
     // ── Summary Stats ──────────────────────────────
 
@@ -341,8 +497,14 @@
     function buildDetailRow(r) {
         var html = '<tr class="flip-detail-row"><td colspan="12">';
 
-        // Toolbar with PDF button
+        // Toolbar with PDF button + Force Analyze for DQ rows
+        var forceBtn = r.disqualified
+            ? '<button class="button button-small flip-force-btn" data-listing="' + r.listing_id + '">'
+              + '<span class="dashicons dashicons-update"></span> Force Full Analysis'
+              + '</button>'
+            : '';
         html += '<div class="flip-detail-toolbar">'
+            + forceBtn
             + '<button class="button button-small flip-pdf-btn" data-listing="' + r.listing_id + '">'
             + '<span class="dashicons dashicons-pdf"></span> Download PDF Report'
             + '</button></div>';
@@ -940,6 +1102,52 @@
                 $btn.prop('disabled', false).html('<span class="dashicons dashicons-pdf"></span> Download PDF Report');
                 if (pdfWindow) pdfWindow.close();
                 alert('PDF generation failed: ' + status + (err ? ' - ' + err : ''));
+            }
+        });
+    }
+
+    // ── Force Analyze (DQ bypass) ───────────────────
+
+    function forceAnalyze($btn) {
+        var listingId = $btn.data('listing');
+        if (!confirm('Run full analysis on MLS# ' + listingId + ', bypassing disqualification?')) return;
+
+        $btn.prop('disabled', true).text('Analyzing...');
+
+        $.ajax({
+            url: flipData.ajaxUrl,
+            method: 'POST',
+            timeout: 120000,
+            data: {
+                action: 'flip_force_analyze',
+                nonce: flipData.nonce,
+                listing_id: listingId,
+            },
+            success: function (response) {
+                if (response.success) {
+                    var newResult = response.data.result;
+                    var idx = -1;
+                    for (var i = 0; i < dashData.results.length; i++) {
+                        if (dashData.results[i].listing_id === newResult.listing_id) {
+                            idx = i;
+                            break;
+                        }
+                    }
+                    if (idx !== -1) {
+                        dashData.results[idx] = newResult;
+                    } else {
+                        dashData.results.push(newResult);
+                    }
+                    applyFilters();
+                    alert('Analysis complete. Score: ' + newResult.total_score.toFixed(1));
+                } else {
+                    $btn.prop('disabled', false).html('<span class="dashicons dashicons-update"></span> Force Full Analysis');
+                    alert('Error: ' + (response.data || 'Unknown error'));
+                }
+            },
+            error: function (xhr, status) {
+                $btn.prop('disabled', false).html('<span class="dashicons dashicons-update"></span> Force Full Analysis');
+                alert('Request failed: ' + status);
             }
         });
     }

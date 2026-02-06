@@ -177,6 +177,79 @@ class Flip_Database {
     }
 
     /**
+     * Get saved analysis filters (merged with defaults).
+     */
+    public static function get_analysis_filters(): array {
+        $defaults = [
+            'property_sub_types' => ['Single Family Residence'],
+            'statuses'           => ['Active'],
+            'sewer_public_only'  => false,
+            'min_dom'            => null,
+            'max_dom'            => null,
+            'list_date_from'     => null,
+            'list_date_to'       => null,
+            'year_built_min'     => null,
+            'year_built_max'     => null,
+            'min_price'          => null,
+            'max_price'          => null,
+            'min_sqft'           => null,
+            'max_sqft'           => null,
+            'min_lot_acres'      => null,
+            'min_beds'           => null,
+            'min_baths'          => null,
+            'has_garage'         => false,
+        ];
+
+        $saved = get_option('bmn_flip_analysis_filters', '{}');
+        $saved = json_decode($saved, true) ?: [];
+
+        return array_merge($defaults, $saved);
+    }
+
+    /**
+     * Save analysis filters.
+     */
+    public static function set_analysis_filters(array $filters): void {
+        // Sanitize arrays
+        if (isset($filters['property_sub_types']) && is_array($filters['property_sub_types'])) {
+            $filters['property_sub_types'] = array_values(array_map('sanitize_text_field', $filters['property_sub_types']));
+        }
+        if (isset($filters['statuses']) && is_array($filters['statuses'])) {
+            $allowed = ['Active', 'Active Under Contract', 'Pending', 'Closed'];
+            $filters['statuses'] = array_values(array_intersect(array_map('sanitize_text_field', $filters['statuses']), $allowed));
+        }
+
+        // Sanitize scalars
+        $filters['sewer_public_only'] = !empty($filters['sewer_public_only']);
+        $filters['has_garage']        = !empty($filters['has_garage']);
+
+        foreach (['min_dom', 'max_dom', 'year_built_min', 'year_built_max', 'min_sqft', 'max_sqft', 'min_beds'] as $int_key) {
+            $filters[$int_key] = isset($filters[$int_key]) && $filters[$int_key] !== '' ? (int) $filters[$int_key] : null;
+        }
+        foreach (['min_price', 'max_price', 'min_lot_acres', 'min_baths'] as $float_key) {
+            $filters[$float_key] = isset($filters[$float_key]) && $filters[$float_key] !== '' ? (float) $filters[$float_key] : null;
+        }
+        foreach (['list_date_from', 'list_date_to'] as $date_key) {
+            $filters[$date_key] = !empty($filters[$date_key]) ? sanitize_text_field($filters[$date_key]) : null;
+        }
+
+        update_option('bmn_flip_analysis_filters', json_encode($filters));
+    }
+
+    /**
+     * Get distinct residential property sub types from the database.
+     */
+    public static function get_available_property_sub_types(): array {
+        global $wpdb;
+        $table = $wpdb->prefix . 'bme_listing_summary';
+        return $wpdb->get_col(
+            "SELECT DISTINCT property_sub_type FROM {$table}
+             WHERE property_type = 'Residential' AND property_sub_type IS NOT NULL AND property_sub_type != ''
+             ORDER BY property_sub_type"
+        );
+    }
+
+    /**
      * Insert or update a flip score result.
      */
     public static function upsert_result(array $data): int {

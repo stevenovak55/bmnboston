@@ -77,6 +77,105 @@ if (!defined('ABSPATH')) {
         </div>
     </div>
 
+    <!-- Analysis Filters -->
+    <div class="flip-card flip-af-card">
+        <div class="flip-card-header flip-af-header" id="flip-af-toggle">
+            <h2><span class="dashicons dashicons-filter"></span> Analysis Filters</h2>
+            <span class="flip-af-arrow dashicons dashicons-arrow-down-alt2"></span>
+        </div>
+        <div class="flip-card-body flip-af-body" id="flip-af-body" style="display:none;">
+            <div class="flip-af-grid">
+
+                <!-- Row 1: Property Type + Status -->
+                <div class="flip-af-field">
+                    <label>Property Sub Type</label>
+                    <div id="flip-af-subtypes" class="flip-af-checks"></div>
+                </div>
+                <div class="flip-af-field">
+                    <label>Status</label>
+                    <div class="flip-af-checks">
+                        <label><input type="checkbox" name="af-status" value="Active"> Active</label>
+                        <label><input type="checkbox" name="af-status" value="Active Under Contract"> Under Contract</label>
+                        <label><input type="checkbox" name="af-status" value="Pending"> Pending</label>
+                        <label><input type="checkbox" name="af-status" value="Closed"> Closed</label>
+                    </div>
+                </div>
+
+                <!-- Row 2: Price + Sqft + Year Built -->
+                <div class="flip-af-field">
+                    <label>Price Range</label>
+                    <div class="flip-af-range">
+                        <input type="number" id="af-min-price" placeholder="Min" step="10000">
+                        <span>to</span>
+                        <input type="number" id="af-max-price" placeholder="Max" step="10000">
+                    </div>
+                </div>
+                <div class="flip-af-field">
+                    <label>Sqft Range</label>
+                    <div class="flip-af-range">
+                        <input type="number" id="af-min-sqft" placeholder="Min">
+                        <span>to</span>
+                        <input type="number" id="af-max-sqft" placeholder="Max">
+                    </div>
+                </div>
+                <div class="flip-af-field">
+                    <label>Year Built</label>
+                    <div class="flip-af-range">
+                        <input type="number" id="af-year-min" placeholder="Min" min="1800" max="2030">
+                        <span>to</span>
+                        <input type="number" id="af-year-max" placeholder="Max" min="1800" max="2030">
+                    </div>
+                </div>
+
+                <!-- Row 3: DOM + List Date + Beds/Baths -->
+                <div class="flip-af-field">
+                    <label>Days on Market</label>
+                    <div class="flip-af-range">
+                        <input type="number" id="af-min-dom" placeholder="Min" min="0">
+                        <span>to</span>
+                        <input type="number" id="af-max-dom" placeholder="Max">
+                    </div>
+                </div>
+                <div class="flip-af-field">
+                    <label>List Date Range</label>
+                    <div class="flip-af-range">
+                        <input type="date" id="af-list-from">
+                        <span>to</span>
+                        <input type="date" id="af-list-to">
+                    </div>
+                </div>
+                <div class="flip-af-field">
+                    <label>Min Beds / Baths</label>
+                    <div class="flip-af-range">
+                        <input type="number" id="af-min-beds" placeholder="Beds" min="0" max="10">
+                        <input type="number" id="af-min-baths" placeholder="Baths" min="0" max="10" step="0.5">
+                    </div>
+                </div>
+
+                <!-- Row 4: Checkboxes + Lot -->
+                <div class="flip-af-field">
+                    <label>Additional</label>
+                    <div class="flip-af-checks">
+                        <label><input type="checkbox" id="af-sewer-public"> Public Sewer Only</label>
+                        <label><input type="checkbox" id="af-has-garage"> Has Garage</label>
+                    </div>
+                </div>
+                <div class="flip-af-field">
+                    <label>Min Lot Size (acres)</label>
+                    <input type="number" id="af-min-lot" placeholder="Min acres" step="0.01" min="0">
+                </div>
+            </div>
+
+            <div class="flip-af-actions">
+                <button id="flip-save-filters" class="button button-primary">
+                    <span class="dashicons dashicons-saved"></span> Save Filters
+                </button>
+                <button id="flip-reset-filters" class="button">Reset to Defaults</button>
+                <span id="flip-af-status" class="flip-af-status"></span>
+            </div>
+        </div>
+    </div>
+
     <!-- City Breakdown Chart -->
     <div class="flip-card">
         <div class="flip-card-header">

@@ -1,11 +1,22 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.8.0
+**Current Version:** 0.10.0
 **Last Updated:** 2026-02-06
 
 ## Overview
 
 Standalone WordPress plugin that identifies Single Family Residence flip candidates by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates.
+
+**v0.10.0 Enhancements (Pre-Analysis Filters + Force Analyze + PDF v2):**
+- Configurable pre-analysis filters: 17 filters applied at SQL level before analysis runs
+- Filter schema stored as WP option `bmn_flip_analysis_filters` (JSON), persistent across sessions
+- Filters: property sub type (dynamic multi-select), status (Active/Under Contract/Pending/Closed), price range, sqft range, year built range, DOM range, list date range, min beds, min baths, min lot acres, public sewer only (JOIN to bme_listing_details), has garage
+- Closed status queries `bme_listing_summary_archive` via UNION
+- Collapsible "Analysis Filters" panel on dashboard with save/reset
+- CLI filter override flags: `--property-type`, `--status`, `--sewer-public-only`, `--min-dom`, `--max-dom`, `--list-date-from`, `--list-date-to`, `--year-min`, `--year-max`, `--min-price`, `--max-price`, `--min-sqft`, `--min-beds`, `--min-baths`
+- Force Analyze button on DQ'd property rows: bypasses all disqualification checks, runs full pipeline
+- `force_analyze_single()` public method on Flip_Analyzer
+- PDF report v2: photo thumbnail strip, circular score gauge, stacked bar chart, sensitivity line chart, comp photo cards
 
 **v0.8.0 Enhancements (ARV & Financial Model Overhaul):**
 - ARV accuracy: sqft adjustment threshold 10%→5%, P90 neighborhood ceiling (was MAX), reno weight 2.0→1.3
@@ -60,6 +71,7 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 - **Standalone plugin** — separate from MLS Listings Display
 - **Two-pass workflow** — Pass 1: data scoring (no API calls), Pass 2: photo analysis (top 50 only)
 - **Configurable target cities** — stored in WP option `bmn_flip_target_cities`
+- **Configurable analysis filters** — stored in WP option `bmn_flip_analysis_filters` (JSON)
 - **Results table** — `wp_bmn_flip_scores` stores all analysis data
 - **WP-CLI interface** — `wp flip analyze`, `wp flip results`, etc.
 
@@ -99,16 +111,23 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 - Thresholds: `applied_thresholds_json` (v0.7.0)
 
 **Source tables (from BME/MLD):**
-- `bme_listing_summary` — active SFR listings
-- `bme_listing_summary_archive` — sold comps for ARV
-- `bme_listing_details` — public remarks
+- `bme_listing_summary` — active listings (filtered by analysis filters)
+- `bme_listing_summary_archive` — sold comps for ARV + Closed status listings when selected
+- `bme_listing_details` — public remarks + sewer data (JOIN when sewer filter active)
 - `bme_listing_financial` — property taxes
 - `bme_media` — property photos (Pass 2)
+
+**WP Options:**
+- `bmn_flip_target_cities` — JSON array of city names
+- `bmn_flip_analysis_filters` — JSON object with 17 filter fields (see Filter Schema below)
 
 ## WP-CLI Commands
 
 ```bash
-wp flip analyze [--limit=500] [--city=Reading,Melrose]
+wp flip analyze [--limit=500] [--city=Reading,Melrose] [--property-type=Single Family Residence,Condominium]
+    [--status=Active,Pending] [--sewer-public-only] [--min-dom=30] [--max-dom=180]
+    [--list-date-from=2025-07-01] [--list-date-to=2025-08-01] [--year-min=1950] [--year-max=2000]
+    [--min-price=200000] [--max-price=600000] [--min-sqft=800] [--min-beds=2] [--min-baths=1]
 wp flip results [--top=20] [--min-score=60] [--city=Reading] [--sort=total_score] [--format=table|json|csv]
 wp flip property <listing_id> [--verbose]
 wp flip summary
@@ -116,6 +135,8 @@ wp flip config --list-cities | --add-city=Woburn | --remove-city=Burlington
 wp flip clear [--older-than=30] [--all] [--yes]
 wp flip analyze_photos [--top=50] [--min-score=40]  # Pass 2: Claude Vision photo analysis
 ```
+
+**Note:** CLI flags override saved filters for that run only (don't persist).
 
 ## Scoring Weights
 
@@ -266,18 +287,22 @@ Uses Claude Vision API (`claude-sonnet-4-5-20250929`) to analyze up to 5 photos 
 | 3.5 - ARV & Financial Overhaul | Complete | Comp adjustments, financing model, market signals |
 | 3.7 - Market-Adaptive Thresholds | Complete | Adaptive DQ thresholds, near-viable category |
 | 3.8 - ARV & Financial Overhaul | Complete | ARV fixes, financial model v2, risk analysis |
-| 4 - iOS | Pending | SwiftUI views, ViewModel, API |
-| 5 - Polish | Pending | Testing, weight tuning |
+| 3.9 - PDF Report v2 | Complete | Photo strips, charts, comp cards, visual redesign |
+| 4.0 - Analysis Filters + Force Analyze | Complete | 17 pre-analysis filters, force DQ bypass, CLI flags |
+| 5 - iOS | Pending | SwiftUI views, ViewModel, API |
+| 6 - Polish | Pending | Testing, weight tuning |
 
 See `DEVELOPMENT.md` for detailed progress tracking.
 
-## Admin Dashboard (v0.7.0)
+## Admin Dashboard (v0.10.0)
 
 Access via **Flip Analyzer** in the WordPress admin sidebar menu.
 
 **Features:**
 - Summary stat cards (total, viable, avg score, avg ROI, near-viable, disqualified)
 - Chart.js grouped bar chart: viable vs disqualified per city
+- Target cities management with add/remove tags
+- **Analysis Filters panel** (collapsible): 17 pre-analysis filters with save/reset
 - Client-side filters: city dropdown, min score slider, sort, show viable/all/near-viable/DQ
 - Results table with expandable rows showing:
   - Score breakdown with weighted bars
@@ -287,14 +312,49 @@ Access via **Flip Analyzer** in the WordPress admin sidebar menu.
   - Comps table with adjusted prices and adjustment breakdown on hover
   - ARV projections with $250/sqft MA addition cost and financing model
   - Photo analysis results and remarks signals
-- "Run Analysis" button — triggers Pass 1 via AJAX (1-3 min)
+  - **Force Full Analysis** button on DQ'd rows (bypasses disqualification)
+- "Run Analysis" button — triggers Pass 1 via AJAX (1-3 min), uses saved filters
 - "Run Photo Analysis" button — triggers Pass 2 via AJAX (1-5 min)
 - "Export CSV" — downloads currently filtered results with all financial columns
 
 **AJAX Actions:**
-- `flip_run_analysis` — runs `Flip_Analyzer::run()` with 5-min timeout
+- `flip_run_analysis` — runs `Flip_Analyzer::run()` with saved filters, 5-min timeout
 - `flip_run_photo_analysis` — runs `Flip_Photo_Analyzer::analyze_top_candidates()` with 10-min timeout
 - `flip_refresh_data` — reloads dashboard data without re-running analysis
+- `flip_force_analyze` — runs `Flip_Analyzer::force_analyze_single()` on a DQ'd property
+- `flip_save_filters` — saves analysis filters via `Flip_Database::set_analysis_filters()`
+
+## Analysis Filter Schema (v0.10.0)
+
+Stored as WP option `bmn_flip_analysis_filters` (JSON). Defaults: SFR + Active only.
+
+```php
+[
+    'property_sub_types' => ['Single Family Residence'],  // dynamic multi-select from DB
+    'statuses'           => ['Active'],                    // Active, Active Under Contract, Pending, Closed
+    'sewer_public_only'  => false,                         // requires JOIN to bme_listing_details
+    'min_dom'            => null,                          // int|null
+    'max_dom'            => null,                          // int|null
+    'list_date_from'     => null,                          // 'YYYY-MM-DD'|null
+    'list_date_to'       => null,                          // 'YYYY-MM-DD'|null
+    'year_built_min'     => null,                          // int|null
+    'year_built_max'     => null,                          // int|null
+    'min_price'          => null,                          // float|null
+    'max_price'          => null,                          // float|null
+    'min_sqft'           => null,                          // int|null
+    'max_sqft'           => null,                          // int|null
+    'min_lot_acres'      => null,                          // float|null
+    'min_beds'           => null,                          // int|null
+    'min_baths'          => null,                          // float|null
+    'has_garage'         => false,                         // bool
+]
+```
+
+**Important implementation notes:**
+- Sewer data is in `bme_listing_details` (JSON array: `["Public Sewer"]`), requires INNER JOIN + `LIKE '%%Public Sewer%%'`
+- Closed listings are in `bme_listing_summary_archive`, not `bme_listing_summary`. When statuses include 'Closed', a separate query runs against the archive table and results are merged.
+- Available property_sub_types are queried dynamically from `bme_listing_summary` via `Flip_Database::get_available_property_sub_types()`
+- CLI flags override saved filters for that run only (don't persist)
 
 ## Known Issues (v0.3.1)
 

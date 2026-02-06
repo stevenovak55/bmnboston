@@ -2,9 +2,19 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies Single Family Residence flip candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis.
- * Version: 0.9.0
+ * Version: 0.10.0
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.9.1 - Sleeker PDF with Photos & Charts
+ * - Photo thumbnail strip on cover page (5 photos from bme_media)
+ * - Circular score gauge replaces plain text total score
+ * - Horizontal stacked bar chart comparing Cash vs Hard Money costs
+ * - Sensitivity line chart (profit across 85%-110% ARV scenarios)
+ * - Comparable photo cards with adjustment badges (replaces plain table)
+ * - Blue background band on section headers
+ * - Card shadows for depth effect
+ * - Larger font hierarchy (18pt values, 12pt score bars)
  *
  * Version 0.9.0 - Investor-Grade PDF Report Redesign
  * - Full visual rewrite of PDF report generator
@@ -93,7 +103,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.9.0');
+define('FLIP_VERSION', '0.10.0');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 

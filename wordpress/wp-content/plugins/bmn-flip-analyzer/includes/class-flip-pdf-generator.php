@@ -13,6 +13,10 @@
  * - Score bars with rounded ends
  * - Card-based section grouping with accent bars
  *
+ * v0.9.1 enhancements: photo strip, score gauge, financial bar chart,
+ * sensitivity line chart, comparable photo cards, blue section headers,
+ * card shadows, larger fonts.
+ *
  * @package BMN_Flip_Analyzer
  * @since 0.9.0
  */
@@ -235,8 +239,13 @@ class Flip_PDF_Generator {
             $this->draw_badge($badge_x + 4, $badge_y, 'LEAD PAINT (Pre-1978)', [180, 130, 30]);
         }
 
+        // Photo thumbnail strip
+        $photos = $this->fetch_property_photos($d['listing_id']);
+        $strip_y = max($this->pdf->GetY() + 4, $badge_y + 16);
+        $after_strip_y = $this->render_photo_strip($photos, $strip_y);
+
         // 6 metric cards — 3 columns x 2 rows
-        $metrics_y = max($this->pdf->GetY() + 5, $badge_y + 16);
+        $metrics_y = $after_strip_y + 2;
         $this->pdf->SetY($metrics_y);
 
         $cards = [
@@ -279,17 +288,26 @@ class Flip_PDF_Generator {
         // Total score hero
         $this->add_section_header('Score Breakdown');
 
-        $total_color = $this->get_score_color($d['total_score']);
-        $this->pdf->SetFont('helvetica', 'B', 11);
+        // Score gauge (left) with label (right)
+        $gauge_y = $this->pdf->GetY();
+        $this->render_score_gauge($d['total_score'], self::LM + 24, $gauge_y + 20, 16);
+
+        $this->pdf->SetFont('helvetica', 'B', 12);
         $this->set_color($this->gray);
-        $this->pdf->Cell(40, 8, 'TOTAL SCORE', 0, 0, 'L');
-        $this->pdf->SetFont('helvetica', 'B', 22);
-        $this->set_color($total_color);
-        $this->pdf->Cell(30, 8, number_format($d['total_score'], 1), 0, 0, 'L');
-        $this->pdf->SetFont('helvetica', '', 10);
+        $this->pdf->SetXY(self::LM + 48, $gauge_y + 10);
+        $this->pdf->Cell(60, 6, 'TOTAL SCORE', 0, 1, 'L');
+
+        $grade = $d['deal_risk_grade'] ?? '--';
+        $gc = $this->get_risk_color($grade);
+        $this->pdf->SetXY(self::LM + 48, $gauge_y + 18);
+        $this->pdf->SetFont('helvetica', '', 9);
         $this->set_color($this->gray);
-        $this->pdf->Cell(40, 8, '/ 100', 0, 1, 'L');
-        $this->pdf->Ln(4);
+        $this->pdf->Cell(22, 5, 'Risk Grade:', 0, 0, 'L');
+        $this->pdf->SetFont('helvetica', 'B', 13);
+        $this->set_color($gc);
+        $this->pdf->Cell(10, 5, $grade, 0, 1, 'L');
+
+        $this->pdf->SetY($gauge_y + 42);
 
         // Score card
         $card_y = $this->pdf->GetY();
@@ -452,11 +470,10 @@ class Flip_PDF_Generator {
         $this->pdf->SetXY(self::LM + 6, $mao_y + 3);
         $this->pdf->SetFont('helvetica', '', 9);
         $this->set_color($this->gray);
-        $this->pdf->Cell($half_w - 10, 5, 'MAO (70% Rule)', 0, 0, 'L');
+        $this->pdf->Cell($half_w - 10, 5, 'MAO (70% Rule)', 0, 1, 'L');
+        $this->pdf->SetXY(self::LM + 6, $mao_y + 9);
         $this->pdf->SetFont('helvetica', 'B', 14);
         $this->set_color($this->primary);
-        $this->pdf->Cell($half_w - 10, 5, '', 0, 0, 'L');
-        $this->pdf->SetXY(self::LM + 6, $mao_y + 9);
         $this->pdf->Cell($half_w - 10, 7, '$' . number_format($d['mao']), 0, 0, 'L');
 
         $adj_mao = $d['mao'] - ($d['holding_costs'] ?? 0) - ($d['financing_costs'] ?? 0);
@@ -472,7 +489,7 @@ class Flip_PDF_Generator {
         $this->pdf->SetY($mao_y + 24);
 
         // Breakeven ARV callout
-        if ($d['breakeven_arv'] > 0) {
+        if ($d['breakeven_arv'] > 0 && $d['estimated_arv'] > 0) {
             $margin_pct = (($d['estimated_arv'] - $d['breakeven_arv']) / $d['estimated_arv']) * 100;
             $margin_color = $margin_pct >= 10 ? $this->success : ($margin_pct >= 0 ? $this->warning : $this->danger);
 
@@ -484,6 +501,12 @@ class Flip_PDF_Generator {
                 $be_y
             );
         }
+
+        // Financial bar chart — add to new page if not enough room
+        if ($this->pdf->GetY() > 200) {
+            $this->pdf->AddPage();
+        }
+        $this->render_financial_bar_chart($this->pdf->GetY() + 4);
     }
 
     // ─── PAGE 4: RISK & SENSITIVITY ────────────────────────────────
@@ -577,7 +600,11 @@ class Flip_PDF_Generator {
             $this->pdf->Ln();
         }
 
-        $this->pdf->Ln(8);
+        $this->pdf->Ln(4);
+
+        // Sensitivity line chart
+        $this->add_subsection_header('Profit vs ARV Scenario');
+        $this->render_sensitivity_chart($this->pdf->GetY());
 
         // Market-Adaptive Thresholds
         $thresholds = $d['applied_thresholds'] ?? null;
@@ -606,115 +633,68 @@ class Flip_PDF_Generator {
         $this->pdf->AddPage();
         $this->add_section_header('Comparable Sales (' . count($comps) . ' comps)');
 
-        // Main table
-        $cols = [58, 28, 30, 22, 22, 32];
-        $headers = ['Address', 'Sold Price', 'Adj. Price', '$/SqFt', 'Distance', 'Close Date'];
-
-        $this->render_styled_table_header($cols, $headers);
-
-        $this->pdf->SetFont('helvetica', '', 8.5);
+        // Average $/sqft summary
         $total_ppsf = 0;
         $ppsf_count = 0;
-
-        foreach ($comps as $ci => $c) {
-            // Page break check
-            if ($this->pdf->GetY() > 240) {
-                $this->pdf->AddPage();
-                $this->render_styled_table_header($cols, $headers);
-                $this->pdf->SetFont('helvetica', '', 8.5);
-            }
-
-            $is_zebra = ($ci % 2 === 1);
-            if ($is_zebra) {
-                $this->pdf->SetFillColor($this->zebra[0], $this->zebra[1], $this->zebra[2]);
-            }
-
-            $this->set_text_color();
-            $addr = $c['address'] ?? 'Unknown';
-            if (strlen($addr) > 33) $addr = substr($addr, 0, 31) . '...';
-            $this->pdf->Cell($cols[0], 7, $addr, 0, 0, 'L', $is_zebra);
-
-            $close_price = $c['close_price'] ?? 0;
-            $this->pdf->Cell($cols[1], 7, '$' . number_format($close_price), 0, 0, 'R', $is_zebra);
-
-            $adj_price = $c['adjusted_price'] ?? $close_price;
-            $adj_diff = ($c['total_adjustment'] ?? 0);
-            if ($adj_diff > 0) $this->set_color($this->success);
-            elseif ($adj_diff < 0) $this->set_color($this->danger);
-            else $this->set_text_color();
-            $this->pdf->Cell($cols[2], 7, '$' . number_format($adj_price), 0, 0, 'R', $is_zebra);
-
-            $this->set_text_color();
+        foreach ($comps as $c) {
             $ppsf = $c['adjusted_ppsf'] ?? $c['ppsf'] ?? 0;
-            $this->pdf->Cell($cols[3], 7, $ppsf > 0 ? '$' . number_format($ppsf) : '--', 0, 0, 'R', $is_zebra);
             if ($ppsf > 0) { $total_ppsf += $ppsf; $ppsf_count++; }
-
-            $dist = $c['distance_miles'] ?? 0;
-            $this->pdf->Cell($cols[4], 7, $dist > 0 ? number_format($dist, 2) . ' mi' : '--', 0, 0, 'R', $is_zebra);
-            $this->pdf->Cell($cols[5], 7, $c['close_date'] ?? '--', 0, 0, 'R', $is_zebra);
-            $this->pdf->Ln();
         }
-
-        // Summary row
         if ($ppsf_count > 0) {
             $avg_ppsf = $total_ppsf / $ppsf_count;
-            $this->pdf->SetDrawColor(180, 180, 180);
-            $this->pdf->SetLineWidth(0.3);
-            $y = $this->pdf->GetY();
-            $this->pdf->Line(self::LM, $y, self::LM + self::PW, $y);
-            $this->pdf->SetFont('helvetica', 'B', 9);
-            $this->set_text_color();
-            $this->pdf->Cell(self::PW, 7, 'Average Comp $/SqFt: $' . number_format($avg_ppsf), 0, 1, 'L');
+            $this->pdf->SetFont('helvetica', '', 10);
+            $this->set_color($this->gray);
+            $this->pdf->Cell(self::PW, 6, 'Average Comp $/SqFt: $' . number_format($avg_ppsf) . '  |  ' . count($comps) . ' comparables used', 0, 1, 'L');
+            $this->pdf->Ln(4);
         }
 
-        // Adjustment detail table
-        if (!empty($comps[0]['adjustments'])) {
-            $this->pdf->Ln(6);
-            $this->add_subsection_header('Comp Adjustment Details');
+        // Comp photo cards (limit to 8 to avoid excessive photo downloads)
+        $y = $this->pdf->GetY();
+        $rendered = 0;
+        foreach ($comps as $c) {
+            if ($rendered >= 8) break;
+            $y = $this->render_comp_card($c, $y);
+            $rendered++;
+        }
 
-            $adj_cols = [58, 22, 22, 24, 22, 22, 22];
-            $adj_headers = ['Address', 'Bed Adj', 'Bath Adj', 'SqFt Adj', 'Garage', 'Bsmt', 'Total'];
-
-            $this->pdf->SetFillColor($this->light[0], $this->light[1], $this->light[2]);
-            $this->pdf->SetFont('helvetica', 'B', 7.5);
-            $this->set_text_color();
-            foreach ($adj_headers as $i => $h) {
-                $this->pdf->Cell($adj_cols[$i], 6, $h, 0, 0, $i === 0 ? 'L' : 'R', true);
+        // Remaining comps as compact table if more than 8
+        if (count($comps) > 8) {
+            if ($y > 230) {
+                $this->pdf->AddPage();
+                $y = self::LM + 5;
             }
-            $this->pdf->Ln();
+            $this->pdf->SetY($y + 2);
+            $this->add_subsection_header('Additional Comparables');
 
-            $this->pdf->SetFont('helvetica', '', 7.5);
-            foreach ($comps as $ci => $c) {
-                $adj = $c['adjustments'] ?? [];
-                if (empty($adj)) continue;
+            $cols = [58, 28, 30, 22, 22, 32];
+            $headers = ['Address', 'Sold Price', 'Adj. Price', '$/SqFt', 'Distance', 'Close Date'];
+            $this->render_styled_table_header($cols, $headers);
 
-                if ($this->pdf->GetY() > 250) break;
+            $this->pdf->SetFont('helvetica', '', 8.5);
+            foreach (array_slice($comps, 8) as $ci => $c) {
+                if ($this->pdf->GetY() > 240) {
+                    $this->pdf->AddPage();
+                    $this->render_styled_table_header($cols, $headers);
+                    $this->pdf->SetFont('helvetica', '', 8.5);
+                }
 
                 $is_zebra = ($ci % 2 === 1);
                 if ($is_zebra) {
                     $this->pdf->SetFillColor($this->zebra[0], $this->zebra[1], $this->zebra[2]);
                 }
 
+                $this->set_text_color();
                 $addr = $c['address'] ?? 'Unknown';
                 if (strlen($addr) > 33) $addr = substr($addr, 0, 31) . '...';
-
-                $this->set_text_color();
-                $this->pdf->Cell($adj_cols[0], 5.5, $addr, 0, 0, 'L', $is_zebra);
-
-                $fields = ['bed_adjustment', 'bath_adjustment', 'sqft_adjustment', 'garage_adjustment', 'basement_adjustment'];
-                foreach ($fields as $fi => $f) {
-                    $val = $adj[$f] ?? 0;
-                    if ($val > 0) $this->set_color($this->success);
-                    elseif ($val < 0) $this->set_color($this->danger);
-                    else $this->set_color($this->gray);
-                    $this->pdf->Cell($adj_cols[$fi + 1], 5.5, $val != 0 ? '$' . number_format($val) : '-', 0, 0, 'R', $is_zebra);
-                }
-
-                $total_adj = $c['total_adjustment'] ?? 0;
-                if ($total_adj > 0) $this->set_color($this->success);
-                elseif ($total_adj < 0) $this->set_color($this->danger);
-                else $this->set_color($this->gray);
-                $this->pdf->Cell($adj_cols[6], 5.5, '$' . number_format($total_adj), 0, 0, 'R', $is_zebra);
+                $this->pdf->Cell($cols[0], 7, $addr, 0, 0, 'L', $is_zebra);
+                $this->pdf->Cell($cols[1], 7, '$' . number_format($c['close_price'] ?? 0), 0, 0, 'R', $is_zebra);
+                $adj_p = $c['adjusted_price'] ?? ($c['close_price'] ?? 0);
+                $this->pdf->Cell($cols[2], 7, '$' . number_format($adj_p), 0, 0, 'R', $is_zebra);
+                $pp = $c['adjusted_ppsf'] ?? $c['ppsf'] ?? 0;
+                $this->pdf->Cell($cols[3], 7, $pp > 0 ? '$' . number_format($pp) : '--', 0, 0, 'R', $is_zebra);
+                $di = $c['distance_miles'] ?? 0;
+                $this->pdf->Cell($cols[4], 7, $di > 0 ? number_format($di, 2) . ' mi' : '--', 0, 0, 'R', $is_zebra);
+                $this->pdf->Cell($cols[5], 7, $c['close_date'] ?? '--', 0, 0, 'R', $is_zebra);
                 $this->pdf->Ln();
             }
         }
@@ -1009,7 +989,7 @@ class Flip_PDF_Generator {
 
             // Value
             $this->pdf->SetXY($x, $cy + 4);
-            $this->pdf->SetFont('helvetica', 'B', 16);
+            $this->pdf->SetFont('helvetica', 'B', 18);
             $clr = $c['color'] ?? $this->text;
             $this->set_color($clr);
             $this->pdf->Cell($card_w, 8, $c['value'], 0, 0, 'C');
@@ -1029,6 +1009,12 @@ class Flip_PDF_Generator {
      * Begin a white card with optional accent bar and gray border.
      */
     private function render_card_start(float $y, float $h, array $opts = []): void {
+        // Shadow
+        $this->pdf->SetFillColor(210, 210, 210);
+        $this->pdf->SetAlpha(0.3);
+        $this->pdf->RoundedRect(self::LM + 0.7, $y + 0.7, self::PW, $h, 3, '1111', 'F');
+        $this->pdf->SetAlpha(1);
+
         // White background
         $this->pdf->SetFillColor(255, 255, 255);
         $this->pdf->SetDrawColor($this->card_bdr[0], $this->card_bdr[1], $this->card_bdr[2]);
@@ -1080,9 +1066,12 @@ class Flip_PDF_Generator {
         $this->pdf->SetFillColor($this->track[0], $this->track[1], $this->track[2]);
         $this->pdf->RoundedRect($bar_x, $y + 1, $bar_w, $bar_h, $radius, '1111', 'F');
 
-        // Filled bar (rounded)
+        // Filled bar (rounded) — minimum 2×radius so corners render properly
         $fill_w = max(0, min($bar_w, ($score / 100) * $bar_w));
-        if ($fill_w > 1) {
+        if ($fill_w > 0 && $fill_w < $radius * 2) {
+            $fill_w = $radius * 2;
+        }
+        if ($fill_w > 0) {
             $color = $this->get_score_color($score);
             $this->pdf->SetFillColor($color[0], $color[1], $color[2]);
             $this->pdf->RoundedRect($bar_x, $y + 1, $fill_w, $bar_h, $radius, '1111', 'F');
@@ -1090,7 +1079,7 @@ class Flip_PDF_Generator {
 
         // Score value
         $this->pdf->SetXY(self::LM + self::PW - 40, $y);
-        $this->pdf->SetFont('helvetica', 'B', 10);
+        $this->pdf->SetFont('helvetica', 'B', 12);
         $this->set_color($this->get_score_color($score));
         $this->pdf->Cell(38, $bar_h + 2, number_format($score, 1), 0, 0, 'R');
 
@@ -1183,16 +1172,21 @@ class Flip_PDF_Generator {
     // ─── SECTION HEADERS ───────────────────────────────────────────
 
     private function add_section_header(string $title): void {
-        $this->pdf->SetFont('helvetica', 'B', 16);
+        $y = $this->pdf->GetY();
+
+        // Blue background band
+        $this->pdf->SetFillColor($this->primary[0], $this->primary[1], $this->primary[2]);
+        $this->pdf->SetAlpha(0.07);
+        $this->pdf->RoundedRect(self::LM, $y, self::PW, 13, 2, '1111', 'F');
+        $this->pdf->SetAlpha(1);
+
+        $this->pdf->SetFont('helvetica', 'B', 18);
         $this->set_color($this->primary);
-        $this->pdf->Cell(0, 10, $title, 0, 1, 'L');
+        $this->pdf->SetXY(self::LM + 5, $y + 1.5);
+        $this->pdf->Cell(self::PW - 10, 10, $title, 0, 1, 'L');
         $this->set_text_color();
 
-        $this->pdf->SetDrawColor($this->primary[0], $this->primary[1], $this->primary[2]);
-        $this->pdf->SetLineWidth(0.6);
-        $y = $this->pdf->GetY();
-        $this->pdf->Line(self::LM, $y, self::LM + self::PW, $y);
-        $this->pdf->Ln(5);
+        $this->pdf->SetY($y + 16);
     }
 
     private function add_subsection_header(string $title): void {
@@ -1380,8 +1374,514 @@ class Flip_PDF_Generator {
             return false;
         }
 
+        // TCPDF doesn't support WebP — convert to JPEG via GD
+        if ($ext === 'webp' && function_exists('imagecreatefromwebp')) {
+            $webp = @imagecreatefromwebp($temp_file);
+            if ($webp) {
+                $jpeg_file = wp_tempnam('flip_img_') . '.jpg';
+                imagejpeg($webp, $jpeg_file, 90);
+                imagedestroy($webp);
+                @unlink($temp_file);
+                return $jpeg_file;
+            }
+        }
+
         return $temp_file;
     }
+
+    // ─── v0.9.1 ENHANCEMENT METHODS ─────────────────────────────
+
+    /**
+     * Fetch property photos from bme_media table.
+     */
+    private function fetch_property_photos(string $listing_id, int $limit = 5): array {
+        global $wpdb;
+        return $wpdb->get_col($wpdb->prepare(
+            "SELECT media_url FROM {$wpdb->prefix}bme_media
+             WHERE listing_id = %s AND media_url IS NOT NULL AND media_url != ''
+             ORDER BY order_index ASC LIMIT %d",
+            $listing_id, $limit
+        ));
+    }
+
+    /**
+     * Render a horizontal photo thumbnail strip.
+     * Returns the Y position after the strip.
+     */
+    private function render_photo_strip(array $photos, float $y): float {
+        if (empty($photos)) {
+            return $y;
+        }
+
+        $count = count($photos);
+        $gap = 3;
+        $thumb_h = 28;
+        $thumb_w = (self::PW - ($gap * ($count - 1))) / $count;
+
+        foreach ($photos as $i => $url) {
+            $x = self::LM + ($i * ($thumb_w + $gap));
+
+            // Gray fallback background
+            $this->pdf->SetFillColor(240, 240, 240);
+            $this->pdf->RoundedRect($x, $y, $thumb_w, $thumb_h, 2.5, '1111', 'F');
+
+            $temp = $this->download_image_temp($url);
+            if ($temp) {
+                $info = @getimagesize($temp);
+                if ($info) {
+                    $img_ratio = $info[0] / $info[1];
+                    $box_ratio = $thumb_w / $thumb_h;
+
+                    if ($img_ratio > $box_ratio) {
+                        $dw = $thumb_w;
+                        $dh = $thumb_w / $img_ratio;
+                    } else {
+                        $dh = $thumb_h;
+                        $dw = $thumb_h * $img_ratio;
+                    }
+
+                    $cx = $x + ($thumb_w - $dw) / 2;
+                    $cy = $y + ($thumb_h - $dh) / 2;
+
+                    $this->pdf->StartTransform();
+                    $this->pdf->RoundedRect($x, $y, $thumb_w, $thumb_h, 2.5, '1111', 'CNZ');
+                    $this->pdf->Image($temp, $cx, $cy, $dw, $dh, '', '', '', false, 300, '', false, false, 0);
+                    $this->pdf->StopTransform();
+                }
+                @unlink($temp);
+            }
+        }
+
+        return $y + $thumb_h + 5;
+    }
+
+    /**
+     * Render a circular score gauge with coloured arc.
+     */
+    private function render_score_gauge(float $score, float $cx, float $cy, float $radius): void {
+        $color = $this->get_score_color($score);
+        $lw = 3.5;
+
+        // Background track circle
+        $this->pdf->SetLineWidth($lw);
+        $this->pdf->SetDrawColor($this->track[0], $this->track[1], $this->track[2]);
+        $this->pdf->Circle($cx, $cy, $radius, 0, 360, 'D');
+
+        // Coloured arc from top, clockwise
+        if ($score > 0) {
+            $this->pdf->SetDrawColor($color[0], $color[1], $color[2]);
+            $angle = min(359.9, ($score / 100) * 360);
+            if ($score >= 99.9) {
+                $this->pdf->Circle($cx, $cy, $radius, 0, 360, 'D');
+            } else {
+                $start = fmod(90 - $angle + 360, 360);
+                $this->pdf->Circle($cx, $cy, $radius, $start, 90, 'D');
+            }
+        }
+
+        $this->pdf->SetLineWidth(0.2);
+
+        // Score number in centre
+        $this->pdf->SetFont('helvetica', 'B', 22);
+        $this->set_color($color);
+        $this->pdf->SetXY($cx - $radius, $cy - 7);
+        $this->pdf->Cell($radius * 2, 10, number_format($score, 1), 0, 0, 'C');
+
+        // Sub-label
+        $this->pdf->SetFont('helvetica', '', 8);
+        $this->set_color($this->gray);
+        $this->pdf->SetXY($cx - $radius, $cy + 4);
+        $this->pdf->Cell($radius * 2, 5, 'out of 100', 0, 0, 'C');
+    }
+
+    /**
+     * Render horizontal stacked bar chart comparing cash vs hard money scenarios.
+     */
+    private function render_financial_bar_chart(float $y): void {
+        $d = $this->d;
+        $arv = $d['estimated_arv'];
+        if ($arv <= 0) return;
+
+        $purchase = $d['list_price'];
+        $rehab = $d['estimated_rehab_cost'];
+        $purch_close = $purchase * Flip_Analyzer::PURCHASE_CLOSING_PCT;
+        $transfer_buy = $d['transfer_tax_buy'];
+        $transfer_sell = $d['transfer_tax_sell'];
+        $sale_costs = $arv * (Flip_Analyzer::SALE_COMMISSION_PCT + Flip_Analyzer::SALE_CLOSING_PCT) + $transfer_sell;
+        $holding = $d['holding_costs'];
+        $financing = $d['financing_costs'];
+
+        $cash_total = $purchase + $rehab + $purch_close + $transfer_buy + $sale_costs + $holding;
+        $cash_profit = $arv - $cash_total;
+        $hm_total = $cash_total + $financing;
+        $hm_profit = $arv - $hm_total;
+
+        $max_val = max($arv, $cash_total + abs($cash_profit), $hm_total + abs($hm_profit));
+        if ($max_val <= 0) return;
+
+        $chart_x = self::LM + 2;
+        $chart_w = self::PW - 4;
+        $bar_h = 14;
+
+        $this->pdf->SetFont('helvetica', 'B', 9);
+        $this->set_color($this->gray);
+        $this->pdf->SetXY(self::LM, $y);
+        $this->pdf->Cell(self::PW, 5, 'COST BREAKDOWN COMPARISON', 0, 1, 'L');
+        $y += 8;
+
+        $segments_cash = [
+            ['Purchase', $purchase, [44, 90, 160]],
+            ['Rehab', $rehab, [74, 184, 102]],
+            ['Closing', $purch_close + $transfer_buy, [219, 166, 23]],
+            ['Holding', $holding, [230, 126, 34]],
+            ['Sale', $sale_costs, [108, 117, 125]],
+        ];
+
+        $segments_hm = [
+            ['Purchase', $purchase, [44, 90, 160]],
+            ['Rehab', $rehab, [74, 184, 102]],
+            ['Closing', $purch_close + $transfer_buy, [219, 166, 23]],
+            ['Holding', $holding, [230, 126, 34]],
+            ['Financing', $financing, [204, 24, 24]],
+            ['Sale', $sale_costs, [108, 117, 125]],
+        ];
+
+        // Cash bar
+        $this->pdf->SetFont('helvetica', 'B', 8);
+        $this->set_text_color();
+        $this->pdf->SetXY(self::LM, $y);
+        $this->pdf->Cell(self::PW, 5, 'Cash Purchase', 0, 1, 'L');
+        $y += 5;
+        $this->draw_stacked_bar($chart_x, $y, $chart_w, $bar_h, $segments_cash, $max_val, $cash_profit);
+        $y += $bar_h + 10;
+
+        // Hard money bar
+        $this->pdf->SetFont('helvetica', 'B', 8);
+        $this->set_text_color();
+        $this->pdf->SetXY(self::LM, $y);
+        $this->pdf->Cell(self::PW, 5, 'Hard Money Financing', 0, 1, 'L');
+        $y += 5;
+        $this->draw_stacked_bar($chart_x, $y, $chart_w, $bar_h, $segments_hm, $max_val, $hm_profit);
+        $y += $bar_h + 6;
+
+        // Legend
+        $this->render_chart_legend($y, $segments_hm);
+        $this->pdf->SetY($y + 10);
+    }
+
+    private function draw_stacked_bar(float $x, float $y, float $w, float $h, array $segments, float $max_val, float $profit): void {
+        $this->pdf->SetFillColor(245, 245, 245);
+        $this->pdf->RoundedRect($x, $y, $w, $h, 2, '1111', 'F');
+
+        $cx = $x;
+        foreach ($segments as $seg) {
+            $seg_w = ($seg[1] / $max_val) * $w;
+            if ($seg_w < 0.5) continue;
+
+            $this->pdf->SetFillColor($seg[2][0], $seg[2][1], $seg[2][2]);
+            $this->pdf->Rect($cx, $y, $seg_w, $h, 'F');
+
+            if ($seg_w > 18) {
+                $this->pdf->SetFont('helvetica', '', 6.5);
+                $this->pdf->SetTextColor(255, 255, 255);
+                $this->pdf->SetXY($cx, $y + $h / 2 - 2);
+                $this->pdf->Cell($seg_w, 4, '$' . number_format($seg[1] / 1000) . 'K', 0, 0, 'C');
+            }
+
+            $cx += $seg_w;
+        }
+
+        if ($profit != 0) {
+            $pc = $profit >= 0 ? $this->success : $this->danger;
+            $this->pdf->SetFont('helvetica', 'B', 8);
+            $this->set_color($pc);
+            $this->pdf->SetXY($cx + 2, $y + $h / 2 - 3);
+            $label = ($profit >= 0 ? '+' : '-') . '$' . number_format(abs($profit) / 1000) . 'K';
+            $this->pdf->Cell(30, 6, $label, 0, 0, 'L');
+        }
+    }
+
+    private function render_chart_legend(float $y, array $segments): void {
+        $lx = self::LM;
+        $this->pdf->SetFont('helvetica', '', 7);
+        foreach ($segments as $seg) {
+            $this->pdf->SetFillColor($seg[2][0], $seg[2][1], $seg[2][2]);
+            $this->pdf->Rect($lx, $y + 1, 4, 4, 'F');
+            $this->set_color($this->gray);
+            $this->pdf->SetXY($lx + 5, $y);
+            $lw = $this->pdf->GetStringWidth($seg[0]) + 4;
+            $this->pdf->Cell($lw, 6, $seg[0], 0, 0, 'L');
+            $lx += $lw + 6;
+            if ($lx > self::LM + self::PW - 30) {
+                $lx = self::LM;
+                $y += 7;
+            }
+        }
+    }
+
+    /**
+     * Render a sensitivity line chart showing profit across ARV scenarios.
+     */
+    private function render_sensitivity_chart(float $y): void {
+        $d = $this->d;
+
+        $pcts = [85, 90, 95, 100, 105, 110];
+        $data = [];
+        $labels = [];
+
+        foreach ($pcts as $pct) {
+            $s_arv = $d['estimated_arv'] * ($pct / 100);
+            $s_fin = $this->calc_scenario($d['list_price'], $s_arv, $d['estimated_rehab_cost'], $d['hold_months']);
+            $data[] = $s_fin['profit'];
+            $labels[] = $pct . '%';
+        }
+
+        if (empty($data)) return;
+
+        $chart_h = 58;
+        $min_val = min($data);
+        $max_val = max($data);
+        $range = $max_val - $min_val;
+        $padding = $range * 0.15;
+        $min_val -= $padding;
+        $max_val += $padding;
+        $range = $max_val - $min_val;
+        if ($range == 0) $range = 1;
+
+        $inner_x = self::LM + 28;
+        $inner_w = self::PW - 33;
+        $inner_y = $y + 5;
+        $inner_h = $chart_h - 18;
+
+        // Chart background
+        $this->pdf->SetFillColor(250, 251, 252);
+        $this->pdf->RoundedRect($inner_x, $inner_y, $inner_w, $inner_h, 2, '1111', 'F');
+
+        // Grid lines and Y-axis labels
+        $grid_lines = 4;
+        $this->pdf->SetDrawColor(230, 230, 230);
+        $this->pdf->SetLineWidth(0.1);
+
+        for ($i = 0; $i <= $grid_lines; $i++) {
+            $gy = $inner_y + ($inner_h * $i / $grid_lines);
+            $this->pdf->Line($inner_x, $gy, $inner_x + $inner_w, $gy);
+
+            $val = $max_val - ($range * $i / $grid_lines);
+            $this->pdf->SetFont('helvetica', '', 7);
+            $this->set_color($this->gray);
+            $this->pdf->SetXY(self::LM, $gy - 2);
+            $label = $val >= 0 ? '$' . number_format($val / 1000) . 'K' : '-$' . number_format(abs($val) / 1000) . 'K';
+            $this->pdf->Cell(26, 4, $label, 0, 0, 'R');
+        }
+
+        // Zero line (dashed)
+        if ($min_val < 0 && $max_val > 0) {
+            $zero_y = $inner_y + $inner_h - ((0 - $min_val) / $range * $inner_h);
+            $this->pdf->SetDrawColor($this->danger[0], $this->danger[1], $this->danger[2]);
+            $this->pdf->SetLineWidth(0.3);
+            $dash = 2;
+            for ($dx = $inner_x; $dx < $inner_x + $inner_w; $dx += $dash * 2) {
+                $this->pdf->Line($dx, $zero_y, min($dx + $dash, $inner_x + $inner_w), $zero_y);
+            }
+        }
+
+        // Calculate points
+        $point_count = count($data);
+        $x_step = $inner_w / max(1, $point_count - 1);
+        $points = [];
+        foreach ($data as $i => $val) {
+            $px = $inner_x + ($i * $x_step);
+            $py = $inner_y + $inner_h - (($val - $min_val) / $range * $inner_h);
+            $points[] = [$px, $py, $val];
+        }
+
+        // Connecting lines
+        $this->pdf->SetDrawColor($this->primary[0], $this->primary[1], $this->primary[2]);
+        $this->pdf->SetLineWidth(0.8);
+        for ($i = 1; $i < count($points); $i++) {
+            $this->pdf->Line($points[$i - 1][0], $points[$i - 1][1], $points[$i][0], $points[$i][1]);
+        }
+
+        // Data point circles
+        foreach ($points as $pt) {
+            $pc = $pt[2] >= 0 ? $this->success : $this->danger;
+            $this->pdf->SetFillColor($pc[0], $pc[1], $pc[2]);
+            $this->pdf->Circle($pt[0], $pt[1], 1.5, 0, 360, 'F');
+        }
+
+        // X-axis labels
+        $this->pdf->SetFont('helvetica', '', 7);
+        foreach ($labels as $i => $label) {
+            $lx = $inner_x + ($i * $x_step) - 5;
+            $this->set_color($this->gray);
+            $this->pdf->SetXY($lx, $inner_y + $inner_h + 1);
+            $this->pdf->Cell(12, 4, $label, 0, 0, 'C');
+        }
+
+        // Chart border
+        $this->pdf->SetDrawColor(210, 210, 210);
+        $this->pdf->SetLineWidth(0.2);
+        $this->pdf->RoundedRect($inner_x, $inner_y, $inner_w, $inner_h, 2, '1111', 'D');
+
+        $this->pdf->SetY($y + $chart_h + 4);
+    }
+
+    /**
+     * Render a comparable property card with photo.
+     * Returns the Y position after the card.
+     */
+    private function render_comp_card(array $c, float $y): float {
+        $card_h = 48;
+        $photo_w = 55;
+        $photo_h = $card_h - 6;
+
+        if ($y + $card_h > 250) {
+            $this->pdf->AddPage();
+            $this->add_section_header('Comparable Sales (continued)');
+            $y = $this->pdf->GetY();
+        }
+
+        // Shadow
+        $this->pdf->SetFillColor(220, 220, 220);
+        $this->pdf->SetAlpha(0.35);
+        $this->pdf->RoundedRect(self::LM + 0.8, $y + 0.8, self::PW, $card_h, 3, '1111', 'F');
+        $this->pdf->SetAlpha(1);
+
+        // Card background
+        $this->pdf->SetFillColor(255, 255, 255);
+        $this->pdf->SetDrawColor($this->card_bdr[0], $this->card_bdr[1], $this->card_bdr[2]);
+        $this->pdf->SetLineWidth(0.3);
+        $this->pdf->RoundedRect(self::LM, $y, self::PW, $card_h, 3, '1111', 'DF');
+
+        // Photo area
+        $photo_x = self::LM + 3;
+        $photo_y = $y + 3;
+
+        $this->pdf->SetFillColor(242, 242, 242);
+        $this->pdf->RoundedRect($photo_x, $photo_y, $photo_w, $photo_h, 2, '1111', 'F');
+
+        $listing_id = $c['listing_id'] ?? '';
+        $has_photo = false;
+
+        if (!empty($listing_id)) {
+            $photos = $this->fetch_property_photos((string) $listing_id, 1);
+            if (!empty($photos[0])) {
+                $temp = $this->download_image_temp($photos[0]);
+                if ($temp) {
+                    $info = @getimagesize($temp);
+                    if ($info) {
+                        $img_ratio = $info[0] / $info[1];
+                        $box_ratio = $photo_w / $photo_h;
+
+                        if ($img_ratio > $box_ratio) {
+                            $dw = $photo_w;
+                            $dh = $photo_w / $img_ratio;
+                        } else {
+                            $dh = $photo_h;
+                            $dw = $photo_h * $img_ratio;
+                        }
+
+                        $draw_x = $photo_x + ($photo_w - $dw) / 2;
+                        $draw_y = $photo_y + ($photo_h - $dh) / 2;
+
+                        $this->pdf->StartTransform();
+                        $this->pdf->RoundedRect($photo_x, $photo_y, $photo_w, $photo_h, 2, '1111', 'CNZ');
+                        $this->pdf->Image($temp, $draw_x, $draw_y, $dw, $dh, '', '', '', false, 300, '', false, false, 0);
+                        $this->pdf->StopTransform();
+                        $has_photo = true;
+                    }
+                    @unlink($temp);
+                }
+            }
+        }
+
+        if (!$has_photo) {
+            $this->pdf->SetFont('helvetica', '', 8);
+            $this->pdf->SetTextColor(180, 180, 180);
+            $this->pdf->SetXY($photo_x, $photo_y + $photo_h / 2 - 3);
+            $this->pdf->Cell($photo_w, 6, 'No Photo', 0, 0, 'C');
+        }
+
+        // Content (right side)
+        $content_x = $photo_x + $photo_w + 5;
+        $content_w = self::PW - $photo_w - 11;
+
+        // Address
+        $addr = $c['address'] ?? 'Unknown';
+        if (strlen($addr) > 38) $addr = substr($addr, 0, 36) . '...';
+        $this->pdf->SetFont('helvetica', 'B', 10);
+        $this->set_text_color();
+        $this->pdf->SetXY($content_x, $y + 4);
+        $this->pdf->Cell($content_w - 28, 6, $addr, 0, 1, 'L');
+
+        // Adjustment badge (top-right)
+        $total_adj = $c['total_adjustment'] ?? 0;
+        if ($total_adj != 0) {
+            $adj_color = $total_adj > 0 ? $this->success : $this->danger;
+            $adj_text = ($total_adj > 0 ? '+' : '') . '$' . number_format($total_adj);
+            $bw = max(24, $this->pdf->GetStringWidth($adj_text) + 8);
+            $bx = self::LM + self::PW - $bw - 4;
+            $this->pdf->SetFillColor($adj_color[0], $adj_color[1], $adj_color[2]);
+            $this->pdf->SetAlpha(0.15);
+            $this->pdf->RoundedRect($bx, $y + 4, $bw, 6, 2, '1111', 'F');
+            $this->pdf->SetAlpha(1);
+            $this->pdf->SetFont('helvetica', 'B', 7);
+            $this->set_color($adj_color);
+            $this->pdf->SetXY($bx, $y + 4);
+            $this->pdf->Cell($bw, 6, $adj_text, 0, 0, 'C');
+        }
+
+        // Price row
+        $close_price = $c['close_price'] ?? 0;
+        $adj_price = $c['adjusted_price'] ?? $close_price;
+        $this->pdf->SetFont('helvetica', '', 9);
+        $this->set_color($this->gray);
+        $this->pdf->SetXY($content_x, $y + 12);
+        $this->pdf->Cell(26, 5, 'Sold:', 0, 0, 'L');
+        $this->pdf->SetFont('helvetica', 'B', 9);
+        $this->set_text_color();
+        $this->pdf->Cell(40, 5, '$' . number_format($close_price), 0, 0, 'L');
+
+        $this->pdf->SetFont('helvetica', '', 9);
+        $this->set_color($this->primary);
+        $this->pdf->Cell(40, 5, 'Adj: $' . number_format($adj_price), 0, 1, 'L');
+
+        // Details row
+        $ppsf = $c['adjusted_ppsf'] ?? $c['ppsf'] ?? 0;
+        $dist = $c['distance_miles'] ?? 0;
+        $details = [];
+        if ($ppsf > 0) $details[] = '$' . number_format($ppsf) . '/sqft';
+        if ($dist > 0) $details[] = number_format($dist, 2) . ' mi';
+        if (!empty($c['close_date'])) $details[] = 'Sold ' . $c['close_date'];
+
+        $this->pdf->SetFont('helvetica', '', 8);
+        $this->set_color($this->gray);
+        $this->pdf->SetXY($content_x, $y + 19);
+        $this->pdf->Cell($content_w, 5, implode('  •  ', $details), 0, 1, 'L');
+
+        // Adjustment breakdown
+        $adj = $c['adjustments'] ?? [];
+        if (!empty($adj)) {
+            $fields = ['bed_adjustment' => 'Bed', 'bath_adjustment' => 'Bath', 'sqft_adjustment' => 'SqFt', 'garage_adjustment' => 'Gar', 'basement_adjustment' => 'Bsmt'];
+            $parts = [];
+            foreach ($fields as $f => $lbl) {
+                $val = $adj[$f] ?? 0;
+                if ($val != 0) {
+                    $parts[] = $lbl . ': ' . ($val > 0 ? '+' : '') . '$' . number_format($val);
+                }
+            }
+            if (!empty($parts)) {
+                $this->pdf->SetFont('helvetica', '', 7);
+                $this->set_color($this->gray);
+                $this->pdf->SetXY($content_x, $y + 25);
+                $this->pdf->Cell($content_w, 4, 'Adj: ' . implode(', ', $parts), 0, 1, 'L');
+            }
+        }
+
+        return $y + $card_h + 4;
+    }
+
+    // ─── FILE OUTPUT ──────────────────────────────────────────────
 
     private function save_pdf(): string|false {
         $upload_dir = wp_upload_dir();

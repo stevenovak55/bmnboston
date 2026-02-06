@@ -8,6 +8,7 @@
  *   wp flip results          - View scored results
  *   wp flip property <id>    - Deep-dive a single property
  *   wp flip summary          - Show per-city summary stats
+ *   wp flip pdf <id>          - Generate PDF report for a property
  *   wp flip config           - Manage target cities
  *   wp flip clear            - Delete old results
  */
@@ -39,13 +40,55 @@ class Flip_CLI {
      * [--city=<city>]
      * : Comma-separated list of cities (overrides configured cities).
      *
+     * [--property-type=<types>]
+     * : Comma-separated property sub types (e.g. "Single Family Residence,Condominium").
+     *
+     * [--status=<statuses>]
+     * : Comma-separated statuses (Active, Pending, Active Under Contract, Closed).
+     *
+     * [--sewer-public-only]
+     * : Only include properties with public sewer.
+     *
+     * [--min-dom=<days>]
+     * : Minimum days on market.
+     *
+     * [--max-dom=<days>]
+     * : Maximum days on market.
+     *
+     * [--list-date-from=<date>]
+     * : List date start (YYYY-MM-DD).
+     *
+     * [--list-date-to=<date>]
+     * : List date end (YYYY-MM-DD).
+     *
+     * [--year-min=<year>]
+     * : Minimum year built.
+     *
+     * [--year-max=<year>]
+     * : Maximum year built.
+     *
+     * [--min-price=<price>]
+     * : Minimum list price.
+     *
+     * [--max-price=<price>]
+     * : Maximum list price.
+     *
+     * [--min-sqft=<sqft>]
+     * : Minimum building sqft.
+     *
+     * [--min-beds=<beds>]
+     * : Minimum bedrooms.
+     *
+     * [--min-baths=<baths>]
+     * : Minimum bathrooms.
+     *
      * ## EXAMPLES
      *
-     *     # Analyze all target cities
+     *     # Analyze all target cities (uses saved filters)
      *     wp flip analyze
      *
-     *     # Analyze specific cities, limit 20
-     *     wp flip analyze --city=Reading,Melrose --limit=20
+     *     # Override filters for this run
+     *     wp flip analyze --city=Reading --status=Active,Pending --min-price=200000 --max-price=600000
      *
      * @when after_wp_load
      */
@@ -61,6 +104,36 @@ class Flip_CLI {
         if ($city) {
             $options['city'] = $city;
         }
+
+        // Build filter overrides from CLI flags (override saved filters)
+        $filters = Flip_Database::get_analysis_filters();
+        if (!empty($assoc_args['property-type'])) {
+            $filters['property_sub_types'] = array_map('trim', explode(',', $assoc_args['property-type']));
+        }
+        if (!empty($assoc_args['status'])) {
+            $filters['statuses'] = array_map('trim', explode(',', $assoc_args['status']));
+        }
+        if (isset($assoc_args['sewer-public-only'])) {
+            $filters['sewer_public_only'] = true;
+        }
+        foreach ([
+            'min-dom'        => 'min_dom',
+            'max-dom'        => 'max_dom',
+            'list-date-from' => 'list_date_from',
+            'list-date-to'   => 'list_date_to',
+            'year-min'       => 'year_built_min',
+            'year-max'       => 'year_built_max',
+            'min-price'      => 'min_price',
+            'max-price'      => 'max_price',
+            'min-sqft'       => 'min_sqft',
+            'min-beds'       => 'min_beds',
+            'min-baths'      => 'min_baths',
+        ] as $cli_key => $filter_key) {
+            if (isset($assoc_args[$cli_key])) {
+                $filters[$filter_key] = $assoc_args[$cli_key];
+            }
+        }
+        $options['filters'] = $filters;
 
         $progress = function ($msg) {
             WP_CLI::line("  {$msg}");
