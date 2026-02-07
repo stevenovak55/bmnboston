@@ -7,13 +7,18 @@
 
 Standalone WordPress plugin that identifies Single Family Residence flip candidates by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates.
 
-**v0.12.0 Enhancements (Dashboard JS Modular Refactor):**
+**v0.12.0 Enhancements (Dashboard JS Modular Refactor + PDF Branding):**
 - Split monolithic `flip-dashboard.js` (1,565 lines) into 10 focused modules
 - Module files: `flip-core.js`, `flip-helpers.js`, `flip-stats-chart.js`, `flip-filters-table.js`, `flip-detail-row.js`, `flip-projections.js`, `flip-ajax.js`, `flip-analysis-filters.js`, `flip-cities.js`, `flip-init.js`
 - Namespace pattern: `window.FlipDashboard` with sub-objects (`FD.helpers`, `FD.stats`, `FD.filters`, etc.)
 - WordPress `wp_enqueue_script` dependency chain (no bundler needed)
 - Bug fix: `applyFilters()` now delegates to `getFilteredResults()` (was duplicated filter+sort logic)
 - Deleted old `flip-dashboard.js`
+- **PDF report branding:** BMN Boston logo on cover page hero + every page footer
+- **PDF branded footer:** company name, Steve Novak contact, website on every page
+- **PDF Call to Action page:** agent card with circular headshot, CTA buttons, company info
+- **PDF listing disclosure:** "Property Offered By" with listing agent name + brokerage (no contact info)
+- Agent/brokerage data via JOIN: `bme_listings` → `bme_agents` + `bme_offices`
 
 **v0.11.1 Fixes (Logic Audit — 11 loopholes):**
 - ARV confidence discount: low/none confidence requires 25-50% higher profit/ROI to pass post-calc DQ
@@ -120,6 +125,7 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 | `includes/class-flip-market-scorer.php` | Market timing + remarks analysis (10%) |
 | `includes/class-flip-cli.php` | WP-CLI commands |
 | `includes/class-flip-database.php` | Table creation, queries, CRUD |
+| `includes/class-flip-pdf-generator.php` | TCPDF-based investor-grade PDF report with branding |
 | `includes/class-flip-rest-api.php` | REST API endpoints (6 endpoints) |
 | `includes/class-flip-photo-analyzer.php` | Claude Vision photo analysis |
 | `admin/class-flip-admin-dashboard.php` | Admin page, AJAX handlers |

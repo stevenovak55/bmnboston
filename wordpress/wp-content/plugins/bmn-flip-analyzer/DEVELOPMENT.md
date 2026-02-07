@@ -667,6 +667,59 @@ Five root causes identified: (1) year-built scoring was backwards (newer = highe
 2. Consider further refactoring: `class-flip-pdf-generator.php` (1,907 lines)
 3. Consider further refactoring: `class-flip-analyzer.php` (1,335 lines)
 
+### Session 14 - 2026-02-07
+
+**What was done (v0.12.0 — PDF Report Branding + Agent CTA):**
+
+**Goal:** Add BMN Boston branding and Steve Novak agent call-to-action to the PDF analysis reports.
+
+- **Cover page branding** (`class-flip-pdf-generator.php`):
+  - BMN Boston logo in hero overlay (top-right, 92% opacity)
+  - Subtitle changed: "Generated [date]" → "Prepared by Steve Novak | [date]"
+
+- **Branded footer on every page**:
+  - Small BMN logo on left side of footer
+  - Text: "BMN Boston Real Estate | Steve Novak (617) 955-2224 | bmnboston.com | Page X/Y"
+  - Logo downloaded once in `initialize_pdf()`, stored on TCPDF instance, cleaned up after save
+
+- **New Call to Action page** (final page of report):
+  - BMN Boston logo centered at top
+  - "Interested in This Property?" headline
+  - Personalized message from Steve Novak
+  - Agent card with circular headshot photo, name, title, phone, email, license
+  - Two CTA buttons: "Call (617) 955-2224" and "Email Steve"
+  - Company info: BMN Boston Real Estate, 20 Park Plaza, Boston, MA 02118
+  - "Member of Douglas Elliman" affiliation
+
+- **"Property Offered By" disclosure**:
+  - Shows listing agent name and brokerage office (no contact info)
+  - New `fetch_listing_agent_info()` method queries `bme_listings` → `bme_agents` + `bme_offices`
+  - Example: "James Pham | RE/MAX Partners"
+
+- **Branding properties** added to `Flip_PDF_Generator`:
+  - `$logo_url`, `$agent_photo_url`, `$agent_name`, `$agent_title`, `$agent_phone`, `$agent_email`, `$agent_license`, `$company_name`, `$company_phone`, `$company_address`, `$company_url`
+
+- **Legal disclaimer** at bottom of CTA page
+
+**Branding assets used:**
+- Logo: `https://bmnboston.com/wp-content/uploads/2025/12/BMN-Logo-Croped.png`
+- Agent photo: `https://bmnboston.com/wp-content/uploads/2025/12/Steve-Novak-600x600-1.jpg`
+
+**Verification:**
+- PDF generated successfully on production (listing 73473168 — 64 Norfolk Street)
+- Logo renders on cover + all page footers
+- Agent card with circular headshot renders correctly
+- "Property Offered By: James Pham | RE/MAX Partners" disclosure present
+- File size: 9.4MB (includes property photos + agent photo + logos)
+
+**Files modified (1):**
+1. `includes/class-flip-pdf-generator.php` — branding properties, footer logo, cover logo, CTA page, listing disclosure
+
+**Next steps:**
+1. Phase 5: iOS SwiftUI integration
+2. Consider further refactoring: `class-flip-pdf-generator.php` (now 2,118 lines)
+3. Consider further refactoring: `class-flip-analyzer.php` (1,335 lines)
+
 ---
 
 ## Scoring Weight Tuning Log
@@ -884,6 +937,12 @@ bmn-flip-analyzer/
 - Bug fix: `applyFilters()` now delegates to `getFilteredResults()` (was duplicated filter+sort logic)
 - PHP: `enqueue_assets()` rewritten with 10-file dependency chain, `wp_localize_script` target updated
 - Deleted old `flip-dashboard.js`
+- **PDF Report Branding:**
+  - BMN Boston logo on cover page hero overlay + every page footer
+  - Branded footer with company name, agent contact, website
+  - Call to Action final page with agent card, headshot, CTA buttons, company info
+  - "Property Offered By" disclosure with listing agent name + brokerage
+  - Legal disclaimer
 
 ### v0.9.0 (Planned)
 - iOS SwiftUI integration
