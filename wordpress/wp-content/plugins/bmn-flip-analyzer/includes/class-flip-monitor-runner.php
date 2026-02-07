@@ -81,7 +81,7 @@ class Flip_Monitor_Runner {
         $now       = current_time('mysql');
 
         // Step 1: Get all matching listing IDs
-        $all_listing_ids = Flip_Analyzer::fetch_matching_listing_ids($cities, $filters);
+        $all_listing_ids = Flip_Property_Fetcher::fetch_matching_listing_ids($cities, $filters);
 
         if (empty($all_listing_ids)) {
             Flip_Database::update_report($report_id, [

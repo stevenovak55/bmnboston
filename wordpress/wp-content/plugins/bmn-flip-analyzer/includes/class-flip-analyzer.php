@@ -58,9 +58,6 @@ class Flip_Analyzer {
         'soft' => 0.82, 'cold' => 0.78,
     ];
 
-    /** Minimum list price to exclude lease/land anomalies */
-    const MIN_LIST_PRICE = 100000;
-
     /** ARV discount by road type */
     const ROAD_ARV_DISCOUNT = [
         'busy-road'        => 0.15,
@@ -283,9 +280,9 @@ class Flip_Analyzer {
 
         // Step 2: Fetch listings matching filters (or specific IDs for monitors)
         if (!empty($options['listing_ids'])) {
-            $properties = self::fetch_properties_by_ids($options['listing_ids']);
+            $properties = Flip_Property_Fetcher::fetch_properties_by_ids($options['listing_ids']);
         } else {
-            $properties = self::fetch_properties($cities, $limit, $filters);
+            $properties = Flip_Property_Fetcher::fetch_properties($cities, $limit, $filters);
         }
         $sub_types = implode(', ', $filters['property_sub_types'] ?? ['SFR']);
         $statuses  = implode(', ', $filters['statuses'] ?? ['Active']);
@@ -312,15 +309,15 @@ class Flip_Analyzer {
 
             // Fetch remarks early (needed for DQ distress check and later for market scoring + financials)
             $remarks = Flip_Market_Scorer::get_remarks($listing_id);
-            $property_condition = self::get_property_condition($listing_id);
+            $property_condition = Flip_Disqualifier::get_property_condition($listing_id);
 
             // Calculate ARV
             $arv_data = Flip_ARV_Calculator::calculate($property);
 
             // Check pre-financial disqualifiers (includes new construction check)
-            $disqualify = self::check_disqualifiers($property, $arv_data, $remarks, $property_condition);
+            $disqualify = Flip_Disqualifier::check_disqualifiers($property, $arv_data, $remarks, $property_condition);
             if ($disqualify) {
-                self::store_disqualified($property, $arv_data, $disqualify, $run_date, $report_id);
+                Flip_Disqualifier::store_disqualified($property, $arv_data, $disqualify, $run_date, $report_id);
                 $disqualified++;
                 $analyzed++;
                 continue;
@@ -401,7 +398,7 @@ class Flip_Analyzer {
             );
 
             // Post-calculation disqualifier (uses financed numbers + adaptive thresholds)
-            $post_dq = self::check_post_calc_disqualifiers(
+            $post_dq = Flip_Disqualifier::check_post_calc_disqualifiers(
                 $fin['estimated_profit'], $fin['cash_on_cash_roi'], $thresholds,
                 $arv_data['arv_confidence'] ?? 'medium'
             );
@@ -675,476 +672,9 @@ class Flip_Analyzer {
         ];
     }
 
-    /**
-     * Fetch listings matching analysis filters from target cities.
-     */
-    private static function fetch_properties(array $cities, int $limit, array $filters = []): array {
-        global $wpdb;
-        $summary_table = $wpdb->prefix . 'bme_listing_summary';
+    // Property fetching methods extracted to Flip_Property_Fetcher in v0.14.0
 
-        $where  = ["s.property_type = 'Residential'", "s.list_price > 0", "s.building_area_total > 0"];
-        $params = [];
-        $join   = '';
-
-        // Property sub types
-        $sub_types = !empty($filters['property_sub_types']) ? $filters['property_sub_types'] : ['Single Family Residence'];
-        $ph = implode(',', array_fill(0, count($sub_types), '%s'));
-        $where[] = "s.property_sub_type IN ({$ph})";
-        $params  = array_merge($params, $sub_types);
-
-        // Statuses
-        $statuses = !empty($filters['statuses']) ? $filters['statuses'] : ['Active'];
-        $ph = implode(',', array_fill(0, count($statuses), '%s'));
-        $where[] = "s.standard_status IN ({$ph})";
-        $params  = array_merge($params, $statuses);
-
-        // Cities
-        $ph = implode(',', array_fill(0, count($cities), '%s'));
-        $where[] = "s.city IN ({$ph})";
-        $params  = array_merge($params, $cities);
-
-        // Sewer (requires JOIN to bme_listing_details)
-        if (!empty($filters['sewer_public_only'])) {
-            $join = "INNER JOIN {$wpdb->prefix}bme_listing_details d ON s.listing_id = d.listing_id";
-            $where[] = "d.sewer LIKE '%%Public Sewer%%'";
-        }
-
-        // Days on market range
-        if (!empty($filters['min_dom'])) {
-            $where[]  = "s.days_on_market >= %d";
-            $params[] = (int) $filters['min_dom'];
-        }
-        if (!empty($filters['max_dom'])) {
-            $where[]  = "s.days_on_market <= %d";
-            $params[] = (int) $filters['max_dom'];
-        }
-
-        // List date range
-        if (!empty($filters['list_date_from'])) {
-            $where[]  = "s.listing_contract_date >= %s";
-            $params[] = $filters['list_date_from'];
-        }
-        if (!empty($filters['list_date_to'])) {
-            $where[]  = "s.listing_contract_date <= %s";
-            $params[] = $filters['list_date_to'];
-        }
-
-        // Year built range
-        if (!empty($filters['year_built_min'])) {
-            $where[]  = "s.year_built >= %d";
-            $params[] = (int) $filters['year_built_min'];
-        }
-        if (!empty($filters['year_built_max'])) {
-            $where[]  = "s.year_built <= %d";
-            $params[] = (int) $filters['year_built_max'];
-        }
-
-        // Price range
-        if (!empty($filters['min_price'])) {
-            $where[]  = "s.list_price >= %f";
-            $params[] = (float) $filters['min_price'];
-        }
-        if (!empty($filters['max_price'])) {
-            $where[]  = "s.list_price <= %f";
-            $params[] = (float) $filters['max_price'];
-        }
-
-        // Sqft range
-        if (!empty($filters['min_sqft'])) {
-            $where[]  = "s.building_area_total >= %d";
-            $params[] = (int) $filters['min_sqft'];
-        }
-        if (!empty($filters['max_sqft'])) {
-            $where[]  = "s.building_area_total <= %d";
-            $params[] = (int) $filters['max_sqft'];
-        }
-
-        // Lot size
-        if (!empty($filters['min_lot_acres'])) {
-            $where[]  = "s.lot_size_acres >= %f";
-            $params[] = (float) $filters['min_lot_acres'];
-        }
-
-        // Beds / baths
-        if (!empty($filters['min_beds'])) {
-            $where[]  = "s.bedrooms_total >= %d";
-            $params[] = (int) $filters['min_beds'];
-        }
-        if (!empty($filters['min_baths'])) {
-            $where[]  = "s.bathrooms_total >= %f";
-            $params[] = (float) $filters['min_baths'];
-        }
-
-        // Garage
-        if (!empty($filters['has_garage'])) {
-            $where[] = "s.garage_spaces > 0";
-        }
-
-        $params[] = $limit;
-        $where_sql = implode(' AND ', $where);
-
-        // Query active listings
-        $results = $wpdb->get_results($wpdb->prepare(
-            "SELECT s.* FROM {$summary_table} s {$join}
-             WHERE {$where_sql}
-             ORDER BY s.list_price ASC
-             LIMIT %d",
-            $params
-        ));
-
-        // Also query archive table if Closed status is included
-        if (in_array('Closed', $statuses, true)) {
-            $archive_table = $wpdb->prefix . 'bme_listing_summary_archive';
-            $archive_join  = str_replace('bme_listing_details', 'bme_listing_details_archive', $join);
-            $archive_results = $wpdb->get_results($wpdb->prepare(
-                "SELECT s.* FROM {$archive_table} s {$archive_join}
-                 WHERE {$where_sql}
-                 ORDER BY s.list_price ASC
-                 LIMIT %d",
-                $params
-            ));
-            if ($archive_results) {
-                $results = array_merge($results, $archive_results);
-                // Re-sort by list_price and apply limit
-                usort($results, fn($a, $b) => (float) $a->list_price <=> (float) $b->list_price);
-                $results = array_slice($results, 0, $limit);
-            }
-        }
-
-        return $results;
-    }
-
-    /**
-     * Fetch specific properties by listing_id (for monitor incremental runs).
-     * Checks both active and archive summary tables.
-     */
-    private static function fetch_properties_by_ids(array $listing_ids): array {
-        global $wpdb;
-        if (empty($listing_ids)) {
-            return [];
-        }
-
-        $table = $wpdb->prefix . 'bme_listing_summary';
-        $archive_table = $wpdb->prefix . 'bme_listing_summary_archive';
-        $placeholders = implode(',', array_fill(0, count($listing_ids), '%d'));
-        $ids = array_map('intval', $listing_ids);
-
-        $results = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$table} WHERE listing_id IN ({$placeholders})",
-            $ids
-        ));
-
-        // Check archive for any IDs not found in the active table
-        $found_ids = array_map(function ($r) { return (int) $r->listing_id; }, $results);
-        $missing_ids = array_values(array_diff($ids, $found_ids));
-
-        if (!empty($missing_ids)) {
-            $ph = implode(',', array_fill(0, count($missing_ids), '%d'));
-            $archive_results = $wpdb->get_results($wpdb->prepare(
-                "SELECT * FROM {$archive_table} WHERE listing_id IN ({$ph})",
-                $missing_ids
-            ));
-            if ($archive_results) {
-                $results = array_merge($results, $archive_results);
-            }
-        }
-
-        return $results;
-    }
-
-    /**
-     * Fetch just listing_ids matching criteria (for monitor new-listing detection).
-     */
-    public static function fetch_matching_listing_ids(array $cities, array $filters = []): array {
-        global $wpdb;
-        $summary_table = $wpdb->prefix . 'bme_listing_summary';
-
-        $where  = ["s.property_type = 'Residential'", "s.list_price > 0", "s.building_area_total > 0"];
-        $params = [];
-        $join   = '';
-
-        $sub_types = !empty($filters['property_sub_types']) ? $filters['property_sub_types'] : ['Single Family Residence'];
-        $ph = implode(',', array_fill(0, count($sub_types), '%s'));
-        $where[] = "s.property_sub_type IN ({$ph})";
-        $params  = array_merge($params, $sub_types);
-
-        $statuses = !empty($filters['statuses']) ? $filters['statuses'] : ['Active'];
-        $ph = implode(',', array_fill(0, count($statuses), '%s'));
-        $where[] = "s.standard_status IN ({$ph})";
-        $params  = array_merge($params, $statuses);
-
-        $ph = implode(',', array_fill(0, count($cities), '%s'));
-        $where[] = "s.city IN ({$ph})";
-        $params  = array_merge($params, $cities);
-
-        if (!empty($filters['sewer_public_only'])) {
-            $join = "INNER JOIN {$wpdb->prefix}bme_listing_details d ON s.listing_id = d.listing_id";
-            $where[] = "d.sewer LIKE '%%Public Sewer%%'";
-        }
-        if (!empty($filters['min_price'])) {
-            $where[]  = "s.list_price >= %f";
-            $params[] = (float) $filters['min_price'];
-        }
-        if (!empty($filters['max_price'])) {
-            $where[]  = "s.list_price <= %f";
-            $params[] = (float) $filters['max_price'];
-        }
-        if (!empty($filters['min_sqft'])) {
-            $where[]  = "s.building_area_total >= %d";
-            $params[] = (int) $filters['min_sqft'];
-        }
-        if (!empty($filters['min_beds'])) {
-            $where[]  = "s.bedrooms_total >= %d";
-            $params[] = (int) $filters['min_beds'];
-        }
-        if (!empty($filters['min_baths'])) {
-            $where[]  = "s.bathrooms_total >= %f";
-            $params[] = (float) $filters['min_baths'];
-        }
-        if (!empty($filters['min_dom'])) {
-            $where[]  = "s.days_on_market >= %d";
-            $params[] = (int) $filters['min_dom'];
-        }
-        if (!empty($filters['max_dom'])) {
-            $where[]  = "s.days_on_market <= %d";
-            $params[] = (int) $filters['max_dom'];
-        }
-        if (!empty($filters['list_date_from'])) {
-            $where[]  = "s.listing_contract_date >= %s";
-            $params[] = $filters['list_date_from'];
-        }
-        if (!empty($filters['list_date_to'])) {
-            $where[]  = "s.listing_contract_date <= %s";
-            $params[] = $filters['list_date_to'];
-        }
-        if (!empty($filters['year_built_min'])) {
-            $where[]  = "s.year_built >= %d";
-            $params[] = (int) $filters['year_built_min'];
-        }
-        if (!empty($filters['year_built_max'])) {
-            $where[]  = "s.year_built <= %d";
-            $params[] = (int) $filters['year_built_max'];
-        }
-        if (!empty($filters['max_sqft'])) {
-            $where[]  = "s.building_area_total <= %d";
-            $params[] = (int) $filters['max_sqft'];
-        }
-        if (!empty($filters['min_lot_acres'])) {
-            $where[]  = "s.lot_size_acres >= %f";
-            $params[] = (float) $filters['min_lot_acres'];
-        }
-        if (!empty($filters['has_garage'])) {
-            $where[] = "s.garage_spaces > 0";
-        }
-
-        $where_sql = implode(' AND ', $where);
-
-        $results = $wpdb->get_col($wpdb->prepare(
-            "SELECT s.listing_id FROM {$summary_table} s {$join} WHERE {$where_sql}",
-            $params
-        ));
-
-        // Also query archive table if Closed status is included
-        if (in_array('Closed', $statuses, true)) {
-            $archive_table = $wpdb->prefix . 'bme_listing_summary_archive';
-            $archive_join  = str_replace('bme_listing_details', 'bme_listing_details_archive', $join);
-            $archive_ids = $wpdb->get_col($wpdb->prepare(
-                "SELECT s.listing_id FROM {$archive_table} s {$archive_join} WHERE {$where_sql}",
-                $params
-            ));
-            if ($archive_ids) {
-                $results = array_unique(array_merge($results, $archive_ids));
-            }
-        }
-
-        return $results;
-    }
-
-    /**
-     * Check pre-financial auto-disqualifiers.
-     *
-     * @param object      $property           Row from bme_listing_summary.
-     * @param array       $arv_data           ARV calculation result.
-     * @param string|null $remarks            Public remarks (for distress keyword check).
-     * @param string|null $property_condition  Property condition from bme_listing_details.
-     * @return string|null Reason for disqualification, or null if passed.
-     */
-    private static function check_disqualifiers(
-        object $property,
-        array $arv_data,
-        ?string $remarks = null,
-        ?string $property_condition = null
-    ): ?string {
-        $list_price = (float) $property->list_price;
-        $arv = (float) $arv_data['estimated_arv'];
-        $sqft = (int) $property->building_area_total;
-
-        if ($list_price < self::MIN_LIST_PRICE) {
-            return 'List price below minimum ($' . number_format(self::MIN_LIST_PRICE) . ') - likely lease or land';
-        }
-
-        if ($arv_data['comp_count'] === 0) {
-            return 'No comparable sales found within 1 mile';
-        }
-
-        if ($sqft < 600) {
-            return 'Building area too small (' . $sqft . ' sqft)';
-        }
-
-        // New construction / near-new disqualifier
-        $year_built = (int) $property->year_built;
-        if ($year_built > 0) {
-            $current_year = (int) wp_date('Y');
-            $age = $current_year - $year_built;
-            $has_distress = self::has_distress_signals($remarks);
-            $condition_is_poor = self::condition_indicates_distress($property_condition);
-
-            // Age ≤ 5: auto-DQ unless distress signals or poor condition
-            if ($age <= 5 && !$has_distress && !$condition_is_poor) {
-                return "Recent construction ({$year_built}) - minimal renovation potential";
-            }
-
-            // Property condition "New Construction" or "Excellent" on < 15 year old property
-            if (self::condition_indicates_pristine($property_condition, $age) && !$has_distress) {
-                return "Property condition '{$property_condition}' on {$year_built} build - no renovation potential";
-            }
-        }
-
-        $market_str = $arv_data['market_strength'] ?? 'balanced';
-        $max_ratio = self::MARKET_MAX_PRICE_ARV_RATIO[$market_str] ?? 0.85;
-        if ($arv > 0 && $list_price > $arv * $max_ratio) {
-            $ratio = round($list_price / $arv, 2);
-            $pct = round($max_ratio * 100);
-            return "List price too close to ARV (ratio: {$ratio}, max: {$pct}% [{$market_str}])";
-        }
-
-        $base_rehab_ppsf  = self::get_rehab_per_sqft($year_built);
-        $age_mult         = self::get_age_condition_multiplier($year_built);
-        $remarks_mult     = self::get_remarks_rehab_multiplier($remarks);
-        $estimated_rehab  = $sqft * max(2.0, $base_rehab_ppsf * $age_mult * $remarks_mult);
-        if ($arv > 0 && $estimated_rehab > $arv * 0.35) {
-            return 'Rehab estimate exceeds 35% of ARV';
-        }
-
-        $ceiling_pct = $arv_data['ceiling_pct'] ?? 0;
-        if ($ceiling_pct > 120) {
-            return 'ARV exceeds 120% of neighborhood ceiling ($'
-                . number_format($arv_data['neighborhood_ceiling'] ?? 0)
-                . ', ceiling_pct: ' . round($ceiling_pct) . '%)';
-        }
-
-        return null;
-    }
-
-    /**
-     * Post-calculation disqualifier using financed numbers and adaptive thresholds.
-     *
-     * @return string|null Reason for disqualification, or null if passed.
-     */
-    private static function check_post_calc_disqualifiers(float $profit, float $roi, array $thresholds, string $arv_confidence = 'medium'): ?string {
-        // Confidence safety margin — require more profit/ROI when ARV is uncertain
-        $confidence_factor = match ($arv_confidence) {
-            'high'   => 1.0,
-            'medium' => 1.0,
-            'low'    => 1.25,  // 25% stricter
-            default  => 1.5,   // 50% stricter for 'none'
-        };
-
-        $min_profit = $thresholds['min_profit'] * $confidence_factor;
-        $min_roi    = $thresholds['min_roi'] * $confidence_factor;
-        $market     = $thresholds['market_strength'];
-        $suffix     = ($market !== 'balanced')
-            ? ' [' . $market . ' market]'
-            : '';
-        if ($confidence_factor > 1.0) {
-            $suffix .= ' [low ARV confidence]';
-        }
-
-        if ($profit < $min_profit) {
-            return 'Estimated profit ($' . number_format($profit) . ') below minimum ($'
-                . number_format($min_profit) . ')' . $suffix;
-        }
-
-        if ($roi < $min_roi) {
-            return 'Estimated ROI (' . round($roi, 1) . '%) below minimum ('
-                . round($min_roi, 1) . '%)' . $suffix;
-        }
-
-        return null;
-    }
-
-    /**
-     * Store a disqualified property result (pre-calculation DQ).
-     */
-    private static function store_disqualified(object $property, array $arv_data, string $reason, string $run_date, ?int $report_id = null): void {
-        $thresholds = self::get_adaptive_thresholds(
-            $arv_data['market_strength'] ?? 'balanced',
-            $arv_data['avg_sale_to_list'] ?? 1.0,
-            $arv_data['arv_confidence'] ?? 'medium'
-        );
-
-        $data = [
-            'listing_id'          => (int) $property->listing_id,
-            'listing_key'         => $property->listing_key ?? '',
-            'run_date'            => $run_date,
-            'total_score'         => 0,
-            'financial_score'     => 0,
-            'property_score'      => 0,
-            'location_score'      => 0,
-            'market_score'        => 0,
-            'estimated_arv'       => round((float) $arv_data['estimated_arv'], 2),
-            'arv_confidence'      => $arv_data['arv_confidence'],
-            'comp_count'          => $arv_data['comp_count'],
-            'avg_comp_ppsf'       => $arv_data['avg_comp_ppsf'],
-            'neighborhood_ceiling' => round((float) ($arv_data['neighborhood_ceiling'] ?? 0), 2),
-            'ceiling_pct'          => $arv_data['ceiling_pct'] ?? 0,
-            'ceiling_warning'      => ($arv_data['ceiling_warning'] ?? false) ? 1 : 0,
-            'estimated_rehab_cost' => 0,
-            'rehab_level'         => 'unknown',
-            'mao'                 => 0,
-            'estimated_profit'    => 0,
-            'estimated_roi'       => 0,
-            'financing_costs'     => 0,
-            'holding_costs'       => 0,
-            'rehab_contingency'   => 0,
-            'hold_months'         => 0,
-            'cash_profit'         => 0,
-            'cash_roi'            => 0,
-            'cash_on_cash_roi'    => 0,
-            'market_strength'     => $arv_data['market_strength'] ?? 'balanced',
-            'avg_sale_to_list'    => $arv_data['avg_sale_to_list'] ?? 1.0,
-            'rehab_multiplier'         => 1.0,
-            'age_condition_multiplier' => 1.0,
-            'days_on_market'           => (int) ($property->days_on_market ?? 0),
-            'list_price'               => (float) $property->list_price,
-            'original_list_price' => (float) ($property->original_list_price ?? 0),
-            'price_per_sqft'      => (float) ($property->price_per_sqft ?? 0),
-            'building_area_total' => (int) $property->building_area_total,
-            'bedrooms_total'      => (int) $property->bedrooms_total,
-            'bathrooms_total'     => (float) $property->bathrooms_total,
-            'year_built'          => (int) $property->year_built,
-            'lot_size_acres'      => (float) ($property->lot_size_acres ?? 0),
-            'city'                => $property->city ?? '',
-            'address'             => trim(($property->street_number ?? '') . ' ' . ($property->street_name ?? '')),
-            'main_photo_url'      => $property->main_photo_url ?? '',
-            'disqualified'        => 1,
-            'disqualify_reason'   => $reason,
-            'near_viable'         => 0,
-            'applied_thresholds_json' => json_encode($thresholds),
-            'annualized_roi'      => 0,
-            'breakeven_arv'       => 0,
-            'deal_risk_grade'     => null,
-            'lead_paint_flag'     => ((int) $property->year_built > 0 && (int) $property->year_built < self::LEAD_PAINT_YEAR) ? 1 : 0,
-            'transfer_tax_buy'    => 0,
-            'transfer_tax_sell'   => 0,
-        ];
-
-        if ($report_id) {
-            $data['report_id'] = $report_id;
-        }
-
-        Flip_Database::upsert_result($data);
-    }
+    // Disqualification methods extracted to Flip_Disqualifier in v0.14.0
 
     /**
      * Get rehab cost per sqft based on property age.
@@ -1168,7 +698,7 @@ class Flip_Analyzer {
      *
      * Returns a multiplier (0.5 = half estimate, 1.5 = 50% more).
      */
-    private static function get_remarks_rehab_multiplier(?string $remarks): float {
+    public static function get_remarks_rehab_multiplier(?string $remarks): float {
         if (empty($remarks)) return 1.0;
         $lower = strtolower($remarks);
 
@@ -1369,114 +899,6 @@ class Flip_Analyzer {
         }
 
         return null;
-    }
-
-    /**
-     * Look up property condition from MLS listing details.
-     *
-     * @param int $listing_id MLS listing ID.
-     * @return string|null Condition value (e.g. "Excellent", "New Construction", "Poor") or null.
-     */
-    private static function get_property_condition(int $listing_id): ?string {
-        global $wpdb;
-        $details_table = $wpdb->prefix . 'bme_listing_details';
-
-        return $wpdb->get_var($wpdb->prepare(
-            "SELECT property_condition FROM {$details_table} WHERE listing_id = %d LIMIT 1",
-            $listing_id
-        ));
-    }
-
-    /**
-     * Check if listing remarks contain distress signals that indicate
-     * a property may need renovation despite being recently built.
-     */
-    private static function has_distress_signals(?string $remarks): bool {
-        if (empty($remarks)) return false;
-        $lower = strtolower($remarks);
-
-        // Strong signals — unambiguous distress, never used in marketing
-        $strong_keywords = [
-            'foreclosure', 'bank owned', 'reo', 'short sale',
-            'fire damage', 'water damage', 'condemned', 'court ordered',
-            'estate sale', 'probate', 'uninhabitable',
-        ];
-        foreach ($strong_keywords as $keyword) {
-            if (str_contains($lower, $keyword)) return true;
-        }
-
-        // Weak signals — commonly used in marketing copy ("settle for a fixer upper",
-        // "no need for a handyman"). Require they NOT appear in a negation context.
-        // Uses word-boundary matching and expanded negation detection.
-        $weak_keywords = [
-            'fixer', 'handyman', 'needs work', 'as-is', 'as is',
-            'tear down', 'teardown',
-        ];
-        $negation_phrases = [
-            'no need', 'don\'t need', 'doesn\'t need', 'not a fixer', 'no fixer',
-            'settle for', 'instead of', 'rather than', 'unlike',
-            'forget the', 'won\'t need', 'without the',
-            'why settle', 'say goodbye', 'no more',
-            'never have to', 'don\'t have to', 'you won\'t',
-        ];
-        foreach ($weak_keywords as $keyword) {
-            // Word-boundary aware search: find all occurrences
-            $offset = 0;
-            $found_unegated = false;
-            while (($pos = strpos($lower, $keyword, $offset)) !== false) {
-                // Basic word boundary: char before/after shouldn't be a letter
-                if ($pos > 0 && ctype_alpha($lower[$pos - 1])) {
-                    $offset = $pos + 1;
-                    continue;
-                }
-                $end = $pos + strlen($keyword);
-                if ($end < strlen($lower) && ctype_alpha($lower[$end])) {
-                    $offset = $pos + 1;
-                    continue;
-                }
-
-                // Check negation context: 120 chars before, 60 chars after
-                $context_start = max(0, $pos - 120);
-                $context_end = min(strlen($lower), $end + 60);
-                $context = substr($lower, $context_start, $context_end - $context_start);
-
-                $negated = false;
-                foreach ($negation_phrases as $neg) {
-                    if (str_contains($context, $neg)) {
-                        $negated = true;
-                        break;
-                    }
-                }
-                if (!$negated) {
-                    $found_unegated = true;
-                    break;
-                }
-                $offset = $pos + 1;
-            }
-            if ($found_unegated) return true;
-        }
-        return false;
-    }
-
-    /**
-     * Check if property condition field indicates distress/renovation need.
-     */
-    private static function condition_indicates_distress(?string $condition): bool {
-        if (empty($condition)) return false;
-        $lower = strtolower(trim($condition));
-        return str_contains($lower, 'poor')
-            || str_contains($lower, 'needs')
-            || str_contains($lower, 'fixer');
-    }
-
-    /**
-     * Check if property condition field indicates pristine/new state
-     * on a relatively new property (< 15 years old).
-     */
-    private static function condition_indicates_pristine(?string $condition, int $age): bool {
-        if (empty($condition) || $age > 15) return false;
-        $lower = strtolower(trim($condition));
-        return in_array($lower, ['new construction', 'excellent', 'new/never occupied'], true);
     }
 
     /**

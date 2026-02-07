@@ -2,9 +2,18 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies Single Family Residence flip candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis.
- * Version: 0.13.3
+ * Version: 0.14.0
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.14.0 - Code Refactoring (6 Extracted Classes)
+ * - Extract: Flip_Property_Fetcher from Flip_Analyzer (eliminates 254-line filter duplication)
+ * - Extract: Flip_Disqualifier from Flip_Analyzer (DQ checks, distress detection, condition logic)
+ * - Extract: Flip_PDF_Components from Flip_PDF_Generator (rendering, formatting, colors)
+ * - Extract: Flip_PDF_Charts from Flip_PDF_Generator (gauge, bar chart, sensitivity chart)
+ * - Extract: Flip_PDF_Images from Flip_PDF_Generator (photo download, strip, comp cards)
+ * - Extract: Flip_Report_AJAX from Flip_Admin_Dashboard (report/monitor AJAX handlers)
+ * - No functional changes — pure refactoring for maintainability
  *
  * Version 0.13.3 - Monitor Polish
  * - Fix: Dashboard "Run Photo Analysis" now scopes to active report (was querying global latest run)
@@ -180,7 +189,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.13.3');
+define('FLIP_VERSION', '0.14.0');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -192,6 +201,8 @@ require_once FLIP_PLUGIN_PATH . 'includes/class-flip-property-scorer.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-location-scorer.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-road-analyzer.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-market-scorer.php';
+require_once FLIP_PLUGIN_PATH . 'includes/class-flip-property-fetcher.php';
+require_once FLIP_PLUGIN_PATH . 'includes/class-flip-disqualifier.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-analyzer.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-photo-analyzer.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-monitor-runner.php';
@@ -204,10 +215,12 @@ if (defined('WP_CLI') && WP_CLI) {
 // Load REST API
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-rest-api.php';
 
-// Load admin dashboard
+// Load admin dashboard + report AJAX handlers
 if (is_admin()) {
     require_once FLIP_PLUGIN_PATH . 'admin/class-flip-admin-dashboard.php';
+    require_once FLIP_PLUGIN_PATH . 'admin/class-flip-report-ajax.php';
     Flip_Admin_Dashboard::init();
+    Flip_Report_AJAX::init();
 }
 
 // Register REST API routes
