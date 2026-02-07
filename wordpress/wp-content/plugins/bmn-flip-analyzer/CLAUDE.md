@@ -1,11 +1,21 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.13.3
+**Current Version:** 0.14.0
 **Last Updated:** 2026-02-07
 
 ## Overview
 
 Standalone WordPress plugin that identifies Single Family Residence flip candidates by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates.
+
+**v0.14.0 Refactoring (6 Extracted Classes):**
+- Extract: `Flip_Property_Fetcher` from `Flip_Analyzer` — eliminates 254-line filter duplication via shared `build_filter_conditions()`
+- Extract: `Flip_Disqualifier` from `Flip_Analyzer` — DQ checks, distress detection, condition logic
+- Extract: `Flip_PDF_Components` from `Flip_PDF_Generator` — rendering, formatting, color constants (composition pattern)
+- Extract: `Flip_PDF_Charts` from `Flip_PDF_Generator` — gauge, bar chart, sensitivity chart
+- Extract: `Flip_PDF_Images` from `Flip_PDF_Generator` — photo download, strip, comp cards
+- Extract: `Flip_Report_AJAX` from `Flip_Admin_Dashboard` — report/monitor AJAX handlers
+- File size reductions: Analyzer 1,335→922, PDF Generator 2,170→1,245, Dashboard 807→548
+- No functional changes — pure refactoring for maintainability
 
 **v0.13.0 Enhancements (Saved Reports & Monitor System):**
 - Auto-save every analysis run as a named report (prompted before running, default "Cities - Date")
@@ -20,7 +30,7 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 - New JS module: `flip-reports.js` in `FlipDashboard.reports` namespace
 - All AJAX handlers (run, refresh, PDF, force-analyze) now accept and propagate `report_id`
 - `Flip_Analyzer::run()` accepts `report_id` and `listing_ids` for report-scoped and incremental runs
-- `Flip_Analyzer::fetch_matching_listing_ids()` for monitor new-listing detection
+- `Flip_Property_Fetcher::fetch_matching_listing_ids()` for monitor new-listing detection
 - 25-report cap with soft delete for archived reports
 - New file: `class-flip-monitor-runner.php` — cron-based incremental analysis with tiered notifications
 
@@ -135,7 +145,9 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 | File | Purpose |
 |------|---------|
 | `bmn-flip-analyzer.php` | Main plugin file, hooks, activation |
-| `includes/class-flip-analyzer.php` | Orchestrator — runs the full pipeline |
+| `includes/class-flip-analyzer.php` | Orchestrator — runs the full pipeline (~922 lines) |
+| `includes/class-flip-property-fetcher.php` | Property fetching + shared filter builder (extracted v0.14.0) |
+| `includes/class-flip-disqualifier.php` | DQ checks, distress detection, condition logic (extracted v0.14.0) |
 | `includes/class-flip-arv-calculator.php` | ARV from sold comps + neighborhood ceiling |
 | `includes/class-flip-financial-scorer.php` | Financial scoring (40% weight) |
 | `includes/class-flip-property-scorer.php` | Lot size & expansion potential (25%) |
@@ -144,11 +156,15 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 | `includes/class-flip-market-scorer.php` | Market timing + remarks analysis (10%) |
 | `includes/class-flip-cli.php` | WP-CLI commands |
 | `includes/class-flip-database.php` | Table creation, queries, CRUD |
-| `includes/class-flip-pdf-generator.php` | TCPDF-based investor-grade PDF report with branding |
+| `includes/class-flip-pdf-generator.php` | TCPDF-based PDF report — page builders (~1,245 lines) |
+| `includes/class-flip-pdf-components.php` | PDF rendering, formatting, colors (extracted v0.14.0) |
+| `includes/class-flip-pdf-charts.php` | PDF gauge, bar chart, sensitivity chart (extracted v0.14.0) |
+| `includes/class-flip-pdf-images.php` | PDF photo download, strip, comp cards (extracted v0.14.0) |
 | `includes/class-flip-rest-api.php` | REST API endpoints (6 endpoints) |
 | `includes/class-flip-photo-analyzer.php` | Claude Vision photo analysis |
 | `includes/class-flip-monitor-runner.php` | Cron-based incremental monitor analysis |
-| `admin/class-flip-admin-dashboard.php` | Admin page, AJAX handlers, report management |
+| `admin/class-flip-admin-dashboard.php` | Admin page, core AJAX handlers (~548 lines) |
+| `admin/class-flip-report-ajax.php` | Report/monitor AJAX handlers (extracted v0.14.0) |
 | `admin/views/dashboard.php` | Dashboard HTML template |
 | `assets/js/flip-core.js` | Namespace + shared state (`window.FlipDashboard`) |
 | `assets/js/flip-helpers.js` | Utility functions (formatCurrency, scoreClass, etc.) |
@@ -374,6 +390,7 @@ Uses Claude Vision API (`claude-sonnet-4-5-20250929`) to analyze up to 5 photos 
 | 4.1 - Renovation Potential Guard | Complete | New construction DQ, inverted year scoring, age rehab multiplier, enhanced remarks |
 | 4.2 - Dashboard JS Refactor | Complete | Split 1,565-line monolith into 10 focused modules |
 | 4.3 - Saved Reports & Monitors | Complete | Auto-save reports, load/rerun/delete, monitor cron system |
+| 4.4 - Code Refactoring | Complete | Extract 6 focused classes, eliminate filter duplication |
 | 5 - iOS | Pending | SwiftUI views, ViewModel, API |
 | 6 - Polish | Pending | Testing, weight tuning |
 
