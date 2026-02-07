@@ -1007,6 +1007,17 @@ Five root causes identified: (1) year-built scoring was backwards (newer = highe
 4. `includes/class-flip-monitor-runner.php` — PDF failure tracking + email improvement
 5. `bmn-flip-analyzer.php` — version bump + PDF cleanup in cron hook
 
+**Deployment & verification:**
+- All 5 files deployed via SCP, version verified: 0.13.3
+- Method signatures confirmed via Reflection on production
+- Cron scheduled with PDF cleanup included
+
+**E2E tests (both passed):**
+1. **Photo analysis report scoping:** `analyze_top_candidates(50, 40, 10)` → found 1 candidate in Report #10 (25 Juniper Ave), photo_score=72 saved to `report_id=10` row, total_score=58.08. Correctly scoped to report, not global latest.
+2. **PDF cleanup:** 24 test PDFs (94.1 MB) deleted by `cleanup_old_pdfs(0)`. Directory clean. Production cron uses 30-day retention.
+
+**Commit:** 19cadc6 pushed to main
+
 **Next steps:**
 1. Phase 5: iOS SwiftUI integration
 2. Consider further refactoring: `class-flip-admin-dashboard.php` (~820 lines)
