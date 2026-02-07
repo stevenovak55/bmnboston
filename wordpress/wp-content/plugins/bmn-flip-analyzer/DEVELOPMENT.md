@@ -969,6 +969,8 @@ Five root causes identified: (1) year-built scoring was backwards (newer = highe
 - Deleted 3 test PDFs
 - Production restored to clean state: 3 active manual reports, 0 monitors
 
+**Commit:** aa516c1 pushed to main
+
 **Next steps:**
 1. Phase 5: iOS SwiftUI integration
 2. Consider further refactoring: `class-flip-admin-dashboard.php` (~820 lines)
