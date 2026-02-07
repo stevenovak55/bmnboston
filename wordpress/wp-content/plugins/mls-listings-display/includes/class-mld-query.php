@@ -3559,13 +3559,18 @@ public static function get_listings_for_map($north, $south, $east, $west, $filte
      */
     public static function get_full_property_history_by_address($address, $exclude_mls = '') {
         global $wpdb;
-        
+
+        // Empty address would match all rows with empty unparsed_address (OOM risk)
+        if (empty($address)) {
+            return array();
+        }
+
         // Check if property history table exists
         $history_table = $wpdb->prefix . 'bme_property_history';
         if ($wpdb->get_var("SHOW TABLES LIKE '{$history_table}'") !== $history_table) {
             return array();
         }
-        
+
         // Get address variations for fuzzy matching
         $address_variations = MLD_Address_Utils::get_fuzzy_match_variations($address);
         
@@ -3625,6 +3630,7 @@ public static function get_listings_for_map($north, $south, $east, $west, $filte
             FROM {$history_table}
             WHERE {$address_where}
             ORDER BY listing_id, event_date ASC
+            LIMIT 500
         ", ...$query_values);
         
         $results = $wpdb->get_results($sql, ARRAY_A);
