@@ -51,7 +51,7 @@
 - Created `CLAUDE.md` and `DEVELOPMENT.md`
 
 **Issues encountered:**
-- None yet (first implementation session)
+- None (first implementation session)
 
 **Next steps:**
 1. ~~Activate plugin on local/staging WordPress~~ ✓
@@ -586,6 +586,15 @@ Five root causes identified: (1) year-built scoring was backwards (newer = highe
 - Added handling for PHP associative arrays (projections keyed by year) in JS
 - Computed derived metrics (capital_recovery_pct, equity_to_investment_pct) client-side from available data
 
+**Phase 7: Production Testing & Critical Bug Fixes**
+- **Bug: ARV not passed to rental/BRRRR calculators** — `calculate_financials()` doesn't return `estimated_arv` (it's a parameter, not a return value). Both `calculate_rental()` and `calculate_brrrr()` read `$flip_fin['estimated_arv']` which was always null/0. Fixed by passing ARV through `$property_data['estimated_arv']` from `$data['estimated_arv']`.
+- **Bug: Rehab cost double-counted** — `$fin['rehab_cost']` already includes contingency, but both calculators added `$fin['rehab_contingency']` again. Inflated total_investment by ~$15K per property. Fixed by using `$fin['rehab_cost']` directly.
+- **Bug: Deal risk grade always 'C'** — `recommend_strategy()` read `$flip_fin['deal_risk_grade']` which doesn't exist in `calculate_financials()` return. Always defaulted to 'C'. Fixed by augmenting `$fin` with `$data['deal_risk_grade']`.
+- **Bug: Pre-DQ'd properties had no rental analysis** — 50 of 51 properties were pre-calc DQ'd and skipped `calculate_financials()` entirely. Added `build_rental_json()` helper + financials computation in pre-DQ block. Coverage: 1/51 → 51/51.
+- **Bug: NaN in BRRRR projections broke JSON encoding** — When post-refi cash flow is deeply negative, `pow(negative_base, fractional_exponent)` produces NaN. `json_encode()` silently returns false. Added guard with linear fallback for negative growth factors.
+- Verified 51/51 properties with rental data across full Somerville analysis
+- Spot-checked 5 properties across $425K–$2.5M range — all metrics realistic for MA market
+
 **Files created (5):**
 1. `includes/class-flip-rental-calculator.php` — Rental/BRRRR calculator + strategy recommendation
 2. `admin/views/strategy-comparison.php` — Strategy comparison sub-page view
@@ -593,16 +602,18 @@ Five root causes identified: (1) year-built scoring was backwards (newer = highe
 4. `assets/js/flip-strategy-comparison.js` — Strategy comparison page JS
 5. `assets/css/flip-strategy.css` — Strategy tab/comparison/BRRRR styles
 
-**Files modified (9):**
+**Files modified (10):**
 1. `bmn-flip-analyzer.php` — Version bump, require, migration
-2. `includes/class-flip-analyzer.php` — Pipeline integration (3 insertion points)
-3. `includes/class-flip-database.php` — Migration, rental defaults getter/setter
-4. `admin/class-flip-admin-dashboard.php` — Sub-page, AJAX handlers, asset enqueue, format_result
-5. `admin/views/dashboard.php` — Rental defaults panel
-6. `assets/js/flip-core.js` — rental namespace
-7. `assets/js/flip-helpers.js` — formatPercent, formatMonthly, strategyBadge
-8. `assets/js/flip-detail-row.js` — Tab system, strategy badge
-9. `assets/js/flip-init.js` — Tab delegation, initDefaults
+2. `includes/class-flip-analyzer.php` — Pipeline integration (3 insertion points), `build_rental_json()` for pre-DQ, ARV passthrough fix
+3. `includes/class-flip-rental-calculator.php` — ARV source fix, rehab double-count fix, NaN guard in projections
+4. `includes/class-flip-disqualifier.php` — Accept + store rental_analysis_json for pre-DQ'd properties
+5. `includes/class-flip-database.php` — Migration, rental defaults getter/setter
+6. `admin/class-flip-admin-dashboard.php` — Sub-page, AJAX handlers, asset enqueue, format_result
+7. `admin/views/dashboard.php` — Rental defaults panel
+8. `assets/js/flip-core.js` — rental namespace
+9. `assets/js/flip-helpers.js` — formatPercent, formatMonthly, strategyBadge
+10. `assets/js/flip-detail-row.js` — Tab system, strategy badge
+11. `assets/js/flip-init.js` — Tab delegation, initDefaults
 
 **Key design decisions:**
 - JSON column (not 20+ new columns) — matches existing patterns, flexible schema
@@ -1437,7 +1448,14 @@ bmn-flip-analyzer/
   7. Admin Rental & BRRRR Defaults panel (11 configurable parameters)
   8. All properties get rental/BRRRR analysis (DQ'd flip may be excellent rental)
   9. New DB column: `rental_analysis_json LONGTEXT`
-  10. 5 new files, 9 modified files
+  10. 5 new files, 11 modified files
+- **Production bug fixes (Session 21 continued):**
+  - Fixed ARV not passed to rental/BRRRR calculators (was always 0 → refi_loan=0)
+  - Fixed rehab cost double-counted (contingency added twice, ~$15K inflation)
+  - Fixed deal risk grade always defaulting to 'C' in strategy scoring
+  - Added rental analysis for pre-DQ'd properties (50/51 were missing)
+  - Fixed NaN in BRRRR projections when negative returns broke `pow()` → `json_encode()` failed silently
+  - Verified 51/51 properties with rental data across full Somerville analysis
 
 ### v1.0.0 (Planned)
 - Fully tested, tuned, production-ready
