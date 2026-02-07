@@ -2,9 +2,14 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies Single Family Residence flip candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis.
- * Version: 0.13.1
+ * Version: 0.13.2
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.13.2 - Monitor Photo Analysis Fix
+ * - Fix: Monitor process_viable() now saves photo analysis results (was discarding return value)
+ * - Fix: Photo analysis in monitor context updates the correct report-scoped DB row
+ * - Add: Flip_Photo_Analyzer::analyze_and_update() public method with report_id support
  *
  * Version 0.13.1 - Reports & Monitor System Audit Fixes
  * - Fix: Global "latest" view now prefers latest manual report (monitor runs no longer contaminate)
@@ -168,7 +173,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.13.1');
+define('FLIP_VERSION', '0.13.2');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 

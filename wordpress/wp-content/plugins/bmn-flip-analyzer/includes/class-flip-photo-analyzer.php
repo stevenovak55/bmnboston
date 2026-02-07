@@ -472,6 +472,48 @@ PROMPT;
     }
 
     /**
+     * Analyze photos for a listing and update its score row.
+     *
+     * Combines analyze() + update_result_with_photo_analysis() into a single
+     * public method that can target a specific report_id.
+     *
+     * @param int      $listing_id MLS listing ID.
+     * @param int|null $report_id  Optional report ID to scope the update.
+     * @return array analyze() result with added 'updated' key.
+     */
+    public static function analyze_and_update(int $listing_id, ?int $report_id = null): array {
+        $analysis = self::analyze($listing_id);
+        $analysis['updated'] = false;
+
+        if (!$analysis['success']) {
+            return $analysis;
+        }
+
+        // Find the DB row for this listing, optionally scoped by report_id
+        global $wpdb;
+        $table = Flip_Database::table_name();
+
+        if ($report_id !== null) {
+            $result = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$table} WHERE listing_id = %d AND report_id = %d LIMIT 1",
+                $listing_id,
+                $report_id
+            ));
+        } else {
+            $result = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$table} WHERE listing_id = %d AND report_id IS NULL ORDER BY run_date DESC LIMIT 1",
+                $listing_id
+            ));
+        }
+
+        if ($result) {
+            $analysis['updated'] = self::update_result_with_photo_analysis($result, $analysis);
+        }
+
+        return $analysis;
+    }
+
+    /**
      * Run photo analysis on top candidates from latest run.
      *
      * @param int   $top Number of top candidates to analyze.

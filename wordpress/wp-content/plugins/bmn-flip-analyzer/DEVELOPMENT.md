@@ -1,6 +1,6 @@
 # BMN Flip Analyzer - Development Log
 
-## Current Version: 0.13.1
+## Current Version: 0.13.2
 
 ## Status: Phase 4.3 Complete (Saved Reports & Monitor System) - Pre-Phase 5 (iOS)
 
@@ -914,6 +914,66 @@ Five root causes identified: (1) year-built scoring was backwards (newer = highe
 3. Consider further refactoring: `class-flip-admin-dashboard.php` (now ~820 lines)
 4. Consider further refactoring: `class-flip-analyzer.php` (1,335 lines)
 
+### Session 17 - 2026-02-07
+
+**What was done (v0.13.2 — Monitor E2E Test + Photo Analysis Fix):**
+
+**Goal:** End-to-end test of the monitor system: create monitor → trigger cron → verify incremental analysis + notification pipeline.
+
+**E2E Test — DQ-only path (Wakefield):**
+1. Created monitor #12 for Wakefield (16 matching listings)
+2. Marked all 16 as seen, then removed 3 to simulate "new arrivals"
+3. Triggered `wp cron event run bmn_flip_monitor_check`
+4. All 3 analyzed, all DQ'd (price too close to ARV, new construction)
+5. Verified: no email sent, no photo analysis, no PDF — correct DQ-only behavior
+6. Seen table restored to 16, report metadata updated (run_count=1, property_count=3)
+
+**E2E Test — Viable path (Melrose):**
+1. Created monitor #13 for Melrose with 515 Upham Street (73432608) as unseen
+2. Cron analyzed it but it got DQ'd fresh (ARV exceeds 120% of ceiling — comp data changed)
+3. Set score to viable manually to test the notification pipeline
+4. Tested PDF generation: PASS (3.5MB PDF with branding)
+5. Tested email notification: PASS (HTML email with property table + PDF download link)
+6. Tested `process_viable()` via Reflection: **Found photo analysis bug**
+
+**Bug found: Monitor photo analysis results silently discarded:**
+- `process_viable()` called `Flip_Photo_Analyzer::analyze($lid)` which returned analysis results
+- But the return value was never used — results weren't saved to the database
+- Additionally, `analyze()` has no `report_id` parameter — even if saved, it would update wrong row
+
+**Fix (2 files):**
+
+1. **`class-flip-photo-analyzer.php`** — Added `analyze_and_update(int $listing_id, ?int $report_id = null)`:
+   - Calls `analyze()` to get Claude Vision results
+   - Finds the DB row scoped to the specified `report_id`
+   - Calls `update_result_with_photo_analysis()` to save results
+   - Returns analysis result with `updated` flag
+
+2. **`class-flip-monitor-runner.php`** — Updated `process_viable()`:
+   - Changed from `Flip_Photo_Analyzer::analyze($lid)` (discarded result)
+   - To `Flip_Photo_Analyzer::analyze_and_update($lid, $report_id)` (saves to correct row)
+   - Added error logging for failed photo analysis
+
+**Verification after fix:**
+- `analyze_and_update(73432608, 13)`: photo_score=72, level=cosmetic, $35/sqft
+- DB row updated: photo_score=72.00, total_score=82.70 (75.5 + 7.2 photo bonus)
+- Full pipeline test (14.3s): photo PASS + PDF PASS + email SENT
+
+**Files modified (3):**
+1. `includes/class-flip-photo-analyzer.php` — Added `analyze_and_update()` public method
+2. `includes/class-flip-monitor-runner.php` — Fixed `process_viable()` to save photo results
+3. `bmn-flip-analyzer.php` — Version bump to 0.13.2
+
+**Test cleanup:**
+- Deleted test monitors #12, #13 (soft-deleted + scores/seen data purged)
+- Deleted 3 test PDFs
+- Production restored to clean state: 3 active manual reports, 0 monitors
+
+**Next steps:**
+1. Phase 5: iOS SwiftUI integration
+2. Consider further refactoring: `class-flip-admin-dashboard.php` (~820 lines)
+3. Consider further refactoring: `class-flip-analyzer.php` (~1,335 lines)
+
 ---
 
 ## Scoring Weight Tuning Log
@@ -1167,6 +1227,14 @@ bmn-flip-analyzer/
   8. Concurrency lock increased from 10 to 15 minutes
   9. Periodic cleanup of scores/seen data for deleted reports (runs on monitor cron)
 - Removed dead code: `stamp_scores_with_report()`, `delete_scores_for_report()`
+
+### v0.13.2 (Complete)
+- **Monitor Photo Analysis Fix + E2E Test** — fixed photo analysis results being silently discarded:
+  1. `process_viable()` now saves photo analysis results to the correct report-scoped DB row
+  2. New `Flip_Photo_Analyzer::analyze_and_update()` public method with `report_id` support
+  3. Full E2E test verified: monitor creation → cron trigger → incremental analysis → tiered notifications
+  4. DQ-only path verified: no email/photo/PDF when all properties disqualified
+  5. Viable path verified: photo analysis (Claude Vision) + PDF generation + email notification
 
 ### v0.14.0 (Planned)
 - iOS SwiftUI integration

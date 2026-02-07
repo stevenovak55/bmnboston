@@ -166,15 +166,19 @@ class Flip_Monitor_Runner {
      * Process viable properties: run photo analysis, generate PDFs, send email.
      */
     private static function process_viable(object $monitor, array $viable_results): void {
+        $report_id   = (int) $monitor->id;
         $listing_ids = array_map(function ($r) {
             return (int) $r->listing_id;
         }, $viable_results);
 
-        // Run photo analysis on viable properties
+        // Run photo analysis on viable properties (report-scoped)
         if (class_exists('Flip_Photo_Analyzer')) {
             foreach ($listing_ids as $lid) {
                 try {
-                    Flip_Photo_Analyzer::analyze($lid);
+                    $result = Flip_Photo_Analyzer::analyze_and_update($lid, $report_id);
+                    if (!$result['success']) {
+                        error_log("Flip Monitor: Photo analysis failed for listing {$lid}: " . ($result['error'] ?? 'unknown'));
+                    }
                 } catch (\Exception $e) {
                     error_log("Flip Monitor: Photo analysis failed for listing {$lid}: " . $e->getMessage());
                 }
