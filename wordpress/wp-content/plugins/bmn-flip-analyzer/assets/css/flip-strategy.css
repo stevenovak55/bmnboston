@@ -226,3 +226,21 @@
 .flip-comparison-table .flip-worst-cell {
     background: #f8d7da;
 }
+
+/* ==========================================
+   Per-Strategy Score Cards (v0.18.0)
+   ========================================== */
+.flip-strategy-cards {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 8px 0;
+}
+
+.flip-strategy-card {
+    flex: 1;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}

@@ -14,6 +14,23 @@
         $('#stat-near-viable').text(summary.near_viable || 0);
         $('#stat-disqualified').text(summary.disqualified || 0);
 
+        // Strategy breakdown (v0.18.0) — count from results data
+        var results = FD.data.results || [];
+        var stratCounts = { flip: 0, rental: 0, brrrr: 0 };
+        var viableCounts = { flip: 0, rental: 0, brrrr: 0 };
+        results.forEach(function (r) {
+            if (r.best_strategy) stratCounts[r.best_strategy] = (stratCounts[r.best_strategy] || 0) + 1;
+            if (r.flip_viable) viableCounts.flip++;
+            if (r.rental_viable) viableCounts.rental++;
+            if (r.brrrr_viable) viableCounts.brrrr++;
+        });
+        $('#stat-flip-viable').text(viableCounts.flip);
+        $('#stat-rental-viable').text(viableCounts.rental);
+        $('#stat-brrrr-viable').text(viableCounts.brrrr);
+        $('#stat-best-flip').text(stratCounts.flip);
+        $('#stat-best-rental').text(stratCounts.rental);
+        $('#stat-best-brrrr').text(stratCounts.brrrr);
+
         if (summary.last_run) {
             var d = new Date(summary.last_run + ' UTC');
             $('#flip-last-run').text('Last run: ' + d.toLocaleDateString() + ' ' + d.toLocaleTimeString());

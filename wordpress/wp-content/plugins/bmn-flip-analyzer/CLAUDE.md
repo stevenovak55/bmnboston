@@ -1,11 +1,23 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.17.0
+**Current Version:** 0.18.0
 **Last Updated:** 2026-02-07
 
 ## Overview
 
-Standalone WordPress plugin that identifies residential investment property candidates (SFR, multifamily, income properties) by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates. As of v0.17.0, supports **Residential Income (multifamily)** properties with unit-aware rent estimation, MLS income integration, and multifamily-specific operating expense defaults.
+Standalone WordPress plugin that identifies residential investment property candidates (SFR, multifamily, income properties) by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates. As of v0.18.0, evaluates **three investment strategies (Flip, Rental Hold, BRRRR)** with per-strategy 0-100 scores and per-strategy disqualification — properties are only DQ'd if ALL strategies fail.
+
+**v0.18.0 Enhancements (Multi-Strategy Scoring & Per-Strategy Disqualification):**
+- **Per-strategy scores:** Each property gets separate `flip_score`, `rental_score`, `brrrr_score` (0-100)
+- **Two-tier DQ system:** Universal DQs (min price, 0 comps, min sqft) block all strategies; flip-specific DQs (new construction, price/ARV, rehab/ARV) only block flip — properties may still be excellent rentals
+- **Composite scoring:** `total_score = max(viable strategy scores)`, `best_strategy = highest scoring viable strategy`
+- **70/20/10 formula:** Each strategy score = 70% financial metrics + 20% quality scores + 10% photo condition
+- **Strategy-specific quality weights:** Location weighted 40% for rental (schools/stability matter) vs 25% for flip; Property weighted 35% for flip (renovation potential) vs 30% for BRRRR
+- **Photo analyzer enhanced:** 4 new Claude Vision fields: `rental_appeal_score`, `tenant_quality_potential`, `maintenance_outlook`, `value_add_score`
+- **Dashboard:** Strategy mini-badges (F:82 R:71 B:--) in table, per-strategy score cards in detail row, strategy filter dropdown, sort by any strategy score, strategy viability stats
+- **CLI:** Strategy columns (Best/F/R/B) in results table, strategy score section in property detail
+- **REST API:** 7 new fields in response, `strategy` filter parameter, sort by `flip_score`/`rental_score`/`brrrr_score`
+- **DB migration:** 7 new columns on `wp_bmn_flip_scores` (flip_score, rental_score, brrrr_score, flip_viable, rental_viable, brrrr_viable, best_strategy)
 
 **v0.17.0 Enhancements (Multifamily / Residential Income Support):**
 
@@ -247,6 +259,7 @@ Standalone WordPress plugin that identifies residential investment property cand
 - Risk analysis (v0.8.0): `annualized_roi`, `breakeven_arv`, `deal_risk_grade`, `transfer_tax_buy`, `transfer_tax_sell`
 - Thresholds: `applied_thresholds_json` (v0.7.0)
 - Report link: `report_id` (v0.13.0) — foreign key to `wp_bmn_flip_reports`
+- Strategy (v0.18.0): `flip_score`, `rental_score`, `brrrr_score` (DECIMAL 0-100), `flip_viable`, `rental_viable`, `brrrr_viable` (TINYINT 0/1), `best_strategy` (VARCHAR flip/rental/brrrr)
 
 **Table:** `wp_bmn_flip_reports` (v0.13.0)
 - Report metadata: `id`, `name`, `type` (manual/monitor), `status` (active/archived/deleted)
@@ -456,6 +469,7 @@ Uses Claude Vision API (`claude-sonnet-4-5-20250929`) to analyze up to 5 photos 
 | 4.4 - Code Refactoring | Complete | Extract 6 focused classes, eliminate filter duplication |
 | 4.5 - Email & Weight Tuning | Complete | Branded emails, digest, notification levels, scoring weights admin UI |
 | 4.7 - Multi-Exit Strategy | Complete | Rental Hold, BRRRR, strategy comparison, tab system, defaults panel |
+| 4.8 - Multi-Strategy Scoring | Complete | Per-strategy scores, two-tier DQ, strategy filter/sort, photo enhancement |
 | 5 - iOS | Pending | SwiftUI views, ViewModel, API |
 | 6 - Polish | Pending | Testing, weight tuning |
 

@@ -536,96 +536,127 @@ class Flip_Rental_Calculator {
     /**
      * Compare all three strategies and recommend the best one.
      *
-     * @param array $flip_fin  From Flip_Analyzer::calculate_financials()
-     * @param array $rental    From self::calculate_rental()
-     * @param array $brrrr     From self::calculate_brrrr()
-     * @return array {recommended, scores, reasoning}
+     * Scoring formula: 70% financial metrics + 20% property/location quality + 10% photo condition.
+     * Quality and photo components use strategy-specific weights.
+     *
+     * @param array      $flip_fin       From Flip_Analyzer::calculate_financials()
+     * @param array      $rental         From self::calculate_rental()
+     * @param array      $brrrr          From self::calculate_brrrr()
+     * @param array      $quality_scores Quality scorer results {financial, property, location, market} (0-100 each)
+     * @param array|null $photo_data     Photo analysis data from Claude Vision
+     * @return array {recommended, scores, viable, reasoning}
      */
     public static function recommend_strategy(
         array $flip_fin,
         array $rental,
-        array $brrrr
+        array $brrrr,
+        array $quality_scores = [],
+        ?array $photo_data = null
     ): array {
-        // Score each strategy 0-100
+        $has_quality = !empty($quality_scores);
+        $has_photo   = !empty($photo_data);
 
-        // --- Flip Score ---
-        $flip_score = 0;
+        // --- Flip Financial Component (0-100) ---
+        $flip_fin_raw = 0;
         $flip_profit = (float) ($flip_fin['estimated_profit'] ?? 0);
-        $flip_roi    = (float) ($flip_fin['cash_on_cash_roi'] ?? 0);
         $flip_risk   = $flip_fin['deal_risk_grade'] ?? 'C';
+        $annualized  = (float) ($flip_fin['annualized_roi'] ?? 0);
 
-        // Profit speed (annualized ROI normalized to 0-40 points)
-        $annualized = (float) ($flip_fin['annualized_roi'] ?? 0);
-        $flip_score += min(40, max(0, $annualized * 0.4));
-
-        // Absolute profit (0-30 points)
-        $flip_score += min(30, max(0, $flip_profit / 2000));
-
-        // Risk grade bonus (0-30 points): A=30, B=24, C=18, D=12, F=6
+        $flip_fin_raw += min(40, max(0, $annualized * 0.4));
+        $flip_fin_raw += min(30, max(0, $flip_profit / 2000));
         $risk_map = ['A' => 30, 'B' => 24, 'C' => 18, 'D' => 12, 'F' => 6];
-        $flip_score += $risk_map[$flip_risk] ?? 15;
-
-        // Penalize negative profit
+        $flip_fin_raw += $risk_map[$flip_risk] ?? 15;
         if ($flip_profit <= 0) {
-            $flip_score = max(0, $flip_score - 40);
+            $flip_fin_raw = max(0, $flip_fin_raw - 40);
         }
+        $flip_fin_raw = min(100, max(0, $flip_fin_raw));
 
-        // --- Rental Score ---
-        $rental_score = 0;
-        $cap_rate      = (float) ($rental['cap_rate'] ?? 0);
-        $rental_coc    = (float) ($rental['cash_on_cash'] ?? 0);
-        $monthly_cf    = (float) ($rental['monthly_cash_flow'] ?? 0);
-        $yr5_return    = (float) ($rental['projections'][5]['total_return_pct'] ?? 0);
+        // Flip quality: property weighted highest (renovation potential matters most)
+        $flip_quality = $has_quality
+            ? ($quality_scores['financial'] ?? 50) * 0.30
+              + ($quality_scores['property'] ?? 50) * 0.35
+              + ($quality_scores['location'] ?? 50) * 0.25
+              + ($quality_scores['market'] ?? 50) * 0.10
+            : 50;
 
-        // Cap rate quality (0-25 points)
-        $rental_score += min(25, max(0, $cap_rate * 4));
+        // Flip photo: use existing flip_photo_score
+        $flip_photo = $has_photo
+            ? min(100, max(0, (float) ($photo_data['flip_photo_score'] ?? 50)))
+            : 50;
 
-        // Cash-on-cash (0-25 points)
-        $rental_score += min(25, max(0, $rental_coc * 3));
+        // --- Rental Financial Component (0-100) ---
+        $rental_fin_raw = 0;
+        $cap_rate    = (float) ($rental['cap_rate'] ?? 0);
+        $rental_coc  = (float) ($rental['cash_on_cash'] ?? 0);
+        $monthly_cf  = (float) ($rental['monthly_cash_flow'] ?? 0);
+        $yr5_return  = (float) ($rental['projections'][5]['total_return_pct'] ?? 0);
 
-        // Monthly cash flow stability (0-25 points): $500/mo = 25pts
-        $rental_score += min(25, max(0, $monthly_cf / 20));
-
-        // Long-term wealth (5-year total return, 0-25 points)
-        $rental_score += min(25, max(0, $yr5_return * 0.25));
-
-        // Penalize negative cash flow
+        $rental_fin_raw += min(25, max(0, $cap_rate * 4));
+        $rental_fin_raw += min(25, max(0, $rental_coc * 3));
+        $rental_fin_raw += min(25, max(0, $monthly_cf / 20));
+        $rental_fin_raw += min(25, max(0, $yr5_return * 0.25));
         if ($monthly_cf <= 0) {
-            $rental_score = max(0, $rental_score - 20);
+            $rental_fin_raw = max(0, $rental_fin_raw - 20);
         }
+        $rental_fin_raw = min(100, max(0, $rental_fin_raw));
 
-        // --- BRRRR Score ---
-        $brrrr_score = 0;
-        $cash_left    = (float) ($brrrr['cash_left_in_deal'] ?? 999999);
-        $infinite     = (bool) ($brrrr['infinite_return'] ?? false);
-        $brrrr_cf     = (float) ($brrrr['post_refi_monthly_cf'] ?? 0);
-        $equity       = (float) ($brrrr['equity_captured'] ?? 0);
-        $dscr         = (float) ($brrrr['dscr'] ?? 0);
+        // Rental quality: location weighted highest (schools, stability matter for tenants)
+        $rental_quality = $has_quality
+            ? ($quality_scores['financial'] ?? 50) * 0.15
+              + ($quality_scores['property'] ?? 50) * 0.20
+              + ($quality_scores['location'] ?? 50) * 0.40
+              + ($quality_scores['market'] ?? 50) * 0.25
+            : 50;
 
-        // Capital recovery (0-35 points): infinite return = 35, 100% recovery = 28
+        // Rental photo: curb appeal + exterior + overall condition
+        $rental_photo = $has_photo
+            ? self::compute_rental_photo_score($photo_data)
+            : 50;
+
+        // --- BRRRR Financial Component (0-100) ---
+        $brrrr_fin_raw = 0;
+        $cash_left  = (float) ($brrrr['cash_left_in_deal'] ?? 999999);
+        $infinite   = (bool) ($brrrr['infinite_return'] ?? false);
+        $brrrr_cf   = (float) ($brrrr['post_refi_monthly_cf'] ?? 0);
+        $equity     = (float) ($brrrr['equity_captured'] ?? 0);
+        $dscr       = (float) ($brrrr['dscr'] ?? 0);
+
         if ($infinite) {
-            $brrrr_score += 35;
+            $brrrr_fin_raw += 35;
         } else {
             $total_in = (float) ($brrrr['total_cash_in'] ?? 1);
             $recovery_pct = $total_in > 0 ? (($total_in - $cash_left) / $total_in) * 100 : 0;
-            $brrrr_score += min(35, max(0, $recovery_pct * 0.35));
+            $brrrr_fin_raw += min(35, max(0, $recovery_pct * 0.35));
         }
-
-        // Post-refi cash flow (0-25 points)
-        $brrrr_score += min(25, max(0, $brrrr_cf / 20));
-
-        // Equity position (0-20 points)
-        $brrrr_score += min(20, max(0, $equity / 10000));
-
-        // DSCR safety (0-20 points): 1.25+ = 20, 1.0 = 10, <1.0 = 0
+        $brrrr_fin_raw += min(25, max(0, $brrrr_cf / 20));
+        $brrrr_fin_raw += min(20, max(0, $equity / 10000));
         if ($dscr !== null && $dscr > 0) {
-            $brrrr_score += min(20, max(0, ($dscr - 0.8) * 50));
+            $brrrr_fin_raw += min(20, max(0, ($dscr - 0.8) * 50));
         }
-
-        // Penalize negative post-refi cash flow heavily
         if ($brrrr_cf < 0) {
-            $brrrr_score = max(0, $brrrr_score - 15);
+            $brrrr_fin_raw = max(0, $brrrr_fin_raw - 15);
         }
+        $brrrr_fin_raw = min(100, max(0, $brrrr_fin_raw));
+
+        // BRRRR quality: balanced property + location (value-add + appreciation)
+        $brrrr_quality = $has_quality
+            ? ($quality_scores['financial'] ?? 50) * 0.25
+              + ($quality_scores['property'] ?? 50) * 0.30
+              + ($quality_scores['location'] ?? 50) * 0.30
+              + ($quality_scores['market'] ?? 50) * 0.15
+            : 50;
+
+        // BRRRR photo: values renovation opportunity (lower condition = more upside)
+        $brrrr_photo = $has_photo
+            ? self::compute_brrrr_photo_score($photo_data)
+            : 50;
+
+        // --- Compose Final Scores ---
+        // When quality/photo data is available: 70/20/10 split
+        // When not available: pure financial (quality/photo default to 50, which is neutral)
+        $flip_score   = $flip_fin_raw * 0.70 + $flip_quality * 0.20 + $flip_photo * 0.10;
+        $rental_score = $rental_fin_raw * 0.70 + $rental_quality * 0.20 + $rental_photo * 0.10;
+        $brrrr_score  = $brrrr_fin_raw * 0.70 + $brrrr_quality * 0.20 + $brrrr_photo * 0.10;
 
         // Clamp all scores 0-100
         $flip_score   = (int) min(100, max(0, round($flip_score)));
@@ -653,6 +684,56 @@ class Flip_Rental_Calculator {
             ],
             'reasoning'   => $reasoning,
         ];
+    }
+
+    /**
+     * Compute rental-specific photo score from Claude Vision data.
+     *
+     * Prioritizes tenant appeal: curb appeal, exterior condition, overall condition.
+     */
+    private static function compute_rental_photo_score(array $photo_data): float {
+        // Use rental_appeal_score if available (v0.18.0 photo analyzer field)
+        if (isset($photo_data['rental_appeal_score'])) {
+            return min(100, max(0, (float) $photo_data['rental_appeal_score']));
+        }
+
+        // Fallback: compose from existing photo fields (1-10 scale → 0-100)
+        $curb      = (float) ($photo_data['curb_appeal'] ?? 5);
+        $exterior  = (float) ($photo_data['exterior_condition'] ?? 5);
+        $overall   = (float) ($photo_data['overall_condition'] ?? 5);
+        $structural_penalty = !empty($photo_data['structural_concerns']) ? 3 : 0;
+        $water_penalty      = !empty($photo_data['water_damage_signs']) ? 2 : 0;
+        $condition_factor   = max(0, 10 - $structural_penalty - $water_penalty);
+
+        $raw = $curb * 0.30 + $exterior * 0.25 + $overall * 0.25 + $condition_factor * 0.20;
+        return min(100, max(0, $raw * 10)); // Scale 1-10 → 0-100
+    }
+
+    /**
+     * Compute BRRRR-specific photo score from Claude Vision data.
+     *
+     * BRRRR values renovation opportunity — lower condition = more value-add upside.
+     * But structural issues are still penalized (too risky for refinance).
+     */
+    private static function compute_brrrr_photo_score(array $photo_data): float {
+        // Use value_add_score if available (v0.18.0 photo analyzer field)
+        if (isset($photo_data['value_add_score'])) {
+            return min(100, max(0, (float) $photo_data['value_add_score']));
+        }
+
+        // Fallback: compose from existing fields
+        $overall   = (float) ($photo_data['overall_condition'] ?? 5);
+        $exterior  = (float) ($photo_data['exterior_condition'] ?? 5);
+        $curb      = (float) ($photo_data['curb_appeal'] ?? 5);
+
+        // Lower overall condition = more value-add opportunity
+        $value_add = (10 - $overall) * 10; // 0-100: condition 1 = 90pts, condition 10 = 0pts
+        $structural_ok = empty($photo_data['structural_concerns']) ? 25 : 0;
+        $exterior_score = $exterior * 2.5;  // 0-25: decent exterior = refinanceable
+        $curb_score     = $curb * 2.5;      // 0-25: curb appeal helps appraisal
+
+        $raw = ($value_add * 0.30) + ($structural_ok * 0.25) + ($exterior_score * 0.25) + ($curb_score * 0.20);
+        return min(100, max(0, $raw));
     }
 
     /**

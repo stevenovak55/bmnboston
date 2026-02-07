@@ -316,29 +316,18 @@ class Flip_Analyzer {
             // Calculate ARV
             $arv_data = Flip_ARV_Calculator::calculate($property);
 
-            // Check pre-financial disqualifiers (includes new construction check)
-            $disqualify = Flip_Disqualifier::check_disqualifiers($property, $arv_data, $remarks, $property_condition);
-            if ($disqualify) {
-                // Still compute financials + rental analysis for pre-DQ'd properties.
-                // A property that fails flip DQ may be an excellent rental.
-                $sqft_dq       = (int) $property->building_area_total;
-                $year_built_dq = (int) $property->year_built;
-                $list_price_dq = (float) $property->list_price;
-                $arv_dq        = (float) $arv_data['estimated_arv'];
-                $tax_rate_dq   = self::get_actual_tax_rate($listing_id, $list_price_dq);
-                $fin_dq = self::calculate_financials(
-                    $arv_dq, $list_price_dq, max(1, $sqft_dq), max(1900, $year_built_dq),
-                    $remarks, $city_metrics['avg_dom'] ?? 30, $tax_rate_dq
-                );
-                $rental_json = self::build_rental_json($fin_dq, $property, $arv_dq);
-
-                Flip_Disqualifier::store_disqualified($property, $arv_data, $disqualify, $run_date, $report_id, $rental_json);
+            // ---- UNIVERSAL DQ: blocks ALL strategies ----
+            $universal_dq = Flip_Disqualifier::check_universal_disqualifiers($property, $arv_data);
+            if ($universal_dq) {
+                // Universally disqualified — no strategy can work
+                Flip_Disqualifier::store_disqualified($property, $arv_data, $universal_dq, $run_date, $report_id, null);
                 $disqualified++;
                 $analyzed++;
                 continue;
             }
 
-            // Run all scorers
+            // ---- FULL SCORING for ALL remaining properties ----
+            // Run all scorers (even if flip will be DQ'd — needed for rental/BRRRR scores)
             $financial = Flip_Financial_Scorer::score($property, $arv_data, $city_metrics['avg_ppsf']);
             $prop_score = Flip_Property_Scorer::score($property);
 
@@ -366,15 +355,14 @@ class Flip_Analyzer {
                 ['road_type' => $road_analysis['road_type']]
             );
 
-            // $remarks already fetched earlier (before DQ check)
             $market = Flip_Market_Scorer::score($property, $remarks);
 
             // Compute weighted total (dynamic weights from WP option, defaults to constants)
             $w = Flip_Database::get_scoring_weights()['main'];
-            $total_score = ($financial['score'] * $w['financial'])
-                         + ($prop_score['score'] * $w['property'])
-                         + ($location['score'] * $w['location'])
-                         + ($market['score'] * $w['market']);
+            $base_total_score = ($financial['score'] * $w['financial'])
+                              + ($prop_score['score'] * $w['property'])
+                              + ($location['score'] * $w['location'])
+                              + ($market['score'] * $w['market']);
 
             // Financial calculations via shared method
             $sqft = (int) $property->building_area_total;
@@ -413,38 +401,93 @@ class Flip_Analyzer {
                 $arv_data['comp_count']
             );
 
-            // Post-calculation disqualifier (uses financed numbers + adaptive thresholds)
-            $post_dq = Flip_Disqualifier::check_post_calc_disqualifiers(
-                $fin['estimated_profit'], $fin['cash_on_cash_roi'], $thresholds,
-                $arv_data['arv_confidence'] ?? 'medium'
-            );
-            if ($post_dq) {
-                // Check if near-viable (within 80% of adjusted thresholds)
-                $near_viable = ($fin['estimated_profit'] >= $thresholds['min_profit'] * 0.8)
-                            && ($fin['cash_on_cash_roi'] >= $thresholds['min_roi'] * 0.8);
+            // ---- PER-STRATEGY VIABILITY ----
 
-                // Still store full data so dashboard shows why it was DQ'd
-                $data = self::build_result_data(
-                    $property, $arv_data, $road_analysis, $fin,
-                    $total_score, $financial, $prop_score, $location, $market,
-                    $arv, $run_date
+            // Flip viability: check flip-specific DQs + post-calc DQs
+            $flip_dq_reason = Flip_Disqualifier::check_flip_disqualifiers($property, $arv_data, $remarks, $property_condition);
+            $flip_post_dq = null;
+            if (!$flip_dq_reason) {
+                $flip_post_dq = Flip_Disqualifier::check_post_calc_disqualifiers(
+                    $fin['estimated_profit'], $fin['cash_on_cash_roi'], $thresholds,
+                    $arv_data['arv_confidence'] ?? 'medium'
                 );
-                $data['disqualified'] = 1;
-                $data['disqualify_reason'] = $post_dq;
-                $data['near_viable'] = $near_viable ? 1 : 0;
-                $data['applied_thresholds_json'] = $thresholds_json;
-                $data['deal_risk_grade'] = $deal_risk_grade;
-                self::attach_rental_analysis($data, $fin, $property);
-                if ($report_id) {
-                    $data['report_id'] = $report_id;
-                }
-                Flip_Database::upsert_result($data);
-                $disqualified++;
-                $analyzed++;
-                continue;
+            }
+            $flip_viable = ($flip_dq_reason === null && $flip_post_dq === null);
+
+            // Calculate rental/BRRRR data
+            $property_data_for_rental = [
+                'list_price'          => $list_price,
+                'building_area_total' => $sqft,
+                'bedrooms_total'      => (int) $property->bedrooms_total,
+                'bathrooms_total'     => (float) $property->bathrooms_total,
+                'year_built'          => $year_built,
+                'city'                => $property->city ?? '',
+                'actual_tax_rate'     => $fin['actual_tax_rate'] ?? null,
+                'estimated_arv'       => $arv,
+                'property_sub_type'      => $property->property_sub_type ?? 'Single Family Residence',
+                'number_of_units_total'  => self::get_unit_count($property),
+                'gross_income'           => self::get_gross_income($property),
+            ];
+
+            $fin['deal_risk_grade'] = $deal_risk_grade;
+            $rental_data = Flip_Rental_Calculator::calculate_rental($fin, $property_data_for_rental);
+            $brrrr_data  = Flip_Rental_Calculator::calculate_brrrr($fin, $rental_data, $property_data_for_rental);
+
+            // Rental and BRRRR viability
+            $rental_viable = Flip_Disqualifier::check_rental_viable($rental_data);
+            $brrrr_viable  = Flip_Disqualifier::check_brrrr_viable($brrrr_data);
+
+            // ---- PER-STRATEGY SCORES via enhanced recommend_strategy() ----
+            $quality_scores = [
+                'financial' => $financial['score'],
+                'property'  => $prop_score['score'],
+                'location'  => $location['score'],
+                'market'    => $market['score'],
+            ];
+            $strategy = Flip_Rental_Calculator::recommend_strategy(
+                $fin, $rental_data, $brrrr_data, $quality_scores
+            );
+
+            $flip_score   = $strategy['scores']['flip'];
+            $rental_score = $strategy['scores']['rental'];
+            $brrrr_score  = $strategy['scores']['brrrr'];
+
+            // ---- COMPOSITE SCORING ----
+            // total_score = max of viable strategy scores (represents best investment opportunity)
+            $viable_scores = [];
+            if ($flip_viable)   $viable_scores[] = $flip_score;
+            if ($rental_viable) $viable_scores[] = $rental_score;
+            if ($brrrr_viable)  $viable_scores[] = $brrrr_score;
+
+            $is_disqualified = empty($viable_scores);  // DQ only if ALL strategies fail
+            $total_score = $is_disqualified ? $base_total_score : max($viable_scores);
+
+            // Determine best strategy (highest scoring viable strategy)
+            $best_strategy = null;
+            if (!$is_disqualified) {
+                $viable_map = [];
+                if ($flip_viable)   $viable_map['flip']   = $flip_score;
+                if ($rental_viable) $viable_map['rental'] = $rental_score;
+                if ($brrrr_viable)  $viable_map['brrrr']  = $brrrr_score;
+                arsort($viable_map);
+                $best_strategy = array_key_first($viable_map);
             }
 
-            // Store viable result
+            // Determine DQ reason (most informative reason if all fail)
+            $dq_reason = null;
+            if ($is_disqualified) {
+                // Show flip DQ reason (most specific), with rental/BRRRR failure note
+                $dq_reason = $flip_dq_reason ?? $flip_post_dq ?? 'All strategies failed viability checks';
+            }
+
+            // Near-viable: at least one strategy is close (for flip, check 80% threshold)
+            $near_viable = false;
+            if ($is_disqualified) {
+                $near_viable = ($fin['estimated_profit'] >= $thresholds['min_profit'] * 0.8
+                             && $fin['cash_on_cash_roi'] >= $thresholds['min_roi'] * 0.8);
+            }
+
+            // ---- BUILD AND STORE RESULT ----
             $data = self::build_result_data(
                 $property, $arv_data, $road_analysis, $fin,
                 $total_score, $financial, $prop_score, $location, $market,
@@ -452,11 +495,34 @@ class Flip_Analyzer {
             );
             $data['applied_thresholds_json'] = $thresholds_json;
             $data['deal_risk_grade'] = $deal_risk_grade;
-            self::attach_rental_analysis($data, $fin, $property);
+            $data['disqualified']    = $is_disqualified ? 1 : 0;
+            $data['disqualify_reason'] = $dq_reason;
+            $data['near_viable']     = $near_viable ? 1 : 0;
+
+            // Per-strategy fields (v0.18.0)
+            $data['flip_score']      = $flip_score;
+            $data['rental_score']    = $rental_score;
+            $data['brrrr_score']     = $brrrr_score;
+            $data['flip_viable']     = $flip_viable ? 1 : 0;
+            $data['rental_viable']   = $rental_viable ? 1 : 0;
+            $data['brrrr_viable']    = $brrrr_viable ? 1 : 0;
+            $data['best_strategy']   = $best_strategy;
+
+            // Attach rental analysis JSON (already computed above)
+            $data['rental_analysis_json'] = wp_json_encode([
+                'rental'   => $rental_data,
+                'brrrr'    => $brrrr_data,
+                'strategy' => $strategy,
+            ]);
+
             if ($report_id) {
                 $data['report_id'] = $report_id;
             }
             Flip_Database::upsert_result($data);
+
+            if ($is_disqualified) {
+                $disqualified++;
+            }
             $analyzed++;
         }
 
@@ -670,7 +736,59 @@ class Flip_Analyzer {
             $arv_data['comp_count']
         );
 
-        // 9. Build result and store (disqualified = 0 by default from build_result_data)
+        // 9. Compute rental/BRRRR data (remarks already fetched at step 5)
+        $property_data_for_rental = [
+            'list_price'          => $list_price,
+            'building_area_total' => $sqft,
+            'bedrooms_total'      => (int) $property->bedrooms_total,
+            'bathrooms_total'     => (float) $property->bathrooms_total,
+            'year_built'          => $year_built,
+            'city'                => $property->city ?? '',
+            'actual_tax_rate'     => $fin['actual_tax_rate'] ?? null,
+            'estimated_arv'       => $arv,
+            'property_sub_type'      => $property->property_sub_type ?? 'Single Family Residence',
+            'number_of_units_total'  => self::get_unit_count($property),
+            'gross_income'           => self::get_gross_income($property),
+        ];
+
+        $fin['deal_risk_grade'] = $deal_risk_grade;
+        $rental_data = Flip_Rental_Calculator::calculate_rental($fin, $property_data_for_rental);
+        $brrrr_data  = Flip_Rental_Calculator::calculate_brrrr($fin, $rental_data, $property_data_for_rental);
+
+        // 10. Per-strategy viability (force-analyze bypasses flip DQ, but still compute viability flags)
+        $rental_viable = Flip_Disqualifier::check_rental_viable($rental_data);
+        $brrrr_viable  = Flip_Disqualifier::check_brrrr_viable($brrrr_data);
+        $flip_viable   = true;  // Force analyze always considers flip viable
+
+        // 11. Per-strategy scores via enhanced recommend_strategy()
+        $quality_scores = [
+            'financial' => $financial['score'],
+            'property'  => $prop_score['score'],
+            'location'  => $location['score'],
+            'market'    => $market['score'],
+        ];
+        $strategy = Flip_Rental_Calculator::recommend_strategy(
+            $fin, $rental_data, $brrrr_data, $quality_scores
+        );
+
+        $flip_score   = $strategy['scores']['flip'];
+        $rental_score = $strategy['scores']['rental'];
+        $brrrr_score  = $strategy['scores']['brrrr'];
+
+        // Composite score = max of viable strategy scores
+        $viable_scores = [$flip_score];  // flip always viable for force-analyze
+        if ($rental_viable) $viable_scores[] = $rental_score;
+        if ($brrrr_viable)  $viable_scores[] = $brrrr_score;
+        $total_score = max($viable_scores);
+
+        // Best strategy = highest scoring viable
+        $viable_map = ['flip' => $flip_score];
+        if ($rental_viable) $viable_map['rental'] = $rental_score;
+        if ($brrrr_viable)  $viable_map['brrrr']  = $brrrr_score;
+        arsort($viable_map);
+        $best_strategy = array_key_first($viable_map);
+
+        // 12. Build result and store (disqualified = 0 for force-analyze)
         $data = self::build_result_data(
             $property, $arv_data, $road_analysis, $fin,
             $total_score, $financial, $prop_score, $location, $market,
@@ -678,7 +796,23 @@ class Flip_Analyzer {
         );
         $data['applied_thresholds_json'] = json_encode($thresholds);
         $data['deal_risk_grade']         = $deal_risk_grade;
-        self::attach_rental_analysis($data, $fin, $property);
+
+        // Per-strategy fields (v0.18.0)
+        $data['flip_score']      = $flip_score;
+        $data['rental_score']    = $rental_score;
+        $data['brrrr_score']     = $brrrr_score;
+        $data['flip_viable']     = 1;
+        $data['rental_viable']   = $rental_viable ? 1 : 0;
+        $data['brrrr_viable']    = $brrrr_viable ? 1 : 0;
+        $data['best_strategy']   = $best_strategy;
+
+        // Attach rental analysis JSON
+        $data['rental_analysis_json'] = wp_json_encode([
+            'rental'   => $rental_data,
+            'brrrr'    => $brrrr_data,
+            'strategy' => $strategy,
+        ]);
+
         if ($report_id) {
             $data['report_id'] = $report_id;
         }
@@ -686,9 +820,10 @@ class Flip_Analyzer {
         Flip_Database::upsert_result($data);
 
         return [
-            'success'     => true,
-            'listing_id'  => $listing_id,
-            'total_score' => round($total_score, 2),
+            'success'       => true,
+            'listing_id'    => $listing_id,
+            'total_score'   => round($total_score, 2),
+            'best_strategy' => $best_strategy,
         ];
     }
 

@@ -8,7 +8,7 @@
     var h = FD.helpers;
 
     FD.detail.buildDetailRow = function (r) {
-        var html = '<tr class="flip-detail-row"><td colspan="12">';
+        var html = '<tr class="flip-detail-row"><td colspan="13">';
 
         var forceBtn = r.disqualified
             ? '<button class="button button-small flip-force-btn" data-listing="' + r.listing_id + '">'
@@ -29,11 +29,40 @@
             + '<span class="dashicons dashicons-pdf"></span> Download PDF Report'
             + '</button></div>';
 
-        // Tab bar
+        // Per-strategy score cards (v0.18.0)
+        if (r.flip_score !== null || r.rental_score !== null || r.brrrr_score !== null) {
+            html += '<div class="flip-strategy-cards">';
+            var cards = [
+                { key: 'flip', label: 'FLIP', score: r.flip_score, viable: r.flip_viable, color: '#dc3545' },
+                { key: 'rental', label: 'RENTAL', score: r.rental_score, viable: r.rental_viable, color: '#198754' },
+                { key: 'brrrr', label: 'BRRRR', score: r.brrrr_score, viable: r.brrrr_viable, color: '#0d6efd' },
+            ];
+            cards.forEach(function (c) {
+                var scoreText = c.score !== null && c.score !== undefined ? Math.round(c.score) : '--';
+                var viableText = c.viable ? '✓ Viable' : '✗ N/A';
+                var viableColor = c.viable ? '#198754' : '#999';
+                var borderColor = c.viable ? c.color : '#ddd';
+                var isBest = r.best_strategy === c.key;
+                var bestMark = isBest ? '<div style="color:' + c.color + ';font-size:11px;font-weight:600">★ Best Pick</div>' : '';
+                html += '<div class="flip-strategy-card" style="border-top:3px solid ' + borderColor + ';padding:8px 12px;text-align:center;min-width:100px">'
+                    + '<div style="font-size:11px;font-weight:700;color:#666;letter-spacing:0.5px">' + c.label + '</div>'
+                    + '<div style="font-size:24px;font-weight:700;color:' + (c.viable ? c.color : '#ccc') + '">' + scoreText + '</div>'
+                    + '<div style="font-size:11px;color:' + viableColor + '">' + viableText + '</div>'
+                    + bestMark
+                    + '</div>';
+            });
+            html += '</div>';
+        }
+
+        // Tab bar with strategy scores
+        var flipTabLabel = 'Flip Analysis' + (r.flip_score !== null ? ' (' + Math.round(r.flip_score) + ')' : '');
+        var rentalTabLabel = 'Rental Hold' + (r.rental_score !== null ? ' (' + Math.round(r.rental_score) + ')' : '');
+        var brrrrTabLabel = 'BRRRR' + (r.brrrr_score !== null ? ' (' + Math.round(r.brrrr_score) + ')' : '');
+
         html += '<div class="flip-strategy-tabs">'
-            + '<button class="flip-strategy-tab active" data-pane="flip">Flip Analysis</button>'
-            + '<button class="flip-strategy-tab" data-pane="rental">Rental Hold</button>'
-            + '<button class="flip-strategy-tab" data-pane="brrrr">BRRRR</button>'
+            + '<button class="flip-strategy-tab active" data-pane="flip">' + flipTabLabel + '</button>'
+            + '<button class="flip-strategy-tab" data-pane="rental">' + rentalTabLabel + '</button>'
+            + '<button class="flip-strategy-tab" data-pane="brrrr">' + brrrrTabLabel + '</button>'
             + '</div>';
 
         // === Flip tab pane (existing content) ===

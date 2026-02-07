@@ -2,9 +2,22 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies residential investment property candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis. Supports SFR, multifamily, and Residential Income properties.
- * Version: 0.17.0
+ * Version: 0.18.0
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.18.0 - Multi-Strategy Scoring & Per-Strategy Disqualification
+ * - Per-strategy scores: flip_score, rental_score, brrrr_score (0-100 each)
+ * - Two-tier DQ: universal DQs block all strategies; flip DQs only block flip
+ * - Property only DQ'd if ALL strategies fail viability checks
+ * - total_score = max(viable strategy scores); best_strategy = highest scoring viable
+ * - 70/20/10 scoring formula: 70% financial + 20% quality + 10% photo per strategy
+ * - Strategy-specific quality weights (e.g., location 40% for rental vs 25% for flip)
+ * - Photo analyzer: 4 new fields (rental_appeal_score, tenant_quality, maintenance, value_add)
+ * - Dashboard: strategy mini-badges, per-strategy score cards, strategy filter/sort
+ * - CLI: strategy columns in results table, strategy breakdown in property detail
+ * - REST API: strategy fields in response, strategy filter parameter
+ * - DB migration: 7 new columns on wp_bmn_flip_scores
  *
  * Version 0.17.0 - Multifamily (Residential Income) Support
  * - Property type filter expanded: Residential + Residential Income
@@ -218,7 +231,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.17.0');
+define('FLIP_VERSION', '0.18.0');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -287,6 +300,7 @@ register_activation_hook(__FILE__, function () {
     Flip_Database::migrate_v0130();
     Flip_Database::migrate_v0150();
     Flip_Database::migrate_v0160();
+    Flip_Database::migrate_v0180();
 
     // Schedule monitor cron if not already scheduled
     if (!wp_next_scheduled('bmn_flip_monitor_check')) {
@@ -326,6 +340,10 @@ add_action('plugins_loaded', function () {
     if (version_compare($db_version, '0.16.0', '<')) {
         Flip_Database::migrate_v0160();
         update_option('bmn_flip_db_version', '0.16.0');
+    }
+    if (version_compare($db_version, '0.18.0', '<')) {
+        Flip_Database::migrate_v0180();
+        update_option('bmn_flip_db_version', '0.18.0');
     }
 });
 

@@ -316,6 +316,14 @@ class Flip_Admin_Dashboard {
             'rental_analysis'     => !empty($row->rental_analysis_json) ? json_decode($row->rental_analysis_json, true) : null,
             'remarks_signals'     => !empty($row->remarks_signals_json) ? json_decode($row->remarks_signals_json, true) : [],
             'run_date'            => $row->run_date,
+            // Per-strategy fields (v0.18.0)
+            'flip_score'          => $row->flip_score !== null ? round((float) $row->flip_score, 1) : null,
+            'rental_score'        => $row->rental_score !== null ? round((float) $row->rental_score, 1) : null,
+            'brrrr_score'         => $row->brrrr_score !== null ? round((float) $row->brrrr_score, 1) : null,
+            'flip_viable'         => (int) ($row->flip_viable ?? 0),
+            'rental_viable'       => (int) ($row->rental_viable ?? 0),
+            'brrrr_viable'        => (int) ($row->brrrr_viable ?? 0),
+            'best_strategy'       => $row->best_strategy ?? null,
         ];
     }
 

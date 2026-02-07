@@ -17,7 +17,7 @@ class Flip_Disqualifier {
     const MIN_LIST_PRICE = 100000;
 
     /**
-     * Check pre-financial auto-disqualifiers.
+     * Check pre-financial auto-disqualifiers (all checks — backward compatible).
      *
      * @param object      $property           Row from bme_listing_summary.
      * @param array       $arv_data           ARV calculation result.
@@ -31,8 +31,27 @@ class Flip_Disqualifier {
         ?string $remarks = null,
         ?string $property_condition = null
     ): ?string {
+        // Universal checks first
+        $universal = self::check_universal_disqualifiers($property, $arv_data);
+        if ($universal) return $universal;
+
+        // Flip-specific checks
+        return self::check_flip_disqualifiers($property, $arv_data, $remarks, $property_condition);
+    }
+
+    /**
+     * Universal disqualifiers — block ALL strategies (flip, rental, BRRRR).
+     *
+     * These represent data quality issues or properties fundamentally unsuitable
+     * for any investment strategy.
+     *
+     * @return string|null Reason for disqualification, or null if passed.
+     */
+    public static function check_universal_disqualifiers(
+        object $property,
+        array $arv_data
+    ): ?string {
         $list_price = (float) $property->list_price;
-        $arv = (float) $arv_data['estimated_arv'];
         $sqft = (int) $property->building_area_total;
 
         if ($list_price < self::MIN_LIST_PRICE) {
@@ -47,8 +66,28 @@ class Flip_Disqualifier {
             return 'Building area too small (' . $sqft . ' sqft)';
         }
 
-        // New construction / near-new disqualifier
+        return null;
+    }
+
+    /**
+     * Flip-specific disqualifiers — only block flip strategy.
+     *
+     * Properties failing these checks may still be excellent rentals or BRRRR candidates.
+     *
+     * @return string|null Reason for disqualification, or null if passed.
+     */
+    public static function check_flip_disqualifiers(
+        object $property,
+        array $arv_data,
+        ?string $remarks = null,
+        ?string $property_condition = null
+    ): ?string {
+        $list_price = (float) $property->list_price;
+        $arv = (float) $arv_data['estimated_arv'];
+        $sqft = (int) $property->building_area_total;
         $year_built = (int) $property->year_built;
+
+        // New construction / near-new disqualifier
         if ($year_built > 0) {
             $current_year = (int) wp_date('Y');
             $age = $current_year - $year_built;
@@ -90,6 +129,43 @@ class Flip_Disqualifier {
         }
 
         return null;
+    }
+
+    /**
+     * Check if a property is viable for rental hold strategy.
+     *
+     * Uses lenient thresholds — viability just means "could this possibly work?"
+     * The strategy score handles ranking quality.
+     *
+     * @param array|null $rental Rental analysis data from calculate_rental().
+     * @return bool True if rental strategy is viable.
+     */
+    public static function check_rental_viable(?array $rental): bool {
+        if (empty($rental)) return false;
+
+        $cap_rate = (float) ($rental['cap_rate'] ?? 0);
+        $monthly_cf = (float) ($rental['monthly_cash_flow'] ?? 0);
+
+        // Viable if cap rate >= 3% AND monthly cash flow > -$200
+        // Allows slightly negative CF if strong cap rate (appreciation play)
+        return $cap_rate >= 3.0 && $monthly_cf > -200;
+    }
+
+    /**
+     * Check if a property is viable for BRRRR strategy.
+     *
+     * @param array|null $brrrr BRRRR analysis data from calculate_brrrr().
+     * @return bool True if BRRRR strategy is viable.
+     */
+    public static function check_brrrr_viable(?array $brrrr): bool {
+        if (empty($brrrr)) return false;
+
+        $dscr = (float) ($brrrr['dscr'] ?? 0);
+        $cash_left = (float) ($brrrr['cash_left_in_deal'] ?? 999999);
+        $total_in = (float) ($brrrr['total_cash_in'] ?? 1);
+
+        // Viable if DSCR >= 0.9 and cash left is not astronomical (< 200% of total in)
+        return $dscr >= 0.9 && $cash_left < $total_in * 2;
     }
 
     /**
@@ -193,6 +269,14 @@ class Flip_Disqualifier {
             'lead_paint_flag'     => ((int) $property->year_built > 0 && (int) $property->year_built < Flip_Analyzer::LEAD_PAINT_YEAR) ? 1 : 0,
             'transfer_tax_buy'    => 0,
             'transfer_tax_sell'   => 0,
+            // Per-strategy fields (v0.18.0) — universally DQ'd = all strategies fail
+            'flip_score'          => null,
+            'rental_score'        => null,
+            'brrrr_score'         => null,
+            'flip_viable'         => 0,
+            'rental_viable'       => 0,
+            'brrrr_viable'        => 0,
+            'best_strategy'       => null,
         ];
 
         if ($rental_json) {

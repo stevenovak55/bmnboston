@@ -16,6 +16,7 @@
         var minScore = parseInt($('#filter-score').val()) || 0;
         var sort = $('#filter-sort').val();
         var show = $('#filter-show').val();
+        var strategy = $('#filter-strategy').val();
 
         var filtered = (FD.data.results || []).filter(function (r) {
             if (show === 'viable' && r.disqualified) return false;
@@ -23,6 +24,7 @@
             if (show === 'disqualified' && !r.disqualified) return false;
             if (city && r.city !== city) return false;
             if (!r.disqualified && minScore > 0 && r.total_score < minScore) return false;
+            if (strategy && r.best_strategy !== strategy) return false;
             return true;
         });
 
@@ -97,6 +99,29 @@
         var annRoiText = r.annualized_roi ? r.annualized_roi.toFixed(0) + '%' : '--';
         var annRoiClass = r.annualized_roi >= 0 ? '' : ' flip-negative';
 
+        // Strategy mini-badges (v0.18.0)
+        var strategyHtml = '';
+        if (r.best_strategy) {
+            var stratColors = { flip: '#dc3545', rental: '#198754', brrrr: '#0d6efd' };
+            var stratLabels = { flip: 'F', rental: 'R', brrrr: 'B' };
+            var strats = ['flip', 'rental', 'brrrr'];
+            var badges = [];
+            strats.forEach(function (s) {
+                var scoreKey = s + '_score';
+                var viableKey = s + '_viable';
+                var sc = r[scoreKey];
+                var viable = r[viableKey];
+                if (sc !== null && sc !== undefined) {
+                    var bg = viable ? stratColors[s] : '#ccc';
+                    badges.push('<span style="background:' + bg + ';color:#fff;padding:1px 4px;border-radius:2px;font-size:10px;font-weight:600">'
+                        + stratLabels[s] + ':' + Math.round(sc) + '</span>');
+                }
+            });
+            strategyHtml = badges.join(' ');
+        } else {
+            strategyHtml = '<span style="color:#ccc">--</span>';
+        }
+
         var html = '<tr class="flip-main-row' + dqClass + '" data-idx="' + idx + '">'
             + '<td class="flip-col-toggle"><button class="flip-toggle" data-idx="' + idx + '">+</button></td>'
             + '<td><div class="flip-property-cell">'
@@ -107,6 +132,7 @@
             + '</div></td>'
             + '<td>' + h.escapeHtml(r.city) + '</td>'
             + '<td class="flip-col-num">' + scoreHtml + '</td>'
+            + '<td>' + strategyHtml + '</td>'
             + '<td>' + riskHtml + '</td>'
             + '<td class="flip-col-num">' + h.formatCurrency(r.list_price) + '</td>'
             + '<td class="flip-col-num">' + h.formatCurrency(r.estimated_arv) + '</td>'

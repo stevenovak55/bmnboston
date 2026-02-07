@@ -87,7 +87,7 @@
         $('#flip-city-input').on('keypress', function (e) {
             if (e.which === 13) { e.preventDefault(); FD.cities.add(); }
         });
-        $('#filter-city, #filter-sort, #filter-show').on('change', FD.filters.applyFilters);
+        $('#filter-city, #filter-sort, #filter-show, #filter-strategy').on('change', FD.filters.applyFilters);
         $('#filter-score').on('input', function () {
             $('#score-display').text(this.value);
             FD.filters.applyFilters();

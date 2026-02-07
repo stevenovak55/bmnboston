@@ -303,22 +303,23 @@ class Flip_CLI {
 
         $table_data = [];
         foreach ($results as $r) {
+            $best = strtoupper(substr($r->best_strategy ?? '--', 0, 4));
             $table_data[] = [
                 'MLS#'    => $r->listing_id,
                 'Address' => self::truncate($r->address, 22),
                 'City'    => self::truncate($r->city, 12),
+                'Best'    => $best,
+                'F'       => $r->flip_score !== null ? round($r->flip_score) : '--',
+                'R'       => $r->rental_score !== null ? round($r->rental_score) : '--',
+                'B'       => $r->brrrr_score !== null ? round($r->brrrr_score) : '--',
                 'Score'   => $r->total_score,
-                'ARV'     => '$' . number_format($r->estimated_arv / 1000) . 'K',
-                'Price'   => '$' . number_format($r->list_price / 1000) . 'K',
-                'Rehab'   => '$' . number_format($r->estimated_rehab_cost / 1000) . 'K',
                 'Profit'  => '$' . number_format($r->estimated_profit / 1000) . 'K',
                 'ROI%'    => $r->estimated_roi . '%',
-                'Level'   => ucfirst($r->rehab_level),
             ];
         }
 
         WP_CLI::line('');
-        WP_CLI::line('Top Flip Candidates (Latest Run)');
+        WP_CLI::line('Top Investment Candidates (Latest Run)');
         WP_CLI::line(str_repeat('-', 80));
         WP_CLI\Utils\format_items($format, $table_data, array_keys($table_data[0]));
         WP_CLI::line('');
@@ -381,6 +382,22 @@ class Flip_CLI {
         WP_CLI::line(sprintf("  Market    (10%%): %s / 100", $result->market_score));
         if ($result->photo_score !== null) {
             WP_CLI::line(sprintf("  Photo (bonus):   %s / 100", $result->photo_score));
+        }
+
+        // Per-strategy scores (v0.18.0)
+        if ($result->flip_score !== null || $result->rental_score !== null || $result->brrrr_score !== null) {
+            WP_CLI::line('');
+            WP_CLI::line('Strategy Scores');
+            WP_CLI::line(str_repeat('-', 40));
+            $strategies = ['flip', 'rental', 'brrrr'];
+            foreach ($strategies as $s) {
+                $score_col = $s . '_score';
+                $viable_col = $s . '_viable';
+                $score = $result->$score_col !== null ? round($result->$score_col, 1) : '--';
+                $viable = $result->$viable_col ? 'YES' : 'no';
+                $best = ($result->best_strategy === $s) ? ' ★ BEST' : '';
+                WP_CLI::line(sprintf("  %-8s %6s  viable: %-3s%s", ucfirst($s) . ':', $score, $viable, $best));
+            }
         }
 
         WP_CLI::line('');

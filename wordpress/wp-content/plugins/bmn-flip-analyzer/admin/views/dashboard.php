@@ -127,6 +127,34 @@ if (!defined('ABSPATH')) {
         </div>
     </div>
 
+    <!-- Strategy Breakdown (v0.18.0) -->
+    <div class="flip-stats-row" style="margin-top:4px">
+        <div class="flip-stat-card" style="border-left:3px solid #dc3545">
+            <div class="flip-stat-value" id="stat-flip-viable">--</div>
+            <div class="flip-stat-label">Flip Viable</div>
+        </div>
+        <div class="flip-stat-card" style="border-left:3px solid #198754">
+            <div class="flip-stat-value" id="stat-rental-viable">--</div>
+            <div class="flip-stat-label">Rental Viable</div>
+        </div>
+        <div class="flip-stat-card" style="border-left:3px solid #0d6efd">
+            <div class="flip-stat-value" id="stat-brrrr-viable">--</div>
+            <div class="flip-stat-label">BRRRR Viable</div>
+        </div>
+        <div class="flip-stat-card" style="border-left:3px solid #dc3545">
+            <div class="flip-stat-value" id="stat-best-flip">--</div>
+            <div class="flip-stat-label">Best: Flip</div>
+        </div>
+        <div class="flip-stat-card" style="border-left:3px solid #198754">
+            <div class="flip-stat-value" id="stat-best-rental">--</div>
+            <div class="flip-stat-label">Best: Rental</div>
+        </div>
+        <div class="flip-stat-card" style="border-left:3px solid #0d6efd">
+            <div class="flip-stat-value" id="stat-best-brrrr">--</div>
+            <div class="flip-stat-label">Best: BRRRR</div>
+        </div>
+    </div>
+
     <!-- Target Cities -->
     <div class="flip-card flip-cities-card">
         <div class="flip-card-header">
@@ -541,6 +569,9 @@ if (!defined('ABSPATH')) {
             <label for="filter-sort">Sort By</label>
             <select id="filter-sort">
                 <option value="total_score">Total Score</option>
+                <option value="flip_score">Flip Score</option>
+                <option value="rental_score">Rental Score</option>
+                <option value="brrrr_score">BRRRR Score</option>
                 <option value="estimated_profit">Profit</option>
                 <option value="annualized_roi">Annualized ROI</option>
                 <option value="estimated_roi">Cash-on-Cash ROI</option>
@@ -555,6 +586,15 @@ if (!defined('ABSPATH')) {
                 <option value="viable">Viable Only</option>
                 <option value="near_viable">Near-Viable</option>
                 <option value="disqualified">Disqualified Only</option>
+            </select>
+        </div>
+        <div class="flip-filter-group">
+            <label for="filter-strategy">Best Strategy</label>
+            <select id="filter-strategy">
+                <option value="">All Strategies</option>
+                <option value="flip">Flip</option>
+                <option value="rental">Rental Hold</option>
+                <option value="brrrr">BRRRR</option>
             </select>
         </div>
     </div>
@@ -572,6 +612,7 @@ if (!defined('ABSPATH')) {
                         <th>Property</th>
                         <th>City</th>
                         <th class="flip-col-num">Score</th>
+                        <th>Strategy</th>
                         <th>Risk</th>
                         <th class="flip-col-num">List Price</th>
                         <th class="flip-col-num">ARV</th>

@@ -119,7 +119,7 @@ class Flip_REST_API {
             ],
             'sort' => [
                 'default' => 'total_score',
-                'enum'    => ['total_score', 'estimated_profit', 'estimated_roi', 'cash_on_cash_roi', 'annualized_roi', 'list_price', 'estimated_arv', 'deal_risk_grade'],
+                'enum'    => ['total_score', 'flip_score', 'rental_score', 'brrrr_score', 'estimated_profit', 'estimated_roi', 'cash_on_cash_roi', 'annualized_roi', 'list_price', 'estimated_arv', 'deal_risk_grade'],
             ],
             'order' => [
                 'default' => 'DESC',
@@ -128,6 +128,10 @@ class Flip_REST_API {
             'has_photos' => [
                 'default' => false,
                 'type'    => 'boolean',
+            ],
+            'strategy' => [
+                'default' => '',
+                'enum'    => ['', 'flip', 'rental', 'brrrr'],
             ],
         ];
     }
@@ -212,6 +216,7 @@ class Flip_REST_API {
         $sort      = $request->get_param('sort');
         $order     = $request->get_param('order');
         $has_photos = $request->get_param('has_photos');
+        $strategy   = $request->get_param('strategy');
 
         // Get total count first
         $total = self::get_total_count($min_score, $city, $has_photos);
@@ -225,6 +230,15 @@ class Flip_REST_API {
             'order'      => $order,
             'has_photos' => $has_photos,
         ]);
+
+        // Apply strategy filter (post-query since get_results doesn't support it natively)
+        if (!empty($strategy)) {
+            $results = array_filter($results, function ($r) use ($strategy) {
+                return ($r->best_strategy ?? '') === $strategy;
+            });
+            $results = array_values($results);
+            $total = count($results);
+        }
 
         // Format results for API response
         $properties = array_map([__CLASS__, 'format_result'], $results);
@@ -443,6 +457,14 @@ class Flip_REST_API {
             'main_photo_url'      => $result->main_photo_url ?? '',
             'disqualified'        => (bool) $result->disqualified,
             'run_date'            => $result->run_date,
+            // Per-strategy fields (v0.18.0)
+            'flip_score'          => $result->flip_score !== null ? round((float) $result->flip_score, 1) : null,
+            'rental_score'        => $result->rental_score !== null ? round((float) $result->rental_score, 1) : null,
+            'brrrr_score'         => $result->brrrr_score !== null ? round((float) $result->brrrr_score, 1) : null,
+            'flip_viable'         => (int) ($result->flip_viable ?? 0),
+            'rental_viable'       => (int) ($result->rental_viable ?? 0),
+            'brrrr_viable'        => (int) ($result->brrrr_viable ?? 0),
+            'best_strategy'       => $result->best_strategy ?? null,
         ];
 
         if ($include_details) {

@@ -387,6 +387,12 @@ class Flip_Database {
                 AVG(CASE WHEN disqualified = 0 AND estimated_roi > 0 THEN estimated_roi END) as avg_roi,
                 SUM(CASE WHEN disqualified = 1 THEN 1 ELSE 0 END) as disqualified,
                 SUM(CASE WHEN disqualified = 1 AND near_viable = 1 THEN 1 ELSE 0 END) as near_viable,
+                SUM(CASE WHEN flip_viable = 1 THEN 1 ELSE 0 END) as flip_viable_count,
+                SUM(CASE WHEN rental_viable = 1 THEN 1 ELSE 0 END) as rental_viable_count,
+                SUM(CASE WHEN brrrr_viable = 1 THEN 1 ELSE 0 END) as brrrr_viable_count,
+                SUM(CASE WHEN best_strategy = 'flip' THEN 1 ELSE 0 END) as best_flip,
+                SUM(CASE WHEN best_strategy = 'rental' THEN 1 ELSE 0 END) as best_rental,
+                SUM(CASE WHEN best_strategy = 'brrrr' THEN 1 ELSE 0 END) as best_brrrr,
                 MAX(run_date) as last_run
             FROM {$table} WHERE report_id = %d",
             $report_id
@@ -418,6 +424,14 @@ class Flip_Database {
             'near_viable'  => (int) ($totals->near_viable ?? 0),
             'last_run'     => $totals->last_run,
             'cities'       => $city_breakdown,
+            'strategy_counts' => [
+                'flip_viable'    => (int) ($totals->flip_viable_count ?? 0),
+                'rental_viable'  => (int) ($totals->rental_viable_count ?? 0),
+                'brrrr_viable'   => (int) ($totals->brrrr_viable_count ?? 0),
+                'best_flip'      => (int) ($totals->best_flip ?? 0),
+                'best_rental'    => (int) ($totals->best_rental ?? 0),
+                'best_brrrr'     => (int) ($totals->best_brrrr ?? 0),
+            ],
         ];
     }
 
@@ -702,7 +716,7 @@ class Flip_Database {
             $where[] = "photo_score IS NOT NULL";
         }
 
-        $allowed_sorts = ['total_score', 'estimated_profit', 'estimated_roi', 'cash_on_cash_roi', 'annualized_roi', 'list_price', 'estimated_arv', 'deal_risk_grade'];
+        $allowed_sorts = ['total_score', 'flip_score', 'rental_score', 'brrrr_score', 'estimated_profit', 'estimated_roi', 'cash_on_cash_roi', 'annualized_roi', 'list_price', 'estimated_arv', 'deal_risk_grade'];
         $sort = in_array($args['sort'], $allowed_sorts) ? $args['sort'] : 'total_score';
         $order = strtoupper($args['order']) === 'ASC' ? 'ASC' : 'DESC';
 
@@ -754,7 +768,13 @@ class Flip_Database {
                 AVG(CASE WHEN disqualified = 0 THEN total_score END) as avg_score,
                 AVG(CASE WHEN disqualified = 0 AND estimated_roi > 0 THEN estimated_roi END) as avg_roi,
                 SUM(CASE WHEN disqualified = 1 THEN 1 ELSE 0 END) as disqualified,
-                SUM(CASE WHEN disqualified = 1 AND near_viable = 1 THEN 1 ELSE 0 END) as near_viable
+                SUM(CASE WHEN disqualified = 1 AND near_viable = 1 THEN 1 ELSE 0 END) as near_viable,
+                SUM(CASE WHEN flip_viable = 1 THEN 1 ELSE 0 END) as flip_viable_count,
+                SUM(CASE WHEN rental_viable = 1 THEN 1 ELSE 0 END) as rental_viable_count,
+                SUM(CASE WHEN brrrr_viable = 1 THEN 1 ELSE 0 END) as brrrr_viable_count,
+                SUM(CASE WHEN best_strategy = 'flip' THEN 1 ELSE 0 END) as best_flip,
+                SUM(CASE WHEN best_strategy = 'rental' THEN 1 ELSE 0 END) as best_rental,
+                SUM(CASE WHEN best_strategy = 'brrrr' THEN 1 ELSE 0 END) as best_brrrr
             FROM {$table} WHERE run_date = %s AND report_id IS NULL",
             $latest_run
         ));
@@ -781,6 +801,14 @@ class Flip_Database {
             'near_viable'  => (int) ($totals->near_viable ?? 0),
             'last_run'     => $latest_run,
             'cities'       => $city_breakdown,
+            'strategy_counts' => [
+                'flip_viable'    => (int) ($totals->flip_viable_count ?? 0),
+                'rental_viable'  => (int) ($totals->rental_viable_count ?? 0),
+                'brrrr_viable'   => (int) ($totals->brrrr_viable_count ?? 0),
+                'best_flip'      => (int) ($totals->best_flip ?? 0),
+                'best_rental'    => (int) ($totals->best_rental ?? 0),
+                'best_brrrr'     => (int) ($totals->best_brrrr ?? 0),
+            ],
         ];
     }
 
@@ -989,6 +1017,36 @@ class Flip_Database {
 
         if (!in_array('rental_analysis_json', $cols, true)) {
             $wpdb->query("ALTER TABLE {$table} ADD COLUMN rental_analysis_json LONGTEXT DEFAULT NULL AFTER photo_analysis_json");
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // v0.18.0: Per-Strategy Scoring & Viability
+    // ---------------------------------------------------------------
+
+    /**
+     * Add per-strategy score and viability columns to scores table.
+     */
+    public static function migrate_v0180(): void {
+        global $wpdb;
+        $table = self::table_name();
+
+        $cols = $wpdb->get_col("SHOW COLUMNS FROM {$table}", 0);
+
+        $new_columns = [
+            'flip_score'     => "ALTER TABLE {$table} ADD COLUMN flip_score DECIMAL(5,2) DEFAULT NULL AFTER total_score",
+            'rental_score'   => "ALTER TABLE {$table} ADD COLUMN rental_score DECIMAL(5,2) DEFAULT NULL AFTER flip_score",
+            'brrrr_score'    => "ALTER TABLE {$table} ADD COLUMN brrrr_score DECIMAL(5,2) DEFAULT NULL AFTER rental_score",
+            'flip_viable'    => "ALTER TABLE {$table} ADD COLUMN flip_viable TINYINT(1) DEFAULT NULL AFTER brrrr_score",
+            'rental_viable'  => "ALTER TABLE {$table} ADD COLUMN rental_viable TINYINT(1) DEFAULT NULL AFTER flip_viable",
+            'brrrr_viable'   => "ALTER TABLE {$table} ADD COLUMN brrrr_viable TINYINT(1) DEFAULT NULL AFTER rental_viable",
+            'best_strategy'  => "ALTER TABLE {$table} ADD COLUMN best_strategy VARCHAR(10) DEFAULT NULL AFTER brrrr_viable",
+        ];
+
+        foreach ($new_columns as $col_name => $sql) {
+            if (!in_array($col_name, $cols, true)) {
+                $wpdb->query($sql);
+            }
         }
     }
 

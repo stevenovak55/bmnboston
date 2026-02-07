@@ -281,7 +281,11 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanation):
   "road_visible": <true|false, whether the road/street is visible in any exterior photos>,
   "road_type": "<cul-de-sac|dead-end|quiet-residential|moderate-traffic|busy-road|highway-adjacent|unknown>",
   "road_concerns": "<description of any road/traffic concerns that could affect resale value, empty string if none>",
-  "lot_assessment": "<description of lot size, privacy, expansion potential based on visible yard/land>"
+  "lot_assessment": "<description of lot size, privacy, expansion potential based on visible yard/land>",
+  "rental_appeal_score": <number 0-100, rate appeal as a rental investment considering curb appeal for tenants, unit layout, parking, neighborhood feel, outdoor space, natural light>,
+  "tenant_quality_potential": "<luxury|moderate|basic>",
+  "maintenance_outlook": "<low|moderate|high, predict ongoing maintenance burden based on systems age, condition, deferred maintenance>",
+  "value_add_score": <number 0-100, rate potential for forced appreciation through renovation considering cosmetic vs structural needs, layout improvement potential, finish level vs neighborhood standard>
 }
 
 Scoring guidance for flip_photo_score:
@@ -307,6 +311,20 @@ Road type identification (look at exterior photos for road visibility):
 - unknown: Road not visible in photos
 
 IMPORTANT: Road type significantly affects resale value. A $1M+ house on a busy double-yellow road is a red flag.
+
+Rental appeal scoring (rental_appeal_score):
+- 80-100: Highly attractive to quality tenants, desirable location/finishes, premium amenities
+- 60-79: Good rental with solid appeal, average neighborhood, functional layout
+- 40-59: Average rental, some drawbacks but livable
+- 20-39: Below average, dated or unappealing but functional
+- 0-19: Poor rental appeal, significant issues for tenant attraction
+
+Value-add scoring (value_add_score):
+- 80-100: Huge renovation upside, cosmetic/moderate work can dramatically increase value
+- 60-79: Good value-add opportunity, clear improvements to make
+- 40-59: Some potential, moderate improvements possible
+- 20-39: Limited upside, already close to neighborhood standard
+- 0-19: Minimal value-add opportunity, already updated or structural-only needs
 PROMPT;
     }
 
@@ -425,6 +443,10 @@ PROMPT;
             'road_type'               => 'unknown',
             'road_concerns'           => '',
             'lot_assessment'          => '',
+            'rental_appeal_score'     => 50,
+            'tenant_quality_potential' => 'moderate',
+            'maintenance_outlook'     => 'moderate',
+            'value_add_score'         => 50,
         ];
 
         $validated = array_merge($defaults, $analysis);
@@ -467,6 +489,20 @@ PROMPT;
         // Ensure strings
         $validated['road_concerns']   = (string) $validated['road_concerns'];
         $validated['lot_assessment']  = (string) $validated['lot_assessment'];
+
+        // Validate new rental/BRRRR fields (v0.18.0)
+        $validated['rental_appeal_score'] = max(0, min(100, (float) $validated['rental_appeal_score']));
+        $validated['value_add_score']     = max(0, min(100, (float) $validated['value_add_score']));
+
+        $valid_tenant_tiers = ['luxury', 'moderate', 'basic'];
+        if (!in_array($validated['tenant_quality_potential'], $valid_tenant_tiers, true)) {
+            $validated['tenant_quality_potential'] = 'moderate';
+        }
+
+        $valid_maintenance = ['low', 'moderate', 'high'];
+        if (!in_array($validated['maintenance_outlook'], $valid_maintenance, true)) {
+            $validated['maintenance_outlook'] = 'moderate';
+        }
 
         return $validated;
     }
@@ -619,25 +655,74 @@ PROMPT;
         $list_price = (float) $result->list_price;
         $year_built = (int) $result->year_built;
         $city = $result->city ?? '';
+        $listing_id = (int) $result->listing_id;
 
         // Use shared financial calculation (same as main pipeline)
         $area_avg_dom = Flip_ARV_Calculator::get_area_avg_dom($city);
-        $remarks = Flip_Market_Scorer::get_remarks((int) $result->listing_id);
+        $remarks = Flip_Market_Scorer::get_remarks($listing_id);
         $fin = Flip_Analyzer::calculate_financials($arv, $list_price, $sqft, $year_built, $remarks, $area_avg_dom);
-
-        // Photo score is a bonus, adds up to 10 points
-        $photo_bonus = ($analysis['photo_score'] / 100) * 10;
-        $base_score = (float) $result->total_score;
-        $new_total = min(100, $base_score + $photo_bonus);
 
         // Get road type from photo analysis (or keep existing)
         $road_type = $analysis['analysis']['road_type'] ?? ($result->road_type ?? 'unknown');
+
+        // Recalculate strategy scores with photo data (v0.18.0)
+        $photo_data = $analysis['analysis'];
+        $quality_scores = [
+            'financial' => (float) $result->financial_score,
+            'property'  => (float) $result->property_score,
+            'location'  => (float) $result->location_score,
+            'market'    => (float) $result->market_score,
+        ];
+
+        // Reconstruct rental/BRRRR data from stored JSON
+        $rental_json = !empty($result->rental_analysis_json) ? json_decode($result->rental_analysis_json, true) : null;
+        $rental_data = $rental_json['rental'] ?? [];
+        $brrrr_data  = $rental_json['brrrr'] ?? [];
+
+        $fin['deal_risk_grade'] = $result->deal_risk_grade ?? 'C';
+        $strategy = Flip_Rental_Calculator::recommend_strategy(
+            $fin, $rental_data, $brrrr_data, $quality_scores, $photo_data
+        );
+
+        $flip_score   = $strategy['scores']['flip'];
+        $rental_score = $strategy['scores']['rental'];
+        $brrrr_score  = $strategy['scores']['brrrr'];
+
+        // Determine viability (same logic as pipeline)
+        $flip_viable   = (bool) ($result->flip_viable ?? 0);
+        $rental_viable = (bool) ($result->rental_viable ?? 0);
+        $brrrr_viable  = (bool) ($result->brrrr_viable ?? 0);
+
+        // Composite score = max of viable strategy scores
+        $viable_scores = [];
+        if ($flip_viable)   $viable_scores[] = $flip_score;
+        if ($rental_viable) $viable_scores[] = $rental_score;
+        if ($brrrr_viable)  $viable_scores[] = $brrrr_score;
+        $new_total = !empty($viable_scores) ? max($viable_scores) : (float) $result->total_score;
+
+        // Best strategy = highest scoring viable
+        $best_strategy = $result->best_strategy;
+        if (!empty($viable_scores)) {
+            $viable_map = [];
+            if ($flip_viable)   $viable_map['flip']   = $flip_score;
+            if ($rental_viable) $viable_map['rental'] = $rental_score;
+            if ($brrrr_viable)  $viable_map['brrrr']  = $brrrr_score;
+            arsort($viable_map);
+            $best_strategy = array_key_first($viable_map);
+        }
+
+        // Update rental analysis JSON with photo-enhanced strategy scores
+        $updated_rental_json = wp_json_encode([
+            'rental'   => $rental_data,
+            'brrrr'    => $brrrr_data,
+            'strategy' => $strategy,
+        ]);
 
         return $wpdb->update(
             $table,
             [
                 'photo_score'          => round($analysis['photo_score'], 2),
-                'photo_analysis_json'  => json_encode($analysis['analysis']),
+                'photo_analysis_json'  => json_encode($photo_data),
                 'estimated_rehab_cost' => $fin['rehab_cost'],
                 'rehab_level'          => $analysis['analysis']['renovation_level'],
                 'rehab_contingency'    => $fin['rehab_contingency'],
@@ -653,6 +738,12 @@ PROMPT;
                 'cash_roi'             => $fin['cash_roi'],
                 'cash_on_cash_roi'     => $fin['cash_on_cash_roi'],
                 'total_score'          => round($new_total, 2),
+                // Per-strategy scores with photo data (v0.18.0)
+                'flip_score'           => $flip_score,
+                'rental_score'         => $rental_score,
+                'brrrr_score'          => $brrrr_score,
+                'best_strategy'        => $best_strategy,
+                'rental_analysis_json' => $updated_rental_json,
             ],
             ['id' => $result->id],
             null,
