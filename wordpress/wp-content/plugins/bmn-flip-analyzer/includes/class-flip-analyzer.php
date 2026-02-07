@@ -319,7 +319,20 @@ class Flip_Analyzer {
             // Check pre-financial disqualifiers (includes new construction check)
             $disqualify = Flip_Disqualifier::check_disqualifiers($property, $arv_data, $remarks, $property_condition);
             if ($disqualify) {
-                Flip_Disqualifier::store_disqualified($property, $arv_data, $disqualify, $run_date, $report_id);
+                // Still compute financials + rental analysis for pre-DQ'd properties.
+                // A property that fails flip DQ may be an excellent rental.
+                $sqft_dq       = (int) $property->building_area_total;
+                $year_built_dq = (int) $property->year_built;
+                $list_price_dq = (float) $property->list_price;
+                $arv_dq        = (float) $arv_data['estimated_arv'];
+                $tax_rate_dq   = self::get_actual_tax_rate($listing_id, $list_price_dq);
+                $fin_dq = self::calculate_financials(
+                    $arv_dq, $list_price_dq, max(1, $sqft_dq), max(1900, $year_built_dq),
+                    $remarks, $city_metrics['avg_dom'] ?? 30, $tax_rate_dq
+                );
+                $rental_json = self::build_rental_json($fin_dq, $property, $arv_dq);
+
+                Flip_Disqualifier::store_disqualified($property, $arv_data, $disqualify, $run_date, $report_id, $rental_json);
                 $disqualified++;
                 $analyzed++;
                 continue;
@@ -689,6 +702,32 @@ class Flip_Analyzer {
      * @param array  $fin      Financial calculations from calculate_financials().
      * @param object $property Property object from bme_listing_summary.
      */
+    /**
+     * Build rental analysis JSON for pre-DQ'd properties (no $data array available).
+     */
+    private static function build_rental_json(array $fin, object $property, float $arv): string {
+        $property_data = [
+            'list_price'          => (float) $property->list_price,
+            'building_area_total' => (int) $property->building_area_total,
+            'bedrooms_total'      => (int) $property->bedrooms_total,
+            'bathrooms_total'     => (float) $property->bathrooms_total,
+            'year_built'          => (int) $property->year_built,
+            'city'                => $property->city ?? '',
+            'actual_tax_rate'     => $fin['actual_tax_rate'] ?? null,
+            'estimated_arv'       => $arv,
+        ];
+
+        $rental   = Flip_Rental_Calculator::calculate_rental($fin, $property_data);
+        $brrrr    = Flip_Rental_Calculator::calculate_brrrr($fin, $rental, $property_data);
+        $strategy = Flip_Rental_Calculator::recommend_strategy($fin, $rental, $brrrr);
+
+        return wp_json_encode([
+            'rental'   => $rental,
+            'brrrr'    => $brrrr,
+            'strategy' => $strategy,
+        ]);
+    }
+
     private static function attach_rental_analysis(array &$data, array $fin, object $property): void {
         $property_data = [
             'list_price'          => (float) $property->list_price,

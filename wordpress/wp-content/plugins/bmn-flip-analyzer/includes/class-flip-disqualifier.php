@@ -132,7 +132,7 @@ class Flip_Disqualifier {
     /**
      * Store a disqualified property result (pre-calculation DQ).
      */
-    public static function store_disqualified(object $property, array $arv_data, string $reason, string $run_date, ?int $report_id = null): void {
+    public static function store_disqualified(object $property, array $arv_data, string $reason, string $run_date, ?int $report_id = null, ?string $rental_json = null): void {
         $thresholds = Flip_Analyzer::get_adaptive_thresholds(
             $arv_data['market_strength'] ?? 'balanced',
             $arv_data['avg_sale_to_list'] ?? 1.0,
@@ -194,6 +194,10 @@ class Flip_Disqualifier {
             'transfer_tax_buy'    => 0,
             'transfer_tax_sell'   => 0,
         ];
+
+        if ($rental_json) {
+            $data['rental_analysis_json'] = $rental_json;
+        }
 
         if ($report_id) {
             $data['report_id'] = $report_id;

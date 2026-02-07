@@ -316,9 +316,11 @@ class Flip_Rental_Calculator {
             }
 
             $total_return = $equity_gain + $cumulative_cf;
-            $annualized   = $total_investment > 0 && $y > 0
-                ? round((pow(1 + ($total_return / $total_investment), 1 / $y) - 1) * 100, 1)
-                : 0;
+            // Guard against NaN: pow() of negative base with fractional exponent = NaN
+            $growth_factor = $total_investment > 0 ? 1 + ($total_return / $total_investment) : 0;
+            $annualized   = ($growth_factor > 0 && $y > 0)
+                ? round((pow($growth_factor, 1 / $y) - 1) * 100, 1)
+                : ($total_investment > 0 && $y > 0 ? round(($total_return / $total_investment / $y) * 100, 1) : 0);
 
             $projections[$y] = [
                 'year'            => $y,
