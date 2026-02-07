@@ -2,9 +2,23 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies Single Family Residence flip candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis.
- * Version: 0.12.0
+ * Version: 0.13.0
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.13.0 - Saved Reports & Monitor System
+ * - Auto-save every analysis run as a named report (prompted before running)
+ * - Saved Reports panel on dashboard: load, rename, re-run, delete reports
+ * - Report context bar shows active report name with "Back to Latest" navigation
+ * - Re-run reports with fresh MLS data using original criteria (replaces old results)
+ * - Monitor system: saved searches that auto-analyze only NEW listings matching criteria
+ * - Tiered monitor notifications: DQ'd = dashboard badge, viable = badge + email + photo + PDF
+ * - wp_cron integration: twicedaily check, configurable per-monitor (daily/twice_daily/weekly)
+ * - New DB tables: wp_bmn_flip_reports, wp_bmn_flip_monitor_seen
+ * - New DB column: report_id on wp_bmn_flip_scores (scopes results to reports)
+ * - New JS module: flip-reports.js in FlipDashboard namespace
+ * - Report-aware AJAX: run, refresh, PDF, force-analyze all accept report_id
+ * - 25-report cap with soft delete for archived reports
  *
  * Version 0.12.0 - Dashboard JS Modular Refactor
  * - Split monolithic flip-dashboard.js (1,565 lines) into 10 focused modules
@@ -142,7 +156,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.12.0');
+define('FLIP_VERSION', '0.13.0');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -156,6 +170,7 @@ require_once FLIP_PLUGIN_PATH . 'includes/class-flip-road-analyzer.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-market-scorer.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-analyzer.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-photo-analyzer.php';
+require_once FLIP_PLUGIN_PATH . 'includes/class-flip-monitor-runner.php';
 
 // Load WP-CLI commands
 if (defined('WP_CLI') && WP_CLI) {
@@ -176,13 +191,24 @@ add_action('rest_api_init', function () {
     Flip_REST_API::register_routes();
 });
 
+// Monitor cron hook
+add_action('bmn_flip_monitor_check', ['Flip_Monitor_Runner', 'run_all_due']);
+
 // Activation hook
 register_activation_hook(__FILE__, function () {
     Flip_Database::create_tables();
+    Flip_Database::create_reports_table();
+    Flip_Database::create_monitor_seen_table();
     Flip_Database::set_default_cities();
     Flip_Database::migrate_v070();
     Flip_Database::migrate_v080();
     Flip_Database::migrate_v0110();
+    Flip_Database::migrate_v0130();
+
+    // Schedule monitor cron if not already scheduled
+    if (!wp_next_scheduled('bmn_flip_monitor_check')) {
+        wp_schedule_event(time(), 'twicedaily', 'bmn_flip_monitor_check');
+    }
 });
 
 // Version-check migration for file-only updates (no deactivate/reactivate)
@@ -200,9 +226,20 @@ add_action('plugins_loaded', function () {
         Flip_Database::migrate_v0110();
         update_option('bmn_flip_db_version', '0.11.0');
     }
+    if (version_compare($db_version, '0.13.0', '<')) {
+        Flip_Database::create_reports_table();
+        Flip_Database::create_monitor_seen_table();
+        Flip_Database::migrate_v0130();
+        // Schedule monitor cron (may be a file-only update without activation hook)
+        if (!wp_next_scheduled('bmn_flip_monitor_check')) {
+            wp_schedule_event(time(), 'twicedaily', 'bmn_flip_monitor_check');
+        }
+        update_option('bmn_flip_db_version', '0.13.0');
+    }
 });
 
 // Deactivation hook
 register_deactivation_hook(__FILE__, function () {
     // Tables are preserved on deactivation for data safety
+    wp_clear_scheduled_hook('bmn_flip_monitor_check');
 });

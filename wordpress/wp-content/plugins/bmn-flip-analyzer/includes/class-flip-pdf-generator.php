@@ -135,7 +135,7 @@ class Flip_PDF_Generator {
      * @param int $listing_id MLS listing ID.
      * @return string|false File path on success, false on failure.
      */
-    public function generate(int $listing_id) {
+    public function generate(int $listing_id, ?int $report_id = null) {
         if (!class_exists('Flip_TCPDF')) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('Flip PDF: TCPDF library not found.');
@@ -143,7 +143,9 @@ class Flip_PDF_Generator {
             return false;
         }
 
-        $this->raw = Flip_Database::get_result_by_listing($listing_id);
+        $this->raw = $report_id
+            ? Flip_Database::get_result_by_listing_and_report($listing_id, $report_id)
+            : Flip_Database::get_result_by_listing($listing_id);
         if (!$this->raw) {
             return false;
         }

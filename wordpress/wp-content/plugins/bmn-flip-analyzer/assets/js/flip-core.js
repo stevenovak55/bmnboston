@@ -5,8 +5,9 @@
  */
 window.FlipDashboard = {
     // Shared mutable state
-    data: null,   // dashboard data (summary, results, cities) — set in flip-init.js
-    chart: null,  // Chart.js instance — managed by flip-stats-chart.js
+    data: null,          // dashboard data (summary, results, cities) — set in flip-init.js
+    chart: null,         // Chart.js instance — managed by flip-stats-chart.js
+    activeReportId: null, // currently viewed report ID (null = latest/unsaved)
 
     // Module namespaces (populated by each file)
     helpers: {},
@@ -17,4 +18,5 @@ window.FlipDashboard = {
     ajax: {},
     analysisFilters: {},
     cities: {},
+    reports: {},
 };

@@ -34,6 +34,9 @@
         // Analysis filters panel
         FD.analysisFilters.init();
 
+        // Reports panel
+        FD.reports.init();
+
         // Event handlers — use delegation on tbody for dynamic rows
         var $tbody = $('#flip-results-body');
         $tbody.on('click', '.flip-toggle', function (e) {

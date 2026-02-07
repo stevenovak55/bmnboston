@@ -1,11 +1,28 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.12.0
-**Last Updated:** 2026-02-07
+**Current Version:** 0.13.0
+**Last Updated:** 2026-02-06
 
 ## Overview
 
 Standalone WordPress plugin that identifies Single Family Residence flip candidates by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates.
+
+**v0.13.0 Enhancements (Saved Reports & Monitor System):**
+- Auto-save every analysis run as a named report (prompted before running, default "Cities - Date")
+- Saved Reports panel on dashboard: collapsible list of all reports with load/rename/rerun/delete
+- Report context bar: blue header showing active report name + "Back to Latest" button
+- Re-run reports with fresh MLS data using original criteria (replaces old results, preserves report identity)
+- Monitor system: saved searches that auto-analyze only NEW listings matching criteria via wp_cron
+- Tiered monitor notifications: DQ'd properties get dashboard badge only; viable properties get badge + email + auto photo analysis + auto PDF generation
+- Cron integration: `bmn_flip_monitor_check` hook, twicedaily default, configurable per-monitor (daily/twice_daily/weekly)
+- New DB tables: `wp_bmn_flip_reports` (report metadata), `wp_bmn_flip_monitor_seen` (incremental tracking)
+- New DB column: `report_id` on `wp_bmn_flip_scores` (scopes results to specific reports)
+- New JS module: `flip-reports.js` in `FlipDashboard.reports` namespace
+- All AJAX handlers (run, refresh, PDF, force-analyze) now accept and propagate `report_id`
+- `Flip_Analyzer::run()` accepts `report_id` and `listing_ids` for report-scoped and incremental runs
+- `Flip_Analyzer::fetch_matching_listing_ids()` for monitor new-listing detection
+- 25-report cap with soft delete for archived reports
+- New file: `class-flip-monitor-runner.php` — cron-based incremental analysis with tiered notifications
 
 **v0.12.0 Enhancements (Dashboard JS Modular Refactor + PDF Branding):**
 - Split monolithic `flip-dashboard.js` (1,565 lines) into 10 focused modules
@@ -108,7 +125,9 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 - **Two-pass workflow** — Pass 1: data scoring (no API calls), Pass 2: photo analysis (top 50 only)
 - **Configurable target cities** — stored in WP option `bmn_flip_target_cities`
 - **Configurable analysis filters** — stored in WP option `bmn_flip_analysis_filters` (JSON)
-- **Results table** — `wp_bmn_flip_scores` stores all analysis data
+- **Results table** — `wp_bmn_flip_scores` stores all analysis data, scoped by `report_id` (v0.13.0)
+- **Saved reports** — every analysis run auto-saved as a named report in `wp_bmn_flip_reports`
+- **Monitors** — saved search reports that auto-analyze new listings via `wp_cron` (twicedaily)
 - **WP-CLI interface** — `wp flip analyze`, `wp flip results`, etc.
 
 ## Key Files
@@ -128,7 +147,8 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 | `includes/class-flip-pdf-generator.php` | TCPDF-based investor-grade PDF report with branding |
 | `includes/class-flip-rest-api.php` | REST API endpoints (6 endpoints) |
 | `includes/class-flip-photo-analyzer.php` | Claude Vision photo analysis |
-| `admin/class-flip-admin-dashboard.php` | Admin page, AJAX handlers |
+| `includes/class-flip-monitor-runner.php` | Cron-based incremental monitor analysis |
+| `admin/class-flip-admin-dashboard.php` | Admin page, AJAX handlers, report management |
 | `admin/views/dashboard.php` | Dashboard HTML template |
 | `assets/js/flip-core.js` | Namespace + shared state (`window.FlipDashboard`) |
 | `assets/js/flip-helpers.js` | Utility functions (formatCurrency, scoreClass, etc.) |
@@ -139,6 +159,7 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 | `assets/js/flip-ajax.js` | AJAX operations (run analysis, PDF, force analyze, CSV export) |
 | `assets/js/flip-analysis-filters.js` | Pre-analysis filters panel (save/reset) |
 | `assets/js/flip-cities.js` | City tag management (add/remove/save) |
+| `assets/js/flip-reports.js` | Saved reports panel, load/rerun/delete, monitor dialog |
 | `assets/js/flip-init.js` | Initialization + event binding (loaded last) |
 | `assets/css/flip-dashboard.css` | Dashboard styles |
 
@@ -155,6 +176,19 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 - Flags: `disqualified`, `disqualify_reason`, `near_viable` (v0.7.0), `lead_paint_flag` (v0.8.0)
 - Risk analysis (v0.8.0): `annualized_roi`, `breakeven_arv`, `deal_risk_grade`, `transfer_tax_buy`, `transfer_tax_sell`
 - Thresholds: `applied_thresholds_json` (v0.7.0)
+- Report link: `report_id` (v0.13.0) — foreign key to `wp_bmn_flip_reports`
+
+**Table:** `wp_bmn_flip_reports` (v0.13.0)
+- Report metadata: `id`, `name`, `type` (manual/monitor), `status` (active/archived/deleted)
+- Criteria snapshot: `cities_json`, `filters_json` — frozen at report creation
+- Run tracking: `run_date`, `last_run_date`, `run_count`, `property_count`, `viable_count`
+- Monitor config: `monitor_frequency` (daily/twice_daily/weekly), `monitor_last_check`, `monitor_last_new_count`, `notification_email`
+- Audit: `created_at`, `updated_at`, `created_by`
+
+**Table:** `wp_bmn_flip_monitor_seen` (v0.13.0)
+- Tracks which listings each monitor has already processed
+- Columns: `id`, `report_id`, `listing_id`, `first_seen_at`
+- Unique key on `(report_id, listing_id)` for incremental-only analysis
 
 **Source tables (from BME/MLD):**
 - `bme_listing_summary` — active listings (filtered by analysis filters)
@@ -339,6 +373,7 @@ Uses Claude Vision API (`claude-sonnet-4-5-20250929`) to analyze up to 5 photos 
 | 4.0 - Analysis Filters + Force Analyze | Complete | 17 pre-analysis filters, force DQ bypass, CLI flags |
 | 4.1 - Renovation Potential Guard | Complete | New construction DQ, inverted year scoring, age rehab multiplier, enhanced remarks |
 | 4.2 - Dashboard JS Refactor | Complete | Split 1,565-line monolith into 10 focused modules |
+| 4.3 - Saved Reports & Monitors | Complete | Auto-save reports, load/rerun/delete, monitor cron system |
 | 5 - iOS | Pending | SwiftUI views, ViewModel, API |
 | 6 - Polish | Pending | Testing, weight tuning |
 
@@ -368,11 +403,17 @@ Access via **Flip Analyzer** in the WordPress admin sidebar menu.
 - "Export CSV" — downloads currently filtered results with all financial columns
 
 **AJAX Actions:**
-- `flip_run_analysis` — runs `Flip_Analyzer::run()` with saved filters, 5-min timeout
+- `flip_run_analysis` — runs `Flip_Analyzer::run()` with saved filters + report_name, auto-saves as report
 - `flip_run_photo_analysis` — runs `Flip_Photo_Analyzer::analyze_top_candidates()` with 10-min timeout
-- `flip_refresh_data` — reloads dashboard data without re-running analysis
-- `flip_force_analyze` — runs `Flip_Analyzer::force_analyze_single()` on a DQ'd property
+- `flip_refresh_data` — reloads dashboard data, accepts optional `report_id`
+- `flip_force_analyze` — runs `Flip_Analyzer::force_analyze_single()`, accepts `report_id`
 - `flip_save_filters` — saves analysis filters via `Flip_Database::set_analysis_filters()`
+- `flip_get_reports` — returns list of all saved reports (v0.13.0)
+- `flip_load_report` — loads a specific report's full dashboard data (v0.13.0)
+- `flip_rename_report` — renames a saved report (v0.13.0)
+- `flip_rerun_report` — re-runs a report with original criteria, replaces old results (v0.13.0)
+- `flip_delete_report` — soft-deletes a report (v0.13.0)
+- `flip_create_monitor` — creates a monitor from current cities + filters (v0.13.0)
 
 ## Analysis Filter Schema (v0.10.0)
 

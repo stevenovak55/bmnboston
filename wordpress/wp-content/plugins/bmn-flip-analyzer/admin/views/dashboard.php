@@ -18,6 +18,9 @@ if (!defined('ABSPATH')) {
         Flip Analyzer
     </h1>
 
+    <!-- Report Context Bar (shown when viewing a saved report) -->
+    <div id="flip-report-context" class="flip-report-context" style="display:none;"></div>
+
     <!-- Action Buttons -->
     <div class="flip-actions">
         <button id="flip-run-analysis" class="button button-primary button-large">
@@ -30,6 +33,62 @@ if (!defined('ABSPATH')) {
             <span class="dashicons dashicons-download"></span> Export CSV
         </button>
         <span id="flip-last-run" class="flip-last-run"></span>
+    </div>
+
+    <!-- Report Name Prompt (shown before running analysis) -->
+    <div id="flip-report-name-prompt" class="flip-report-name-prompt" style="display:none;">
+        <label for="flip-report-name">Report Name:</label>
+        <input type="text" id="flip-report-name" placeholder="Report name..." class="regular-text">
+        <button id="flip-report-run-confirm" class="button button-primary">Run & Save</button>
+        <button id="flip-report-run-cancel" class="button">Cancel</button>
+    </div>
+
+    <!-- Saved Reports Panel -->
+    <div class="flip-card flip-reports-card">
+        <div class="flip-card-header flip-reports-header" id="flip-reports-toggle">
+            <h2>
+                <span class="dashicons dashicons-portfolio"></span> Saved Reports
+                <span id="flip-reports-count" class="flip-badge">0</span>
+            </h2>
+            <span class="flip-reports-arrow dashicons dashicons-arrow-down-alt2"></span>
+        </div>
+        <div class="flip-card-body" id="flip-reports-body" style="display:none;">
+            <div id="flip-reports-list" class="flip-reports-list"></div>
+            <div class="flip-reports-actions">
+                <button id="flip-create-monitor-btn" class="button button-small">
+                    <span class="dashicons dashicons-visibility"></span> Create Monitor
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monitor Creation Dialog -->
+    <div id="flip-monitor-dialog" class="flip-monitor-dialog" style="display:none;">
+        <h3>Create Monitor</h3>
+        <p class="description">Uses current cities and filters. Only NEW listings will be analyzed.
+           Viable properties trigger photo analysis + PDF + email automatically.</p>
+        <div class="flip-monitor-fields">
+            <div>
+                <label for="flip-monitor-name">Monitor Name</label>
+                <input type="text" id="flip-monitor-name" placeholder="Monitor name..." class="regular-text">
+            </div>
+            <div>
+                <label for="flip-monitor-frequency">Check Frequency</label>
+                <select id="flip-monitor-frequency">
+                    <option value="daily">Daily</option>
+                    <option value="twice_daily">Twice Daily</option>
+                    <option value="weekly">Weekly</option>
+                </select>
+            </div>
+            <div>
+                <label for="flip-monitor-email">Notification Email</label>
+                <input type="email" id="flip-monitor-email" placeholder="email@example.com" class="regular-text">
+            </div>
+        </div>
+        <div class="flip-monitor-actions">
+            <button id="flip-monitor-confirm" class="button button-primary">Create Monitor</button>
+            <button id="flip-monitor-cancel" class="button">Cancel</button>
+        </div>
     </div>
 
     <!-- Summary Stats -->

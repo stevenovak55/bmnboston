@@ -882,6 +882,298 @@
     display: inline-block;
 }
 
+/* ── Report Context Bar ────────────────────────── */
+
+.flip-report-context {
+    background: #2271b1;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.flip-report-context .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.flip-report-context-date {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 13px;
+}
+
+.flip-back-btn {
+    margin-left: auto !important;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
+    color: #2271b1 !important;
+}
+
+.flip-back-btn .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #2271b1;
+}
+
+/* ── Report Name Prompt ───────────────────────── */
+
+.flip-report-name-prompt {
+    background: #f0f6fc;
+    border: 1px solid #c3c4c7;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.flip-report-name-prompt label {
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.flip-report-name-prompt input {
+    flex: 1;
+    min-width: 200px;
+}
+
+/* ── Saved Reports Panel ──────────────────────── */
+
+.flip-reports-card {
+    margin-bottom: 20px;
+}
+
+.flip-reports-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px !important;
+    user-select: none;
+}
+
+.flip-reports-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 !important;
+}
+
+.flip-reports-header h2 .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #2271b1;
+}
+
+.flip-reports-arrow {
+    transition: transform 0.2s;
+    color: #888;
+}
+
+.flip-reports-arrow-open {
+    transform: rotate(180deg);
+}
+
+.flip-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    background: #2271b1;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 6px;
+}
+
+.flip-reports-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.flip-reports-empty {
+    color: #888;
+    font-size: 13px;
+    padding: 12px 0;
+    text-align: center;
+}
+
+.flip-report-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.flip-report-item:hover {
+    background: #f0f6fc;
+    border-color: #2271b1;
+}
+
+.flip-report-item.flip-report-active {
+    background: #e8f0fe;
+    border-color: #2271b1;
+    border-left: 3px solid #2271b1;
+}
+
+.flip-report-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.flip-report-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #666;
+    flex-shrink: 0;
+}
+
+.flip-report-text {
+    min-width: 0;
+}
+
+.flip-report-name {
+    font-weight: 500;
+    font-size: 13px;
+    color: #1d2327;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.flip-report-meta {
+    font-size: 12px;
+    color: #888;
+    margin-top: 2px;
+}
+
+.flip-report-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.flip-report-actions .button {
+    padding: 2px 6px !important;
+    min-height: 26px;
+}
+
+.flip-report-actions .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    line-height: 1;
+}
+
+.flip-reports-actions {
+    padding-top: 8px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 8px;
+}
+
+.flip-reports-actions .button .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+}
+
+.flip-freq-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    background: #e8f0fe;
+    color: #2271b1;
+    text-transform: capitalize;
+}
+
+.flip-monitor-new-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    background: #00a32a;
+    color: #fff;
+}
+
+/* ── Monitor Dialog ───────────────────────────── */
+
+.flip-monitor-dialog {
+    background: #f9fbfd;
+    border: 1px solid #c3c4c7;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.flip-monitor-dialog h3 {
+    margin: 0 0 8px;
+    font-size: 15px;
+}
+
+.flip-monitor-dialog .description {
+    color: #666;
+    font-size: 12px;
+    margin: 0 0 16px;
+}
+
+.flip-monitor-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.flip-monitor-fields label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 4px;
+}
+
+.flip-monitor-fields input,
+.flip-monitor-fields select {
+    width: 100%;
+    height: 32px;
+    font-size: 13px;
+}
+
+.flip-monitor-actions {
+    display: flex;
+    gap: 8px;
+}
+
 /* ── Responsive ─────────────────────────────── */
 
 @media (max-width: 1200px) {
@@ -895,6 +1187,10 @@
 
     .flip-af-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .flip-monitor-fields {
+        grid-template-columns: 1fr 1fr;
     }
 }
 
@@ -913,5 +1209,17 @@
 
     .flip-af-grid {
         grid-template-columns: 1fr;
+    }
+
+    .flip-monitor-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .flip-report-name-prompt {
+        flex-wrap: wrap;
+    }
+
+    .flip-report-context {
+        flex-wrap: wrap;
     }
 }

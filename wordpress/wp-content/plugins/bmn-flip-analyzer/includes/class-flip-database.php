@@ -2,7 +2,7 @@
 /**
  * Database layer for flip analysis results.
  *
- * Table: wp_bmn_flip_scores
+ * Tables: wp_bmn_flip_scores, wp_bmn_flip_reports, wp_bmn_flip_monitor_seen
  */
 
 if (!defined('ABSPATH')) {
@@ -11,7 +11,10 @@ if (!defined('ABSPATH')) {
 
 class Flip_Database {
 
-    const TABLE_NAME = 'bmn_flip_scores';
+    const TABLE_NAME         = 'bmn_flip_scores';
+    const REPORTS_TABLE      = 'bmn_flip_reports';
+    const MONITOR_SEEN_TABLE = 'bmn_flip_monitor_seen';
+    const MAX_REPORTS        = 25;
 
     /**
      * Get the full table name with prefix.
@@ -19,6 +22,16 @@ class Flip_Database {
     public static function table_name(): string {
         global $wpdb;
         return $wpdb->prefix . self::TABLE_NAME;
+    }
+
+    public static function reports_table(): string {
+        global $wpdb;
+        return $wpdb->prefix . self::REPORTS_TABLE;
+    }
+
+    public static function monitor_seen_table(): string {
+        global $wpdb;
+        return $wpdb->prefix . self::MONITOR_SEEN_TABLE;
     }
 
     /**
@@ -164,6 +177,338 @@ class Flip_Database {
     }
 
     /**
+     * Create the reports table via dbDelta.
+     */
+    public static function create_reports_table(): void {
+        global $wpdb;
+        $table           = self::reports_table();
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE {$table} (
+            id BIGINT UNSIGNED AUTO_INCREMENT,
+            name VARCHAR(255) NOT NULL,
+            type VARCHAR(10) NOT NULL DEFAULT 'manual',
+            status VARCHAR(10) NOT NULL DEFAULT 'active',
+            cities_json TEXT NOT NULL,
+            filters_json TEXT NOT NULL,
+            run_date DATETIME DEFAULT NULL,
+            last_run_date DATETIME DEFAULT NULL,
+            run_count INT UNSIGNED NOT NULL DEFAULT 0,
+            property_count INT UNSIGNED NOT NULL DEFAULT 0,
+            viable_count INT UNSIGNED NOT NULL DEFAULT 0,
+            monitor_frequency VARCHAR(20) DEFAULT NULL,
+            monitor_last_check DATETIME DEFAULT NULL,
+            monitor_last_new_count INT UNSIGNED NOT NULL DEFAULT 0,
+            notification_email VARCHAR(255) DEFAULT NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            created_by BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            PRIMARY KEY (id),
+            INDEX idx_type_status (type, status),
+            INDEX idx_created_at (created_at DESC)
+        ) {$charset_collate};";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta($sql);
+    }
+
+    /**
+     * Create the monitor seen table via dbDelta.
+     */
+    public static function create_monitor_seen_table(): void {
+        global $wpdb;
+        $table           = self::monitor_seen_table();
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE {$table} (
+            id BIGINT UNSIGNED AUTO_INCREMENT,
+            report_id BIGINT UNSIGNED NOT NULL,
+            listing_id INT NOT NULL,
+            first_seen_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY uk_report_listing (report_id, listing_id),
+            INDEX idx_report_id (report_id)
+        ) {$charset_collate};";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta($sql);
+    }
+
+    /**
+     * Add report_id column to flip_scores for v0.13.0 (saved reports).
+     */
+    public static function migrate_v0130(): void {
+        global $wpdb;
+        $table = self::table_name();
+
+        $cols = $wpdb->get_col("SHOW COLUMNS FROM {$table}", 0);
+
+        if (!in_array('report_id', $cols, true)) {
+            $wpdb->query("ALTER TABLE {$table} ADD COLUMN report_id BIGINT UNSIGNED DEFAULT NULL AFTER run_date");
+            $wpdb->query("ALTER TABLE {$table} ADD INDEX idx_report_id (report_id)");
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // Report CRUD
+    // ---------------------------------------------------------------
+
+    /**
+     * Create a new report. Returns the new report ID.
+     */
+    public static function create_report(array $data): int {
+        global $wpdb;
+
+        $wpdb->insert(self::reports_table(), [
+            'name'                  => $data['name'],
+            'type'                  => $data['type'] ?? 'manual',
+            'status'                => 'active',
+            'cities_json'           => $data['cities_json'],
+            'filters_json'          => $data['filters_json'],
+            'run_date'              => $data['run_date'] ?? null,
+            'last_run_date'         => $data['last_run_date'] ?? null,
+            'run_count'             => $data['run_count'] ?? 0,
+            'property_count'        => $data['property_count'] ?? 0,
+            'viable_count'          => $data['viable_count'] ?? 0,
+            'monitor_frequency'     => $data['monitor_frequency'] ?? null,
+            'notification_email'    => $data['notification_email'] ?? null,
+            'created_at'            => $data['created_at'] ?? current_time('mysql'),
+            'updated_at'            => $data['updated_at'] ?? current_time('mysql'),
+            'created_by'            => $data['created_by'] ?? get_current_user_id(),
+        ]);
+
+        return (int) $wpdb->insert_id;
+    }
+
+    /**
+     * Get a single report by ID.
+     */
+    public static function get_report(int $id): ?object {
+        global $wpdb;
+        $table = self::reports_table();
+        return $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$table} WHERE id = %d AND status != 'deleted'",
+            $id
+        ));
+    }
+
+    /**
+     * Get reports list with optional filters.
+     */
+    public static function get_reports(array $args = []): array {
+        global $wpdb;
+        $table = self::reports_table();
+
+        $where  = ["status != 'deleted'"];
+        $params = [];
+
+        if (!empty($args['type'])) {
+            $where[]  = 'type = %s';
+            $params[] = $args['type'];
+        }
+        if (!empty($args['status'])) {
+            $where[]  = 'status = %s';
+            $params[] = $args['status'];
+        }
+
+        $limit = isset($args['limit']) ? max(1, min(100, (int) $args['limit'])) : 50;
+        $where_sql = implode(' AND ', $where);
+
+        $sql = "SELECT * FROM {$table} WHERE {$where_sql} ORDER BY created_at DESC LIMIT %d";
+        $params[] = $limit;
+
+        return $wpdb->get_results($wpdb->prepare($sql, $params));
+    }
+
+    /**
+     * Update report fields.
+     */
+    public static function update_report(int $id, array $data): bool {
+        global $wpdb;
+        $data['updated_at'] = current_time('mysql');
+        return (bool) $wpdb->update(self::reports_table(), $data, ['id' => $id]);
+    }
+
+    /**
+     * Soft-delete a report.
+     */
+    public static function delete_report(int $id): bool {
+        return self::update_report($id, ['status' => 'deleted']);
+    }
+
+    /**
+     * Count active reports (for enforcing MAX_REPORTS cap).
+     */
+    public static function count_reports(?string $type = null): int {
+        global $wpdb;
+        $table = self::reports_table();
+
+        if ($type) {
+            return (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$table} WHERE status = 'active' AND type = %s",
+                $type
+            ));
+        }
+        return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE status = 'active'");
+    }
+
+    // ---------------------------------------------------------------
+    // Report-Scoped Queries
+    // ---------------------------------------------------------------
+
+    /**
+     * Get all results for a specific report.
+     */
+    public static function get_results_by_report(int $report_id): array {
+        global $wpdb;
+        $table = self::table_name();
+
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM {$table}
+             WHERE report_id = %d
+             ORDER BY disqualified ASC, total_score DESC",
+            $report_id
+        ));
+    }
+
+    /**
+     * Get summary stats for a specific report.
+     */
+    public static function get_summary_by_report(int $report_id): array {
+        global $wpdb;
+        $table = self::table_name();
+
+        $totals = $wpdb->get_row($wpdb->prepare(
+            "SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN disqualified = 0 AND total_score >= 60 THEN 1 ELSE 0 END) as viable,
+                AVG(CASE WHEN disqualified = 0 THEN total_score END) as avg_score,
+                AVG(CASE WHEN disqualified = 0 AND estimated_roi > 0 THEN estimated_roi END) as avg_roi,
+                SUM(CASE WHEN disqualified = 1 THEN 1 ELSE 0 END) as disqualified,
+                SUM(CASE WHEN disqualified = 1 AND near_viable = 1 THEN 1 ELSE 0 END) as near_viable,
+                MAX(run_date) as last_run
+            FROM {$table} WHERE report_id = %d",
+            $report_id
+        ));
+
+        if (!$totals || (int) $totals->total === 0) {
+            return ['total' => 0, 'last_run' => null, 'cities' => []];
+        }
+
+        $city_breakdown = $wpdb->get_results($wpdb->prepare(
+            "SELECT
+                city,
+                COUNT(*) as total,
+                SUM(CASE WHEN disqualified = 0 AND total_score >= 60 THEN 1 ELSE 0 END) as viable,
+                AVG(CASE WHEN disqualified = 0 THEN total_score END) as avg_score
+            FROM {$table}
+            WHERE report_id = %d
+            GROUP BY city
+            ORDER BY viable DESC",
+            $report_id
+        ));
+
+        return [
+            'total'        => (int) $totals->total,
+            'viable'       => (int) $totals->viable,
+            'avg_score'    => round((float) $totals->avg_score, 1),
+            'avg_roi'      => round((float) $totals->avg_roi, 1),
+            'disqualified' => (int) $totals->disqualified,
+            'near_viable'  => (int) ($totals->near_viable ?? 0),
+            'last_run'     => $totals->last_run,
+            'cities'       => $city_breakdown,
+        ];
+    }
+
+    /**
+     * Get a single result by listing_id within a specific report.
+     */
+    public static function get_result_by_listing_and_report(int $listing_id, int $report_id): ?object {
+        global $wpdb;
+        $table = self::table_name();
+        return $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$table} WHERE listing_id = %d AND report_id = %d ORDER BY run_date DESC LIMIT 1",
+            $listing_id, $report_id
+        ));
+    }
+
+    /**
+     * Stamp orphan scores (report_id IS NULL) with a report_id by run_date.
+     * Used when auto-saving a run that just completed.
+     */
+    public static function stamp_scores_with_report(int $report_id, string $run_date): int {
+        global $wpdb;
+        $table = self::table_name();
+
+        return (int) $wpdb->query($wpdb->prepare(
+            "UPDATE {$table} SET report_id = %d WHERE run_date = %s AND report_id IS NULL",
+            $report_id, $run_date
+        ));
+    }
+
+    /**
+     * Delete all scores for a report (used before re-run).
+     */
+    public static function delete_scores_for_report(int $report_id): int {
+        global $wpdb;
+        return (int) $wpdb->delete(self::table_name(), ['report_id' => $report_id]);
+    }
+
+    // ---------------------------------------------------------------
+    // Monitor Tracking
+    // ---------------------------------------------------------------
+
+    /**
+     * Get listing_ids already seen by a monitor.
+     */
+    public static function get_seen_listing_ids(int $report_id): array {
+        global $wpdb;
+        $table = self::monitor_seen_table();
+        return $wpdb->get_col($wpdb->prepare(
+            "SELECT listing_id FROM {$table} WHERE report_id = %d",
+            $report_id
+        ));
+    }
+
+    /**
+     * Mark listing_ids as seen by a monitor (bulk insert, ignores duplicates).
+     */
+    public static function mark_listings_seen(int $report_id, array $listing_ids): void {
+        global $wpdb;
+        $table = self::monitor_seen_table();
+        $now   = current_time('mysql');
+
+        foreach (array_chunk($listing_ids, 500) as $chunk) {
+            $values = [];
+            $placeholders = [];
+            foreach ($chunk as $lid) {
+                $placeholders[] = '(%d, %d, %s)';
+                $values[]       = $report_id;
+                $values[]       = (int) $lid;
+                $values[]       = $now;
+            }
+            $sql = "INSERT IGNORE INTO {$table} (report_id, listing_id, first_seen_at) VALUES "
+                 . implode(', ', $placeholders);
+            $wpdb->query($wpdb->prepare($sql, $values));
+        }
+    }
+
+    /**
+     * Get listing_ids from $all_ids that have NOT been seen by a monitor.
+     */
+    public static function get_unseen_listing_ids(int $report_id, array $all_ids): array {
+        if (empty($all_ids)) {
+            return [];
+        }
+        $seen = self::get_seen_listing_ids($report_id);
+        $seen_map = array_flip($seen);
+
+        return array_values(array_filter($all_ids, function ($id) use ($seen_map) {
+            return !isset($seen_map[$id]);
+        }));
+    }
+
+    /**
      * Set default target cities on activation.
      */
     public static function set_default_cities(): void {
@@ -270,11 +615,18 @@ class Flip_Database {
         global $wpdb;
         $table = self::table_name();
 
-        // Delete any existing result for this listing from the same run date
-        $wpdb->delete($table, [
-            'listing_id' => $data['listing_id'],
-            'run_date'   => $data['run_date'],
-        ]);
+        // Delete any existing result for this listing from the same run date + report
+        if (!empty($data['report_id'])) {
+            $wpdb->query($wpdb->prepare(
+                "DELETE FROM {$table} WHERE listing_id = %d AND run_date = %s AND report_id = %d",
+                $data['listing_id'], $data['run_date'], $data['report_id']
+            ));
+        } else {
+            $wpdb->query($wpdb->prepare(
+                "DELETE FROM {$table} WHERE listing_id = %d AND run_date = %s AND report_id IS NULL",
+                $data['listing_id'], $data['run_date']
+            ));
+        }
 
         $wpdb->insert($table, $data);
         return $wpdb->insert_id;
@@ -402,13 +754,13 @@ class Flip_Database {
     }
 
     /**
-     * Delete results older than N days.
+     * Delete results older than N days (only orphan scores, not saved reports).
      */
     public static function clear_old_results(int $days = 30): int {
         global $wpdb;
         $table = self::table_name();
         return $wpdb->query($wpdb->prepare(
-            "DELETE FROM {$table} WHERE run_date < DATE_SUB(NOW(), INTERVAL %d DAY)",
+            "DELETE FROM {$table} WHERE run_date < DATE_SUB(NOW(), INTERVAL %d DAY) AND report_id IS NULL",
             $days
         ));
     }

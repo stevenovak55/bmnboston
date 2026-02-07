@@ -28,6 +28,12 @@ class Flip_Admin_Dashboard {
         add_action('wp_ajax_flip_generate_pdf', [__CLASS__, 'ajax_generate_pdf']);
         add_action('wp_ajax_flip_force_analyze', [__CLASS__, 'ajax_force_analyze']);
         add_action('wp_ajax_flip_save_filters', [__CLASS__, 'ajax_save_filters']);
+        add_action('wp_ajax_flip_get_reports', [__CLASS__, 'ajax_get_reports']);
+        add_action('wp_ajax_flip_load_report', [__CLASS__, 'ajax_load_report']);
+        add_action('wp_ajax_flip_rename_report', [__CLASS__, 'ajax_rename_report']);
+        add_action('wp_ajax_flip_rerun_report', [__CLASS__, 'ajax_rerun_report']);
+        add_action('wp_ajax_flip_delete_report', [__CLASS__, 'ajax_delete_report']);
+        add_action('wp_ajax_flip_create_monitor', [__CLASS__, 'ajax_create_monitor']);
     }
 
     /**
@@ -100,12 +106,18 @@ class Flip_Admin_Dashboard {
         wp_enqueue_script('flip-cities',
             $url . 'flip-cities.js', ['flip-core', 'flip-helpers', 'jquery'], $ver, true);
 
+        // Reports Module
+        wp_enqueue_script('flip-reports',
+            $url . 'flip-reports.js',
+            ['flip-core', 'flip-helpers', 'flip-stats-chart', 'flip-filters-table', 'flip-ajax', 'jquery'],
+            $ver, true);
+
         // Init (runs last, binds everything)
         wp_enqueue_script('flip-init',
             $url . 'flip-init.js',
             ['flip-core', 'flip-helpers', 'flip-stats-chart', 'flip-filters-table',
              'flip-detail-row', 'flip-projections', 'flip-ajax',
-             'flip-analysis-filters', 'flip-cities', 'jquery'],
+             'flip-analysis-filters', 'flip-cities', 'flip-reports', 'jquery'],
             $ver, true);
 
         // Dashboard CSS
@@ -124,6 +136,8 @@ class Flip_Admin_Dashboard {
             'data'             => self::get_dashboard_data(),
             'filters'          => Flip_Database::get_analysis_filters(),
             'propertySubTypes' => Flip_Database::get_available_property_sub_types(),
+            'reports'          => self::get_reports_list(),
+            'activeReportId'   => null,
         ]);
     }
 
@@ -140,10 +154,30 @@ class Flip_Admin_Dashboard {
 
     /**
      * Get all data needed for the dashboard.
+     *
+     * @param int|null $report_id  When set, load data for a specific saved report.
      */
-    public static function get_dashboard_data(): array {
+    public static function get_dashboard_data(?int $report_id = null): array {
         global $wpdb;
         $table = Flip_Database::table_name();
+
+        if ($report_id) {
+            $report = Flip_Database::get_report($report_id);
+            if (!$report) {
+                // Report was deleted or doesn't exist — fall through to global latest
+                $report_id = null;
+            } else {
+                $summary     = Flip_Database::get_summary_by_report($report_id);
+                $all_results = Flip_Database::get_results_by_report($report_id);
+
+                return [
+                    'summary' => $summary,
+                    'results' => array_map([__CLASS__, 'format_result'], $all_results),
+                    'cities'  => Flip_Database::get_target_cities(),
+                    'report'  => (array) $report,
+                ];
+            }
+        }
 
         $summary = Flip_Database::get_summary();
 
@@ -233,6 +267,8 @@ class Flip_Admin_Dashboard {
 
     /**
      * AJAX: Run the analysis pipeline (Pass 1).
+     *
+     * Now auto-saves every run as a named report.
      */
     public static function ajax_run_analysis(): void {
         check_ajax_referer('flip_dashboard', 'nonce');
@@ -243,14 +279,64 @@ class Flip_Admin_Dashboard {
 
         set_time_limit(300);
 
-        $messages = [];
-        $filters = Flip_Database::get_analysis_filters();
-        $result = Flip_Analyzer::run(['filters' => $filters], function ($msg) use (&$messages) {
-            $messages[] = $msg;
-        });
+        // Get report name from POST (JS prompts for this before calling)
+        $report_name = isset($_POST['report_name'])
+            ? sanitize_text_field(wp_unslash($_POST['report_name']))
+            : '';
 
-        $result['messages']  = $messages;
-        $result['dashboard'] = self::get_dashboard_data();
+        // Enforce report cap
+        if (Flip_Database::count_reports() >= Flip_Database::MAX_REPORTS) {
+            wp_send_json_error('Maximum of ' . Flip_Database::MAX_REPORTS . ' reports reached. Delete old reports first.');
+        }
+
+        // Create a report record before running analysis
+        $filters = Flip_Database::get_analysis_filters();
+        $cities  = Flip_Database::get_target_cities();
+        $now     = current_time('mysql');
+
+        $report_id = Flip_Database::create_report([
+            'name'         => $report_name ?: (implode(', ', $cities) . ' - ' . wp_date('M j, Y')),
+            'type'         => 'manual',
+            'cities_json'  => wp_json_encode($cities),
+            'filters_json' => wp_json_encode($filters),
+            'run_date'     => $now,
+            'created_by'   => get_current_user_id(),
+        ]);
+
+        $messages = [];
+        $result = Flip_Analyzer::run(
+            ['filters' => $filters, 'report_id' => $report_id ?: null],
+            function ($msg) use (&$messages) {
+                $messages[] = $msg;
+            }
+        );
+
+        // Update report metadata after run
+        if ($report_id) {
+            $viable_count = 0;
+            $total_count  = (int) ($result['analyzed'] ?? 0);
+            if (!empty($result['analyzed'])) {
+                // Count viable from the fresh dashboard data
+                global $wpdb;
+                $table = Flip_Database::table_name();
+                $viable_count = (int) $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$table} WHERE report_id = %d AND disqualified = 0",
+                    $report_id
+                ));
+            }
+
+            Flip_Database::update_report($report_id, [
+                'last_run_date'  => $now,
+                'run_count'      => 1,
+                'property_count' => $total_count,
+                'viable_count'   => $viable_count,
+            ]);
+        }
+
+        $result['messages']    = $messages;
+        $result['dashboard']   = self::get_dashboard_data($report_id);
+        $result['report_id']   = $report_id;
+        $result['reports']     = self::get_reports_list();
 
         wp_send_json_success($result);
     }
@@ -267,13 +353,15 @@ class Flip_Admin_Dashboard {
 
         set_time_limit(600); // 10 minutes for photo analysis
 
+        $report_id = isset($_POST['report_id']) ? (int) $_POST['report_id'] : 0;
+
         $messages = [];
         $result = Flip_Photo_Analyzer::analyze_top_candidates(50, 40, function ($msg) use (&$messages) {
             $messages[] = $msg;
         });
 
         $result['messages']  = $messages;
-        $result['dashboard'] = self::get_dashboard_data();
+        $result['dashboard'] = self::get_dashboard_data($report_id ?: null);
 
         wp_send_json_success($result);
     }
@@ -288,7 +376,8 @@ class Flip_Admin_Dashboard {
             wp_send_json_error('Unauthorized');
         }
 
-        wp_send_json_success(self::get_dashboard_data());
+        $report_id = isset($_POST['report_id']) ? (int) $_POST['report_id'] : 0;
+        wp_send_json_success(self::get_dashboard_data($report_id ?: null));
     }
 
     /**
@@ -306,6 +395,8 @@ class Flip_Admin_Dashboard {
             wp_send_json_error('Invalid listing ID.');
         }
 
+        $report_id = isset($_POST['report_id']) ? (int) $_POST['report_id'] : 0;
+
         // TCPDF needs extra memory in web context
         @ini_set('memory_limit', '512M');
         set_time_limit(60);
@@ -314,7 +405,7 @@ class Flip_Admin_Dashboard {
         require_once FLIP_PLUGIN_PATH . 'includes/class-flip-pdf-generator.php';
 
         $generator = new Flip_PDF_Generator();
-        $pdf_path = $generator->generate($listing_id);
+        $pdf_path = $generator->generate($listing_id, $report_id ?: null);
 
         if (!$pdf_path) {
             wp_send_json_error('Failed to generate PDF. Check that the property exists and TCPDF is available.');
@@ -345,23 +436,41 @@ class Flip_Admin_Dashboard {
             wp_send_json_error('Invalid listing ID.');
         }
 
+        $report_id = isset($_POST['report_id']) ? (int) $_POST['report_id'] : 0;
+
         set_time_limit(120);
 
         // Use latest run_date so the result groups with the current batch
         global $wpdb;
-        $table    = Flip_Database::table_name();
-        $run_date = $wpdb->get_var("SELECT MAX(run_date) FROM {$table}");
+        $table = Flip_Database::table_name();
 
-        $result = Flip_Analyzer::force_analyze_single($listing_id, $run_date);
+        if ($report_id) {
+            $run_date = $wpdb->get_var($wpdb->prepare(
+                "SELECT MAX(run_date) FROM {$table} WHERE report_id = %d",
+                $report_id
+            ));
+        } else {
+            $run_date = $wpdb->get_var("SELECT MAX(run_date) FROM {$table}");
+        }
+
+        $result = Flip_Analyzer::force_analyze_single($listing_id, $run_date, $report_id ?: null);
 
         if (!empty($result['error'])) {
             wp_send_json_error($result['error']);
         }
 
         // Fetch the fresh row and format for JS
+        $where_sql = "listing_id = %d AND run_date = %s";
+        $params    = [$listing_id, $run_date];
+
+        if ($report_id) {
+            $where_sql .= " AND report_id = %d";
+            $params[]   = $report_id;
+        }
+
         $row = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$table} WHERE listing_id = %d AND run_date = %s",
-            $listing_id, $run_date
+            "SELECT * FROM {$table} WHERE {$where_sql}",
+            ...$params
         ));
 
         if (!$row) {
@@ -422,5 +531,258 @@ class Flip_Admin_Dashboard {
             'cities'  => $cities,
             'message' => count($cities) . ' target cities saved.',
         ]);
+    }
+
+    /* ─── Report AJAX Handlers ─────────────────────────────── */
+
+    /**
+     * AJAX: Get all saved reports.
+     */
+    public static function ajax_get_reports(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        wp_send_json_success(self::get_reports_list());
+    }
+
+    /**
+     * AJAX: Load a saved report's full dashboard data.
+     */
+    public static function ajax_load_report(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $report_id = isset($_POST['report_id']) ? (int) $_POST['report_id'] : 0;
+        if ($report_id <= 0) {
+            wp_send_json_error('Invalid report ID.');
+        }
+
+        $report = Flip_Database::get_report($report_id);
+        if (!$report || $report->status === 'deleted') {
+            wp_send_json_error('Report not found.');
+        }
+
+        wp_send_json_success(self::get_dashboard_data($report_id));
+    }
+
+    /**
+     * AJAX: Rename a saved report.
+     */
+    public static function ajax_rename_report(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $report_id = isset($_POST['report_id']) ? (int) $_POST['report_id'] : 0;
+        $new_name  = isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '';
+
+        if ($report_id <= 0 || empty($new_name)) {
+            wp_send_json_error('Invalid report ID or name.');
+        }
+
+        Flip_Database::update_report($report_id, ['name' => $new_name]);
+
+        wp_send_json_success([
+            'reports' => self::get_reports_list(),
+            'message' => 'Report renamed.',
+        ]);
+    }
+
+    /**
+     * AJAX: Re-run a report with fresh MLS data (replaces old results).
+     */
+    public static function ajax_rerun_report(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        set_time_limit(300);
+
+        $report_id = isset($_POST['report_id']) ? (int) $_POST['report_id'] : 0;
+        if ($report_id <= 0) {
+            wp_send_json_error('Invalid report ID.');
+        }
+
+        $report = Flip_Database::get_report($report_id);
+        if (!$report || $report->status === 'deleted') {
+            wp_send_json_error('Report not found.');
+        }
+
+        // Concurrency lock — prevent overlapping runs on the same report
+        $lock_key = 'flip_report_lock_' . $report_id;
+        if (get_transient($lock_key)) {
+            wp_send_json_error('This report is already being processed. Please wait.');
+        }
+        set_transient($lock_key, true, 600);
+
+        // Restore the report's original cities + filters
+        $cities  = json_decode($report->cities_json, true) ?: [];
+        $filters = json_decode($report->filters_json, true) ?: [];
+
+        // Run new analysis first (pass cities via option, don't mutate global state)
+        $messages = [];
+        $result = Flip_Analyzer::run(
+            ['filters' => $filters, 'report_id' => $report_id, 'city' => implode(',', $cities)],
+            function ($msg) use (&$messages) {
+                $messages[] = $msg;
+            }
+        );
+
+        global $wpdb;
+        $table = Flip_Database::table_name();
+
+        // Delete ALL old scores for this report after successful new run
+        if (!empty($result['analyzed'])) {
+            $new_run_date = $result['run_date'] ?? '';
+            if ($new_run_date) {
+                $wpdb->query($wpdb->prepare(
+                    "DELETE FROM {$table} WHERE report_id = %d AND run_date != %s",
+                    $report_id, $new_run_date
+                ));
+            }
+        }
+
+        delete_transient($lock_key);
+
+        // Update report metadata
+        $now = current_time('mysql');
+        $viable_count = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE report_id = %d AND disqualified = 0",
+            $report_id
+        ));
+        $total_count = (int) ($result['analyzed'] ?? 0);
+
+        Flip_Database::update_report($report_id, [
+            'last_run_date'  => $now,
+            'run_count'      => (int) $report->run_count + 1,
+            'property_count' => $total_count,
+            'viable_count'   => $viable_count,
+        ]);
+
+        $result['messages']  = $messages;
+        $result['dashboard'] = self::get_dashboard_data($report_id);
+        $result['report_id'] = $report_id;
+        $result['reports']   = self::get_reports_list();
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * AJAX: Soft-delete a saved report.
+     */
+    public static function ajax_delete_report(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $report_id = isset($_POST['report_id']) ? (int) $_POST['report_id'] : 0;
+        if ($report_id <= 0) {
+            wp_send_json_error('Invalid report ID.');
+        }
+
+        Flip_Database::delete_report($report_id);
+
+        wp_send_json_success([
+            'reports' => self::get_reports_list(),
+            'message' => 'Report deleted.',
+        ]);
+    }
+
+    /**
+     * AJAX: Create a monitor from current criteria.
+     */
+    public static function ajax_create_monitor(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $name      = isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '';
+        $frequency = isset($_POST['frequency']) ? sanitize_text_field(wp_unslash($_POST['frequency'])) : 'daily';
+        $email     = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
+
+        if (empty($name)) {
+            wp_send_json_error('Monitor name is required.');
+        }
+
+        $allowed_freqs = ['daily', 'twice_daily', 'weekly'];
+        if (!in_array($frequency, $allowed_freqs, true)) {
+            $frequency = 'daily';
+        }
+
+        // Enforce report cap
+        if (Flip_Database::count_reports() >= Flip_Database::MAX_REPORTS) {
+            wp_send_json_error('Maximum of ' . Flip_Database::MAX_REPORTS . ' reports reached. Delete old reports first.');
+        }
+
+        $cities  = Flip_Database::get_target_cities();
+        $filters = Flip_Database::get_analysis_filters();
+
+        $report_id = Flip_Database::create_report([
+            'name'              => $name,
+            'type'              => 'monitor',
+            'cities_json'       => wp_json_encode($cities),
+            'filters_json'      => wp_json_encode($filters),
+            'monitor_frequency' => $frequency,
+            'notification_email' => $email,
+            'created_by'        => get_current_user_id(),
+        ]);
+
+        if (!$report_id) {
+            wp_send_json_error('Failed to create monitor. Maximum of ' . Flip_Database::MAX_REPORTS . ' reports reached.');
+        }
+
+        // Mark all currently matching listings as "seen" so only future ones trigger
+        $listing_ids = Flip_Analyzer::fetch_matching_listing_ids($cities, $filters);
+        if (!empty($listing_ids)) {
+            Flip_Database::mark_listings_seen($report_id, $listing_ids);
+        }
+
+        wp_send_json_success([
+            'reports' => self::get_reports_list(),
+            'message' => 'Monitor created. It will check for new listings ' . str_replace('_', ' ', $frequency) . '.',
+        ]);
+    }
+
+    /* ─── Helpers ──────────────────────────────────────────── */
+
+    /**
+     * Get lightweight reports list for JS.
+     */
+    private static function get_reports_list(): array {
+        $reports = Flip_Database::get_reports();
+        $list = [];
+
+        foreach ($reports as $r) {
+            $list[] = [
+                'id'               => (int) $r->id,
+                'name'             => $r->name,
+                'type'             => $r->type,
+                'status'           => $r->status,
+                'property_count'   => (int) $r->property_count,
+                'viable_count'     => (int) $r->viable_count,
+                'run_count'        => (int) $r->run_count,
+                'run_date'         => $r->run_date,
+                'last_run_date'    => $r->last_run_date,
+                'monitor_frequency'     => $r->monitor_frequency,
+                'monitor_last_new_count' => (int) ($r->monitor_last_new_count ?? 0),
+                'created_at'       => $r->created_at,
+            ];
+        }
+
+        return $list;
     }
 }

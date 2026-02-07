@@ -9,11 +9,19 @@
 
     var h = FD.helpers;
 
+    /**
+     * Show the report name prompt and run analysis when confirmed.
+     */
     FD.ajax.runAnalysis = function () {
-        if (!confirm('Run analysis on all target cities? This may take 1-3 minutes.')) {
-            return;
-        }
+        FD.reports.promptName(function (reportName) {
+            FD.ajax._executeAnalysis(reportName);
+        });
+    };
 
+    /**
+     * Execute the actual analysis run (called after name prompt).
+     */
+    FD.ajax._executeAnalysis = function (reportName) {
         $('#flip-modal-overlay').show();
         $('#flip-run-analysis').prop('disabled', true);
 
@@ -24,6 +32,7 @@
             data: {
                 action: 'flip_run_analysis',
                 nonce: flipData.nonce,
+                report_name: reportName || '',
             },
             success: function (response) {
                 $('#flip-modal-overlay').hide();
@@ -35,11 +44,23 @@
                         + d.disqualified + ' disqualified.';
                     alert(msg);
 
+                    if (d.report_id) {
+                        FD.activeReportId = d.report_id;
+                    }
+
                     if (d.dashboard) {
                         FD.data = d.dashboard;
                         FD.stats.renderStats(FD.data.summary);
                         FD.stats.renderChart(FD.data.summary.cities || []);
                         FD.filters.applyFilters();
+                    }
+
+                    if (d.reports) {
+                        FD.reports.renderList(d.reports);
+                    }
+
+                    if (d.dashboard && d.dashboard.report) {
+                        FD.reports.showReportHeader(d.dashboard.report);
                     }
                 } else {
                     alert('Error: ' + (response.data || 'Unknown error'));
@@ -93,6 +114,7 @@
             data: {
                 action: 'flip_run_photo_analysis',
                 nonce: flipData.nonce,
+                report_id: FD.activeReportId || '',
             },
             success: function (response) {
                 $('#flip-modal-overlay').hide();
@@ -123,6 +145,12 @@
             error: function (xhr, status) {
                 $('#flip-modal-overlay').hide();
                 $('#flip-run-photos').prop('disabled', false);
+                // Reset modal text for next use
+                $('#flip-modal-overlay').find('h3').text('Running Analysis...');
+                $('#flip-modal-overlay').find('p').first().html(
+                    'Scoring properties across all target cities.<br>'
+                    + 'This may take 1-3 minutes depending on the number of properties.'
+                );
 
                 if (status === 'timeout') {
                     alert('Photo analysis timed out. Check server logs. Refreshing data...');
@@ -135,13 +163,18 @@
     };
 
     FD.ajax.refreshData = function () {
+        var postData = {
+            action: 'flip_refresh_data',
+            nonce: flipData.nonce,
+        };
+        if (FD.activeReportId) {
+            postData.report_id = FD.activeReportId;
+        }
+
         $.ajax({
             url: flipData.ajaxUrl,
             method: 'POST',
-            data: {
-                action: 'flip_refresh_data',
-                nonce: flipData.nonce,
-            },
+            data: postData,
             success: function (response) {
                 if (response.success) {
                     FD.data = response.data;
@@ -167,6 +200,7 @@
                 action: 'flip_generate_pdf',
                 nonce: flipData.nonce,
                 listing_id: listingId,
+                report_id: FD.activeReportId || '',
             },
             success: function (response) {
                 $btn.prop('disabled', false).html('<span class="dashicons dashicons-pdf"></span> Download PDF Report');
@@ -203,6 +237,7 @@
                 action: 'flip_force_analyze',
                 nonce: flipData.nonce,
                 listing_id: listingId,
+                report_id: FD.activeReportId || '',
             },
             success: function (response) {
                 if (response.success) {
@@ -266,7 +301,7 @@
                 r.property_score.toFixed(2),
                 r.location_score.toFixed(2),
                 r.market_score.toFixed(2),
-                r.photo_score !== null ? r.photo_score.toFixed(2) : '',
+                r.photo_score != null ? r.photo_score.toFixed(2) : '',
                 r.list_price.toFixed(0),
                 r.estimated_arv.toFixed(0),
                 r.arv_confidence || '',

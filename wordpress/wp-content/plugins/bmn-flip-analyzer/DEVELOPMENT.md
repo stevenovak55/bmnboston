@@ -1,8 +1,8 @@
 # BMN Flip Analyzer - Development Log
 
-## Current Version: 0.12.0
+## Current Version: 0.13.0
 
-## Status: Phase 4.2 Complete (Dashboard JS Modular Refactor) - Pre-Phase 5 (iOS)
+## Status: Phase 4.3 Complete (Saved Reports & Monitor System) - Pre-Phase 5 (iOS)
 
 ---
 
@@ -23,7 +23,8 @@
 | 7.9 | Pre-Analysis Filters + Force Analyze | Complete | Phase 4.0 - 17 filters, force DQ bypass, CLI flags, PDF v2 |
 | 8.0 | Renovation Potential Guard | Complete | Phase 4.1 - New construction DQ, inverted scoring, age rehab multiplier |
 | 8.5 | Dashboard JS Modular Refactor | Complete | Phase 4.2 - Split 1,565-line monolith into 10 focused modules |
-| 9 | iOS data model + API | Pending | Phase 5 - SwiftUI ViewModel |
+| 9.0 | Saved Reports & Monitor System | Complete | Phase 4.3 - Auto-save reports, load/rerun/delete, cron monitors |
+| 9.5 | iOS data model + API | Pending | Phase 5 - SwiftUI ViewModel |
 | 9 | iOS UI views | Pending | Phase 4 - FlipAnalyzerSheet |
 | 10 | Testing + tuning | Pending | Phase 5 - Score validation |
 
@@ -563,6 +564,13 @@ Five root causes identified: (1) year-built scoring was backwards (newer = highe
 | Weighted remarks keywords | Strongest signals ("new construction", "as-is") deserve more impact than weak signals ("updated") | 2026-02-06 |
 | Property condition from bme_listing_details | Free supplementary signal; catches "New Construction"/"Excellent" even when remarks are vague | 2026-02-06 |
 | Pipeline reorder (remarks before DQ) | New construction DQ needs remarks for distress keyword escape hatch | 2026-02-06 |
+| Report-scoped results via report_id | Foreign key on scores table avoids copying data; single table, indexed column | 2026-02-06 |
+| Criteria snapshot in reports | Cities + filters frozen at creation; re-run uses original criteria, not current settings | 2026-02-06 |
+| Monitor incremental via seen table | Track processed listing_ids per monitor; only analyze new ones on each cron run | 2026-02-06 |
+| Soft delete for reports | Status='deleted' preserves scores data; hard delete would orphan wp_bmn_flip_scores rows | 2026-02-06 |
+| 25-report cap | Prevents unbounded growth; soft-deleted reports don't count toward cap | 2026-02-06 |
+| Transient-based concurrency locks | Prevents parallel re-runs of same report; auto-expires after 5 min if process crashes | 2026-02-06 |
+| Cron in both activation + plugins_loaded | File-only updates (SCP) skip activation hook; migration block ensures cron is scheduled | 2026-02-06 |
 | ARV confidence discount on DQ thresholds | Low/none confidence means profit estimate is unreliable; require 25-50% more to pass | 2026-02-06 |
 | Pre-DQ rehab with full multipliers | Base-only estimate missed age+remarks adjustments; new construction got inflated rehab in DQ check | 2026-02-06 |
 | Scope-based contingency rate | Contingency should reflect work complexity (base × remarks), not age-discounted cost | 2026-02-06 |
@@ -720,6 +728,126 @@ Five root causes identified: (1) year-built scoring was backwards (newer = highe
 2. Consider further refactoring: `class-flip-pdf-generator.php` (now 2,118 lines)
 3. Consider further refactoring: `class-flip-analyzer.php` (1,335 lines)
 
+### Session 15 - 2026-02-06
+
+**What was done (v0.13.0 — Saved Reports & Monitor System):**
+
+**Goal:** Analysis runs currently overwrite the dashboard view. Add saved reports so users can keep multiple analyses, and monitors that auto-analyze new listings on a schedule.
+
+**Phase 1: Database Foundation**
+- New table: `wp_bmn_flip_reports` — stores report metadata (name, type, criteria snapshots, run stats, monitor config)
+- New table: `wp_bmn_flip_monitor_seen` — tracks which listings each monitor has already processed (incremental-only analysis)
+- Migration: `report_id` column added to `wp_bmn_flip_scores` with index (scopes results to reports)
+- Report CRUD: `create_report()`, `get_report()`, `get_reports()`, `update_report()`, `delete_report()` (soft delete)
+- Report queries: `get_results_by_report()`, `get_summary_by_report()` — same aggregation as legacy methods but filtered by `report_id`
+- Monitor tracking: `get_seen_listing_ids()`, `mark_listings_seen()`, `get_unseen_listing_ids()`
+- 25-report cap enforcement via `count_reports()` + `MAX_REPORTS` constant
+- `upsert_result()` updated: when `report_id` is present, DELETE scoped to that report_id; when NULL, scoped to `report_id IS NULL`
+- `clear_old_results()` updated: adds `AND report_id IS NULL` to protect saved report data
+
+**Phase 2: Report-Aware Analyzer**
+- `Flip_Analyzer::run()` accepts `report_id` and `listing_ids` options
+- When `listing_ids` provided, uses new `fetch_properties_by_ids()` instead of `fetch_properties()` (for incremental monitor runs)
+- New `fetch_matching_listing_ids()` public static method — applies all 17 filters to return matching listing IDs (used by monitors)
+- `force_analyze_single()` accepts optional `$report_id`
+- `build_result_data()` and `store_disqualified()` propagate `report_id`
+
+**Phase 3: AJAX Handlers + Dashboard UI**
+- 6 new AJAX actions: `flip_get_reports`, `flip_load_report`, `flip_rename_report`, `flip_rerun_report`, `flip_delete_report`, `flip_create_monitor`
+- Modified `ajax_run_analysis()`: prompts for report name, auto-creates report, stamps all scores with `report_id`
+- Modified `ajax_force_analyze()`, `ajax_generate_pdf()`: accept `report_id` from POST
+- `get_dashboard_data()` accepts optional `$report_id` — queries by `report_id` or falls back to `MAX(run_date)`
+- Deleted report guard: if queried report has status='deleted', falls through to global latest data
+- Report cap check before `create_report()`
+- Concurrency lock via transients in `ajax_rerun_report()` (prevents parallel re-runs)
+- `wp_localize_script` now includes `reports` list and `activeReportId` in `flipData`
+
+**Phase 4: JavaScript**
+- New file: `assets/js/flip-reports.js` (~397 lines) — saved reports panel, load/rerun/delete, monitor dialog, name prompt
+  - `FD.reports.init()` — renders initial reports list, binds collapsible panel + all events
+  - `FD.reports.renderList()` — populates `#flip-reports-list` with report cards (name, counts, date, type icon)
+  - `FD.reports.loadReport()` — AJAX `flip_load_report`, replaces `FD.data`, re-renders everything
+  - `FD.reports.rerunReport()` — confirm + AJAX `flip_rerun_report`, updates on success
+  - `FD.reports.deleteReport()` — confirm + AJAX `flip_delete_report`, removes from list
+  - `FD.reports.showReportHeader()` / `hideReportHeader()` — context bar with report name + "Back to Latest"
+  - `FD.reports.promptName()` — inline name input (pre-filled "Cities - Date") before running analysis
+  - `FD.reports.showMonitorDialog()` — monitor creation dialog with name + frequency + email
+- `flip-core.js`: added `activeReportId: null` and `reports: {}` to namespace
+- `flip-ajax.js`: `runAnalysis()` calls `FD.reports.promptName()` first; `generatePDF()`, `forceAnalyze()`, `refreshData()` send `report_id`
+- `flip-init.js`: calls `FD.reports.init()` in initialization chain
+- Enqueue: `flip-reports.js` registered in dependency chain; `flip-stats-chart` depends on `flip-reports`
+
+**Phase 5: Dashboard HTML + CSS**
+- Report context bar (hidden by default, shown when viewing a saved report)
+- Saved Reports panel (collapsible card between action buttons and summary stats)
+- Report name prompt (inline, appears when clicking Run Analysis)
+- Monitor creation dialog (name, frequency, email, description)
+- ~308 lines of CSS for report panel, badges, context bar, monitor styling
+
+**Phase 6: Monitor System**
+- New file: `includes/class-flip-monitor-runner.php` (~249 lines)
+  - `run_all_due()` — cron entry point, iterates active monitors, checks if due
+  - `run_incremental()` — fetches all matching listing_ids, subtracts seen, analyzes only new
+  - Tiered notifications: DQ'd → dashboard badge only; viable → photo analysis + PDF + email
+  - `send_viable_notification()` — HTML email with property table, PDF links, styled headers
+  - Concurrency lock via transients (prevents parallel runs of same monitor)
+- Cron: `bmn_flip_monitor_check` hook, twicedaily schedule
+- Registered in both activation hook AND `plugins_loaded` migration (for file-only updates)
+- Deactivation hook clears the cron schedule
+
+**Bug fixes applied (2 rounds, 20 fixes total from prior sessions + 2 additional):**
+- Report cap enforcement, concurrency locks, deleted report guard
+- Report-scoped force analyze and PDF handlers
+- `flip-stats-chart` dependency on `flip-reports` in enqueue chain
+- Cities pass-through from report's `cities_json` in monitor runner
+- NULL/non-NULL `report_id` branch in `upsert_result()`
+- `clear_old_results()` protects saved report data
+- CSV export: `photo_score != null` (was `!== null`, crashed on `undefined`)
+- Cron scheduling in `plugins_loaded` migration block (file-only updates wouldn't schedule)
+
+**Deployment & testing:**
+- All 15 files deployed to production via SCP
+- File permissions fixed (chmod 644 for CSS/JS)
+- DB migration verified: reports table, monitor_seen table, report_id column all exist
+- Cron verified: `bmn_flip_monitor_check` scheduled
+- 11 automated tests passed on production:
+  1. Dashboard data loads (84 results)
+  2. Reports list (0 reports, cap=25)
+  3. Report CRUD (create/read/rename/soft-delete)
+  4. Deleted report fallthrough
+  5. Monitor creation + seen tracking
+  6. Monitor runner class loaded
+  7. `fetch_matching_listing_ids` (18 IDs with all filters)
+  8. `upsert_result` scoping
+  9. Concurrency locks
+  10. E2E: full analysis with auto-save (5 analyzed, report_id stamped)
+  11. Monitor notification chain: DQ-only (no email), email delivery, photo analysis
+- PDF generation returns null (TCPDF not installed — pre-existing, not v0.13.0)
+
+**Files modified (13) + new (2):**
+1. `includes/class-flip-database.php` — +370 lines: tables, migration, CRUD, report queries, monitor tracking
+2. `includes/class-flip-analyzer.php` — +143 lines: report_id, listing_ids, fetch_matching_listing_ids
+3. `admin/class-flip-admin-dashboard.php` — +394 lines: 6 new AJAX handlers, report-aware existing handlers
+4. `includes/class-flip-monitor-runner.php` — **New** (~249 lines): cron runner, incremental analysis, notifications
+5. `assets/js/flip-reports.js` — **New** (~397 lines): saved reports panel, load/rerun/delete, monitor dialog
+6. `assets/js/flip-ajax.js` — +51 lines: report name prompt, report_id propagation
+7. `assets/js/flip-core.js` — +6 lines: activeReportId, reports namespace
+8. `assets/js/flip-init.js` — +3 lines: FD.reports.init() call
+9. `admin/views/dashboard.php` — +59 lines: reports panel HTML, context bar, monitor dialog
+10. `assets/css/flip-dashboard.css` — +308 lines: report panel, badges, context bar styles
+11. `bmn-flip-analyzer.php` — +41 lines: require, activation hook, migration, cron registration
+12. `includes/class-flip-pdf-generator.php` — +6 lines: accept optional report_id
+13. `CLAUDE.md` (plugin) — updated with v0.13.0 docs
+14. `.context/VERSIONS.md` — version bump
+15. `CLAUDE.md` (project root) — version reference
+
+**Total: ~1,386 insertions, 54 deletions across 15 files**
+
+**Next steps:**
+1. Install TCPDF/Composer on production for PDF generation in monitor notifications
+2. Phase 5: iOS SwiftUI integration
+3. Consider further refactoring: `class-flip-admin-dashboard.php` (now ~789 lines)
+
 ---
 
 ## Scoring Weight Tuning Log
@@ -771,6 +899,7 @@ bmn-flip-analyzer/
 │   ├── class-flip-market-scorer.php
 │   ├── class-flip-cli.php          # WP-CLI commands
 │   ├── class-flip-database.php
+│   ├── class-flip-monitor-runner.php   # Cron-based monitor system (v0.13.0)
 │   ├── class-flip-photo-analyzer.php  # Claude Vision API
 │   ├── class-flip-rest-api.php        # REST API endpoints
 │   └── class-flip-road-analyzer.php   # OSM road type detection
@@ -791,6 +920,7 @@ bmn-flip-analyzer/
         ├── flip-ajax.js                    # AJAX operations + CSV export
         ├── flip-analysis-filters.js        # Pre-analysis filters panel
         ├── flip-cities.js                  # City tag management
+        ├── flip-reports.js                 # Saved reports + monitors (v0.13.0)
         └── flip-init.js                    # Init + event binding (loaded last)
 ```
 
@@ -944,7 +1074,22 @@ bmn-flip-analyzer/
   - "Property Offered By" disclosure with listing agent name + brokerage
   - Legal disclaimer
 
-### v0.9.0 (Planned)
+### v0.13.0 (Complete)
+- **Saved Reports & Monitor System** — auto-save every analysis run as a named report:
+  1. Report name prompt before each analysis run (pre-filled "Cities - Date")
+  2. Saved Reports panel: collapsible card with load/rename/rerun/delete actions
+  3. Report context bar: blue header showing active report name + "Back to Latest"
+  4. Re-run reports with fresh MLS data using original criteria (replaces old results)
+  5. Monitor system: saved searches that auto-analyze only NEW listings via wp_cron
+  6. Tiered notifications: DQ'd → dashboard badge; viable → photo + PDF + email
+  7. New DB tables: `wp_bmn_flip_reports`, `wp_bmn_flip_monitor_seen`
+  8. New DB column: `report_id` on `wp_bmn_flip_scores`
+  9. New JS module: `flip-reports.js` (FlipDashboard.reports namespace)
+  10. New PHP class: `Flip_Monitor_Runner` with cron integration
+  11. All AJAX handlers (run, refresh, PDF, force-analyze) accept `report_id`
+  12. 25-report cap with soft delete, concurrency locks, incremental analysis
+
+### v0.14.0 (Planned)
 - iOS SwiftUI integration
 
 ### v1.0.0 (Planned)
