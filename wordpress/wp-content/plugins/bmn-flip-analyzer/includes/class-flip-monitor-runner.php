@@ -186,7 +186,8 @@ class Flip_Monitor_Runner {
         }
 
         // Generate PDFs
-        $pdf_urls = [];
+        $pdf_urls     = [];
+        $pdf_failures = [];
         require_once FLIP_PLUGIN_PATH . 'includes/class-flip-pdf-generator.php';
         $upload_dir = wp_upload_dir();
 
@@ -196,22 +197,30 @@ class Flip_Monitor_Runner {
                 $pdf_path  = $generator->generate($lid, (int) $monitor->id);
                 if ($pdf_path) {
                     $pdf_urls[$lid] = str_replace($upload_dir['basedir'], $upload_dir['baseurl'], $pdf_path);
+                } else {
+                    $pdf_failures[] = $lid;
                 }
             } catch (\Exception $e) {
                 error_log("Flip Monitor: PDF generation failed for listing {$lid}: " . $e->getMessage());
+                $pdf_failures[] = $lid;
             }
         }
 
         // Send email notification
         if (!empty($monitor->notification_email)) {
-            self::send_viable_notification($monitor, $viable_results, $pdf_urls);
+            self::send_viable_notification($monitor, $viable_results, $pdf_urls, $pdf_failures);
         }
     }
 
     /**
      * Send email notification for viable properties found by a monitor.
+     *
+     * @param object $monitor        Monitor report object.
+     * @param array  $viable_results Viable result rows.
+     * @param array  $pdf_urls       Mapping of listing_id → PDF URL (successful only).
+     * @param array  $pdf_failures   Listing IDs where PDF generation failed.
      */
-    private static function send_viable_notification(object $monitor, array $viable_results, array $pdf_urls): void {
+    private static function send_viable_notification(object $monitor, array $viable_results, array $pdf_urls, array $pdf_failures = []): void {
         $to      = $monitor->notification_email;
         $count   = count($viable_results);
         $subject = "Flip Monitor: \"{$monitor->name}\" found {$count} viable " . ($count === 1 ? 'property' : 'properties');
@@ -233,7 +242,9 @@ class Flip_Monitor_Runner {
             $lid     = (int) $r->listing_id;
             $pdf_link = '';
             if (!empty($pdf_urls[$lid])) {
-                $pdf_link = "<a href='" . esc_url($pdf_urls[$lid]) . "'>Download</a>";
+                $pdf_link = "<a href='" . esc_url($pdf_urls[$lid]) . "' style='color:#2271b1;'>Download</a>";
+            } elseif (in_array($lid, $pdf_failures, true)) {
+                $pdf_link = "<span style='color:#999;font-size:12px;'>N/A</span>";
             }
 
             $body .= "<tr style='border-bottom:1px solid #ddd;'>";
@@ -249,6 +260,15 @@ class Flip_Monitor_Runner {
         }
 
         $body .= "</table>\n";
+
+        if (!empty($pdf_failures)) {
+            $fail_count = count($pdf_failures);
+            $body .= "<p style='margin-top:12px;color:#cc1818;font-size:12px;'>"
+                . "Note: PDF reports could not be generated for {$fail_count} "
+                . ($fail_count === 1 ? 'property' : 'properties')
+                . ". View full details on the Flip Analyzer dashboard.</p>\n";
+        }
+
         $body .= "<p style='margin-top:16px;color:#666;font-size:12px;'>This is an automated notification from the BMN Flip Analyzer monitor: \""
             . esc_html($monitor->name) . "\"</p>\n";
 

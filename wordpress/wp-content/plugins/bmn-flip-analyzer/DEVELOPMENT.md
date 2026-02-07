@@ -1,6 +1,6 @@
 # BMN Flip Analyzer - Development Log
 
-## Current Version: 0.13.2
+## Current Version: 0.13.3
 
 ## Status: Phase 4.3 Complete (Saved Reports & Monitor System) - Pre-Phase 5 (iOS)
 
@@ -976,6 +976,42 @@ Five root causes identified: (1) year-built scoring was backwards (newer = highe
 2. Consider further refactoring: `class-flip-admin-dashboard.php` (~820 lines)
 3. Consider further refactoring: `class-flip-analyzer.php` (~1,335 lines)
 
+### Session 18 - 2026-02-07
+
+**What was done (v0.13.3 — Monitor Polish):**
+
+**Goal:** Fix three known issues from v0.13.2 E2E testing: report-scoped photo analysis, PDF accumulation, and email PDF error handling.
+
+**Fix 1: Report-scoped photo analysis for dashboard**
+- `analyze_top_candidates()` now accepts optional `$report_id` parameter
+- When `$report_id` is provided: queries `get_results_by_report()`, filters to non-DQ'd candidates with `total_score >= min_score`, uses `analyze_and_update()` for correct row targeting
+- When null (CLI backward compat): keeps existing `get_results()` behavior
+- `ajax_run_photo_analysis()` now passes `$report_id` from AJAX to the analyzer
+
+**Fix 2: Monitor PDF cleanup mechanism**
+- Added `Flip_PDF_Generator::cleanup_old_pdfs(int $days = 30)` static method
+- Uses `glob()` on `flip-report-*.pdf` pattern, deletes files older than cutoff via `filemtime()`
+- Hooked into existing `bmn_flip_monitor_check` cron callback (same pattern as DB cleanup)
+- Logs deletion count when files are cleaned up
+
+**Fix 3: Email PDF error handling**
+- `process_viable()` now tracks `$pdf_failures` array alongside `$pdf_urls`
+- `send_viable_notification()` accepts `$pdf_failures` parameter
+- Failed PDFs show "N/A" (gray text) instead of blank cells in email table
+- Footer note added when any PDFs failed: "PDF reports could not be generated for X properties"
+
+**Files modified (5):**
+1. `includes/class-flip-photo-analyzer.php` — report-scoped `analyze_top_candidates()`
+2. `admin/class-flip-admin-dashboard.php` — pass `report_id` to photo analyzer
+3. `includes/class-flip-pdf-generator.php` — add `cleanup_old_pdfs()` static method
+4. `includes/class-flip-monitor-runner.php` — PDF failure tracking + email improvement
+5. `bmn-flip-analyzer.php` — version bump + PDF cleanup in cron hook
+
+**Next steps:**
+1. Phase 5: iOS SwiftUI integration
+2. Consider further refactoring: `class-flip-admin-dashboard.php` (~820 lines)
+3. Consider further refactoring: `class-flip-analyzer.php` (~1,335 lines)
+
 ---
 
 ## Scoring Weight Tuning Log
@@ -1237,6 +1273,14 @@ bmn-flip-analyzer/
   3. Full E2E test verified: monitor creation → cron trigger → incremental analysis → tiered notifications
   4. DQ-only path verified: no email/photo/PDF when all properties disqualified
   5. Viable path verified: photo analysis (Claude Vision) + PDF generation + email notification
+
+### v0.13.3 (Complete)
+- **Monitor Polish** — three known issues from v0.13.2 E2E testing:
+  1. Dashboard "Run Photo Analysis" now scopes to active report (was querying global latest run)
+  2. `analyze_top_candidates()` accepts optional `report_id`, uses `analyze_and_update()` for correct row targeting
+  3. PDF cleanup mechanism: `cleanup_old_pdfs(30)` deletes reports older than 30 days via cron
+  4. Monitor email shows "N/A" for failed PDFs instead of blank cells
+  5. Monitor email includes footer note when PDF generation fails
 
 ### v0.14.0 (Planned)
 - iOS SwiftUI integration

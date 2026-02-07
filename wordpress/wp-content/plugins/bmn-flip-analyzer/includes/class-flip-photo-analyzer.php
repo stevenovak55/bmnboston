@@ -514,22 +514,44 @@ PROMPT;
     }
 
     /**
-     * Run photo analysis on top candidates from latest run.
+     * Run photo analysis on top candidates.
      *
-     * @param int   $top Number of top candidates to analyze.
-     * @param float $min_score Minimum total_score to qualify.
-     * @param callable|null $progress Progress callback.
+     * When $report_id is provided, queries only that report's results and
+     * uses analyze_and_update() for correct report-scoped DB updates.
+     * When null, falls back to global latest run (CLI backward compat).
+     *
+     * @param int           $top       Number of top candidates to analyze.
+     * @param float         $min_score Minimum total_score to qualify.
+     * @param int|null      $report_id Optional report ID to scope candidates.
+     * @param callable|null $progress  Progress callback.
      * @return array { analyzed: int, updated: int, errors: int }
      */
-    public static function analyze_top_candidates(int $top = 50, float $min_score = 40, ?callable $progress = null): array {
+    public static function analyze_top_candidates(int $top = 50, float $min_score = 40, ?int $report_id = null, ?callable $progress = null): array {
         $log = $progress ?? function ($msg) {};
 
-        $results = Flip_Database::get_results([
-            'top'       => $top,
-            'min_score' => $min_score,
-            'sort'      => 'total_score',
-            'order'     => 'DESC',
-        ]);
+        if ($report_id) {
+            // Report-scoped: query this report's non-DQ'd results
+            $all_results = Flip_Database::get_results_by_report($report_id);
+            $results = [];
+            foreach ($all_results as $r) {
+                if (!$r->disqualified && (float) $r->total_score >= $min_score) {
+                    $results[] = $r;
+                }
+            }
+            // Sort by total_score DESC and limit
+            usort($results, function ($a, $b) {
+                return (float) $b->total_score <=> (float) $a->total_score;
+            });
+            $results = array_slice($results, 0, $top);
+        } else {
+            // Global latest run (CLI backward compat)
+            $results = Flip_Database::get_results([
+                'top'       => $top,
+                'min_score' => $min_score,
+                'sort'      => 'total_score',
+                'order'     => 'DESC',
+            ]);
+        }
 
         $stats = ['analyzed' => 0, 'updated' => 0, 'errors' => 0];
 
@@ -544,20 +566,37 @@ PROMPT;
             $listing_id = (int) $result->listing_id;
             $log("  [{$i}/" . count($results) . "] Analyzing MLS# {$listing_id}...");
 
-            $analysis = self::analyze($listing_id);
-            $stats['analyzed']++;
+            if ($report_id) {
+                // Report-scoped: use analyze_and_update for correct row targeting
+                $analysis = self::analyze_and_update($listing_id, $report_id);
+                $stats['analyzed']++;
 
-            if (!$analysis['success']) {
-                $log("    Error: " . $analysis['error']);
-                $stats['errors']++;
-                continue;
-            }
+                if (!$analysis['success']) {
+                    $log("    Error: " . ($analysis['error'] ?? 'unknown'));
+                    $stats['errors']++;
+                    continue;
+                }
 
-            // Update the result in database
-            $updated = self::update_result_with_photo_analysis($result, $analysis);
-            if ($updated) {
-                $stats['updated']++;
-                $log("    Photo score: {$analysis['photo_score']}, Rehab: \${$analysis['rehab_cost_per_sqft']}/sqft ({$analysis['analysis']['renovation_level']})");
+                if (!empty($analysis['updated'])) {
+                    $stats['updated']++;
+                    $log("    Photo score: {$analysis['photo_score']}, Rehab: \${$analysis['rehab_cost_per_sqft']}/sqft ({$analysis['analysis']['renovation_level']})");
+                }
+            } else {
+                // Global: use raw analyze + update (original behavior)
+                $analysis = self::analyze($listing_id);
+                $stats['analyzed']++;
+
+                if (!$analysis['success']) {
+                    $log("    Error: " . $analysis['error']);
+                    $stats['errors']++;
+                    continue;
+                }
+
+                $updated = self::update_result_with_photo_analysis($result, $analysis);
+                if ($updated) {
+                    $stats['updated']++;
+                    $log("    Photo score: {$analysis['photo_score']}, Rehab: \${$analysis['rehab_cost_per_sqft']}/sqft ({$analysis['analysis']['renovation_level']})");
+                }
             }
 
             // Rate limit: small delay between API calls

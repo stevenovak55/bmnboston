@@ -374,7 +374,7 @@ class Flip_Admin_Dashboard {
         $report_id = isset($_POST['report_id']) ? (int) $_POST['report_id'] : 0;
 
         $messages = [];
-        $result = Flip_Photo_Analyzer::analyze_top_candidates(50, 40, function ($msg) use (&$messages) {
+        $result = Flip_Photo_Analyzer::analyze_top_candidates(50, 40, $report_id ?: null, function ($msg) use (&$messages) {
             $messages[] = $msg;
         });
 

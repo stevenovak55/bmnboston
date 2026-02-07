@@ -2169,4 +2169,41 @@ class Flip_PDF_Generator {
             return false;
         }
     }
+
+    // ─── CLEANUP ─────────────────────────────────────────────────
+
+    /**
+     * Delete PDF reports older than a given number of days.
+     *
+     * Only targets files matching the naming pattern `flip-report-*.pdf`
+     * inside the `flip-reports` upload directory.
+     *
+     * @param int $days Delete files older than this many days.
+     * @return int Number of files deleted.
+     */
+    public static function cleanup_old_pdfs(int $days = 30): int {
+        $upload_dir = wp_upload_dir();
+        $pdf_dir = $upload_dir['basedir'] . '/flip-reports';
+
+        if (!is_dir($pdf_dir)) {
+            return 0;
+        }
+
+        $cutoff  = time() - ($days * DAY_IN_SECONDS);
+        $deleted = 0;
+
+        foreach (glob($pdf_dir . '/flip-report-*.pdf') as $file) {
+            if (filemtime($file) < $cutoff) {
+                if (@unlink($file)) {
+                    $deleted++;
+                }
+            }
+        }
+
+        if ($deleted > 0) {
+            error_log("Flip PDF cleanup: deleted {$deleted} PDFs older than {$days} days.");
+        }
+
+        return $deleted;
+    }
 }

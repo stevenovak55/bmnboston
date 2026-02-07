@@ -2,9 +2,16 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies Single Family Residence flip candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis.
- * Version: 0.13.2
+ * Version: 0.13.3
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.13.3 - Monitor Polish
+ * - Fix: Dashboard "Run Photo Analysis" now scopes to active report (was querying global latest run)
+ * - Fix: analyze_top_candidates() accepts report_id, uses analyze_and_update() for correct row targeting
+ * - Add: PDF cleanup mechanism — deletes reports older than 30 days via cron
+ * - Fix: Monitor email shows "N/A" for failed PDFs instead of blank cells
+ * - Fix: Monitor email includes footer note when PDF generation fails
  *
  * Version 0.13.2 - Monitor Photo Analysis Fix
  * - Fix: Monitor process_viable() now saves photo analysis results (was discarding return value)
@@ -173,7 +180,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.13.2');
+define('FLIP_VERSION', '0.13.3');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -211,11 +218,15 @@ add_action('rest_api_init', function () {
 // Monitor cron hook
 add_action('bmn_flip_monitor_check', ['Flip_Monitor_Runner', 'run_all_due']);
 
-// Periodic cleanup: purge scores/seen data for deleted reports, old orphan scores
+// Periodic cleanup: purge scores/seen data for deleted reports, old orphan scores, old PDFs
 add_action('bmn_flip_monitor_check', function () {
     Flip_Database::cleanup_deleted_report_scores();
     Flip_Database::cleanup_deleted_monitor_seen();
     Flip_Database::clear_old_results(30);
+
+    // Clean up old PDF files (requires lazy-loading the class)
+    require_once FLIP_PLUGIN_PATH . 'includes/class-flip-pdf-generator.php';
+    Flip_PDF_Generator::cleanup_old_pdfs(30);
 });
 
 // Activation hook
