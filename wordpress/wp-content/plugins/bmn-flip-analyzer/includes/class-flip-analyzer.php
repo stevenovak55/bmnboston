@@ -816,6 +816,7 @@ class Flip_Analyzer {
 
     /**
      * Fetch specific properties by listing_id (for monitor incremental runs).
+     * Checks both active and archive summary tables.
      */
     private static function fetch_properties_by_ids(array $listing_ids): array {
         global $wpdb;
@@ -824,13 +825,31 @@ class Flip_Analyzer {
         }
 
         $table = $wpdb->prefix . 'bme_listing_summary';
+        $archive_table = $wpdb->prefix . 'bme_listing_summary_archive';
         $placeholders = implode(',', array_fill(0, count($listing_ids), '%d'));
         $ids = array_map('intval', $listing_ids);
 
-        return $wpdb->get_results($wpdb->prepare(
+        $results = $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM {$table} WHERE listing_id IN ({$placeholders})",
             $ids
         ));
+
+        // Check archive for any IDs not found in the active table
+        $found_ids = array_map(function ($r) { return (int) $r->listing_id; }, $results);
+        $missing_ids = array_values(array_diff($ids, $found_ids));
+
+        if (!empty($missing_ids)) {
+            $ph = implode(',', array_fill(0, count($missing_ids), '%d'));
+            $archive_results = $wpdb->get_results($wpdb->prepare(
+                "SELECT * FROM {$archive_table} WHERE listing_id IN ({$ph})",
+                $missing_ids
+            ));
+            if ($archive_results) {
+                $results = array_merge($results, $archive_results);
+            }
+        }
+
+        return $results;
     }
 
     /**
@@ -920,10 +939,25 @@ class Flip_Analyzer {
 
         $where_sql = implode(' AND ', $where);
 
-        return $wpdb->get_col($wpdb->prepare(
+        $results = $wpdb->get_col($wpdb->prepare(
             "SELECT s.listing_id FROM {$summary_table} s {$join} WHERE {$where_sql}",
             $params
         ));
+
+        // Also query archive table if Closed status is included
+        if (in_array('Closed', $statuses, true)) {
+            $archive_table = $wpdb->prefix . 'bme_listing_summary_archive';
+            $archive_join  = str_replace('bme_listing_details', 'bme_listing_details_archive', $join);
+            $archive_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT s.listing_id FROM {$archive_table} s {$archive_join} WHERE {$where_sql}",
+                $params
+            ));
+            if ($archive_ids) {
+                $results = array_unique(array_merge($results, $archive_ids));
+            }
+        }
+
+        return $results;
     }
 
     /**

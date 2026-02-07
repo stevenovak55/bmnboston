@@ -2,9 +2,21 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies Single Family Residence flip candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis.
- * Version: 0.13.0
+ * Version: 0.13.1
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.13.1 - Reports & Monitor System Audit Fixes
+ * - Fix: Global "latest" view now prefers latest manual report (monitor runs no longer contaminate)
+ * - Fix: get_summary() scoped to orphan scores only (excludes report-scoped data)
+ * - Fix: viable_count uses score >= 60 threshold (was counting all non-DQ as viable)
+ * - Fix: fetch_matching_listing_ids() and fetch_properties_by_ids() now query archive table for Closed status
+ * - Fix: Monitor marks new listings as "seen" AFTER analysis (was before, causing data loss on failure)
+ * - Fix: Empty reports (0 results) auto-deleted instead of persisting as clutter
+ * - Fix: Re-run with 0 results now clears stale data (was preserving old scores)
+ * - Fix: Concurrency lock increased from 10 to 15 minutes
+ * - Add: Periodic cleanup of scores/seen data for deleted reports (runs on monitor cron)
+ * - Remove: Dead code (stamp_scores_with_report, delete_scores_for_report)
  *
  * Version 0.13.0 - Saved Reports & Monitor System
  * - Auto-save every analysis run as a named report (prompted before running)
@@ -156,7 +168,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.13.0');
+define('FLIP_VERSION', '0.13.1');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -193,6 +205,13 @@ add_action('rest_api_init', function () {
 
 // Monitor cron hook
 add_action('bmn_flip_monitor_check', ['Flip_Monitor_Runner', 'run_all_due']);
+
+// Periodic cleanup: purge scores/seen data for deleted reports, old orphan scores
+add_action('bmn_flip_monitor_check', function () {
+    Flip_Database::cleanup_deleted_report_scores();
+    Flip_Database::cleanup_deleted_monitor_seen();
+    Flip_Database::clear_old_results(30);
+});
 
 // Activation hook
 register_activation_hook(__FILE__, function () {

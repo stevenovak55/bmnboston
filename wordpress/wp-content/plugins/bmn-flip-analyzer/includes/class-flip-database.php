@@ -433,25 +433,34 @@ class Flip_Database {
     }
 
     /**
-     * Stamp orphan scores (report_id IS NULL) with a report_id by run_date.
-     * Used when auto-saving a run that just completed.
+     * Delete scores belonging to soft-deleted reports.
+     * Called periodically to prevent unbounded table growth.
      */
-    public static function stamp_scores_with_report(int $report_id, string $run_date): int {
+    public static function cleanup_deleted_report_scores(): int {
         global $wpdb;
-        $table = self::table_name();
+        $scores_table  = self::table_name();
+        $reports_table = self::reports_table();
 
-        return (int) $wpdb->query($wpdb->prepare(
-            "UPDATE {$table} SET report_id = %d WHERE run_date = %s AND report_id IS NULL",
-            $report_id, $run_date
-        ));
+        return (int) $wpdb->query(
+            "DELETE s FROM {$scores_table} s
+             INNER JOIN {$reports_table} r ON s.report_id = r.id
+             WHERE r.status = 'deleted'"
+        );
     }
 
     /**
-     * Delete all scores for a report (used before re-run).
+     * Delete monitor_seen entries for soft-deleted reports.
      */
-    public static function delete_scores_for_report(int $report_id): int {
+    public static function cleanup_deleted_monitor_seen(): int {
         global $wpdb;
-        return (int) $wpdb->delete(self::table_name(), ['report_id' => $report_id]);
+        $seen_table    = self::monitor_seen_table();
+        $reports_table = self::reports_table();
+
+        return (int) $wpdb->query(
+            "DELETE ms FROM {$seen_table} ms
+             INNER JOIN {$reports_table} r ON ms.report_id = r.id
+             WHERE r.status = 'deleted'"
+        );
     }
 
     // ---------------------------------------------------------------
@@ -633,6 +642,20 @@ class Flip_Database {
     }
 
     /**
+     * Get the most recent active manual report.
+     */
+    public static function get_latest_manual_report(): ?object {
+        global $wpdb;
+        $table = self::reports_table();
+        return $wpdb->get_row(
+            "SELECT * FROM {$table}
+             WHERE type = 'manual' AND status = 'active'
+             ORDER BY COALESCE(last_run_date, run_date, created_at) DESC
+             LIMIT 1"
+        );
+    }
+
+    /**
      * Get results from the latest run, optionally filtered.
      */
     public static function get_results(array $args = []): array {
@@ -705,13 +728,19 @@ class Flip_Database {
     }
 
     /**
-     * Get summary stats from the latest run.
+     * Get summary stats from the latest orphan run (scores not attached to any report).
+     *
+     * This is the fallback used when no saved manual reports exist.
+     * Report-scoped scores are excluded to prevent monitor runs from
+     * contaminating the global "latest" view.
      */
     public static function get_summary(): array {
         global $wpdb;
         $table = self::table_name();
 
-        $latest_run = $wpdb->get_var("SELECT MAX(run_date) FROM {$table}");
+        $latest_run = $wpdb->get_var(
+            "SELECT MAX(run_date) FROM {$table} WHERE report_id IS NULL"
+        );
         if (!$latest_run) {
             return ['total' => 0, 'last_run' => null, 'cities' => []];
         }
@@ -724,7 +753,7 @@ class Flip_Database {
                 AVG(CASE WHEN disqualified = 0 AND estimated_roi > 0 THEN estimated_roi END) as avg_roi,
                 SUM(CASE WHEN disqualified = 1 THEN 1 ELSE 0 END) as disqualified,
                 SUM(CASE WHEN disqualified = 1 AND near_viable = 1 THEN 1 ELSE 0 END) as near_viable
-            FROM {$table} WHERE run_date = %s",
+            FROM {$table} WHERE run_date = %s AND report_id IS NULL",
             $latest_run
         ));
 
@@ -735,7 +764,7 @@ class Flip_Database {
                 SUM(CASE WHEN disqualified = 0 AND total_score >= 60 THEN 1 ELSE 0 END) as viable,
                 AVG(CASE WHEN disqualified = 0 THEN total_score END) as avg_score
             FROM {$table}
-            WHERE run_date = %s
+            WHERE run_date = %s AND report_id IS NULL
             GROUP BY city
             ORDER BY viable DESC",
             $latest_run

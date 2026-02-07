@@ -156,15 +156,25 @@ class Flip_Admin_Dashboard {
      * Get all data needed for the dashboard.
      *
      * @param int|null $report_id  When set, load data for a specific saved report.
+     *                             When null, prefers the latest manual report to avoid
+     *                             monitor runs contaminating the default view.
      */
     public static function get_dashboard_data(?int $report_id = null): array {
         global $wpdb;
         $table = Flip_Database::table_name();
 
+        // When no specific report requested, prefer the latest manual report
+        if (!$report_id) {
+            $latest_manual = Flip_Database::get_latest_manual_report();
+            if ($latest_manual) {
+                $report_id = (int) $latest_manual->id;
+            }
+        }
+
         if ($report_id) {
             $report = Flip_Database::get_report($report_id);
             if (!$report) {
-                // Report was deleted or doesn't exist — fall through to global latest
+                // Report was deleted or doesn't exist — fall through to orphan scores
                 $report_id = null;
             } else {
                 $summary     = Flip_Database::get_summary_by_report($report_id);
@@ -179,16 +189,18 @@ class Flip_Admin_Dashboard {
             }
         }
 
+        // Fallback: orphan scores only (pre-v0.13.0 runs without report_id)
         $summary = Flip_Database::get_summary();
 
-        // Get all results from latest run (viable + disqualified)
-        $latest_run = $wpdb->get_var("SELECT MAX(run_date) FROM {$table}");
+        $latest_run = $wpdb->get_var(
+            "SELECT MAX(run_date) FROM {$table} WHERE report_id IS NULL"
+        );
         $all_results = [];
 
         if ($latest_run) {
             $all_results = $wpdb->get_results($wpdb->prepare(
                 "SELECT * FROM {$table}
-                 WHERE run_date = %s
+                 WHERE run_date = %s AND report_id IS NULL
                  ORDER BY disqualified ASC, total_score DESC",
                 $latest_run
             ));
@@ -316,11 +328,11 @@ class Flip_Admin_Dashboard {
             $viable_count = 0;
             $total_count  = (int) ($result['analyzed'] ?? 0);
             if (!empty($result['analyzed'])) {
-                // Count viable from the fresh dashboard data
                 global $wpdb;
                 $table = Flip_Database::table_name();
                 $viable_count = (int) $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$table} WHERE report_id = %d AND disqualified = 0",
+                    "SELECT COUNT(*) FROM {$table}
+                     WHERE report_id = %d AND disqualified = 0 AND total_score >= 60",
                     $report_id
                 ));
             }
@@ -331,6 +343,12 @@ class Flip_Admin_Dashboard {
                 'property_count' => $total_count,
                 'viable_count'   => $viable_count,
             ]);
+
+            // Clean up empty reports (0 properties analyzed)
+            if ($total_count === 0) {
+                Flip_Database::delete_report($report_id);
+                $report_id = null;
+            }
         }
 
         $result['messages']    = $messages;
@@ -623,7 +641,7 @@ class Flip_Admin_Dashboard {
         if (get_transient($lock_key)) {
             wp_send_json_error('This report is already being processed. Please wait.');
         }
-        set_transient($lock_key, true, 600);
+        set_transient($lock_key, true, 900);
 
         // Restore the report's original cities + filters
         $cities  = json_decode($report->cities_json, true) ?: [];
@@ -641,15 +659,14 @@ class Flip_Admin_Dashboard {
         global $wpdb;
         $table = Flip_Database::table_name();
 
-        // Delete ALL old scores for this report after successful new run
-        if (!empty($result['analyzed'])) {
-            $new_run_date = $result['run_date'] ?? '';
-            if ($new_run_date) {
-                $wpdb->query($wpdb->prepare(
-                    "DELETE FROM {$table} WHERE report_id = %d AND run_date != %s",
-                    $report_id, $new_run_date
-                ));
-            }
+        // Delete ALL old scores for this report after new run (even if 0 results,
+        // so stale data from a previous run doesn't persist with updated metadata)
+        $new_run_date = $result['run_date'] ?? '';
+        if ($new_run_date) {
+            $wpdb->query($wpdb->prepare(
+                "DELETE FROM {$table} WHERE report_id = %d AND run_date != %s",
+                $report_id, $new_run_date
+            ));
         }
 
         delete_transient($lock_key);
@@ -657,7 +674,8 @@ class Flip_Admin_Dashboard {
         // Update report metadata
         $now = current_time('mysql');
         $viable_count = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table} WHERE report_id = %d AND disqualified = 0",
+            "SELECT COUNT(*) FROM {$table}
+             WHERE report_id = %d AND disqualified = 0 AND total_score >= 60",
             $report_id
         ));
         $total_count = (int) ($result['analyzed'] ?? 0);

@@ -74,7 +74,7 @@ class Flip_Monitor_Runner {
         if (get_transient($lock_key)) {
             return;
         }
-        set_transient($lock_key, true, 600);
+        set_transient($lock_key, true, 900);
 
         $cities    = json_decode($monitor->cities_json, true) ?: [];
         $filters   = json_decode($monitor->filters_json, true) ?: [];
@@ -95,8 +95,11 @@ class Flip_Monitor_Runner {
         // Step 2: Find new listings not yet seen
         $new_listing_ids = Flip_Database::get_unseen_listing_ids($report_id, $all_listing_ids);
 
-        // Step 3: Mark ALL current listings as seen (including existing ones)
-        Flip_Database::mark_listings_seen($report_id, $all_listing_ids);
+        // Step 3: Mark existing (non-new) listings as seen — safe to do now
+        $existing_ids = array_values(array_diff($all_listing_ids, $new_listing_ids));
+        if (!empty($existing_ids)) {
+            Flip_Database::mark_listings_seen($report_id, $existing_ids);
+        }
 
         if (empty($new_listing_ids)) {
             Flip_Database::update_report($report_id, [
@@ -114,6 +117,10 @@ class Flip_Monitor_Runner {
             'listing_ids' => $new_listing_ids,
             'city'        => implode(',', $cities),
         ]);
+
+        // Step 4b: Mark new listings as seen AFTER analysis completes
+        // (if analysis failed, these listings will be retried on the next run)
+        Flip_Database::mark_listings_seen($report_id, $new_listing_ids);
 
         $new_total = (int) ($result['analyzed'] ?? 0);
 
