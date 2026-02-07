@@ -348,7 +348,7 @@ class Flip_Admin_Dashboard {
         $result['messages']    = $messages;
         $result['dashboard']   = self::get_dashboard_data($report_id);
         $result['report_id']   = $report_id;
-        $result['reports']     = self::get_reports_list();
+        $result['reports']     = Flip_Report_AJAX::get_reports_list();
 
         wp_send_json_success($result);
     }
