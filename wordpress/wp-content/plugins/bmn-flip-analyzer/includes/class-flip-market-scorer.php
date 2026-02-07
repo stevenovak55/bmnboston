@@ -71,12 +71,14 @@ class Flip_Market_Scorer {
         $factors['season'] = self::score_season();
 
         // Weighted composite
-        $base_score = ($factors['listing_dom'] * 0.40)
-                    + ($factors['price_reduction'] * 0.30)
-                    + ($factors['season'] * 0.30);
+        $w = Flip_Database::get_scoring_weights();
+        $mw = $w['market_sub'];
+        $base_score = ($factors['listing_dom'] * $mw['dom'])
+                    + ($factors['price_reduction'] * $mw['reduction'])
+                    + ($factors['season'] * $mw['season']);
 
-        // Remarks analysis (bonus/penalty, max ±15 points)
-        $remarks_signals = self::analyze_remarks($remarks);
+        // Remarks analysis (bonus/penalty, max ±cap points)
+        $remarks_signals = self::analyze_remarks($remarks, (int) $w['market_remarks_cap']);
         $remarks_adjustment = $remarks_signals['adjustment'];
         $score = max(0, min(100, $base_score + $remarks_adjustment));
 
@@ -125,7 +127,7 @@ class Flip_Market_Scorer {
      *
      * @return array { positive: array, negative: array, adjustment: float }
      */
-    public static function analyze_remarks(?string $remarks): array {
+    public static function analyze_remarks(?string $remarks, int $cap = 25): array {
         $result = [
             'positive'   => [],
             'negative'   => [],
@@ -151,8 +153,8 @@ class Flip_Market_Scorer {
             }
         }
 
-        // Weighted adjustment capped at ±25 (v0.11.0: was ±15 with flat 3 per keyword)
-        $result['adjustment'] = max(-25, min(25, $raw));
+        // Weighted adjustment capped at ±cap (v0.11.0: was ±15 with flat 3 per keyword)
+        $result['adjustment'] = max(-$cap, min($cap, $raw));
 
         return $result;
     }

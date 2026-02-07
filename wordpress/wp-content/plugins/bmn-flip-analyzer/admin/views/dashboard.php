@@ -84,6 +84,14 @@ if (!defined('ABSPATH')) {
                 <label for="flip-monitor-email">Notification Email</label>
                 <input type="email" id="flip-monitor-email" placeholder="email@example.com" class="regular-text">
             </div>
+            <div>
+                <label for="flip-monitor-notification-level">Notification Level</label>
+                <select id="flip-monitor-notification-level">
+                    <option value="viable_only">Viable Only (default)</option>
+                    <option value="viable_and_near">Viable + Near-Viable</option>
+                    <option value="all">All (including DQ'd)</option>
+                </select>
+            </div>
         </div>
         <div class="flip-monitor-actions">
             <button id="flip-monitor-confirm" class="button button-primary">Create Monitor</button>
@@ -231,6 +239,193 @@ if (!defined('ABSPATH')) {
                 </button>
                 <button id="flip-reset-filters" class="button">Reset to Defaults</button>
                 <span id="flip-af-status" class="flip-af-status"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scoring Weights -->
+    <div class="flip-card flip-sw-card">
+        <div class="flip-card-header flip-sw-header" id="flip-sw-toggle">
+            <h2><span class="dashicons dashicons-admin-settings"></span> Scoring Weights</h2>
+            <span class="flip-sw-arrow dashicons dashicons-arrow-down-alt2"></span>
+        </div>
+        <div class="flip-card-body flip-sw-body" id="flip-sw-body" style="display:none;">
+
+            <!-- Main Category Weights -->
+            <div class="flip-sw-section">
+                <h3>Main Category Weights</h3>
+                <div class="flip-sw-group" data-group="main">
+                    <div class="flip-sw-row">
+                        <label>Financial</label>
+                        <input type="number" data-key="financial" step="1" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Property</label>
+                        <input type="number" data-key="property" step="1" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Location</label>
+                        <input type="number" data-key="location" step="1" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Market</label>
+                        <input type="number" data-key="market" step="1" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-sum">Sum: <span class="flip-sw-sum-value">100</span>%</div>
+                </div>
+            </div>
+
+            <!-- Financial Sub-Weights -->
+            <div class="flip-sw-section">
+                <h3>Financial Sub-Weights</h3>
+                <div class="flip-sw-group" data-group="financial_sub">
+                    <div class="flip-sw-row">
+                        <label>Price vs ARV</label>
+                        <input type="number" data-key="price_arv" step="0.5" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>$/sqft vs Neighborhood</label>
+                        <input type="number" data-key="ppsf" step="0.5" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Price Reduction</label>
+                        <input type="number" data-key="reduction" step="0.5" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>DOM Motivation</label>
+                        <input type="number" data-key="dom" step="0.5" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-sum">Sum: <span class="flip-sw-sum-value">100</span>%</div>
+                </div>
+            </div>
+
+            <!-- Property Sub-Weights -->
+            <div class="flip-sw-section">
+                <h3>Property Sub-Weights</h3>
+                <div class="flip-sw-group" data-group="property_sub">
+                    <div class="flip-sw-row">
+                        <label>Lot Size</label>
+                        <input type="number" data-key="lot_size" step="0.5" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Expansion Potential</label>
+                        <input type="number" data-key="expansion" step="0.5" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Existing Sqft</label>
+                        <input type="number" data-key="sqft" step="0.5" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Renovation Need</label>
+                        <input type="number" data-key="renovation" step="0.5" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-sum">Sum: <span class="flip-sw-sum-value">100</span>%</div>
+                </div>
+            </div>
+
+            <!-- Location Sub-Weights -->
+            <div class="flip-sw-section">
+                <h3>Location Sub-Weights</h3>
+                <div class="flip-sw-group" data-group="location_sub">
+                    <div class="flip-sw-row">
+                        <label>Road Type</label>
+                        <input type="number" data-key="road_type" step="0.5" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Ceiling Support</label>
+                        <input type="number" data-key="ceiling" step="0.5" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Price Trend</label>
+                        <input type="number" data-key="trend" step="0.5" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Comp Density</label>
+                        <input type="number" data-key="comp_density" step="0.5" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Schools</label>
+                        <input type="number" data-key="schools" step="0.5" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-sum">Sum: <span class="flip-sw-sum-value">100</span>%</div>
+                </div>
+            </div>
+
+            <!-- Market Sub-Weights -->
+            <div class="flip-sw-section">
+                <h3>Market Sub-Weights</h3>
+                <div class="flip-sw-group" data-group="market_sub">
+                    <div class="flip-sw-row">
+                        <label>Listing DOM</label>
+                        <input type="number" data-key="dom" step="0.5" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Price Reduction</label>
+                        <input type="number" data-key="reduction" step="0.5" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Season</label>
+                        <input type="number" data-key="season" step="0.5" min="0" max="100" class="flip-sw-input"> %
+                    </div>
+                    <div class="flip-sw-sum">Sum: <span class="flip-sw-sum-value">100</span>%</div>
+                </div>
+            </div>
+
+            <!-- Financial Thresholds -->
+            <div class="flip-sw-section">
+                <h3>Financial Thresholds</h3>
+                <div class="flip-sw-group" data-group="thresholds">
+                    <div class="flip-sw-row">
+                        <label>Min Profit ($)</label>
+                        <input type="number" id="sw-min-profit" data-key="min_profit" step="1000" min="0" class="flip-sw-input">
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Min ROI (%)</label>
+                        <input type="number" id="sw-min-roi" data-key="min_roi" step="1" min="0" class="flip-sw-input">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Remarks Cap -->
+            <div class="flip-sw-section">
+                <h3>Remarks Analysis</h3>
+                <div class="flip-sw-group" data-group="market_remarks_cap">
+                    <div class="flip-sw-row">
+                        <label>Remarks Bonus Cap (±)</label>
+                        <input type="number" id="sw-remarks-cap" step="1" min="0" max="50" class="flip-sw-input">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Digest Settings -->
+            <div class="flip-sw-section">
+                <h3>Email Digest</h3>
+                <div class="flip-sw-digest">
+                    <div class="flip-sw-row">
+                        <label><input type="checkbox" id="sw-digest-enabled"> Enable Digest Emails</label>
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Email</label>
+                        <input type="email" id="sw-digest-email" placeholder="admin@example.com" class="regular-text" style="width:250px;">
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Frequency</label>
+                        <select id="sw-digest-frequency">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                        </select>
+                    </div>
+                    <button id="flip-save-digest" class="button button-small">Save Digest Settings</button>
+                    <span id="flip-digest-status" class="flip-sw-status"></span>
+                </div>
+            </div>
+
+            <div class="flip-sw-actions">
+                <button id="flip-save-weights" class="button button-primary">
+                    <span class="dashicons dashicons-saved"></span> Save Weights
+                </button>
+                <button id="flip-reset-weights" class="button">Reset to Defaults</button>
+                <span id="flip-sw-status" class="flip-sw-status"></span>
             </div>
         </div>
     </div>

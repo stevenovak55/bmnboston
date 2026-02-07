@@ -202,6 +202,12 @@ class Flip_Report_AJAX {
         $name      = isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '';
         $frequency = isset($_POST['frequency']) ? sanitize_text_field(wp_unslash($_POST['frequency'])) : 'daily';
         $email     = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
+        $notification_level = isset($_POST['notification_level']) ? sanitize_text_field(wp_unslash($_POST['notification_level'])) : 'viable_only';
+
+        $allowed_levels = ['viable_only', 'viable_and_near', 'all'];
+        if (!in_array($notification_level, $allowed_levels, true)) {
+            $notification_level = 'viable_only';
+        }
 
         if (empty($name)) {
             wp_send_json_error('Monitor name is required.');
@@ -221,13 +227,14 @@ class Flip_Report_AJAX {
         $filters = Flip_Database::get_analysis_filters();
 
         $report_id = Flip_Database::create_report([
-            'name'              => $name,
-            'type'              => 'monitor',
-            'cities_json'       => wp_json_encode($cities),
-            'filters_json'      => wp_json_encode($filters),
-            'monitor_frequency' => $frequency,
+            'name'               => $name,
+            'type'               => 'monitor',
+            'cities_json'        => wp_json_encode($cities),
+            'filters_json'       => wp_json_encode($filters),
+            'monitor_frequency'  => $frequency,
             'notification_email' => $email,
-            'created_by'        => get_current_user_id(),
+            'notification_level' => $notification_level,
+            'created_by'         => get_current_user_id(),
         ]);
 
         if (!$report_id) {
@@ -266,9 +273,10 @@ class Flip_Report_AJAX {
                 'run_count'        => (int) $r->run_count,
                 'run_date'         => $r->run_date,
                 'last_run_date'    => $r->last_run_date,
-                'monitor_frequency'     => $r->monitor_frequency,
+                'monitor_frequency'      => $r->monitor_frequency,
                 'monitor_last_new_count' => (int) ($r->monitor_last_new_count ?? 0),
-                'created_at'       => $r->created_at,
+                'notification_level'     => $r->notification_level ?? 'viable_only',
+                'created_at'             => $r->created_at,
             ];
         }
 

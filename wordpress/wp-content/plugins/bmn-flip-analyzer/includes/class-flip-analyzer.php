@@ -84,9 +84,10 @@ class Flip_Analyzer {
         // Continuous multiplier: 1.0 at STL=1.00, lower for hot, higher for cold
         $multiplier = max(0.4, min(1.2, 2.5 - (1.5 * $avg_sale_to_list)));
 
-        // Raw scaled thresholds from baseline
-        $raw_profit = self::MIN_PROFIT_THRESHOLD * $multiplier;
-        $raw_roi    = self::MIN_ROI_THRESHOLD * $multiplier;
+        // Raw scaled thresholds from baseline (dynamic from WP option)
+        $thresholds = Flip_Database::get_scoring_weights()['thresholds'];
+        $raw_profit = ($thresholds['min_profit'] ?? self::MIN_PROFIT_THRESHOLD) * $multiplier;
+        $raw_roi    = ($thresholds['min_roi'] ?? self::MIN_ROI_THRESHOLD) * $multiplier;
 
         // Determine tier bounds — low-confidence ARV uses balanced (no relaxation)
         $use_tier = $market_strength;
@@ -354,11 +355,12 @@ class Flip_Analyzer {
             // $remarks already fetched earlier (before DQ check)
             $market = Flip_Market_Scorer::score($property, $remarks);
 
-            // Compute weighted total
-            $total_score = ($financial['score'] * self::WEIGHT_FINANCIAL)
-                         + ($prop_score['score'] * self::WEIGHT_PROPERTY)
-                         + ($location['score'] * self::WEIGHT_LOCATION)
-                         + ($market['score'] * self::WEIGHT_MARKET);
+            // Compute weighted total (dynamic weights from WP option, defaults to constants)
+            $w = Flip_Database::get_scoring_weights()['main'];
+            $total_score = ($financial['score'] * $w['financial'])
+                         + ($prop_score['score'] * $w['property'])
+                         + ($location['score'] * $w['location'])
+                         + ($market['score'] * $w['market']);
 
             // Financial calculations via shared method
             $sqft = (int) $property->building_area_total;
@@ -612,11 +614,12 @@ class Flip_Analyzer {
         $remarks = Flip_Market_Scorer::get_remarks($listing_id);
         $market  = Flip_Market_Scorer::score($property, $remarks);
 
-        // 6. Weighted total
-        $total_score = ($financial['score'] * self::WEIGHT_FINANCIAL)
-                     + ($prop_score['score'] * self::WEIGHT_PROPERTY)
-                     + ($location['score'] * self::WEIGHT_LOCATION)
-                     + ($market['score'] * self::WEIGHT_MARKET);
+        // 6. Weighted total (dynamic weights from WP option, defaults to constants)
+        $w = Flip_Database::get_scoring_weights()['main'];
+        $total_score = ($financial['score'] * $w['financial'])
+                     + ($prop_score['score'] * $w['property'])
+                     + ($location['score'] * $w['location'])
+                     + ($market['score'] * $w['market']);
 
         // 7. Financial calculations
         $sqft       = (int) $property->building_area_total;

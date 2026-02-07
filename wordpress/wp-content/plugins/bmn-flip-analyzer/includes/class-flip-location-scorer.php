@@ -69,11 +69,12 @@ class Flip_Location_Scorer {
         // (scoring it here would double-count its impact)
 
         // Weighted composite
-        $score = ($factors['road_type'] * 0.25)
-               + ($factors['ceiling_support'] * 0.25)
-               + ($factors['price_trend'] * 0.25)
-               + ($factors['comp_density'] * 0.15)
-               + ($factors['school_rating'] * 0.10);
+        $w = Flip_Database::get_scoring_weights()['location_sub'];
+        $score = ($factors['road_type'] * $w['road_type'])
+               + ($factors['ceiling_support'] * $w['ceiling'])
+               + ($factors['price_trend'] * $w['trend'])
+               + ($factors['comp_density'] * $w['comp_density'])
+               + ($factors['school_rating'] * $w['schools']);
 
         return [
             'score'   => round($score, 2),

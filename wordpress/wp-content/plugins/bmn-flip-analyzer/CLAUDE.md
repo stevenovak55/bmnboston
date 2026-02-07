@@ -1,11 +1,23 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.14.0
+**Current Version:** 0.15.0
 **Last Updated:** 2026-02-07
 
 ## Overview
 
 Standalone WordPress plugin that identifies Single Family Residence flip candidates by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates.
+
+**v0.15.0 Enhancements (Email Polish + Scoring Weight Tuning):**
+- **Polished monitor emails:** Branded HTML wrapper (600px responsive container, colored header band), MLD unified footer via `class_exists()` guard, dynamic from address via `MLD_Email_Utilities`
+- **Digest emails:** Periodic (daily/weekly) summary of all monitor activity with stat cards and per-monitor table; settings stored in `bmn_flip_digest_settings` WP option
+- **Notification levels:** Per-monitor `notification_level` setting: `viable_only` (default), `viable_and_near`, `all` (includes DQ'd); new DB column on `wp_bmn_flip_reports`
+- **Near-viable/DQ emails:** Separate email templates with amber (#f0ad4e) and gray (#999) header bands, score/DQ reason tables
+- **Dynamic scoring weights:** All category/sub-factor weights read from `bmn_flip_scoring_weights` WP option, deep-merged with hardcoded defaults via `Flip_Database::get_scoring_weights()`
+- **Admin UI weights panel:** Collapsible card with live sum validation, save/reset buttons, digest settings
+- **Financial thresholds:** Configurable min profit ($25K default) and min ROI (15% default) via admin panel
+- **Remarks cap:** Configurable ±cap for keyword bonus/penalty (25 default)
+- New file: `assets/js/flip-scoring-weights.js` (~250 lines)
+- DB migration: `notification_level` column added to `wp_bmn_flip_reports`
 
 **v0.14.0 Refactoring (6 Extracted Classes):**
 - Extract: `Flip_Property_Fetcher` from `Flip_Analyzer` — eliminates 254-line filter duplication via shared `build_filter_conditions()`
@@ -176,6 +188,7 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 | `assets/js/flip-analysis-filters.js` | Pre-analysis filters panel (save/reset) |
 | `assets/js/flip-cities.js` | City tag management (add/remove/save) |
 | `assets/js/flip-reports.js` | Saved reports panel, load/rerun/delete, monitor dialog |
+| `assets/js/flip-scoring-weights.js` | Scoring weights admin UI module |
 | `assets/js/flip-init.js` | Initialization + event binding (loaded last) |
 | `assets/css/flip-dashboard.css` | Dashboard styles |
 
@@ -198,7 +211,7 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 - Report metadata: `id`, `name`, `type` (manual/monitor), `status` (active/archived/deleted)
 - Criteria snapshot: `cities_json`, `filters_json` — frozen at report creation
 - Run tracking: `run_date`, `last_run_date`, `run_count`, `property_count`, `viable_count`
-- Monitor config: `monitor_frequency` (daily/twice_daily/weekly), `monitor_last_check`, `monitor_last_new_count`, `notification_email`
+- Monitor config: `monitor_frequency` (daily/twice_daily/weekly), `monitor_last_check`, `monitor_last_new_count`, `notification_email`, `notification_level` (viable_only/viable_and_near/all, v0.15.0)
 - Audit: `created_at`, `updated_at`, `created_by`
 
 **Table:** `wp_bmn_flip_monitor_seen` (v0.13.0)
@@ -216,6 +229,8 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 **WP Options:**
 - `bmn_flip_target_cities` — JSON array of city names
 - `bmn_flip_analysis_filters` — JSON object with 17 filter fields (see Filter Schema below)
+- `bmn_flip_scoring_weights` — JSON object with main/sub-factor weights + thresholds + remarks cap (v0.15.0)
+- `bmn_flip_digest_settings` — JSON object with `enabled`, `email`, `frequency`, `last_sent` (v0.15.0)
 
 ## WP-CLI Commands
 
@@ -236,12 +251,18 @@ wp flip analyze_photos [--top=50] [--min-score=40]  # Pass 2: Claude Vision phot
 
 ## Scoring Weights
 
+**Configurable via Admin UI (v0.15.0).** Stored in `bmn_flip_scoring_weights` WP option. Defaults shown below:
+
 | Category | Weight | Sub-factors |
 |----------|--------|-------------|
 | Financial | 40% | Price/ARV ratio (37.5%), $/sqft vs neighborhood (25%), price reduction (25%), DOM motivation (12.5%) |
 | Property | 25% | Lot size (35%), expansion potential (30%), existing sqft (20%), renovation need (15%) |
 | Location | 25% | Road type (25%), ceiling support (25%), price trend (25%), comp density (15%), schools (10%) |
-| Market | 10% | Listing DOM (40%), price reduction (30%), season (30%) + remarks bonus (±15) |
+| Market | 10% | Listing DOM (40%), price reduction (30%), season (30%) + remarks bonus (±25 cap) |
+
+**Financial Thresholds (configurable):** Min profit $25K, Min ROI 15%.
+
+All weights read at runtime via `Flip_Database::get_scoring_weights()` which deep-merges WP option with hardcoded defaults. Dashboard panel provides save/reset/live-sum-validation.
 
 ## Road Type Detection
 
@@ -391,6 +412,7 @@ Uses Claude Vision API (`claude-sonnet-4-5-20250929`) to analyze up to 5 photos 
 | 4.2 - Dashboard JS Refactor | Complete | Split 1,565-line monolith into 10 focused modules |
 | 4.3 - Saved Reports & Monitors | Complete | Auto-save reports, load/rerun/delete, monitor cron system |
 | 4.4 - Code Refactoring | Complete | Extract 6 focused classes, eliminate filter duplication |
+| 4.5 - Email & Weight Tuning | Complete | Branded emails, digest, notification levels, scoring weights admin UI |
 | 5 - iOS | Pending | SwiftUI views, ViewModel, API |
 | 6 - Polish | Pending | Testing, weight tuning |
 
@@ -430,7 +452,10 @@ Access via **Flip Analyzer** in the WordPress admin sidebar menu.
 - `flip_rename_report` — renames a saved report (v0.13.0)
 - `flip_rerun_report` — re-runs a report with original criteria, replaces old results (v0.13.0)
 - `flip_delete_report` — soft-deletes a report (v0.13.0)
-- `flip_create_monitor` — creates a monitor from current cities + filters (v0.13.0)
+- `flip_create_monitor` — creates a monitor from current cities + filters + notification_level (v0.13.0, extended v0.15.0)
+- `flip_save_weights` — saves scoring weights to WP option (v0.15.0)
+- `flip_reset_weights` — deletes WP option, returns defaults (v0.15.0)
+- `flip_save_digest_settings` — saves digest email settings (v0.15.0)
 
 ## Analysis Filter Schema (v0.10.0)
 

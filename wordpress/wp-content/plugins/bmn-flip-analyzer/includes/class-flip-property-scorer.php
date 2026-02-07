@@ -51,10 +51,11 @@ class Flip_Property_Scorer {
         $factors['renovation_need'] = self::score_renovation_need($year);
 
         // Weighted composite
-        $score = ($factors['lot_size'] * 0.35)
-               + ($factors['expansion_potential'] * 0.30)
-               + ($factors['existing_sqft'] * 0.20)
-               + ($factors['renovation_need'] * 0.15);
+        $w = Flip_Database::get_scoring_weights()['property_sub'];
+        $score = ($factors['lot_size'] * $w['lot_size'])
+               + ($factors['expansion_potential'] * $w['expansion'])
+               + ($factors['existing_sqft'] * $w['sqft'])
+               + ($factors['renovation_need'] * $w['renovation']);
 
         return [
             'score'   => round($score, 2),

@@ -134,10 +134,40 @@ class Flip_Monitor_Runner {
             $report_id
         ));
 
-        // Step 6: Tiered notifications
+        // Step 6: Tiered notifications based on notification_level
+        $notification_level = $monitor->notification_level ?? 'viable_only';
+
         if (!empty($viable_results)) {
             // Viable found: photo analysis + PDF + email
             self::process_viable($monitor, $viable_results);
+        }
+
+        // Near-viable and DQ notifications (if notification_level allows)
+        if (!empty($monitor->notification_email) && $notification_level !== 'viable_only') {
+            // Near-viable notifications
+            $near_viable_results = $wpdb->get_results($wpdb->prepare(
+                "SELECT * FROM {$table}
+                 WHERE report_id = %d AND near_viable = 1
+                 AND listing_id IN (" . implode(',', array_map('intval', $new_listing_ids)) . ")",
+                $report_id
+            ));
+            if (!empty($near_viable_results)) {
+                self::send_near_viable_notification($monitor, $near_viable_results);
+            }
+
+            // DQ notifications (only for 'all' level)
+            if ($notification_level === 'all') {
+                $dq_results = $wpdb->get_results($wpdb->prepare(
+                    "SELECT * FROM {$table}
+                     WHERE report_id = %d AND disqualified = 1
+                     AND listing_id IN (" . implode(',', array_map('intval', $new_listing_ids)) . ")
+                     ORDER BY total_score DESC LIMIT 20",
+                    $report_id
+                ));
+                if (!empty($dq_results)) {
+                    self::send_dq_notification($monitor, $dq_results);
+                }
+            }
         }
 
         // Step 7: Update report metadata
@@ -214,32 +244,106 @@ class Flip_Monitor_Runner {
 
     /**
      * Send email notification for viable properties found by a monitor.
-     *
-     * @param object $monitor        Monitor report object.
-     * @param array  $viable_results Viable result rows.
-     * @param array  $pdf_urls       Mapping of listing_id → PDF URL (successful only).
-     * @param array  $pdf_failures   Listing IDs where PDF generation failed.
      */
     private static function send_viable_notification(object $monitor, array $viable_results, array $pdf_urls, array $pdf_failures = []): void {
         $to      = $monitor->notification_email;
         $count   = count($viable_results);
         $subject = "Flip Monitor: \"{$monitor->name}\" found {$count} viable " . ($count === 1 ? 'property' : 'properties');
 
-        $body = "<h2>Monitor: {$monitor->name}</h2>\n";
-        $body .= "<p>{$count} new viable flip " . ($count === 1 ? 'candidate' : 'candidates') . " found:</p>\n";
-        $body .= "<table style='border-collapse:collapse;width:100%;font-family:Arial,sans-serif;'>\n";
-        $body .= "<tr style='background:#2271b1;color:#fff;'>";
-        $body .= "<th style='padding:8px;text-align:left;'>Property</th>";
-        $body .= "<th style='padding:8px;text-align:right;'>Score</th>";
-        $body .= "<th style='padding:8px;text-align:right;'>List Price</th>";
-        $body .= "<th style='padding:8px;text-align:right;'>ARV</th>";
-        $body .= "<th style='padding:8px;text-align:right;'>Profit</th>";
-        $body .= "<th style='padding:8px;text-align:center;'>PDF</th>";
-        $body .= "</tr>\n";
+        $content = "<h2 style='margin:0 0 12px;font-size:20px;color:#1d2327;'>Monitor: " . esc_html($monitor->name) . "</h2>\n";
+        $content .= "<p style='margin:0 0 16px;color:#50575e;'>{$count} new viable flip " . ($count === 1 ? 'candidate' : 'candidates') . " found:</p>\n";
+        $content .= self::build_property_table($viable_results, $pdf_urls, $pdf_failures);
+
+        if (!empty($pdf_failures)) {
+            $fail_count = count($pdf_failures);
+            $content .= "<p style='margin-top:12px;color:#cc1818;font-size:12px;'>"
+                . "Note: PDF reports could not be generated for {$fail_count} "
+                . ($fail_count === 1 ? 'property' : 'properties')
+                . ". View full details on the Flip Analyzer dashboard.</p>\n";
+        }
+
+        $body = self::build_email_wrapper($content, '#2271b1', "Viable Properties Found");
+        $headers = self::get_email_headers($to);
+
+        wp_mail($to, $subject, $body, $headers);
+    }
+
+    /**
+     * Send email notification for near-viable properties.
+     */
+    private static function send_near_viable_notification(object $monitor, array $results): void {
+        $to      = $monitor->notification_email;
+        $count   = count($results);
+        $subject = "Flip Monitor: \"{$monitor->name}\" — {$count} near-viable " . ($count === 1 ? 'property' : 'properties');
+
+        $content = "<h2 style='margin:0 0 12px;font-size:20px;color:#1d2327;'>Monitor: " . esc_html($monitor->name) . "</h2>\n";
+        $content .= "<p style='margin:0 0 16px;color:#50575e;'>{$count} near-viable " . ($count === 1 ? 'property' : 'properties')
+            . " found (close to viability thresholds):</p>\n";
+        $content .= self::build_score_table($results);
+
+        $body = self::build_email_wrapper($content, '#f0ad4e', "Near-Viable Properties");
+        $headers = self::get_email_headers($to);
+
+        wp_mail($to, $subject, $body, $headers);
+    }
+
+    /**
+     * Send email notification for disqualified properties.
+     */
+    private static function send_dq_notification(object $monitor, array $results): void {
+        $to      = $monitor->notification_email;
+        $count   = count($results);
+        $subject = "Flip Monitor: \"{$monitor->name}\" — {$count} disqualified " . ($count === 1 ? 'property' : 'properties');
+
+        $content = "<h2 style='margin:0 0 12px;font-size:20px;color:#1d2327;'>Monitor: " . esc_html($monitor->name) . "</h2>\n";
+        $content .= "<p style='margin:0 0 16px;color:#50575e;'>{$count} new " . ($count === 1 ? 'property was' : 'properties were')
+            . " analyzed and disqualified:</p>\n";
+
+        $content .= "<table style='border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:14px;'>\n";
+        $content .= "<tr style='background:#999;color:#fff;'>";
+        $content .= "<th style='padding:8px;text-align:left;'>Property</th>";
+        $content .= "<th style='padding:8px;text-align:right;'>List Price</th>";
+        $content .= "<th style='padding:8px;text-align:left;'>DQ Reason</th>";
+        $content .= "</tr>\n";
 
         $site_url = home_url();
-        foreach ($viable_results as $r) {
-            $lid     = (int) $r->listing_id;
+        foreach ($results as $r) {
+            $lid = (int) $r->listing_id;
+            $content .= "<tr style='border-bottom:1px solid #ddd;'>";
+            $content .= "<td style='padding:8px;'><a href='" . esc_url("{$site_url}/property/{$lid}/") . "' style='color:#2271b1;'>"
+                . esc_html($r->address) . "</a><br><small style='color:#888;'>" . esc_html($r->city) . " | MLS# {$lid}</small></td>";
+            $content .= "<td style='padding:8px;text-align:right;'>$" . number_format($r->list_price) . "</td>";
+            $content .= "<td style='padding:8px;color:#666;font-size:12px;'>" . esc_html($r->disqualify_reason ?: 'N/A') . "</td>";
+            $content .= "</tr>\n";
+        }
+        $content .= "</table>\n";
+
+        $body = self::build_email_wrapper($content, '#999999', "Disqualified Properties");
+        $headers = self::get_email_headers($to);
+
+        wp_mail($to, $subject, $body, $headers);
+    }
+
+    /**
+     * Build a property table with scores, prices, and optional PDF links.
+     * Used by viable notification emails.
+     */
+    private static function build_property_table(array $results, array $pdf_urls = [], array $pdf_failures = []): string {
+        $html = "<table style='border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:14px;'>\n";
+        $html .= "<tr style='background:#2271b1;color:#fff;'>";
+        $html .= "<th style='padding:8px;text-align:left;'>Property</th>";
+        $html .= "<th style='padding:8px;text-align:right;'>Score</th>";
+        $html .= "<th style='padding:8px;text-align:right;'>List Price</th>";
+        $html .= "<th style='padding:8px;text-align:right;'>ARV</th>";
+        $html .= "<th style='padding:8px;text-align:right;'>Profit</th>";
+        if (!empty($pdf_urls) || !empty($pdf_failures)) {
+            $html .= "<th style='padding:8px;text-align:center;'>PDF</th>";
+        }
+        $html .= "</tr>\n";
+
+        $site_url = home_url();
+        foreach ($results as $r) {
+            $lid = (int) $r->listing_id;
             $pdf_link = '';
             if (!empty($pdf_urls[$lid])) {
                 $pdf_link = "<a href='" . esc_url($pdf_urls[$lid]) . "' style='color:#2271b1;'>Download</a>";
@@ -247,32 +351,223 @@ class Flip_Monitor_Runner {
                 $pdf_link = "<span style='color:#999;font-size:12px;'>N/A</span>";
             }
 
-            $body .= "<tr style='border-bottom:1px solid #ddd;'>";
-            $body .= "<td style='padding:8px;'><a href='" . esc_url("{$site_url}/property/{$lid}/") . "'>"
+            $html .= "<tr style='border-bottom:1px solid #ddd;'>";
+            $html .= "<td style='padding:8px;'><a href='" . esc_url("{$site_url}/property/{$lid}/") . "' style='color:#2271b1;'>"
                 . esc_html($r->address) . "</a><br><small style='color:#888;'>" . esc_html($r->city) . " | MLS# {$lid}</small></td>";
-            $body .= "<td style='padding:8px;text-align:right;font-weight:bold;'>" . number_format($r->total_score, 1) . "</td>";
-            $body .= "<td style='padding:8px;text-align:right;'>$" . number_format($r->list_price) . "</td>";
-            $body .= "<td style='padding:8px;text-align:right;'>$" . number_format($r->estimated_arv) . "</td>";
-            $body .= "<td style='padding:8px;text-align:right;color:" . ($r->estimated_profit > 0 ? '#00a32a' : '#cc1818') . ";'>$"
+            $html .= "<td style='padding:8px;text-align:right;font-weight:bold;'>" . number_format($r->total_score, 1) . "</td>";
+            $html .= "<td style='padding:8px;text-align:right;'>$" . number_format($r->list_price) . "</td>";
+            $html .= "<td style='padding:8px;text-align:right;'>$" . number_format($r->estimated_arv) . "</td>";
+            $html .= "<td style='padding:8px;text-align:right;color:" . ($r->estimated_profit > 0 ? '#00a32a' : '#cc1818') . ";'>$"
                 . number_format($r->estimated_profit) . "</td>";
-            $body .= "<td style='padding:8px;text-align:center;'>{$pdf_link}</td>";
-            $body .= "</tr>\n";
+            if (!empty($pdf_urls) || !empty($pdf_failures)) {
+                $html .= "<td style='padding:8px;text-align:center;'>{$pdf_link}</td>";
+            }
+            $html .= "</tr>\n";
+        }
+        $html .= "</table>\n";
+
+        return $html;
+    }
+
+    /**
+     * Build a score table for near-viable properties.
+     */
+    private static function build_score_table(array $results): string {
+        $html = "<table style='border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:14px;'>\n";
+        $html .= "<tr style='background:#f0ad4e;color:#fff;'>";
+        $html .= "<th style='padding:8px;text-align:left;'>Property</th>";
+        $html .= "<th style='padding:8px;text-align:right;'>Score</th>";
+        $html .= "<th style='padding:8px;text-align:right;'>List Price</th>";
+        $html .= "<th style='padding:8px;text-align:right;'>ARV</th>";
+        $html .= "<th style='padding:8px;text-align:right;'>Profit</th>";
+        $html .= "</tr>\n";
+
+        $site_url = home_url();
+        foreach ($results as $r) {
+            $lid = (int) $r->listing_id;
+            $html .= "<tr style='border-bottom:1px solid #ddd;'>";
+            $html .= "<td style='padding:8px;'><a href='" . esc_url("{$site_url}/property/{$lid}/") . "' style='color:#2271b1;'>"
+                . esc_html($r->address) . "</a><br><small style='color:#888;'>" . esc_html($r->city) . " | MLS# {$lid}</small></td>";
+            $html .= "<td style='padding:8px;text-align:right;font-weight:bold;'>" . number_format($r->total_score, 1) . "</td>";
+            $html .= "<td style='padding:8px;text-align:right;'>$" . number_format($r->list_price) . "</td>";
+            $html .= "<td style='padding:8px;text-align:right;'>$" . number_format($r->estimated_arv) . "</td>";
+            $html .= "<td style='padding:8px;text-align:right;color:" . ($r->estimated_profit > 0 ? '#00a32a' : '#cc1818') . ";'>$"
+                . number_format($r->estimated_profit) . "</td>";
+            $html .= "</tr>\n";
+        }
+        $html .= "</table>\n";
+
+        return $html;
+    }
+
+    /**
+     * Build branded HTML email wrapper with responsive container.
+     *
+     * @param string $content     Inner HTML content.
+     * @param string $header_color Header band color (hex).
+     * @param string $header_text  Header band text.
+     * @return string Complete HTML email body.
+     */
+    private static function build_email_wrapper(string $content, string $header_color, string $header_text): string {
+        $footer = '';
+        if (class_exists('MLD_Email_Utilities')) {
+            $footer = MLD_Email_Utilities::get_unified_footer([
+                'context'   => 'general',
+                'compact'   => true,
+                'show_social' => false,
+            ]);
         }
 
-        $body .= "</table>\n";
+        $html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>"
+            . "<meta name='viewport' content='width=device-width,initial-scale=1.0'></head><body style='margin:0;padding:0;background:#f0f0f1;'>\n";
 
-        if (!empty($pdf_failures)) {
-            $fail_count = count($pdf_failures);
-            $body .= "<p style='margin-top:12px;color:#cc1818;font-size:12px;'>"
-                . "Note: PDF reports could not be generated for {$fail_count} "
-                . ($fail_count === 1 ? 'property' : 'properties')
-                . ". View full details on the Flip Analyzer dashboard.</p>\n";
+        // Outer container
+        $html .= "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f0f0f1;'><tr><td align='center' style='padding:24px 16px;'>\n";
+
+        // Inner container (600px max-width)
+        $html .= "<table role='presentation' width='600' cellpadding='0' cellspacing='0' style='max-width:600px;width:100%;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.1);'>\n";
+
+        // Branded header band
+        $html .= "<tr><td style='background:{$header_color};padding:16px 24px;'>"
+            . "<h1 style='margin:0;font-family:Arial,sans-serif;font-size:18px;color:#fff;font-weight:600;'>"
+            . esc_html($header_text) . "</h1></td></tr>\n";
+
+        // Content area
+        $html .= "<tr><td style='padding:24px;font-family:Arial,sans-serif;color:#1d2327;line-height:1.5;'>\n"
+            . $content . "\n</td></tr>\n";
+
+        // Flip Analyzer attribution
+        $html .= "<tr><td style='padding:0 24px 16px;'>"
+            . "<p style='margin:0;color:#888;font-size:12px;font-family:Arial,sans-serif;'>"
+            . "Sent by BMN Flip Analyzer</p></td></tr>\n";
+
+        // MLD unified footer (if available)
+        if (!empty($footer)) {
+            $html .= "<tr><td style='border-top:1px solid #e2e4e7;'>{$footer}</td></tr>\n";
         }
 
-        $body .= "<p style='margin-top:16px;color:#666;font-size:12px;'>This is an automated notification from the BMN Flip Analyzer monitor: \""
-            . esc_html($monitor->name) . "\"</p>\n";
+        $html .= "</table>\n"; // End inner container
+        $html .= "</td></tr></table>\n"; // End outer container
+        $html .= "</body></html>";
 
+        return $html;
+    }
+
+    /**
+     * Get email headers, using MLD utilities when available.
+     */
+    private static function get_email_headers(string $to): array {
         $headers = ['Content-Type: text/html; charset=UTF-8'];
+
+        if (class_exists('MLD_Email_Utilities')) {
+            $user_id = MLD_Email_Utilities::get_user_id_from_email($to);
+            if ($user_id) {
+                $headers = MLD_Email_Utilities::get_email_headers($user_id);
+            }
+        }
+
+        return $headers;
+    }
+
+    // ─── Digest Emails ──────────────────────────────────────────
+
+    /**
+     * Send periodic digest email summarizing monitor activity.
+     * Called by wp_cron at priority 20 (after run_all_due at default 10).
+     */
+    public static function maybe_send_digest(): void {
+        $settings = Flip_Database::get_digest_settings();
+
+        if (empty($settings['enabled'])) {
+            return;
+        }
+
+        $frequency = $settings['frequency'] ?? 'daily';
+        $last_sent = $settings['last_sent'] ?? null;
+        $now       = current_time('timestamp');
+
+        // Check if digest is due
+        $interval = ($frequency === 'weekly') ? 604800 : 86400;
+        if (!empty($last_sent)) {
+            $last_ts = strtotime($last_sent);
+            if (($now - $last_ts) < $interval) {
+                return; // Not due yet
+            }
+        }
+
+        $since = $last_sent ?: wp_date('Y-m-d H:i:s', $now - $interval);
+        $activity = Flip_Database::get_monitor_activity_since($since);
+
+        if (empty($activity)) {
+            // Update last_sent even with no activity to avoid re-checking
+            Flip_Database::set_digest_settings(array_merge($settings, [
+                'last_sent' => current_time('mysql'),
+            ]));
+            return;
+        }
+
+        $to = $settings['email'] ?? get_option('admin_email');
+        self::send_digest_email($to, $activity, $since);
+
+        Flip_Database::set_digest_settings(array_merge($settings, [
+            'last_sent' => current_time('mysql'),
+        ]));
+    }
+
+    /**
+     * Compose and send the digest summary email.
+     */
+    private static function send_digest_email(string $to, array $activity, string $since): void {
+        $total_monitors = count($activity);
+        $total_analyzed = array_sum(array_column($activity, 'new_analyzed'));
+        $total_viable   = array_sum(array_column($activity, 'new_viable'));
+        $subject = "Flip Analyzer Digest: {$total_viable} viable from {$total_monitors} " . ($total_monitors === 1 ? 'monitor' : 'monitors');
+
+        $since_display = wp_date('M j, Y g:i A', strtotime($since));
+        $content = "<h2 style='margin:0 0 12px;font-size:20px;color:#1d2327;'>Monitor Activity Digest</h2>\n";
+        $content .= "<p style='margin:0 0 16px;color:#50575e;'>Activity since {$since_display}:</p>\n";
+
+        // Summary stats
+        $content .= "<table style='border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:14px;margin-bottom:20px;'>\n";
+        $content .= "<tr>";
+        $content .= "<td style='padding:12px;background:#f0f6fc;border-radius:4px;text-align:center;width:33%;'>"
+            . "<div style='font-size:24px;font-weight:bold;color:#2271b1;'>{$total_analyzed}</div>"
+            . "<div style='font-size:12px;color:#888;'>Analyzed</div></td>";
+        $content .= "<td style='padding:12px;background:#edf7ee;border-radius:4px;text-align:center;width:33%;'>"
+            . "<div style='font-size:24px;font-weight:bold;color:#00a32a;'>{$total_viable}</div>"
+            . "<div style='font-size:12px;color:#888;'>Viable</div></td>";
+        $total_dq = array_sum(array_column($activity, 'new_dq'));
+        $content .= "<td style='padding:12px;background:#fcf0f0;border-radius:4px;text-align:center;width:33%;'>"
+            . "<div style='font-size:24px;font-weight:bold;color:#cc1818;'>{$total_dq}</div>"
+            . "<div style='font-size:12px;color:#888;'>Disqualified</div></td>";
+        $content .= "</tr></table>\n";
+
+        // Per-monitor table
+        $content .= "<table style='border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;'>\n";
+        $content .= "<tr style='background:#f0f0f1;'>";
+        $content .= "<th style='padding:8px;text-align:left;'>Monitor</th>";
+        $content .= "<th style='padding:8px;text-align:right;'>New</th>";
+        $content .= "<th style='padding:8px;text-align:right;'>Viable</th>";
+        $content .= "<th style='padding:8px;text-align:right;'>Near</th>";
+        $content .= "<th style='padding:8px;text-align:right;'>DQ'd</th>";
+        $content .= "<th style='padding:8px;text-align:right;'>Last Check</th>";
+        $content .= "</tr>\n";
+
+        foreach ($activity as $row) {
+            $last_check = !empty($row['last_check']) ? wp_date('M j g:i A', strtotime($row['last_check'])) : 'N/A';
+            $content .= "<tr style='border-bottom:1px solid #ddd;'>";
+            $content .= "<td style='padding:8px;font-weight:500;'>" . esc_html($row['name']) . "</td>";
+            $content .= "<td style='padding:8px;text-align:right;'>" . (int) $row['new_analyzed'] . "</td>";
+            $content .= "<td style='padding:8px;text-align:right;color:#00a32a;font-weight:bold;'>" . (int) $row['new_viable'] . "</td>";
+            $content .= "<td style='padding:8px;text-align:right;color:#f0ad4e;'>" . (int) ($row['new_near_viable'] ?? 0) . "</td>";
+            $content .= "<td style='padding:8px;text-align:right;color:#cc1818;'>" . (int) $row['new_dq'] . "</td>";
+            $content .= "<td style='padding:8px;text-align:right;color:#888;font-size:12px;'>{$last_check}</td>";
+            $content .= "</tr>\n";
+        }
+        $content .= "</table>\n";
+
+        $body = self::build_email_wrapper($content, '#2271b1', "Flip Analyzer Digest");
+        $headers = self::get_email_headers($to);
 
         wp_mail($to, $subject, $body, $headers);
     }

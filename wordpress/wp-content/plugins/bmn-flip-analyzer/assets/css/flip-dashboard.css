@@ -1222,4 +1222,149 @@
     .flip-report-context {
         flex-wrap: wrap;
     }
+
+    .flip-sw-sections {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Scoring Weights Panel ─────────────────── */
+
+.flip-sw-card {
+    margin-bottom: 20px;
+}
+
+.flip-sw-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px !important;
+    user-select: none;
+}
+
+.flip-sw-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 !important;
+}
+
+.flip-sw-header h2 .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #2271b1;
+}
+
+.flip-sw-arrow {
+    transition: transform 0.2s;
+    color: #888;
+}
+
+.flip-sw-arrow-open {
+    transform: rotate(180deg);
+}
+
+.flip-sw-body {
+    padding: 0 20px 20px;
+}
+
+.flip-sw-section {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eee;
+}
+
+.flip-sw-section:last-of-type {
+    border-bottom: none;
+}
+
+.flip-sw-section h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d2327;
+    margin: 0 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.flip-sw-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px 24px;
+    align-items: center;
+}
+
+.flip-sw-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.flip-sw-row > label {
+    flex: 0 0 auto;
+    color: #555;
+    font-size: 13px;
+}
+
+.flip-sw-input {
+    width: 72px;
+    height: 30px;
+    font-size: 13px;
+    text-align: right;
+    padding: 2px 6px;
+    flex-shrink: 0;
+}
+
+.flip-sw-sum {
+    grid-column: 1 / -1;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px dashed #ddd;
+}
+
+.flip-sw-sum-value {
+    font-weight: 700;
+}
+
+.flip-sw-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+}
+
+.flip-sw-actions .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.flip-sw-actions .button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 1;
+}
+
+.flip-sw-status {
+    font-size: 13px;
+    margin-left: 4px;
+}
+
+.flip-sw-digest {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.flip-sw-digest .flip-sw-row {
+    margin-right: 8px;
 }

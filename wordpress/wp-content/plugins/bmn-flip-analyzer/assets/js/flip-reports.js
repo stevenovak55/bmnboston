@@ -356,6 +356,7 @@
         var name      = $('#flip-monitor-name').val().trim();
         var frequency = $('#flip-monitor-frequency').val();
         var email     = $('#flip-monitor-email').val().trim();
+        var notificationLevel = $('#flip-monitor-notification-level').val() || 'viable_only';
 
         if (!name) {
             alert('Please enter a monitor name.');
@@ -373,6 +374,7 @@
                 name: name,
                 frequency: frequency,
                 email: email,
+                notification_level: notificationLevel,
             },
             success: function (response) {
                 $('#flip-monitor-confirm').prop('disabled', false).text('Create Monitor');

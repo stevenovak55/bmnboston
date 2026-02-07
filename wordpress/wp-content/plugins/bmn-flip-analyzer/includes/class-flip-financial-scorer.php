@@ -48,10 +48,11 @@ class Flip_Financial_Scorer {
         $factors['dom_motivation'] = $dom_score;
 
         // Weighted composite (weights relative within financial category)
-        $score = ($price_arv_score * 0.375)
-               + ($ppsf_score * 0.25)
-               + ($reduction_score * 0.25)
-               + ($dom_score * 0.125);
+        $w = Flip_Database::get_scoring_weights()['financial_sub'];
+        $score = ($price_arv_score * $w['price_arv'])
+               + ($ppsf_score * $w['ppsf'])
+               + ($reduction_score * $w['reduction'])
+               + ($dom_score * $w['dom']);
 
         return [
             'score'   => round($score, 2),

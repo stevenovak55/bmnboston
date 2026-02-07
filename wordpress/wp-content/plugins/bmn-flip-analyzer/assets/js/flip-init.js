@@ -37,6 +37,9 @@
         // Reports panel
         FD.reports.init();
 
+        // Scoring weights panel
+        FD.scoringWeights.init();
+
         // Event handlers — use delegation on tbody for dynamic rows
         var $tbody = $('#flip-results-body');
         $tbody.on('click', '.flip-toggle', function (e) {

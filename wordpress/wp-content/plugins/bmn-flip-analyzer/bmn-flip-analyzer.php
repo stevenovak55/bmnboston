@@ -2,9 +2,19 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies Single Family Residence flip candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis.
- * Version: 0.14.0
+ * Version: 0.15.0
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.15.0 - Email Enhancements + Scoring Weight Tuning
+ * - Polished monitor emails: responsive HTML wrapper, MLD unified footer/branding (with fallback)
+ * - Digest emails: periodic summary of all monitor activity (daily/weekly, configurable)
+ * - Notification levels: per-monitor choice of viable_only, viable_and_near, or all
+ * - Scoring weight tuning UI: admin panel to adjust all category/sub-factor weights + thresholds
+ * - Dynamic weight reading: all 5 scorers read from WP option, fall back to hardcoded defaults
+ * - New WP options: bmn_flip_scoring_weights, bmn_flip_digest_settings
+ * - New DB column: notification_level on wp_bmn_flip_reports
+ * - New JS module: flip-scoring-weights.js in FlipDashboard namespace
  *
  * Version 0.14.0 - Code Refactoring (6 Extracted Classes)
  * - Extract: Flip_Property_Fetcher from Flip_Analyzer (eliminates 254-line filter duplication)
@@ -189,7 +199,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.14.0');
+define('FLIP_VERSION', '0.15.0');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -231,6 +241,9 @@ add_action('rest_api_init', function () {
 // Monitor cron hook
 add_action('bmn_flip_monitor_check', ['Flip_Monitor_Runner', 'run_all_due']);
 
+// Digest email — runs after all monitors complete (priority 20)
+add_action('bmn_flip_monitor_check', ['Flip_Monitor_Runner', 'maybe_send_digest'], 20);
+
 // Periodic cleanup: purge scores/seen data for deleted reports, old orphan scores, old PDFs
 add_action('bmn_flip_monitor_check', function () {
     Flip_Database::cleanup_deleted_report_scores();
@@ -252,6 +265,7 @@ register_activation_hook(__FILE__, function () {
     Flip_Database::migrate_v080();
     Flip_Database::migrate_v0110();
     Flip_Database::migrate_v0130();
+    Flip_Database::migrate_v0150();
 
     // Schedule monitor cron if not already scheduled
     if (!wp_next_scheduled('bmn_flip_monitor_check')) {
@@ -283,6 +297,10 @@ add_action('plugins_loaded', function () {
             wp_schedule_event(time(), 'twicedaily', 'bmn_flip_monitor_check');
         }
         update_option('bmn_flip_db_version', '0.13.0');
+    }
+    if (version_compare($db_version, '0.15.0', '<')) {
+        Flip_Database::migrate_v0150();
+        update_option('bmn_flip_db_version', '0.15.0');
     }
 });
 

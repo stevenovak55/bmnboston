@@ -28,6 +28,9 @@ class Flip_Admin_Dashboard {
         add_action('wp_ajax_flip_generate_pdf', [__CLASS__, 'ajax_generate_pdf']);
         add_action('wp_ajax_flip_force_analyze', [__CLASS__, 'ajax_force_analyze']);
         add_action('wp_ajax_flip_save_filters', [__CLASS__, 'ajax_save_filters']);
+        add_action('wp_ajax_flip_save_weights', [__CLASS__, 'ajax_save_weights']);
+        add_action('wp_ajax_flip_reset_weights', [__CLASS__, 'ajax_reset_weights']);
+        add_action('wp_ajax_flip_save_digest_settings', [__CLASS__, 'ajax_save_digest_settings']);
     }
 
     /**
@@ -106,12 +109,19 @@ class Flip_Admin_Dashboard {
             ['flip-core', 'flip-helpers', 'flip-stats-chart', 'flip-filters-table', 'flip-ajax', 'jquery'],
             $ver, true);
 
+        // Scoring Weights Module
+        wp_enqueue_script('flip-scoring-weights',
+            $url . 'flip-scoring-weights.js',
+            ['flip-core', 'flip-helpers', 'jquery'],
+            $ver, true);
+
         // Init (runs last, binds everything)
         wp_enqueue_script('flip-init',
             $url . 'flip-init.js',
             ['flip-core', 'flip-helpers', 'flip-stats-chart', 'flip-filters-table',
              'flip-detail-row', 'flip-projections', 'flip-ajax',
-             'flip-analysis-filters', 'flip-cities', 'flip-reports', 'jquery'],
+             'flip-analysis-filters', 'flip-cities', 'flip-reports',
+             'flip-scoring-weights', 'jquery'],
             $ver, true);
 
         // Dashboard CSS
@@ -132,6 +142,8 @@ class Flip_Admin_Dashboard {
             'propertySubTypes' => Flip_Database::get_available_property_sub_types(),
             'reports'          => Flip_Report_AJAX::get_reports_list(),
             'activeReportId'   => null,
+            'scoringWeights'   => Flip_Database::get_scoring_weights(),
+            'digestSettings'   => Flip_Database::get_digest_settings(),
         ]);
     }
 
@@ -517,6 +529,74 @@ class Flip_Admin_Dashboard {
         wp_send_json_success([
             'filters' => Flip_Database::get_analysis_filters(),
             'message' => 'Analysis filters saved.',
+        ]);
+    }
+
+    /**
+     * AJAX: Save scoring weights.
+     */
+    public static function ajax_save_weights(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $raw = isset($_POST['weights']) ? wp_unslash($_POST['weights']) : '{}';
+        $weights = json_decode($raw, true);
+
+        if (!is_array($weights)) {
+            wp_send_json_error('Invalid weight data.');
+        }
+
+        Flip_Database::set_scoring_weights($weights);
+
+        wp_send_json_success([
+            'weights' => Flip_Database::get_scoring_weights(),
+            'message' => 'Scoring weights saved.',
+        ]);
+    }
+
+    /**
+     * AJAX: Reset scoring weights to defaults.
+     */
+    public static function ajax_reset_weights(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        delete_option('bmn_flip_scoring_weights');
+
+        wp_send_json_success([
+            'weights' => Flip_Database::get_scoring_weights(),
+            'message' => 'Weights reset to defaults.',
+        ]);
+    }
+
+    /**
+     * AJAX: Save digest email settings.
+     */
+    public static function ajax_save_digest_settings(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $raw = isset($_POST['settings']) ? wp_unslash($_POST['settings']) : '{}';
+        $settings = json_decode($raw, true);
+
+        if (!is_array($settings)) {
+            wp_send_json_error('Invalid settings data.');
+        }
+
+        Flip_Database::set_digest_settings($settings);
+
+        wp_send_json_success([
+            'settings' => Flip_Database::get_digest_settings(),
+            'message'  => 'Digest settings saved.',
         ]);
     }
 

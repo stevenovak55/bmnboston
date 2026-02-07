@@ -19,4 +19,5 @@ window.FlipDashboard = {
     analysisFilters: {},
     cities: {},
     reports: {},
+    scoringWeights: {},
 };

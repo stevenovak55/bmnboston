@@ -272,6 +272,7 @@ class Flip_Database {
             'viable_count'          => $data['viable_count'] ?? 0,
             'monitor_frequency'     => $data['monitor_frequency'] ?? null,
             'notification_email'    => $data['notification_email'] ?? null,
+            'notification_level'    => $data['notification_level'] ?? 'viable_only',
             'created_at'            => $data['created_at'] ?? current_time('mysql'),
             'updated_at'            => $data['updated_at'] ?? current_time('mysql'),
             'created_by'            => $data['created_by'] ?? get_current_user_id(),
@@ -801,5 +802,174 @@ class Flip_Database {
         global $wpdb;
         $table = self::table_name();
         return $wpdb->query("TRUNCATE TABLE {$table}");
+    }
+
+    // ---------------------------------------------------------------
+    // v0.15.0: Scoring Weights
+    // ---------------------------------------------------------------
+
+    /**
+     * Default scoring weights — used as fallback when no custom weights saved.
+     */
+    public static function get_default_scoring_weights(): array {
+        return [
+            'main' => [
+                'financial' => 0.40,
+                'property'  => 0.25,
+                'location'  => 0.25,
+                'market'    => 0.10,
+            ],
+            'financial_sub' => [
+                'price_arv'  => 0.375,
+                'ppsf'       => 0.25,
+                'reduction'  => 0.25,
+                'dom'        => 0.125,
+            ],
+            'property_sub' => [
+                'lot_size'   => 0.35,
+                'expansion'  => 0.30,
+                'sqft'       => 0.20,
+                'renovation' => 0.15,
+            ],
+            'location_sub' => [
+                'road_type'    => 0.25,
+                'ceiling'      => 0.25,
+                'trend'        => 0.25,
+                'comp_density' => 0.15,
+                'schools'      => 0.10,
+            ],
+            'market_sub' => [
+                'dom'       => 0.40,
+                'reduction' => 0.30,
+                'season'    => 0.30,
+            ],
+            'thresholds' => [
+                'min_profit' => 25000,
+                'min_roi'    => 15,
+            ],
+            'market_remarks_cap' => 25,
+        ];
+    }
+
+    /**
+     * Get scoring weights (custom overrides merged with defaults).
+     */
+    public static function get_scoring_weights(): array {
+        $defaults = self::get_default_scoring_weights();
+        $saved = get_option('bmn_flip_scoring_weights', '{}');
+        $saved = json_decode($saved, true) ?: [];
+
+        return array_replace_recursive($defaults, $saved);
+    }
+
+    /**
+     * Save custom scoring weights.
+     */
+    public static function set_scoring_weights(array $weights): void {
+        // Sanitize numeric values in each group
+        $groups = ['main', 'financial_sub', 'property_sub', 'location_sub', 'market_sub'];
+        foreach ($groups as $group) {
+            if (isset($weights[$group]) && is_array($weights[$group])) {
+                $weights[$group] = array_map('floatval', $weights[$group]);
+            }
+        }
+
+        if (isset($weights['thresholds'])) {
+            $weights['thresholds']['min_profit'] = (int) ($weights['thresholds']['min_profit'] ?? 25000);
+            $weights['thresholds']['min_roi']    = (float) ($weights['thresholds']['min_roi'] ?? 15);
+        }
+
+        if (isset($weights['market_remarks_cap'])) {
+            $weights['market_remarks_cap'] = (int) $weights['market_remarks_cap'];
+        }
+
+        update_option('bmn_flip_scoring_weights', wp_json_encode($weights));
+    }
+
+    // ---------------------------------------------------------------
+    // v0.15.0: Digest Settings
+    // ---------------------------------------------------------------
+
+    /**
+     * Get email digest settings.
+     */
+    public static function get_digest_settings(): array {
+        $defaults = [
+            'enabled'   => false,
+            'email'     => get_option('admin_email'),
+            'frequency' => 'daily',
+            'last_sent' => null,
+        ];
+
+        $saved = get_option('bmn_flip_digest_settings', '{}');
+        $saved = json_decode($saved, true) ?: [];
+
+        return array_merge($defaults, $saved);
+    }
+
+    /**
+     * Save email digest settings.
+     */
+    public static function set_digest_settings(array $settings): void {
+        $settings['enabled']   = !empty($settings['enabled']);
+        $settings['email']     = sanitize_email($settings['email'] ?? '');
+        $allowed_freq          = ['daily', 'weekly'];
+        $settings['frequency'] = in_array($settings['frequency'] ?? '', $allowed_freq, true)
+            ? $settings['frequency']
+            : 'daily';
+
+        update_option('bmn_flip_digest_settings', wp_json_encode($settings));
+    }
+
+    // ---------------------------------------------------------------
+    // v0.15.0: Monitor Activity Query
+    // ---------------------------------------------------------------
+
+    /**
+     * Get monitor activity summary since a given datetime.
+     * Used by the digest email to show per-monitor stats.
+     */
+    public static function get_monitor_activity_since(string $since_datetime): array {
+        global $wpdb;
+        $reports_table = self::reports_table();
+        $scores_table  = self::table_name();
+
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT r.id, r.name, r.monitor_frequency, r.monitor_last_new_count,
+                    r.property_count, r.viable_count, r.monitor_last_check,
+                    (SELECT COUNT(*) FROM {$scores_table} s
+                     WHERE s.report_id = r.id AND s.run_date >= %s) as new_analyzed,
+                    (SELECT COUNT(*) FROM {$scores_table} s
+                     WHERE s.report_id = r.id AND s.run_date >= %s
+                     AND s.disqualified = 0 AND s.total_score >= 60) as new_viable,
+                    (SELECT COUNT(*) FROM {$scores_table} s
+                     WHERE s.report_id = r.id AND s.run_date >= %s
+                     AND s.near_viable = 1) as new_near_viable,
+                    (SELECT COUNT(*) FROM {$scores_table} s
+                     WHERE s.report_id = r.id AND s.run_date >= %s
+                     AND s.disqualified = 1 AND s.near_viable = 0) as new_dq
+             FROM {$reports_table} r
+             WHERE r.type = 'monitor' AND r.status = 'active'
+             ORDER BY r.name ASC",
+            $since_datetime, $since_datetime, $since_datetime, $since_datetime
+        )) ?: [];
+    }
+
+    // ---------------------------------------------------------------
+    // v0.15.0: Migration
+    // ---------------------------------------------------------------
+
+    /**
+     * Add notification_level column to reports table.
+     */
+    public static function migrate_v0150(): void {
+        global $wpdb;
+        $reports_table = self::reports_table();
+
+        $cols = $wpdb->get_col("SHOW COLUMNS FROM {$reports_table}", 0);
+
+        if (!in_array('notification_level', $cols, true)) {
+            $wpdb->query("ALTER TABLE {$reports_table} ADD COLUMN notification_level VARCHAR(20) DEFAULT 'viable_only' AFTER notification_email");
+        }
     }
 }
