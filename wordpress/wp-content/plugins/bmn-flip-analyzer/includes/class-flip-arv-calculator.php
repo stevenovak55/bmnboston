@@ -31,6 +31,39 @@ class Flip_ARV_Calculator {
     ];
 
     /**
+     * Get compatible types for comp matching, including multifamily groupings.
+     *
+     * For multifamily, groups by unit count (2-family, 3-family, 4-family, 5+).
+     * "Multi Family" (generic) is compatible with all 2-4 unit types.
+     * Falls back to COMPATIBLE_TYPES const for standard residential.
+     */
+    public static function get_compatible_types(string $sub_type): array {
+        // Check standard residential types first
+        if (isset(self::COMPATIBLE_TYPES[$sub_type])) {
+            return self::COMPATIBLE_TYPES[$sub_type];
+        }
+
+        // Multifamily: group by unit count
+        if (stripos($sub_type, '2 Family') === 0 || $sub_type === 'Duplex') {
+            return ['2 Family - 2 Units Up/Down', '2 Family - 2 Units Side by Side', 'Duplex', '2 Family - Rooming House', 'Multi Family'];
+        }
+        if (stripos($sub_type, '3 Family') === 0) {
+            return ['3 Family', '3 Family - 3 Units Up/Down', '3 Family - 3 Units Side by Side', 'Multi Family'];
+        }
+        if (stripos($sub_type, '4 Family') === 0) {
+            return ['4 Family', '4 Family - 4 Units Up/Down', '4 Family - 4 Units Side by Side', 'Multi Family'];
+        }
+        if (stripos($sub_type, '5') === 0 || stripos($sub_type, '5+') === 0) {
+            return ['5-9 Family', '5+ Family - 5+ Units Up/Down', '5+ Family - 5+ Units Side by Side', '5+ Family - Rooming House', 'Multi Family'];
+        }
+        if ($sub_type === 'Multi Family') {
+            return ['Multi Family', '2 Family - 2 Units Up/Down', '2 Family - 2 Units Side by Side', '3 Family', '3 Family - 3 Units Up/Down', '4 Family', '4 Family - 4 Units Up/Down'];
+        }
+
+        return [$sub_type];
+    }
+
+    /**
      * Calculate ARV for a property.
      *
      * @param object $property Row from bme_listing_summary.
@@ -75,7 +108,7 @@ class Flip_ARV_Calculator {
         // 2. Compatible types (e.g., Townhouse ↔ Condominium)
         // 3. All residential types as last resort
         $exact_types = [$sub_type];
-        $compatible_types = self::COMPATIBLE_TYPES[$sub_type] ?? [$sub_type];
+        $compatible_types = self::get_compatible_types($sub_type);
         $all_types = null; // null = no type filter
 
         // Find comps with bathroom filter, expanding radius: 0.5→1.0→2.0mi
@@ -414,7 +447,7 @@ class Flip_ARV_Calculator {
         $type_filter = '';
         $type_params = [];
         if ($sub_type !== null) {
-            $compatible = self::COMPATIBLE_TYPES[$sub_type] ?? [$sub_type];
+            $compatible = self::get_compatible_types($sub_type);
             $placeholders = implode(',', array_fill(0, count($compatible), '%s'));
             $type_filter = "AND property_sub_type IN ({$placeholders})";
             $type_params = $compatible;
@@ -666,7 +699,7 @@ class Flip_ARV_Calculator {
         $type_filter = '';
         $params = [];
         if ($sub_type !== null) {
-            $compatible = self::COMPATIBLE_TYPES[$sub_type] ?? [$sub_type];
+            $compatible = self::get_compatible_types($sub_type);
             $placeholders = implode(',', array_fill(0, count($compatible), '%s'));
             $type_filter = "AND property_sub_type IN ({$placeholders})";
             $params = $compatible;
@@ -702,7 +735,7 @@ class Flip_ARV_Calculator {
         $type_filter = '';
         $type_params = [];
         if ($sub_type !== null) {
-            $compatible = self::COMPATIBLE_TYPES[$sub_type] ?? [$sub_type];
+            $compatible = self::get_compatible_types($sub_type);
             $placeholders = implode(',', array_fill(0, count($compatible), '%s'));
             $type_filter = "AND property_sub_type IN ({$placeholders})";
             $type_params = $compatible;
@@ -747,7 +780,7 @@ class Flip_ARV_Calculator {
         $type_filter = '';
         $params = [];
         if ($sub_type !== null) {
-            $compatible = self::COMPATIBLE_TYPES[$sub_type] ?? [$sub_type];
+            $compatible = self::get_compatible_types($sub_type);
             $placeholders = implode(',', array_fill(0, count($compatible), '%s'));
             $type_filter = "AND property_sub_type IN ({$placeholders})";
             $params = $compatible;
@@ -783,7 +816,7 @@ class Flip_ARV_Calculator {
         $type_filter = '';
         $type_params = [];
         if ($sub_type !== null) {
-            $compatible = self::COMPATIBLE_TYPES[$sub_type] ?? [$sub_type];
+            $compatible = self::get_compatible_types($sub_type);
             $placeholders = implode(',', array_fill(0, count($compatible), '%s'));
             $type_filter = "AND property_sub_type IN ({$placeholders})";
             $type_params = $compatible;

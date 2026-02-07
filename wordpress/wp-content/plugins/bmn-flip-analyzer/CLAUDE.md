@@ -1,11 +1,34 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.16.0
+**Current Version:** 0.17.0
 **Last Updated:** 2026-02-07
 
 ## Overview
 
-Standalone WordPress plugin that identifies Single Family Residence flip candidates by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates. As of v0.16.0, also provides **multi-exit strategy analysis** — analyzing each property as a Flip, Rental Hold, or BRRRR investment with side-by-side comparison.
+Standalone WordPress plugin that identifies residential investment property candidates (SFR, multifamily, income properties) by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates. As of v0.17.0, supports **Residential Income (multifamily)** properties with unit-aware rent estimation, MLS income integration, and multifamily-specific operating expense defaults.
+
+**v0.17.0 Enhancements (Multifamily / Residential Income Support):**
+
+*Phase A — Enable Multifamily Analysis:*
+- **Dynamic property_type filtering:** `Flip_Property_Fetcher` auto-detects `Residential Income` vs `Residential` based on selected sub-types
+- **Sub-types dropdown:** `Flip_Database::get_available_property_sub_types()` includes both Residential and Residential Income variants
+- **ARV comp matching:** `Flip_ARV_Calculator::get_compatible_types()` groups multifamily by unit count (2-family, 3-family, 4-family, 5+) using MLSPIN sub-type names
+- **Data enrichment:** `Flip_Analyzer` passes `property_sub_type`, `number_of_units_total` (from `bme_listing_details`), and `gross_income` (from `bme_listing_financial`) to rental calculator
+- **Expansion potential cap:** Multifamily types capped at 40 (same as condos/townhouses)
+
+*Phase B — Multifamily-Specific Calculations:*
+- **MLS Tier 0 rent estimation:** `gross_income` from MLS financial data used as highest-priority rent source (75% of multifamily have this data)
+- **Multifamily operating expense defaults:** Higher vacancy (8% vs 5%), insurance (1.0% vs 0.6%), maintenance (1.5% vs 1.0%), capex reserve (7% vs 5%)
+- **Multifamily BRRRR refi terms:** Lower LTV (70% vs 75%), higher rate (7.5% vs 7.2%)
+- **Per-unit metrics:** price/unit, rent/unit, NOI/unit, sqft/unit, expense/unit (when units > 1)
+- **`is_multifamily()` helper:** Detects multifamily from sub-type string (stripos for "Family"/"Duplex")
+
+*Analysis Results (163 multifamily in Boston/Malden/Everett):*
+- Rent sources: 75% MLS gross_income, 24% city_rate, 1% default_rate
+- Median cap rate: 2.06%, 23 properties >5%, 58 >3%
+- Top properties: 7.9% cap / 1.34 DSCR (579 American Legion Hwy, 9-unit)
+- Strategy distribution: 74% rental, 23% BRRRR, 3% flip
+- 2 viable flip candidates, 161 DQ'd (most due to price-to-ARV ratio)
 
 **v0.16.0 Enhancements (Multi-Exit Strategy Analysis):**
 - **Rental Hold Analysis:** Monthly rent estimation (three-tier: user override → city lookup → 0.7% rule), operating expense breakdown (6 categories), NOI, cap rate, cash-on-cash return, DSCR, GRM, tax benefits (27.5yr IRS depreciation), multi-year projections (1/5/10/20yr)

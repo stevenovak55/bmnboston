@@ -62,6 +62,18 @@ class Flip_Rental_Calculator {
      * @return array {amount, annual, source, confidence}
      */
     public static function estimate_monthly_rent(array $property_data, ?float $user_override = null): array {
+        // Tier 0: MLS gross income (most reliable for income properties)
+        $mls_gross = $property_data['gross_income'] ?? null;
+        if ($mls_gross !== null && $mls_gross > 0) {
+            $monthly = round($mls_gross / 12, 2);
+            return [
+                'amount'     => $monthly,
+                'annual'     => round($mls_gross, 2),
+                'source'     => 'mls_gross_income',
+                'confidence' => 'high',
+            ];
+        }
+
         // Tier 1: User override
         if ($user_override !== null && $user_override > 0) {
             return [
@@ -147,6 +159,13 @@ class Flip_Rental_Calculator {
         $list_price = (float) ($property_data['list_price'] ?? 0);
         $sqft       = (int) ($property_data['building_area_total'] ?? 0);
         $year_built = (int) ($property_data['year_built'] ?? 1980);
+        $units      = (int) ($property_data['number_of_units_total'] ?? 1);
+        $is_multifamily = self::is_multifamily($property_data['property_sub_type'] ?? '');
+
+        // Apply multifamily-specific defaults if not already overridden
+        if ($is_multifamily) {
+            $params = self::apply_multifamily_defaults($params);
+        }
 
         // Total acquisition cost (purchase + rehab + closing)
         // Note: flip_fin['rehab_cost'] already includes contingency
@@ -231,7 +250,17 @@ class Flip_Rental_Calculator {
                 'insurance_rate'      => (float) $params['insurance_rate'],
                 'appreciation_rate'   => (float) $params['appreciation_rate'],
                 'rent_growth_rate'    => (float) $params['rent_growth_rate'],
+                'is_multifamily'      => $is_multifamily,
             ],
+            'per_unit'            => $units > 1 ? [
+                'units'             => $units,
+                'price_per_unit'    => round($list_price / $units, 0),
+                'arv_per_unit'      => $arv > 0 ? round($arv / $units, 0) : 0,
+                'rent_per_unit'     => round($monthly_rent / $units, 2),
+                'sqft_per_unit'     => $sqft > 0 ? round($sqft / $units, 0) : 0,
+                'noi_per_unit'      => round($noi / $units, 2),
+                'expense_per_unit'  => round($expenses['total_annual'] / $units, 2),
+            ] : null,
         ];
     }
 
@@ -358,6 +387,12 @@ class Flip_Rental_Calculator {
     ): array {
         $defaults = Flip_Database::get_rental_defaults();
         $params   = array_merge($defaults, $overrides);
+        $is_multifamily = self::is_multifamily($property_data['property_sub_type'] ?? '');
+
+        // Apply multifamily-specific refi terms
+        if ($is_multifamily) {
+            $params = self::apply_multifamily_defaults($params);
+        }
 
         $list_price  = (float) ($property_data['list_price'] ?? 0);
         // ARV comes from property_data (set by attach_rental_analysis), NOT flip_fin
@@ -661,5 +696,50 @@ class Flip_Rental_Calculator {
             default:
                 return 'Unable to determine optimal strategy.';
         }
+    }
+
+    // ---------------------------------------------------------------
+    // Multifamily Helpers
+    // ---------------------------------------------------------------
+
+    /**
+     * Check if a property sub-type is a multifamily/income property.
+     */
+    public static function is_multifamily(string $sub_type): bool {
+        if (empty($sub_type) || $sub_type === 'Single Family Residence') {
+            return false;
+        }
+        return stripos($sub_type, 'Family') !== false || stripos($sub_type, 'Duplex') !== false;
+    }
+
+    /**
+     * Apply multifamily-specific defaults to params.
+     *
+     * Only overrides defaults — user-configured overrides are preserved.
+     * Multifamily properties have higher operating costs and different
+     * financing terms than single-family residences.
+     */
+    private static function apply_multifamily_defaults(array $params): array {
+        $mf_defaults = [
+            'vacancy_rate'        => 0.08,   // 8% (higher tenant turnover)
+            'insurance_rate'      => 0.010,  // 1.0% (higher liability, more units)
+            'maintenance_rate'    => 0.015,  // 1.5% (more systems, common areas)
+            'capex_reserve_rate'  => 0.07,   // 7% (more capex per building)
+            'brrrr_refi_ltv'      => 0.70,   // 70% (tighter underwriting)
+            'brrrr_refi_rate'     => 0.075,  // 7.5% (slightly higher for multifamily)
+        ];
+
+        // Check if the user has explicitly overridden defaults via the admin panel
+        $user_defaults = get_option('bmn_flip_rental_defaults', '');
+        $user_set = !empty($user_defaults) ? json_decode($user_defaults, true) : [];
+
+        foreach ($mf_defaults as $key => $mf_value) {
+            // Only apply multifamily default if user hasn't explicitly set this parameter
+            if (!isset($user_set[$key])) {
+                $params[$key] = $mf_value;
+            }
+        }
+
+        return $params;
     }
 }

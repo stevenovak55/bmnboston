@@ -13,7 +13,7 @@ Single source of truth for all component versions. Update this file when bumping
 | Exclusive Listings | v1.5.3 | Jan 27, 2026 | `exclusive-listings/version.json` |
 | Bridge MLS Extractor | v4.0.32 | Jan 21, 2026 | `bridge-mls-extractor-pro-review/bridge-mls-extractor-pro.php` |
 | Theme (flavor-flavor-flavor) | v1.5.9 | Jan 28, 2026 | `flavor-flavor-flavor/version.json` |
-| BMN Flip Analyzer | v0.16.0 | Feb 7, 2026 | `bmn-flip-analyzer/bmn-flip-analyzer.php` |
+| BMN Flip Analyzer | v0.17.0 | Feb 7, 2026 | `bmn-flip-analyzer/bmn-flip-analyzer.php` |
 
 ## Version Bump Scripts
 

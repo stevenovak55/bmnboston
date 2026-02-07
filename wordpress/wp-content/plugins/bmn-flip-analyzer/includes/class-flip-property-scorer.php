@@ -33,10 +33,15 @@ class Flip_Property_Scorer {
 
         // Factor 2: Expansion Potential (30% of property score)
         // Ratio of unused lot to existing building - room to add sqft
-        // Condos/townhouses can't practically expand on their lot
+        // Condos/townhouses/multifamily can't practically expand on their lot
         $sub_type = $property->property_sub_type ?? 'Single Family Residence';
         $expansion_score = self::score_expansion_potential($lot_sqft, $sqft);
-        if (in_array($sub_type, ['Condominium', 'Townhouse'], true)) {
+        $non_expandable = ['Condominium', 'Townhouse'];
+        // Multifamily: detect by sub-type name (covers all MLSPIN variants)
+        if ($sub_type !== 'Single Family Residence' && (stripos($sub_type, 'Family') !== false || stripos($sub_type, 'Duplex') !== false)) {
+            $non_expandable[] = $sub_type;
+        }
+        if (in_array($sub_type, $non_expandable, true)) {
             $expansion_score = min($expansion_score, 40);
         }
         $factors['expansion_potential'] = $expansion_score;

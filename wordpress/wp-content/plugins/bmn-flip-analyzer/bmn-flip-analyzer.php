@@ -1,10 +1,18 @@
 <?php
 /**
  * Plugin Name: BMN Flip Analyzer
- * Description: Identifies Single Family Residence flip candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis.
- * Version: 0.16.0
+ * Description: Identifies residential investment property candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis. Supports SFR, multifamily, and Residential Income properties.
+ * Version: 0.17.0
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.17.0 - Multifamily (Residential Income) Support
+ * - Property type filter expanded: Residential + Residential Income
+ * - Dynamic property_type WHERE clause based on selected sub-types
+ * - ARV comp matching for multifamily (grouped by unit count)
+ * - Multifamily data enrichment: unit count + MLS gross income passed to rental calculator
+ * - Expansion potential capped for multifamily (same as condos)
+ * - Sub-types dropdown includes all Residential Income variants
  *
  * Version 0.16.0 - Multi-Exit Strategy Analysis
  * - Rental Hold analysis: NOI, cap rate, cash-on-cash return, DSCR, GRM, tax benefits
@@ -210,7 +218,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.16.0');
+define('FLIP_VERSION', '0.17.0');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 

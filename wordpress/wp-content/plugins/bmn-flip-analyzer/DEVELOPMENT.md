@@ -1,8 +1,8 @@
 # BMN Flip Analyzer - Development Log
 
-## Current Version: 0.16.0
+## Current Version: 0.17.0
 
-## Status: Phase 4.7 Complete (Multi-Exit Strategy Analysis) - Pre-Phase 5 (iOS)
+## Status: Phase 4.8 Complete (Multifamily Support) - Pre-Phase 5 (iOS)
 
 ---
 
@@ -27,6 +27,7 @@
 | 9.1 | Code Refactoring | Complete | Phase 4.4 - Extract 6 focused classes from large files |
 | 9.2 | Email Polish & Scoring Weights | Complete | Phase 4.5 - Branded emails, digest, notification levels, weights admin UI |
 | 9.3 | Multi-Exit Strategy Analysis | Complete | Phase 4.7 - Rental Hold, BRRRR, strategy comparison |
+| 9.4 | Multifamily Support | Complete | Phase 4.8 - Residential Income properties, MLS income, MF defaults |
 | 9.5 | iOS data model + API | Pending | Phase 5 - SwiftUI ViewModel |
 | 9 | iOS UI views | Pending | Phase 4 - FlipAnalyzerSheet |
 | 10 | Testing + tuning | Pending | Phase 5 - Score validation |
@@ -621,6 +622,77 @@ Five root causes identified: (1) year-built scoring was backwards (newer = highe
 - Calculate for ALL properties (viable + DQ'd) — a flip DQ may be an excellent rental
 - Tab system in detail row — minimal UI disruption, existing content untouched
 - Separate comparison page — deep analysis deserves dedicated space
+
+### Session 22 - 2026-02-07
+
+**What was done (v0.17.0 — Multifamily / Residential Income Support):**
+
+**Goal:** Enable analysis of multifamily (Residential Income) properties — 2-family through 5+ family buildings — with appropriate rent estimation, operating expense defaults, and per-unit metrics. Two-phase approach: Phase A enables the pipeline, Phase B adjusts calculations based on data.
+
+**Phase A: Enable Multifamily Analysis**
+
+1. **Production data verification** — SSH queries confirmed:
+   - 325 multifamily properties in Boston/Malden/Everett
+   - MLSPIN sub-type names: "2 Family - 2 Units Up/Down", "3 Family", "Multi Family", etc.
+   - `number_of_units_total` populated for 99.7% (in `bme_listing_details`)
+   - `gross_income` populated for 75% (in `bme_listing_financial`)
+   - 1,534 sold multifamily comps in archive table
+
+2. **`class-flip-property-fetcher.php`** — Dynamic `property_type` WHERE clause:
+   - Added `includes_multifamily()` and `includes_residential()` helpers
+   - Auto-detects `Residential Income` vs `Residential` from selected sub-types
+   - Previously hardcoded `property_type = 'Residential'` blocked all multifamily
+
+3. **`class-flip-database.php`** — Sub-types dropdown:
+   - Changed `get_available_property_sub_types()` to include `property_type IN ('Residential', 'Residential Income')`
+
+4. **`class-flip-arv-calculator.php`** — Comp matching for multifamily:
+   - Added `get_compatible_types()` method grouping by unit count using MLSPIN names
+   - 2-family types match each other + "Multi Family" generic
+   - Updated all 6 references from const lookup to method call
+
+5. **`class-flip-analyzer.php`** — Data enrichment:
+   - Added `property_sub_type`, `number_of_units_total`, `gross_income` to both `build_rental_json()` and `attach_rental_analysis()`
+   - New `get_unit_count()` helper (queries `bme_listing_details`, performance-guarded for SFR)
+   - New `get_gross_income()` helper (queries `bme_listing_financial`, performance-guarded for SFR)
+
+6. **`class-flip-property-scorer.php`** — Expansion potential cap for multifamily types
+
+7. **`bmn-flip-analyzer.php`** — Version bump to 0.17.0
+
+**Phase A Results:** 164 properties analyzed, 162 DQ'd, 2 viable. Rent estimates used city_rate (not MLS income).
+
+**Phase B: Multifamily-Specific Calculations**
+
+8. **`class-flip-rental-calculator.php`** — MLS income + MF defaults + per-unit metrics:
+   - **Tier 0 rent estimation:** `gross_income` from MLS as highest-priority rent source
+   - **`is_multifamily()` helper:** Detects from sub-type string (stripos for "Family"/"Duplex")
+   - **`apply_multifamily_defaults()`:** Higher vacancy (8%), insurance (1.0%), maintenance (1.5%), capex (7%)
+   - **Multifamily BRRRR defaults:** Lower LTV (70%), higher rate (7.5%)
+   - **Per-unit metrics:** price/unit, rent/unit, NOI/unit, sqft/unit, expense/unit
+
+**Phase B Results (163 multifamily properties):**
+- **Rent source distribution:** 75% mls_gross_income, 24% city_rate, 1% default_rate
+- **Cap rate stats:** Median 2.06%, 23 properties >5%, 58 >3%
+- **BRRRR DSCR stats:** Median 0.51, 14 properties >1.0, 4 >1.25
+- **Strategy distribution:** 74% rental, 23% BRRRR, 3% flip
+- **Top property:** MLS# 73450008 (579 American Legion Hwy, Boston) — 9-unit, 7.9% cap, 1.34 DSCR
+- **Phase A vs Phase B comparison:** MLS income corrected over-estimations (e.g., MLS# 73309673: city_rate said $12,776/mo, MLS income showed only $6,375/mo — cap rate corrected from 4.64% to -0.27%)
+
+**Files modified (6):**
+1. `bmn-flip-analyzer.php` — Version bump 0.16.0→0.17.0, description updated
+2. `includes/class-flip-property-fetcher.php` — Dynamic property_type WHERE, multifamily helpers
+3. `includes/class-flip-database.php` — Sub-types query includes Residential Income
+4. `includes/class-flip-arv-calculator.php` — `get_compatible_types()` for multifamily comp matching
+5. `includes/class-flip-analyzer.php` — Data enrichment, `get_unit_count()`, `get_gross_income()`
+6. `includes/class-flip-property-scorer.php` — Expansion cap for multifamily
+7. `includes/class-flip-rental-calculator.php` — Tier 0 rent, MF defaults, per-unit metrics, `is_multifamily()`
+
+**Key findings:**
+- Most multifamily in Greater Boston is overpriced relative to income (median 2% cap rate)
+- MLS gross_income is far more accurate than city $/sqft rate for multifamily (corrected 38% over-estimations)
+- 3-family properties in $1M-$1.5M range show best investment metrics
+- BRRRR strategy recommended for 23% of properties despite low DSCR — capital recovery is the advantage
 
 ---
 

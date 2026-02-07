@@ -15,6 +15,28 @@ if (!defined('ABSPATH')) {
 class Flip_Property_Fetcher {
 
     /**
+     * Check if any selected sub-types belong to the "Residential Income" property type.
+     * Uses name-based heuristic: any sub-type containing "Family" (except SFR) or "Duplex".
+     */
+    private static function includes_multifamily(array $sub_types): bool {
+        foreach ($sub_types as $st) {
+            if ($st === 'Single Family Residence') continue;
+            if (stripos($st, 'Family') !== false || stripos($st, 'Duplex') !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if any selected sub-types belong to the standard "Residential" property type.
+     */
+    private static function includes_residential(array $sub_types): bool {
+        $residential_types = ['Single Family Residence', 'Condominium', 'Townhouse', 'Stock Cooperative', 'Condex', 'Mobile Home'];
+        return !empty(array_intersect($sub_types, $residential_types));
+    }
+
+    /**
      * Build WHERE conditions and params from analysis filters.
      *
      * Single source of truth for all 17 filter blocks. Used by both
@@ -27,12 +49,24 @@ class Flip_Property_Fetcher {
     private static function build_filter_conditions(array $cities, array $filters): array {
         global $wpdb;
 
-        $where  = ["s.property_type = 'Residential'", "s.list_price > 0", "s.building_area_total > 0"];
+        // Determine property_type filter based on selected sub-types
+        $sub_types = !empty($filters['property_sub_types']) ? $filters['property_sub_types'] : ['Single Family Residence'];
+        $has_multifamily = self::includes_multifamily($sub_types);
+        $has_residential = self::includes_residential($sub_types);
+
+        if ($has_multifamily && $has_residential) {
+            $property_type_sql = "s.property_type IN ('Residential', 'Residential Income')";
+        } elseif ($has_multifamily) {
+            $property_type_sql = "s.property_type = 'Residential Income'";
+        } else {
+            $property_type_sql = "s.property_type = 'Residential'";
+        }
+
+        $where  = [$property_type_sql, "s.list_price > 0", "s.building_area_total > 0"];
         $params = [];
         $join   = '';
 
         // Property sub types
-        $sub_types = !empty($filters['property_sub_types']) ? $filters['property_sub_types'] : ['Single Family Residence'];
         $ph = implode(',', array_fill(0, count($sub_types), '%s'));
         $where[] = "s.property_sub_type IN ({$ph})";
         $params  = array_merge($params, $sub_types);

@@ -613,7 +613,8 @@ class Flip_Database {
         $table = $wpdb->prefix . 'bme_listing_summary';
         return $wpdb->get_col(
             "SELECT DISTINCT property_sub_type FROM {$table}
-             WHERE property_type = 'Residential' AND property_sub_type IS NOT NULL AND property_sub_type != ''
+             WHERE property_type IN ('Residential', 'Residential Income')
+               AND property_sub_type IS NOT NULL AND property_sub_type != ''
              ORDER BY property_sub_type"
         );
     }

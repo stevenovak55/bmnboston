@@ -715,6 +715,9 @@ class Flip_Analyzer {
             'city'                => $property->city ?? '',
             'actual_tax_rate'     => $fin['actual_tax_rate'] ?? null,
             'estimated_arv'       => $arv,
+            'property_sub_type'      => $property->property_sub_type ?? 'Single Family Residence',
+            'number_of_units_total'  => self::get_unit_count($property),
+            'gross_income'           => self::get_gross_income($property),
         ];
 
         $rental   = Flip_Rental_Calculator::calculate_rental($fin, $property_data);
@@ -738,6 +741,9 @@ class Flip_Analyzer {
             'city'                => $property->city ?? '',
             'actual_tax_rate'     => $fin['actual_tax_rate'] ?? null,
             'estimated_arv'       => (float) ($data['estimated_arv'] ?? 0),
+            'property_sub_type'      => $property->property_sub_type ?? 'Single Family Residence',
+            'number_of_units_total'  => self::get_unit_count($property),
+            'gross_income'           => self::get_gross_income($property),
         ];
 
         // Augment $fin with data not returned by calculate_financials()
@@ -757,6 +763,44 @@ class Flip_Analyzer {
     // Property fetching methods extracted to Flip_Property_Fetcher in v0.14.0
 
     // Disqualification methods extracted to Flip_Disqualifier in v0.14.0
+
+    /**
+     * Get unit count from bme_listing_details for multifamily properties.
+     * Only queries DB for Residential Income sub-types (performance guard).
+     */
+    private static function get_unit_count(object $property): ?int {
+        $sub_type = $property->property_sub_type ?? '';
+        if ($sub_type === 'Single Family Residence' || $sub_type === 'Condominium' || $sub_type === 'Townhouse') {
+            return 1;
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'bme_listing_details';
+        $units = $wpdb->get_var($wpdb->prepare(
+            "SELECT number_of_units_total FROM {$table} WHERE listing_id = %s LIMIT 1",
+            $property->listing_id
+        ));
+        return $units !== null ? (int) $units : null;
+    }
+
+    /**
+     * Get MLS gross income from bme_listing_financial for income properties.
+     * Only queries DB for Residential Income sub-types (performance guard).
+     */
+    private static function get_gross_income(object $property): ?float {
+        $sub_type = $property->property_sub_type ?? '';
+        if ($sub_type === 'Single Family Residence' || $sub_type === 'Condominium' || $sub_type === 'Townhouse') {
+            return null;
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'bme_listing_financial';
+        $income = $wpdb->get_var($wpdb->prepare(
+            "SELECT gross_income FROM {$table} WHERE listing_id = %s LIMIT 1",
+            $property->listing_id
+        ));
+        return ($income !== null && (float) $income > 0) ? (float) $income : null;
+    }
 
     /**
      * Get rehab cost per sqft based on property age.
