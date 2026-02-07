@@ -102,6 +102,37 @@ filters.longitude = nil
 
 ### WordPress Issues
 
+#### Dashboard page blank (header + footer, no content)
+
+**Cause:** Dashboard asset files (`mld-client-dashboard.js`, `mld-client-dashboard.css`) have 600 permissions after SCP upload. The web server can't read them, Vue.js never initializes, and `v-cloak` hides the entire template.
+
+**Symptoms:**
+- User is logged in (name visible in header) but dashboard content is blank
+- Only header and footer visible, no tabs/data between them
+- No visible error message on the page
+
+**Diagnosis:**
+```bash
+# Check file permissions
+SSHPASS='cFDIB2uPBj5LydX' sshpass -e ssh -o StrictHostKeyChecking=no -p 57105 stevenovakcom@35.236.219.140 \
+  "ls -la ~/public/wp-content/plugins/mls-listings-display/assets/js/dashboard/ && ls -la ~/public/wp-content/plugins/mls-listings-display/assets/css/dashboard/"
+
+# Check if files return 403
+curl -sI "https://bmnboston.com/wp-content/plugins/mls-listings-display/assets/js/dashboard/mld-client-dashboard.js" | head -1
+```
+
+**Fix:**
+```bash
+SSHPASS='cFDIB2uPBj5LydX' sshpass -e ssh -o StrictHostKeyChecking=no -p 57105 stevenovakcom@35.236.219.140 \
+  "chmod 644 ~/public/wp-content/plugins/mls-listings-display/assets/js/dashboard/*.js ~/public/wp-content/plugins/mls-listings-display/assets/css/dashboard/*.css"
+```
+
+**Key files:** `assets/js/dashboard/vue.global.prod.js`, `assets/js/dashboard/mld-client-dashboard.js`, `assets/css/dashboard/mld-client-dashboard.css`
+
+**Related:** Pitfall #45 in CLAUDE.md (File Permissions After Deployment)
+
+---
+
 #### CSS changes not appearing
 
 **Cause:** Kinsta CDN caches with 1-year max-age.
