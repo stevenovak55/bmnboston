@@ -2,9 +2,18 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies Single Family Residence flip candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis.
- * Version: 0.11.1
+ * Version: 0.12.0
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.12.0 - Dashboard JS Modular Refactor
+ * - Split monolithic flip-dashboard.js (1,565 lines) into 10 focused modules
+ * - Namespace pattern: window.FlipDashboard with wp_enqueue_script dependency chain
+ * - Modules: core, helpers, stats-chart, filters-table, detail-row, projections, ajax,
+ *   analysis-filters, cities, init
+ * - Bug fix: applyFilters() now delegates to getFilteredResults() (was duplicated logic)
+ * - PHP enqueue_assets() rewritten for 10-file dependency chain
+ * - Deleted old flip-dashboard.js
  *
  * Version 0.11.1 - Logic Audit Fixes (11 loopholes)
  * - ARV confidence discount: low/none confidence requires 25-50% higher profit/ROI to pass DQ
@@ -133,7 +142,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.11.1');
+define('FLIP_VERSION', '0.12.0');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 

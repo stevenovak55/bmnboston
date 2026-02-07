@@ -1,8 +1,8 @@
 # BMN Flip Analyzer - Development Log
 
-## Current Version: 0.11.1
+## Current Version: 0.12.0
 
-## Status: Phase 4.1 Complete (Renovation Potential Guard + Logic Audit) - Pre-Phase 5 (iOS)
+## Status: Phase 4.2 Complete (Dashboard JS Modular Refactor) - Pre-Phase 5 (iOS)
 
 ---
 
@@ -22,6 +22,7 @@
 | 7.8 | ARV & Financial Model Overhaul | Complete | Phase 3.8 - ARV fixes, financial model v2, risk analysis |
 | 7.9 | Pre-Analysis Filters + Force Analyze | Complete | Phase 4.0 - 17 filters, force DQ bypass, CLI flags, PDF v2 |
 | 8.0 | Renovation Potential Guard | Complete | Phase 4.1 - New construction DQ, inverted scoring, age rehab multiplier |
+| 8.5 | Dashboard JS Modular Refactor | Complete | Phase 4.2 - Split 1,565-line monolith into 10 focused modules |
 | 9 | iOS data model + API | Pending | Phase 5 - SwiftUI ViewModel |
 | 9 | iOS UI views | Pending | Phase 4 - FlipAnalyzerSheet |
 | 10 | Testing + tuning | Pending | Phase 5 - Score validation |
@@ -601,6 +602,71 @@ Five root causes identified: (1) year-built scoring was backwards (newer = highe
 - 216 Rangeway uses condo comps (ARV $577K, not SFR $1M+)
 - Market strength properly constrained with limited data (fix #7)
 
+### Session 13 - 2026-02-07
+
+**What was done (v0.12.0 — Dashboard JS Modular Refactor):**
+
+**Problem:** `flip-dashboard.js` was 1,565 lines handling 12+ responsibilities (charts, tables, filters, detail rows, projections, AJAX, cities, CSV export, etc.) in a single IIFE. Hard to navigate, maintain, and extend. Additionally, a latent bug: `applyFilters()` and `getFilteredResults()` duplicated identical filter+sort logic — if they diverge, expanded detail rows show the wrong property.
+
+- **10 new module files** (`assets/js/`):
+  - `flip-core.js` (20 lines) — namespace `window.FlipDashboard` + shared state
+  - `flip-helpers.js` (91 lines) — 6 utility functions
+  - `flip-stats-chart.js` (112 lines) — stats cards, Chart.js chart, city filter
+  - `flip-filters-table.js` (151 lines) — filters, table rendering, row toggle
+  - `flip-detail-row.js` (419 lines) — all expanded detail row builders
+  - `flip-projections.js` (152 lines) — ARV projection calculator + live updates
+  - `flip-ajax.js` (321 lines) — all AJAX operations + CSV export
+  - `flip-analysis-filters.js` (147 lines) — pre-analysis filters panel
+  - `flip-cities.js` (86 lines) — city tag management
+  - `flip-init.js` (75 lines) — init + event binding (loaded last)
+
+- **Namespace pattern:** `window.FlipDashboard` with sub-objects (`.helpers`, `.stats`, `.filters`, `.detail`, `.projections`, `.ajax`, `.analysisFilters`, `.cities`). Each module wraps in `(function (FD, $) { ... })(window.FlipDashboard, jQuery);`
+
+- **Bug fix:** `applyFilters()` now delegates to `getFilteredResults()`:
+  ```js
+  FD.filters.applyFilters = function () {
+      FD.filters.renderTable(FD.filters.getFilteredResults());
+  };
+  ```
+
+- **PHP changes** (`admin/class-flip-admin-dashboard.php`):
+  - `enqueue_assets()` rewritten: single script → 10-file dependency chain
+  - `wp_localize_script` target: `'flip-dashboard'` → `'flip-init'`
+
+- **Deleted:** `assets/js/flip-dashboard.js`
+
+- Version bump to 0.12.0
+
+**Architecture decision:** Used namespace object pattern with `wp_enqueue_script` dependency chains (no bundler needed). Compatible with WordPress asset pipeline, supports cache-busting via version parameter.
+
+**Verification (production):**
+- HTTP 200 on admin page, no JS console errors
+- All 10 JS files syntax-validated via `node --check`
+- Version `0.12.0` confirmed on production
+- CLI commands (`wp flip summary`, `wp flip results`) working
+- No new PHP errors in error log
+- File integrity: local and production line counts match exactly
+
+**Files modified (14):**
+1. `assets/js/flip-core.js` — **New**
+2. `assets/js/flip-helpers.js` — **New**
+3. `assets/js/flip-stats-chart.js` — **New**
+4. `assets/js/flip-filters-table.js` — **New**
+5. `assets/js/flip-detail-row.js` — **New**
+6. `assets/js/flip-projections.js` — **New**
+7. `assets/js/flip-ajax.js` — **New**
+8. `assets/js/flip-analysis-filters.js` — **New**
+9. `assets/js/flip-cities.js` — **New**
+10. `assets/js/flip-init.js` — **New**
+11. `assets/js/flip-dashboard.js` — **Deleted**
+12. `admin/class-flip-admin-dashboard.php` — Rewritten `enqueue_assets()`
+13. `bmn-flip-analyzer.php` — Version bump + changelog comment
+
+**Next steps:**
+1. Phase 5: iOS SwiftUI integration
+2. Consider further refactoring: `class-flip-pdf-generator.php` (1,907 lines)
+3. Consider further refactoring: `class-flip-analyzer.php` (1,335 lines)
+
 ---
 
 ## Scoring Weight Tuning Log
@@ -661,9 +727,18 @@ bmn-flip-analyzer/
 │       └── dashboard.php               # HTML template
 └── assets/
     ├── css/
-    │   └── flip-dashboard.css          # Dashboard styles
-    └── js/
-        └── flip-dashboard.js           # Chart.js, table, filters, export
+    │   └── flip-dashboard.css              # Dashboard styles
+    └── js/                                 # Modular dashboard JS (v0.12.0)
+        ├── flip-core.js                    # Namespace + shared state
+        ├── flip-helpers.js                 # Utility functions
+        ├── flip-stats-chart.js             # Stats cards + Chart.js
+        ├── flip-filters-table.js           # Client-side filters + table
+        ├── flip-detail-row.js              # Expanded detail row builders
+        ├── flip-projections.js             # ARV projection calculator
+        ├── flip-ajax.js                    # AJAX operations + CSV export
+        ├── flip-analysis-filters.js        # Pre-analysis filters panel
+        ├── flip-cities.js                  # City tag management
+        └── flip-init.js                    # Init + event binding (loaded last)
 ```
 
 ---
@@ -771,6 +846,44 @@ bmn-flip-analyzer/
   10. Dashboard: sensitivity table, risk grade column, annualized ROI, lead paint badge
   11. REST API: 6 new fields, updated sort options
   12. DB migration: 6 new columns
+
+### v0.10.0 (Complete)
+- **Pre-Analysis Filters + Force Analyze + PDF v2**:
+  1. 17 configurable pre-analysis filters stored as WP option
+  2. Collapsible "Analysis Filters" panel on dashboard with save/reset
+  3. CLI filter override flags (14 flags, don't persist)
+  4. Force Full Analysis button on DQ'd rows (bypasses all DQ checks)
+  5. PDF report v2: photo thumbnails, circular gauge, charts, comp cards
+
+### v0.11.0 (Complete)
+- **Renovation Potential Guard**:
+  1. New construction auto-DQ: properties ≤5 years old disqualified unless distress signals
+  2. Inverted year-built scoring → "renovation need" score (sweet spot 41-70 years)
+  3. Age-based rehab condition multiplier: 0.10x (≤5yr) to 1.0x (21+yr)
+  4. Enhanced remarks: weighted keywords (2-5 pts), cap ±25, new condition terms
+  5. Property condition from bme_listing_details as supplementary DQ signal
+
+### v0.11.1 (Complete)
+- **Logic Audit Fixes** — 11 loopholes patched across all scoring/calculation files
+  - ARV confidence discount, pre-DQ rehab multipliers, scope-based contingency/hold period
+  - Market strength data guard, distress detection hardening, post-multiplier rehab floor
+  - Distressed comp downweighting, expansion potential cap for condos
+
+### v0.12.0 (Complete)
+- **Dashboard JS Modular Refactor** — split `flip-dashboard.js` (1,565 lines) into 10 focused modules:
+  1. `flip-core.js` — namespace `window.FlipDashboard` + shared state
+  2. `flip-helpers.js` — 6 utility functions (formatCurrency, scoreClass, etc.)
+  3. `flip-stats-chart.js` — stats cards, Chart.js chart, city filter
+  4. `flip-filters-table.js` — client-side filters, table rendering, row toggle
+  5. `flip-detail-row.js` — expanded detail row builders (scores, financials, comps, photos)
+  6. `flip-projections.js` — ARV projection calculator + live updates
+  7. `flip-ajax.js` — AJAX operations (run analysis, PDF, force analyze, CSV export)
+  8. `flip-analysis-filters.js` — pre-analysis filters panel (save/reset)
+  9. `flip-cities.js` — city tag management (add/remove/save)
+  10. `flip-init.js` — initialization + event binding (loaded last)
+- Bug fix: `applyFilters()` now delegates to `getFilteredResults()` (was duplicated filter+sort logic)
+- PHP: `enqueue_assets()` rewritten with 10-file dependency chain, `wp_localize_script` target updated
+- Deleted old `flip-dashboard.js`
 
 ### v0.9.0 (Planned)
 - iOS SwiftUI integration

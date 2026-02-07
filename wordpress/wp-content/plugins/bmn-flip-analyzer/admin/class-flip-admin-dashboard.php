@@ -47,40 +47,77 @@ class Flip_Admin_Dashboard {
 
     /**
      * Enqueue dashboard CSS/JS only on our admin page.
+     *
+     * v0.12.0: Split monolithic flip-dashboard.js into 10 focused modules.
+     * Load order enforced via wp_enqueue_script dependency arrays.
      */
     public static function enqueue_assets(string $hook): void {
         if ($hook !== self::$page_hook) {
             return;
         }
 
-        // Chart.js from CDN
-        wp_enqueue_script(
-            'chartjs',
-            'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js',
-            [],
-            '4.4.1',
-            true
-        );
+        $url = FLIP_PLUGIN_URL . 'assets/js/';
+        $ver = FLIP_VERSION;
 
-        // Dashboard JS
-        wp_enqueue_script(
-            'flip-dashboard',
-            FLIP_PLUGIN_URL . 'assets/js/flip-dashboard.js',
-            ['jquery', 'chartjs'],
-            FLIP_VERSION,
-            true
-        );
+        // Chart.js from CDN
+        wp_enqueue_script('chartjs',
+            'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js',
+            [], '4.4.1', true);
+
+        // Core namespace (no deps)
+        wp_enqueue_script('flip-core',
+            $url . 'flip-core.js', [], $ver, true);
+
+        // Helpers (pure functions)
+        wp_enqueue_script('flip-helpers',
+            $url . 'flip-helpers.js', ['flip-core'], $ver, true);
+
+        // Stats & Chart
+        wp_enqueue_script('flip-stats-chart',
+            $url . 'flip-stats-chart.js', ['flip-core', 'flip-helpers', 'chartjs'], $ver, true);
+
+        // Filters & Table
+        wp_enqueue_script('flip-filters-table',
+            $url . 'flip-filters-table.js', ['flip-core', 'flip-helpers', 'jquery'], $ver, true);
+
+        // Detail Row
+        wp_enqueue_script('flip-detail-row',
+            $url . 'flip-detail-row.js', ['flip-core', 'flip-helpers'], $ver, true);
+
+        // Projections
+        wp_enqueue_script('flip-projections',
+            $url . 'flip-projections.js', ['flip-core', 'flip-helpers', 'jquery'], $ver, true);
+
+        // AJAX Actions
+        wp_enqueue_script('flip-ajax',
+            $url . 'flip-ajax.js', ['flip-core', 'flip-helpers', 'flip-filters-table', 'jquery'], $ver, true);
+
+        // Analysis Filters Panel
+        wp_enqueue_script('flip-analysis-filters',
+            $url . 'flip-analysis-filters.js', ['flip-core', 'flip-helpers', 'jquery'], $ver, true);
+
+        // City Management
+        wp_enqueue_script('flip-cities',
+            $url . 'flip-cities.js', ['flip-core', 'flip-helpers', 'jquery'], $ver, true);
+
+        // Init (runs last, binds everything)
+        wp_enqueue_script('flip-init',
+            $url . 'flip-init.js',
+            ['flip-core', 'flip-helpers', 'flip-stats-chart', 'flip-filters-table',
+             'flip-detail-row', 'flip-projections', 'flip-ajax',
+             'flip-analysis-filters', 'flip-cities', 'jquery'],
+            $ver, true);
 
         // Dashboard CSS
         wp_enqueue_style(
             'flip-dashboard',
             FLIP_PLUGIN_URL . 'assets/css/flip-dashboard.css',
             [],
-            FLIP_VERSION
+            $ver
         );
 
-        // Pass initial data to JS
-        wp_localize_script('flip-dashboard', 'flipData', [
+        // Pass initial data to JS (attached to last script)
+        wp_localize_script('flip-init', 'flipData', [
             'ajaxUrl'          => admin_url('admin-ajax.php'),
             'nonce'            => wp_create_nonce('flip_dashboard'),
             'siteUrl'          => home_url(),
