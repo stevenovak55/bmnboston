@@ -333,21 +333,32 @@ Uses OpenStreetMap Overpass API to classify roads by highway tag:
 
 **Query method:** First tries street-name-based query for accuracy, falls back to coordinate-based nearest road.
 
-## Auto-Disqualifiers
+## Auto-Disqualifiers (v0.18.0 Two-Tier System)
 
-**Pre-calculation:**
-- 0 comps within 1 mile
+**Universal DQ — blocks ALL strategies (flip, rental, BRRRR):**
+- `list_price < $100K` — likely lease or land anomaly
+- 0 comps within 1 mile — cannot estimate ARV
+- `building_area_total < 600` sqft — too small for any strategy
+
+**Flip-specific DQ — only blocks flip (rental/BRRRR may still be viable):**
 - **Recent construction (v0.11.0):** age ≤5 years auto-DQ unless distress keywords in remarks or property_condition indicates poor
 - **Pristine condition (v0.11.0):** property_condition "New Construction"/"Excellent" on properties <15 years old
 - `list_price > ARV * max_price_arv` (market-adaptive: 0.78 cold → 0.92 very_hot)
 - Default rehab estimate > 35% of ARV
-- `building_area_total < 600` sqft
 
-**Post-calculation (v0.7.0 — market-adaptive):**
+**Flip post-calculation DQ (v0.7.0 — market-adaptive):**
 - Financed profit < min_profit (market-adaptive: $10K very_hot → $35K cold; base $25K)
 - Financed ROI < min_roi (market-adaptive: 5% very_hot → 22% cold; base 15%)
 - Thresholds computed via `get_adaptive_thresholds(market_strength, avg_sale_to_list, arv_confidence)`
 - Low-confidence guard: ARV confidence low/none uses balanced bounds as floor
+
+**Rental viability (v0.18.0):** cap_rate >= 3.0% AND monthly_cash_flow > -$200
+**BRRRR viability (v0.18.0):** DSCR >= 0.9 AND cash_left_in_deal < total_cash_in × 2
+
+**Composite DQ rule (v0.18.0):**
+- `disqualified = !(flip_viable || rental_viable || brrrr_viable)` — only DQ if ALL strategies fail
+- `total_score = max(viable strategy scores)` — represents best investment opportunity
+- `best_strategy` = highest scoring viable strategy (flip/rental/brrrr)
 
 **Near-viable (v0.7.0):**
 - Properties within 80% of adjusted min_profit AND min_roi thresholds
