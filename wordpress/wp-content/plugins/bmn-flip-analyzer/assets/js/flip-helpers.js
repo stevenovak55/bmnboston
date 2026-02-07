@@ -88,4 +88,34 @@
         return div.innerHTML;
     };
 
+    FD.helpers.formatPercent = function (num, decimals) {
+        if (num === null || num === undefined || isNaN(num)) return '--';
+        return num.toFixed(decimals !== undefined ? decimals : 1) + '%';
+    };
+
+    FD.helpers.formatMonthly = function (num) {
+        if (num === null || num === undefined || isNaN(num)) return '--';
+        return FD.helpers.formatCurrency(num) + '/mo';
+    };
+
+    FD.helpers.strategyBadge = function (strategy) {
+        if (!strategy || !strategy.recommended) return '';
+        var colors = {
+            'flip': '#dc3545',
+            'rental': '#198754',
+            'brrrr': '#0d6efd',
+        };
+        var labels = {
+            'flip': 'Flip',
+            'rental': 'Rental Hold',
+            'brrrr': 'BRRRR',
+        };
+        var key = strategy.recommended;
+        var color = colors[key] || '#6c757d';
+        var label = labels[key] || key;
+        var score = strategy.scores && strategy.scores[key] ? strategy.scores[key] : '';
+        return '<span class="flip-strategy-badge" style="background:' + color + ';color:#fff;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600">'
+            + '★ ' + label + (score ? ' (' + score + ')' : '') + '</span>';
+    };
+
 })(window.FlipDashboard, jQuery);

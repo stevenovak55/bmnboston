@@ -1,8 +1,8 @@
 # BMN Flip Analyzer - Development Log
 
-## Current Version: 0.13.3
+## Current Version: 0.16.0
 
-## Status: Phase 4.3 Complete (Saved Reports & Monitor System) - Pre-Phase 5 (iOS)
+## Status: Phase 4.7 Complete (Multi-Exit Strategy Analysis) - Pre-Phase 5 (iOS)
 
 ---
 
@@ -24,6 +24,9 @@
 | 8.0 | Renovation Potential Guard | Complete | Phase 4.1 - New construction DQ, inverted scoring, age rehab multiplier |
 | 8.5 | Dashboard JS Modular Refactor | Complete | Phase 4.2 - Split 1,565-line monolith into 10 focused modules |
 | 9.0 | Saved Reports & Monitor System | Complete | Phase 4.3 - Auto-save reports, load/rerun/delete, cron monitors |
+| 9.1 | Code Refactoring | Complete | Phase 4.4 - Extract 6 focused classes from large files |
+| 9.2 | Email Polish & Scoring Weights | Complete | Phase 4.5 - Branded emails, digest, notification levels, weights admin UI |
+| 9.3 | Multi-Exit Strategy Analysis | Complete | Phase 4.7 - Rental Hold, BRRRR, strategy comparison |
 | 9.5 | iOS data model + API | Pending | Phase 5 - SwiftUI ViewModel |
 | 9 | iOS UI views | Pending | Phase 4 - FlipAnalyzerSheet |
 | 10 | Testing + tuning | Pending | Phase 5 - Score validation |
@@ -511,6 +514,102 @@ Five root causes identified: (1) year-built scoring was backwards (newer = highe
 2. Verify 48 Village St is DQ'd, 30 Taylor has reduced scores
 3. Verify typical 1970s properties still score well
 4. Phase 5: iOS SwiftUI integration
+
+### Session 19 - 2026-02-07
+
+**What was done (v0.14.0 — Code Refactoring):**
+
+- Extracted 6 focused classes from large files to improve maintainability:
+  1. `Flip_Property_Fetcher` from `Flip_Analyzer` — eliminates 254-line filter duplication via shared `build_filter_conditions()`
+  2. `Flip_Disqualifier` from `Flip_Analyzer` — DQ checks, distress detection, condition logic
+  3. `Flip_PDF_Components` from `Flip_PDF_Generator` — rendering, formatting, color constants
+  4. `Flip_PDF_Charts` from `Flip_PDF_Generator` — gauge, bar chart, sensitivity chart
+  5. `Flip_PDF_Images` from `Flip_PDF_Generator` — photo download, strip, comp cards
+  6. `Flip_Report_AJAX` from `Flip_Admin_Dashboard` — report/monitor AJAX handlers
+- File size reductions: Analyzer 1,335→922, PDF Generator 2,170→1,245, Dashboard 807→548
+- No functional changes — pure refactoring
+
+### Session 20 - 2026-02-07
+
+**What was done (v0.15.0 — Email Polish + Scoring Weight Tuning):**
+
+- Branded HTML monitor emails with 600px responsive container, colored header bands
+- MLD unified footer via `class_exists()` guard, dynamic from address via `MLD_Email_Utilities`
+- Digest emails: periodic summary with stat cards and per-monitor table
+- Notification levels: per-monitor `notification_level` (viable_only, viable_and_near, all)
+- Dynamic scoring weights: all weights read from `bmn_flip_scoring_weights` WP option
+- Admin UI weights panel: collapsible card with live sum validation, save/reset
+- Configurable financial thresholds (min profit, min ROI) via admin panel
+
+### Session 21 - 2026-02-07
+
+**What was done (v0.16.0 — Multi-Exit Strategy Analysis):**
+
+**Goal:** Transform the tool from a "flip screener" into an "investment decision platform" by adding Rental Hold and BRRRR analysis alongside existing flip analysis.
+
+**Phase 1: Database + Calculator Foundation**
+- `class-flip-database.php`: Added `migrate_v0160()` for `rental_analysis_json LONGTEXT` column. Added rental defaults getter/setter (`bmn_flip_rental_defaults` WP option) with 11 configurable parameters.
+- `class-flip-rental-calculator.php` (**New**, ~663 lines): Complete rental hold + BRRRR financial calculator:
+  - Three-tier rent estimation: user override → city-level $/sqft lookup (22 MA cities) → value-based 0.7% rule
+  - Rental hold: NOI, cap rate, cash-on-cash, DSCR, GRM, operating expenses breakdown (6 categories)
+  - Tax benefits: 27.5-year IRS depreciation schedule with marginal tax savings
+  - Multi-year projections at 1/5/10/20 years (appreciation + rent growth + cumulative cash flow)
+  - BRRRR: refinance modeling (amortization formula), cash out, cash left in deal, infinite return detection
+  - Strategy recommendation: 0-100 scoring for flip/rental/BRRRR with human-readable reasoning
+
+**Phase 2: Pipeline Integration**
+- `class-flip-analyzer.php`: Added `attach_rental_analysis()` method called at all 3 insertion points (DQ'd, viable, force-analyze). Added `actual_tax_rate` to `calculate_financials()` return.
+- `bmn-flip-analyzer.php`: Version bump 0.15.0→0.16.0, require rental calculator, migration call.
+
+**Phase 3: Dashboard UI**
+- `flip-core.js`: Added `rental: {}` namespace
+- `flip-helpers.js`: Added `formatPercent()`, `formatMonthly()`, `strategyBadge()` helpers
+- `flip-detail-row.js`: Added tab system (Flip/Rental/BRRRR) wrapping existing content, strategy badge in toolbar
+- `flip-rental.js` (**New**, ~437 lines): Rental Hold and BRRRR tab pane builders with 3-column layouts:
+  - Rental: income/expenses, metrics/tax/cashflow, multi-year projections
+  - BRRRR: visual step flow (Buy→Rehab→Rent→Refinance→Repeat), refi details, post-refi cash flow
+- `flip-strategy.css` (**New**, ~229 lines): Tab styles, BRRRR step flow, rental defaults grid, comparison table
+- `flip-init.js`: Tab click delegation, rental defaults initialization
+
+**Phase 4: Strategy Comparison Sub-Page**
+- `admin/views/strategy-comparison.php` (**New**): Property selector, side-by-side 3-column comparison table
+- `flip-strategy-comparison.js` (**New**, ~191 lines): Populate from flipData, color-coded best/worst cells
+- `class-flip-admin-dashboard.php`: Registered sub-page, `render_comparison()`, `enqueue_comparison_assets()`
+
+**Phase 5: Rental Defaults Admin Panel**
+- `admin/views/dashboard.php`: Collapsible "Rental & BRRRR Defaults" card with 3 sections (operating assumptions, growth/tax, BRRRR refi terms)
+- AJAX handlers: `flip_save_rental_defaults`, `flip_reset_rental_defaults`
+
+**Phase 6: Key Mismatch Fixes**
+- Comprehensive audit of PHP return structures vs JS expectations
+- Fixed 15+ key naming mismatches across `flip-rental.js` and `flip-strategy-comparison.js`
+- Added handling for PHP associative arrays (projections keyed by year) in JS
+- Computed derived metrics (capital_recovery_pct, equity_to_investment_pct) client-side from available data
+
+**Files created (5):**
+1. `includes/class-flip-rental-calculator.php` — Rental/BRRRR calculator + strategy recommendation
+2. `admin/views/strategy-comparison.php` — Strategy comparison sub-page view
+3. `assets/js/flip-rental.js` — Rental/BRRRR tab pane builders + defaults panel
+4. `assets/js/flip-strategy-comparison.js` — Strategy comparison page JS
+5. `assets/css/flip-strategy.css` — Strategy tab/comparison/BRRRR styles
+
+**Files modified (9):**
+1. `bmn-flip-analyzer.php` — Version bump, require, migration
+2. `includes/class-flip-analyzer.php` — Pipeline integration (3 insertion points)
+3. `includes/class-flip-database.php` — Migration, rental defaults getter/setter
+4. `admin/class-flip-admin-dashboard.php` — Sub-page, AJAX handlers, asset enqueue, format_result
+5. `admin/views/dashboard.php` — Rental defaults panel
+6. `assets/js/flip-core.js` — rental namespace
+7. `assets/js/flip-helpers.js` — formatPercent, formatMonthly, strategyBadge
+8. `assets/js/flip-detail-row.js` — Tab system, strategy badge
+9. `assets/js/flip-init.js` — Tab delegation, initDefaults
+
+**Key design decisions:**
+- JSON column (not 20+ new columns) — matches existing patterns, flexible schema
+- Rental calc reuses `$flip_financials` — single source of truth for property costs
+- Calculate for ALL properties (viable + DQ'd) — a flip DQ may be an excellent rental
+- Tab system in detail row — minimal UI disruption, existing content untouched
+- Separate comparison page — deep analysis deserves dedicated space
 
 ---
 
@@ -1062,41 +1161,54 @@ Manage via: `wp flip config --list-cities` / `--add-city=` / `--remove-city=`
 
 ```
 bmn-flip-analyzer/
-├── bmn-flip-analyzer.php           # Main plugin file
-├── CLAUDE.md                       # AI assistant reference
-├── DEVELOPMENT.md                  # This file
+├── bmn-flip-analyzer.php              # Main plugin file
+├── CLAUDE.md                          # AI assistant reference
+├── DEVELOPMENT.md                     # This file
 ├── includes/
-│   ├── class-flip-analyzer.php     # Orchestrator
+│   ├── class-flip-analyzer.php        # Orchestrator (~922 lines)
 │   ├── class-flip-arv-calculator.php
 │   ├── class-flip-financial-scorer.php
 │   ├── class-flip-property-scorer.php
 │   ├── class-flip-location-scorer.php
 │   ├── class-flip-market-scorer.php
-│   ├── class-flip-cli.php          # WP-CLI commands
+│   ├── class-flip-property-fetcher.php   # Property fetching + filter builder (v0.14.0)
+│   ├── class-flip-disqualifier.php       # DQ checks + distress detection (v0.14.0)
+│   ├── class-flip-rental-calculator.php  # Rental Hold + BRRRR calculator (v0.16.0)
+│   ├── class-flip-cli.php             # WP-CLI commands
 │   ├── class-flip-database.php
-│   ├── class-flip-monitor-runner.php   # Cron-based monitor system (v0.13.0)
+│   ├── class-flip-monitor-runner.php  # Cron-based monitor system (v0.13.0)
 │   ├── class-flip-photo-analyzer.php  # Claude Vision API
+│   ├── class-flip-pdf-generator.php   # TCPDF-based PDF (~1,245 lines)
+│   ├── class-flip-pdf-components.php  # PDF rendering, colors (v0.14.0)
+│   ├── class-flip-pdf-charts.php      # PDF gauge, bar chart (v0.14.0)
+│   ├── class-flip-pdf-images.php      # PDF photos, comp cards (v0.14.0)
 │   ├── class-flip-rest-api.php        # REST API endpoints
 │   └── class-flip-road-analyzer.php   # OSM road type detection
-├── admin/                          # Admin dashboard (v0.4.0)
-│   ├── class-flip-admin-dashboard.php  # Menu, AJAX handlers, data
+├── admin/
+│   ├── class-flip-admin-dashboard.php # Menu, AJAX handlers, data
+│   ├── class-flip-report-ajax.php     # Report/monitor AJAX (v0.14.0)
 │   └── views/
-│       └── dashboard.php               # HTML template
+│       ├── dashboard.php              # Main dashboard HTML template
+│       └── strategy-comparison.php    # Strategy comparison sub-page (v0.16.0)
 └── assets/
     ├── css/
-    │   └── flip-dashboard.css              # Dashboard styles
-    └── js/                                 # Modular dashboard JS (v0.12.0)
-        ├── flip-core.js                    # Namespace + shared state
-        ├── flip-helpers.js                 # Utility functions
-        ├── flip-stats-chart.js             # Stats cards + Chart.js
-        ├── flip-filters-table.js           # Client-side filters + table
-        ├── flip-detail-row.js              # Expanded detail row builders
-        ├── flip-projections.js             # ARV projection calculator
-        ├── flip-ajax.js                    # AJAX operations + CSV export
-        ├── flip-analysis-filters.js        # Pre-analysis filters panel
-        ├── flip-cities.js                  # City tag management
-        ├── flip-reports.js                 # Saved reports + monitors (v0.13.0)
-        └── flip-init.js                    # Init + event binding (loaded last)
+    │   ├── flip-dashboard.css         # Dashboard styles
+    │   └── flip-strategy.css          # Strategy tab/comparison styles (v0.16.0)
+    └── js/
+        ├── flip-core.js               # Namespace + shared state
+        ├── flip-helpers.js            # Utility functions
+        ├── flip-stats-chart.js        # Stats cards + Chart.js
+        ├── flip-filters-table.js      # Client-side filters + table
+        ├── flip-detail-row.js         # Expanded detail row + strategy tabs
+        ├── flip-projections.js        # ARV projection calculator
+        ├── flip-ajax.js               # AJAX operations + CSV export
+        ├── flip-analysis-filters.js   # Pre-analysis filters panel
+        ├── flip-cities.js             # City tag management
+        ├── flip-reports.js            # Saved reports + monitors (v0.13.0)
+        ├── flip-scoring-weights.js    # Scoring weights admin UI (v0.15.0)
+        ├── flip-rental.js             # Rental/BRRRR pane builders (v0.16.0)
+        ├── flip-strategy-comparison.js # Strategy comparison page (v0.16.0)
+        └── flip-init.js               # Init + event binding (loaded last)
 ```
 
 ---
@@ -1293,8 +1405,39 @@ bmn-flip-analyzer/
   4. Monitor email shows "N/A" for failed PDFs instead of blank cells
   5. Monitor email includes footer note when PDF generation fails
 
-### v0.14.0 (Planned)
-- iOS SwiftUI integration
+### v0.14.0 (Complete)
+- **Code Refactoring** — 6 focused classes extracted from large files:
+  1. `Flip_Property_Fetcher` — shared filter builder, eliminates 254-line duplication
+  2. `Flip_Disqualifier` — DQ checks, distress detection, condition logic
+  3. `Flip_PDF_Components` — rendering, formatting, color constants
+  4. `Flip_PDF_Charts` — gauge, bar chart, sensitivity chart
+  5. `Flip_PDF_Images` — photo download, strip, comp cards
+  6. `Flip_Report_AJAX` — report/monitor AJAX handlers
+- File size reductions: Analyzer 1,335→922, PDF Generator 2,170→1,245, Dashboard 807→548
+
+### v0.15.0 (Complete)
+- **Email Polish + Scoring Weight Tuning**:
+  1. Branded HTML monitor emails (600px responsive, colored header bands)
+  2. MLD unified footer + dynamic from address via `MLD_Email_Utilities`
+  3. Digest emails with stat cards and per-monitor summary
+  4. Per-monitor notification levels (viable_only, viable_and_near, all)
+  5. Dynamic scoring weights via `bmn_flip_scoring_weights` WP option
+  6. Admin UI scoring weights panel with live sum validation, save/reset
+  7. Configurable financial thresholds (min profit, min ROI)
+  8. New JS module: `flip-scoring-weights.js`
+
+### v0.16.0 (Complete)
+- **Multi-Exit Strategy Analysis** — transforms tool from flip screener to investment decision platform:
+  1. Rental Hold analysis: NOI, cap rate, cash-on-cash, DSCR, GRM, operating expenses, tax benefits (27.5yr depreciation), multi-year projections
+  2. BRRRR analysis: Buy-Rehab-Rent-Refinance-Repeat with refinance modeling, cash out, infinite return detection
+  3. Strategy recommendation engine: 0-100 scoring per strategy with reasoning
+  4. Three-tier rent estimation: user override → city lookup (22 MA cities) → 0.7% rule
+  5. Tab system in detail rows (Flip / Rental Hold / BRRRR) with strategy badge
+  6. Dedicated Strategy Comparison sub-page with side-by-side metrics table
+  7. Admin Rental & BRRRR Defaults panel (11 configurable parameters)
+  8. All properties get rental/BRRRR analysis (DQ'd flip may be excellent rental)
+  9. New DB column: `rental_analysis_json LONGTEXT`
+  10. 5 new files, 9 modified files
 
 ### v1.0.0 (Planned)
 - Fully tested, tuned, production-ready

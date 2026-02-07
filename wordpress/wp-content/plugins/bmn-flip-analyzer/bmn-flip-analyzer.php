@@ -2,9 +2,20 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies Single Family Residence flip candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis.
- * Version: 0.15.0
+ * Version: 0.16.0
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.16.0 - Multi-Exit Strategy Analysis
+ * - Rental Hold analysis: NOI, cap rate, cash-on-cash return, DSCR, GRM, tax benefits
+ * - BRRRR analysis: refinance modeling, cash-left-in-deal, post-refi cash flow
+ * - Strategy recommendation engine: scores Flip vs Rental vs BRRRR (0-100)
+ * - Three-tier rent estimation: user override → city $/sqft lookup → value-based fallback
+ * - Multi-year projections: 1/5/10/20 year equity + cash flow with appreciation + rent growth
+ * - New DB column: rental_analysis_json on wp_bmn_flip_scores
+ * - New WP option: bmn_flip_rental_defaults (vacancy, mgmt, appreciation, refi terms)
+ * - New class: Flip_Rental_Calculator (includes/class-flip-rental-calculator.php)
+ * - Rental/BRRRR calculated for ALL properties (viable + DQ'd) — a bad flip may be a great rental
  *
  * Version 0.15.0 - Email Enhancements + Scoring Weight Tuning
  * - Polished monitor emails: responsive HTML wrapper, MLD unified footer/branding (with fallback)
@@ -199,7 +210,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.15.0');
+define('FLIP_VERSION', '0.16.0');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -213,6 +224,7 @@ require_once FLIP_PLUGIN_PATH . 'includes/class-flip-road-analyzer.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-market-scorer.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-property-fetcher.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-disqualifier.php';
+require_once FLIP_PLUGIN_PATH . 'includes/class-flip-rental-calculator.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-analyzer.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-photo-analyzer.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-monitor-runner.php';
@@ -266,6 +278,7 @@ register_activation_hook(__FILE__, function () {
     Flip_Database::migrate_v0110();
     Flip_Database::migrate_v0130();
     Flip_Database::migrate_v0150();
+    Flip_Database::migrate_v0160();
 
     // Schedule monitor cron if not already scheduled
     if (!wp_next_scheduled('bmn_flip_monitor_check')) {
@@ -301,6 +314,10 @@ add_action('plugins_loaded', function () {
     if (version_compare($db_version, '0.15.0', '<')) {
         Flip_Database::migrate_v0150();
         update_option('bmn_flip_db_version', '0.15.0');
+    }
+    if (version_compare($db_version, '0.16.0', '<')) {
+        Flip_Database::migrate_v0160();
+        update_option('bmn_flip_db_version', '0.16.0');
     }
 });
 

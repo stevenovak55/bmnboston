@@ -430,6 +430,86 @@ if (!defined('ABSPATH')) {
         </div>
     </div>
 
+    <!-- Rental & BRRRR Defaults -->
+    <div class="flip-card flip-rd-card">
+        <div class="flip-card-header flip-rd-header" id="flip-rd-toggle">
+            <h2><span class="dashicons dashicons-building"></span> Rental & BRRRR Defaults</h2>
+            <span class="flip-rd-arrow dashicons dashicons-arrow-down-alt2"></span>
+        </div>
+        <div class="flip-card-body flip-rd-body" id="flip-rd-body" style="display:none;">
+            <p class="description">These defaults are used when calculating rental hold and BRRRR analysis. Changes apply to future analysis runs.</p>
+
+            <div class="flip-rd-grid">
+                <!-- Operating Assumptions -->
+                <div class="flip-rd-section">
+                    <h3>Operating Assumptions</h3>
+                    <div class="flip-sw-row">
+                        <label>Vacancy Rate (%)</label>
+                        <input type="number" id="rd-vacancy-rate" step="0.5" min="0" max="20" class="flip-sw-input">
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Management Fee (%)</label>
+                        <input type="number" id="rd-management-fee" step="0.5" min="0" max="20" class="flip-sw-input">
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Maintenance Rate (%)</label>
+                        <input type="number" id="rd-maintenance-rate" step="0.1" min="0" max="5" class="flip-sw-input">
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>CapEx Reserve (%)</label>
+                        <input type="number" id="rd-capex-reserve" step="0.5" min="0" max="15" class="flip-sw-input">
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Insurance Rate (%)</label>
+                        <input type="number" id="rd-insurance-rate" step="0.1" min="0" max="3" class="flip-sw-input">
+                    </div>
+                </div>
+
+                <!-- Growth Assumptions -->
+                <div class="flip-rd-section">
+                    <h3>Growth & Tax</h3>
+                    <div class="flip-sw-row">
+                        <label>Appreciation Rate (%/yr)</label>
+                        <input type="number" id="rd-appreciation-rate" step="0.5" min="0" max="10" class="flip-sw-input">
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Rent Growth Rate (%/yr)</label>
+                        <input type="number" id="rd-rent-growth" step="0.5" min="0" max="10" class="flip-sw-input">
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Marginal Tax Rate (%)</label>
+                        <input type="number" id="rd-tax-rate" step="1" min="0" max="50" class="flip-sw-input">
+                    </div>
+                </div>
+
+                <!-- BRRRR Refinance Terms -->
+                <div class="flip-rd-section">
+                    <h3>BRRRR Refinance Terms</h3>
+                    <div class="flip-sw-row">
+                        <label>Refi LTV (%)</label>
+                        <input type="number" id="rd-refi-ltv" step="1" min="50" max="85" class="flip-sw-input">
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Refi Rate (%)</label>
+                        <input type="number" id="rd-refi-rate" step="0.1" min="3" max="12" class="flip-sw-input">
+                    </div>
+                    <div class="flip-sw-row">
+                        <label>Refi Term (years)</label>
+                        <input type="number" id="rd-refi-term" step="5" min="10" max="30" class="flip-sw-input">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flip-sw-actions">
+                <button id="flip-save-rental-defaults" class="button button-primary">
+                    <span class="dashicons dashicons-saved"></span> Save Rental Defaults
+                </button>
+                <button id="flip-reset-rental-defaults" class="button">Reset to Defaults</button>
+                <span id="flip-rd-status" class="flip-sw-status"></span>
+            </div>
+        </div>
+    </div>
+
     <!-- City Breakdown Chart -->
     <div class="flip-card">
         <div class="flip-card-header">

@@ -1784,7 +1784,7 @@ Quick reference for current versions:
 | BMN Schools | v0.6.39 |
 | SN Appointments | v1.10.4 |
 | Exclusive Listings | v1.5.3 |
-| BMN Flip Analyzer | v0.15.0 |
+| BMN Flip Analyzer | v0.16.0 |
 
 ---
 

@@ -972,4 +972,78 @@ class Flip_Database {
             $wpdb->query("ALTER TABLE {$reports_table} ADD COLUMN notification_level VARCHAR(20) DEFAULT 'viable_only' AFTER notification_email");
         }
     }
+
+    // ---------------------------------------------------------------
+    // v0.16.0: Multi-Exit Strategy Analysis
+    // ---------------------------------------------------------------
+
+    /**
+     * Add rental_analysis_json column to scores table.
+     */
+    public static function migrate_v0160(): void {
+        global $wpdb;
+        $table = self::table_name();
+
+        $cols = $wpdb->get_col("SHOW COLUMNS FROM {$table}", 0);
+
+        if (!in_array('rental_analysis_json', $cols, true)) {
+            $wpdb->query("ALTER TABLE {$table} ADD COLUMN rental_analysis_json LONGTEXT DEFAULT NULL AFTER photo_analysis_json");
+        }
+    }
+
+    /**
+     * Default rental calculation parameters.
+     */
+    public static function get_default_rental_params(): array {
+        return [
+            'vacancy_rate'        => 0.05,   // 5%
+            'management_fee_rate' => 0.08,   // 8% of gross rent
+            'maintenance_rate'    => 0.01,   // 1% of property value/year
+            'capex_reserve_rate'  => 0.05,   // 5% of gross rent
+            'insurance_rate'      => 0.006,  // 0.6% of property value/year
+            'appreciation_rate'   => 0.03,   // 3% annual (MA historical)
+            'rent_growth_rate'    => 0.02,   // 2% annual
+            'marginal_tax_rate'   => 0.32,   // Assumed marginal tax bracket
+            'brrrr_refi_ltv'      => 0.75,   // 75% LTV on refi
+            'brrrr_refi_rate'     => 0.072,  // 7.2% conventional 30yr
+            'brrrr_refi_term'     => 30,     // 30-year term
+            'rental_rate_overrides' => [],   // City-level $/sqft/month overrides
+        ];
+    }
+
+    /**
+     * Get rental defaults (custom overrides merged with defaults).
+     */
+    public static function get_rental_defaults(): array {
+        $defaults = self::get_default_rental_params();
+        $saved = get_option('bmn_flip_rental_defaults', '{}');
+        $saved = json_decode($saved, true) ?: [];
+
+        return array_merge($defaults, $saved);
+    }
+
+    /**
+     * Save rental defaults.
+     */
+    public static function set_rental_defaults(array $params): void {
+        $float_keys = [
+            'vacancy_rate', 'management_fee_rate', 'maintenance_rate',
+            'capex_reserve_rate', 'insurance_rate', 'appreciation_rate',
+            'rent_growth_rate', 'marginal_tax_rate', 'brrrr_refi_ltv',
+            'brrrr_refi_rate',
+        ];
+        foreach ($float_keys as $key) {
+            if (isset($params[$key])) {
+                $params[$key] = (float) $params[$key];
+            }
+        }
+        if (isset($params['brrrr_refi_term'])) {
+            $params['brrrr_refi_term'] = (int) $params['brrrr_refi_term'];
+        }
+        if (isset($params['rental_rate_overrides']) && is_array($params['rental_rate_overrides'])) {
+            $params['rental_rate_overrides'] = array_map('floatval', $params['rental_rate_overrides']);
+        }
+
+        update_option('bmn_flip_rental_defaults', wp_json_encode($params));
+    }
 }

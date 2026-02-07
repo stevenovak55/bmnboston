@@ -224,6 +224,7 @@ class Flip_Analyzer {
             'rehab_per_sqft'          => $rehab_per_sqft,
             'age_condition_multiplier' => round($age_condition_mult, 2),
             'rehab_multiplier'        => round($rehab_multiplier, 2),
+            'actual_tax_rate'   => $tax_rate,
             'rehab_cost'        => $rehab_cost,
             'rehab_contingency' => round($rehab_contingency, 2),
             'contingency_rate'  => $contingency_rate,
@@ -420,6 +421,7 @@ class Flip_Analyzer {
                 $data['near_viable'] = $near_viable ? 1 : 0;
                 $data['applied_thresholds_json'] = $thresholds_json;
                 $data['deal_risk_grade'] = $deal_risk_grade;
+                self::attach_rental_analysis($data, $fin, $property);
                 if ($report_id) {
                     $data['report_id'] = $report_id;
                 }
@@ -437,6 +439,7 @@ class Flip_Analyzer {
             );
             $data['applied_thresholds_json'] = $thresholds_json;
             $data['deal_risk_grade'] = $deal_risk_grade;
+            self::attach_rental_analysis($data, $fin, $property);
             if ($report_id) {
                 $data['report_id'] = $report_id;
             }
@@ -662,6 +665,7 @@ class Flip_Analyzer {
         );
         $data['applied_thresholds_json'] = json_encode($thresholds);
         $data['deal_risk_grade']         = $deal_risk_grade;
+        self::attach_rental_analysis($data, $fin, $property);
         if ($report_id) {
             $data['report_id'] = $report_id;
         }
@@ -673,6 +677,38 @@ class Flip_Analyzer {
             'listing_id'  => $listing_id,
             'total_score' => round($total_score, 2),
         ];
+    }
+
+    /**
+     * Compute rental/BRRRR analysis and attach as JSON to result data.
+     *
+     * Called after build_result_data() at all 3 insertion points (viable, DQ'd, force-analyze).
+     * A property that fails flip DQ may still be an excellent rental hold.
+     *
+     * @param array  $data     Result data array (modified by reference).
+     * @param array  $fin      Financial calculations from calculate_financials().
+     * @param object $property Property object from bme_listing_summary.
+     */
+    private static function attach_rental_analysis(array &$data, array $fin, object $property): void {
+        $property_data = [
+            'list_price'          => (float) $property->list_price,
+            'building_area_total' => (int) $property->building_area_total,
+            'bedrooms_total'      => (int) $property->bedrooms_total,
+            'bathrooms_total'     => (float) $property->bathrooms_total,
+            'year_built'          => (int) $property->year_built,
+            'city'                => $property->city ?? '',
+            'actual_tax_rate'     => $fin['actual_tax_rate'] ?? null,
+        ];
+
+        $rental   = Flip_Rental_Calculator::calculate_rental($fin, $property_data);
+        $brrrr    = Flip_Rental_Calculator::calculate_brrrr($fin, $rental, $property_data);
+        $strategy = Flip_Rental_Calculator::recommend_strategy($fin, $rental, $brrrr);
+
+        $data['rental_analysis_json'] = wp_json_encode([
+            'rental'   => $rental,
+            'brrrr'    => $brrrr,
+            'strategy' => $strategy,
+        ]);
     }
 
     // Property fetching methods extracted to Flip_Property_Fetcher in v0.14.0

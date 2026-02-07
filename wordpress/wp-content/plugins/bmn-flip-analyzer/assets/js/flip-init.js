@@ -40,6 +40,22 @@
         // Scoring weights panel
         FD.scoringWeights.init();
 
+        // Rental defaults panel
+        FD.rental.initDefaults();
+
+        // Strategy tab switching (delegation for dynamic rows)
+        $(document).on('click', '.flip-strategy-tab', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var $tab = $(this);
+            var pane = $tab.data('pane');
+            var $container = $tab.closest('td');
+            $container.find('.flip-strategy-tab').removeClass('active');
+            $tab.addClass('active');
+            $container.find('.flip-tab-pane').removeClass('active');
+            $container.find('.flip-tab-pane[data-pane="' + pane + '"]').addClass('active');
+        });
+
         // Event handlers — use delegation on tbody for dynamic rows
         var $tbody = $('#flip-results-body');
         $tbody.on('click', '.flip-toggle', function (e) {

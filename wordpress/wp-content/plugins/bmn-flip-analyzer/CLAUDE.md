@@ -1,11 +1,24 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.15.0
+**Current Version:** 0.16.0
 **Last Updated:** 2026-02-07
 
 ## Overview
 
-Standalone WordPress plugin that identifies Single Family Residence flip candidates by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates.
+Standalone WordPress plugin that identifies Single Family Residence flip candidates by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates. As of v0.16.0, also provides **multi-exit strategy analysis** — analyzing each property as a Flip, Rental Hold, or BRRRR investment with side-by-side comparison.
+
+**v0.16.0 Enhancements (Multi-Exit Strategy Analysis):**
+- **Rental Hold Analysis:** Monthly rent estimation (three-tier: user override → city lookup → 0.7% rule), operating expense breakdown (6 categories), NOI, cap rate, cash-on-cash return, DSCR, GRM, tax benefits (27.5yr IRS depreciation), multi-year projections (1/5/10/20yr)
+- **BRRRR Analysis:** Buy-Rehab-Rent-Refinance-Repeat modeling with refinance math (amortization formula), cash out at refi, cash left in deal, infinite return detection, post-refi cash flow, equity captured
+- **Strategy Recommendation:** 0-100 scoring per strategy with weighted factors and human-readable reasoning
+- **Tab System:** Flip/Rental Hold/BRRRR tabs in detail rows with strategy badge in toolbar
+- **Strategy Comparison Page:** Dedicated admin sub-page with property selector and side-by-side metrics table
+- **Rental Defaults Panel:** Collapsible admin card with 11 configurable parameters (vacancy, management, appreciation, BRRRR refi terms, etc.)
+- **Universal Coverage:** Rental/BRRRR analysis runs for ALL properties (viable + DQ'd) — a property that fails flip DQ may be an excellent rental
+- New file: `includes/class-flip-rental-calculator.php` (~663 lines)
+- New files: `flip-rental.js`, `flip-strategy-comparison.js`, `flip-strategy.css`, `strategy-comparison.php`
+- DB migration: `rental_analysis_json LONGTEXT` column on `wp_bmn_flip_scores`
+- WP option: `bmn_flip_rental_defaults` (11 parameters with defaults)
 
 **v0.15.0 Enhancements (Email Polish + Scoring Weight Tuning):**
 - **Polished monitor emails:** Branded HTML wrapper (600px responsive container, colored header band), MLD unified footer via `class_exists()` guard, dynamic from address via `MLD_Email_Utilities`
@@ -174,10 +187,12 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 | `includes/class-flip-pdf-images.php` | PDF photo download, strip, comp cards (extracted v0.14.0) |
 | `includes/class-flip-rest-api.php` | REST API endpoints (6 endpoints) |
 | `includes/class-flip-photo-analyzer.php` | Claude Vision photo analysis |
+| `includes/class-flip-rental-calculator.php` | Rental Hold + BRRRR calculator + strategy recommendation (v0.16.0) |
 | `includes/class-flip-monitor-runner.php` | Cron-based incremental monitor analysis |
 | `admin/class-flip-admin-dashboard.php` | Admin page, core AJAX handlers (~548 lines) |
 | `admin/class-flip-report-ajax.php` | Report/monitor AJAX handlers (extracted v0.14.0) |
 | `admin/views/dashboard.php` | Dashboard HTML template |
+| `admin/views/strategy-comparison.php` | Strategy comparison sub-page (v0.16.0) |
 | `assets/js/flip-core.js` | Namespace + shared state (`window.FlipDashboard`) |
 | `assets/js/flip-helpers.js` | Utility functions (formatCurrency, scoreClass, etc.) |
 | `assets/js/flip-stats-chart.js` | Stats cards, Chart.js chart, city filter |
@@ -189,8 +204,11 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 | `assets/js/flip-cities.js` | City tag management (add/remove/save) |
 | `assets/js/flip-reports.js` | Saved reports panel, load/rerun/delete, monitor dialog |
 | `assets/js/flip-scoring-weights.js` | Scoring weights admin UI module |
+| `assets/js/flip-rental.js` | Rental/BRRRR tab pane builders + defaults panel (v0.16.0) |
+| `assets/js/flip-strategy-comparison.js` | Strategy comparison page JS (v0.16.0) |
 | `assets/js/flip-init.js` | Initialization + event binding (loaded last) |
 | `assets/css/flip-dashboard.css` | Dashboard styles |
+| `assets/css/flip-strategy.css` | Strategy tab/comparison/BRRRR styles (v0.16.0) |
 
 ## Database
 
@@ -201,7 +219,7 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 - Market (v0.6.0): `market_strength`, `avg_sale_to_list`
 - Neighborhood: `neighborhood_ceiling`, `ceiling_pct`, `ceiling_warning`, `road_type`
 - Property snapshot: `list_price`, `address`, `city`, `bedrooms_total`, etc.
-- JSON fields: `comp_details_json`, `remarks_signals_json`, `photo_analysis_json`
+- JSON fields: `comp_details_json`, `remarks_signals_json`, `photo_analysis_json`, `rental_analysis_json` (v0.16.0)
 - Flags: `disqualified`, `disqualify_reason`, `near_viable` (v0.7.0), `lead_paint_flag` (v0.8.0)
 - Risk analysis (v0.8.0): `annualized_roi`, `breakeven_arv`, `deal_risk_grade`, `transfer_tax_buy`, `transfer_tax_sell`
 - Thresholds: `applied_thresholds_json` (v0.7.0)
@@ -231,6 +249,7 @@ Standalone WordPress plugin that identifies Single Family Residence flip candida
 - `bmn_flip_analysis_filters` — JSON object with 17 filter fields (see Filter Schema below)
 - `bmn_flip_scoring_weights` — JSON object with main/sub-factor weights + thresholds + remarks cap (v0.15.0)
 - `bmn_flip_digest_settings` — JSON object with `enabled`, `email`, `frequency`, `last_sent` (v0.15.0)
+- `bmn_flip_rental_defaults` — JSON object with rental/BRRRR assumptions: vacancy_rate, management_fee_rate, maintenance_rate, capex_reserve_rate, insurance_rate, appreciation_rate, rent_growth_rate, marginal_tax_rate, brrrr_refi_ltv, brrrr_refi_rate, brrrr_refi_term (v0.16.0)
 
 ## WP-CLI Commands
 
@@ -413,6 +432,7 @@ Uses Claude Vision API (`claude-sonnet-4-5-20250929`) to analyze up to 5 photos 
 | 4.3 - Saved Reports & Monitors | Complete | Auto-save reports, load/rerun/delete, monitor cron system |
 | 4.4 - Code Refactoring | Complete | Extract 6 focused classes, eliminate filter duplication |
 | 4.5 - Email & Weight Tuning | Complete | Branded emails, digest, notification levels, scoring weights admin UI |
+| 4.7 - Multi-Exit Strategy | Complete | Rental Hold, BRRRR, strategy comparison, tab system, defaults panel |
 | 5 - iOS | Pending | SwiftUI views, ViewModel, API |
 | 6 - Polish | Pending | Testing, weight tuning |
 
@@ -456,6 +476,8 @@ Access via **Flip Analyzer** in the WordPress admin sidebar menu.
 - `flip_save_weights` — saves scoring weights to WP option (v0.15.0)
 - `flip_reset_weights` — deletes WP option, returns defaults (v0.15.0)
 - `flip_save_digest_settings` — saves digest email settings (v0.15.0)
+- `flip_save_rental_defaults` — saves rental/BRRRR assumptions to WP option (v0.16.0)
+- `flip_reset_rental_defaults` — resets rental defaults, returns hardcoded defaults (v0.16.0)
 
 ## Analysis Filter Schema (v0.10.0)
 

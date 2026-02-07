@@ -1,0 +1,228 @@
+/**
+ * Flip Strategy CSS — Tab system, rental/BRRRR layouts, strategy badges.
+ * v0.16.0: Initial implementation.
+ */
+
+/* ==========================================
+   Strategy Tab Bar
+   ========================================== */
+.flip-strategy-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #ddd;
+    margin-bottom: 12px;
+}
+
+.flip-strategy-tab {
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.flip-strategy-tab:hover {
+    color: #333;
+    background: #f8f9fa;
+}
+
+.flip-strategy-tab.active {
+    color: #2271b1;
+    border-bottom-color: #2271b1;
+}
+
+.flip-strategy-tab[data-pane="flip"].active {
+    color: #dc3545;
+    border-bottom-color: #dc3545;
+}
+
+.flip-strategy-tab[data-pane="rental"].active {
+    color: #198754;
+    border-bottom-color: #198754;
+}
+
+.flip-strategy-tab[data-pane="brrrr"].active {
+    color: #0d6efd;
+    border-bottom-color: #0d6efd;
+}
+
+/* ==========================================
+   Tab Panes
+   ========================================== */
+.flip-tab-pane {
+    display: none;
+}
+
+.flip-tab-pane.active {
+    display: block;
+}
+
+/* ==========================================
+   Strategy Badge (in toolbar)
+   ========================================== */
+.flip-strategy-badge {
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: middle;
+    letter-spacing: 0.3px;
+}
+
+.flip-detail-toolbar .flip-strategy-badge {
+    margin-right: 12px;
+}
+
+/* ==========================================
+   No Data Message
+   ========================================== */
+.flip-no-data {
+    color: #999;
+    font-size: 13px;
+    text-align: center;
+    padding: 40px 20px;
+    font-style: italic;
+}
+
+/* ==========================================
+   BRRRR Step Flow
+   ========================================== */
+.flip-brrrr-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 16px 0;
+    flex-wrap: wrap;
+}
+
+.flip-brrrr-step {
+    text-align: center;
+    padding: 10px 8px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    min-width: 80px;
+    flex: 0 0 auto;
+}
+
+.flip-brrrr-step-icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+.flip-brrrr-step-label {
+    font-weight: 700;
+    font-size: 12px;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.flip-brrrr-step-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2271b1;
+}
+
+.flip-brrrr-step-detail {
+    font-size: 10px;
+    color: #999;
+    margin-top: 2px;
+}
+
+.flip-brrrr-arrow {
+    font-size: 20px;
+    color: #adb5bd;
+    font-weight: 700;
+    flex: 0 0 auto;
+}
+
+/* ==========================================
+   Rental/BRRRR Section Enhancements
+   ========================================== */
+.flip-tab-pane .flip-section h4 {
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 6px;
+}
+
+/* Confidence badge colors for rent source */
+.flip-conf-user_override { color: #198754; font-weight: 600; }
+.flip-conf-city_lookup { color: #0d6efd; }
+.flip-conf-value_estimate { color: #fd7e14; }
+
+/* ==========================================
+   Strategy Comparison Page (placeholder)
+   ========================================== */
+/* ==========================================
+   Rental Defaults Panel
+   ========================================== */
+.flip-rd-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 16px;
+}
+
+.flip-rd-section h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+@media (max-width: 1200px) {
+    .flip-rd-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .flip-rd-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================
+   Strategy Comparison Page
+   ========================================== */
+.flip-comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+}
+
+.flip-comparison-table th,
+.flip-comparison-table td {
+    padding: 8px 12px;
+    text-align: center;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.flip-comparison-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #666;
+}
+
+.flip-comparison-table td:first-child {
+    text-align: left;
+    font-weight: 500;
+}
+
+.flip-comparison-table .flip-best-cell {
+    background: #d1e7dd;
+    font-weight: 700;
+}
+
+.flip-comparison-table .flip-worst-cell {
+    background: #f8d7da;
+}

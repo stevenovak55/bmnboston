@@ -15,6 +15,9 @@ class Flip_Admin_Dashboard {
     /** @var string Admin page hook suffix */
     private static string $page_hook = '';
 
+    /** @var string Comparison sub-page hook suffix */
+    private static string $comparison_hook = '';
+
     /**
      * Initialize admin hooks.
      */
@@ -31,6 +34,8 @@ class Flip_Admin_Dashboard {
         add_action('wp_ajax_flip_save_weights', [__CLASS__, 'ajax_save_weights']);
         add_action('wp_ajax_flip_reset_weights', [__CLASS__, 'ajax_reset_weights']);
         add_action('wp_ajax_flip_save_digest_settings', [__CLASS__, 'ajax_save_digest_settings']);
+        add_action('wp_ajax_flip_save_rental_defaults', [__CLASS__, 'ajax_save_rental_defaults']);
+        add_action('wp_ajax_flip_reset_rental_defaults', [__CLASS__, 'ajax_reset_rental_defaults']);
     }
 
     /**
@@ -46,6 +51,15 @@ class Flip_Admin_Dashboard {
             'dashicons-chart-bar',
             80
         );
+
+        self::$comparison_hook = add_submenu_page(
+            'flip-analyzer',
+            'Strategy Comparison',
+            'Strategy Comparison',
+            'manage_options',
+            'flip-strategy-comparison',
+            [__CLASS__, 'render_comparison']
+        );
     }
 
     /**
@@ -55,6 +69,12 @@ class Flip_Admin_Dashboard {
      * Load order enforced via wp_enqueue_script dependency arrays.
      */
     public static function enqueue_assets(string $hook): void {
+        // Strategy Comparison sub-page gets its own enqueue
+        if ($hook === self::$comparison_hook) {
+            self::enqueue_comparison_assets();
+            return;
+        }
+
         if ($hook !== self::$page_hook) {
             return;
         }
@@ -115,13 +135,19 @@ class Flip_Admin_Dashboard {
             ['flip-core', 'flip-helpers', 'jquery'],
             $ver, true);
 
+        // Rental/BRRRR Module
+        wp_enqueue_script('flip-rental',
+            $url . 'flip-rental.js',
+            ['flip-core', 'flip-helpers', 'flip-detail-row', 'jquery'],
+            $ver, true);
+
         // Init (runs last, binds everything)
         wp_enqueue_script('flip-init',
             $url . 'flip-init.js',
             ['flip-core', 'flip-helpers', 'flip-stats-chart', 'flip-filters-table',
              'flip-detail-row', 'flip-projections', 'flip-ajax',
              'flip-analysis-filters', 'flip-cities', 'flip-reports',
-             'flip-scoring-weights', 'jquery'],
+             'flip-scoring-weights', 'flip-rental', 'jquery'],
             $ver, true);
 
         // Dashboard CSS
@@ -129,6 +155,14 @@ class Flip_Admin_Dashboard {
             'flip-dashboard',
             FLIP_PLUGIN_URL . 'assets/css/flip-dashboard.css',
             [],
+            $ver
+        );
+
+        // Strategy CSS (tabs, rental/BRRRR layouts)
+        wp_enqueue_style(
+            'flip-strategy',
+            FLIP_PLUGIN_URL . 'assets/css/flip-strategy.css',
+            ['flip-dashboard'],
             $ver
         );
 
@@ -144,6 +178,7 @@ class Flip_Admin_Dashboard {
             'activeReportId'   => null,
             'scoringWeights'   => Flip_Database::get_scoring_weights(),
             'digestSettings'   => Flip_Database::get_digest_settings(),
+            'rentalDefaults'   => Flip_Database::get_rental_defaults(),
         ]);
     }
 
@@ -278,6 +313,7 @@ class Flip_Admin_Dashboard {
             'transfer_tax_sell'   => (float) ($row->transfer_tax_sell ?? 0),
             'comps'               => !empty($row->comp_details_json) ? json_decode($row->comp_details_json, true) : [],
             'photo_analysis'      => !empty($row->photo_analysis_json) ? json_decode($row->photo_analysis_json, true) : null,
+            'rental_analysis'     => !empty($row->rental_analysis_json) ? json_decode($row->rental_analysis_json, true) : null,
             'remarks_signals'     => !empty($row->remarks_signals_json) ? json_decode($row->remarks_signals_json, true) : [],
             'run_date'            => $row->run_date,
         ];
@@ -622,6 +658,90 @@ class Flip_Admin_Dashboard {
         wp_send_json_success([
             'cities'  => $cities,
             'message' => count($cities) . ' target cities saved.',
+        ]);
+    }
+
+    /**
+     * Render the Strategy Comparison sub-page.
+     */
+    public static function render_comparison(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to access this page.');
+        }
+
+        include FLIP_PLUGIN_PATH . 'admin/views/strategy-comparison.php';
+    }
+
+    /**
+     * Enqueue assets for the Strategy Comparison sub-page.
+     */
+    private static function enqueue_comparison_assets(): void {
+        $url = FLIP_PLUGIN_URL . 'assets/js/';
+        $ver = FLIP_VERSION;
+
+        // Core + helpers (needed by comparison JS)
+        wp_enqueue_script('flip-core', $url . 'flip-core.js', [], $ver, true);
+        wp_enqueue_script('flip-helpers', $url . 'flip-helpers.js', ['flip-core'], $ver, true);
+
+        // Strategy Comparison page JS
+        wp_enqueue_script('flip-strategy-comparison',
+            $url . 'flip-strategy-comparison.js',
+            ['flip-core', 'flip-helpers', 'jquery'],
+            $ver, true);
+
+        // CSS
+        wp_enqueue_style('flip-dashboard', FLIP_PLUGIN_URL . 'assets/css/flip-dashboard.css', [], $ver);
+        wp_enqueue_style('flip-strategy', FLIP_PLUGIN_URL . 'assets/css/flip-strategy.css', ['flip-dashboard'], $ver);
+
+        // Pass data (same as main dashboard so comparison has access to results)
+        wp_localize_script('flip-strategy-comparison', 'flipData', [
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonce'   => wp_create_nonce('flip_dashboard'),
+            'siteUrl' => home_url(),
+            'data'    => self::get_dashboard_data(),
+        ]);
+    }
+
+    /**
+     * AJAX: Save rental defaults.
+     */
+    public static function ajax_save_rental_defaults(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $raw = isset($_POST['defaults']) ? wp_unslash($_POST['defaults']) : '{}';
+        $defaults = json_decode($raw, true);
+
+        if (!is_array($defaults)) {
+            wp_send_json_error('Invalid rental defaults data.');
+        }
+
+        Flip_Database::set_rental_defaults($defaults);
+
+        wp_send_json_success([
+            'defaults' => Flip_Database::get_rental_defaults(),
+            'message'  => 'Rental defaults saved.',
+        ]);
+    }
+
+    /**
+     * AJAX: Reset rental defaults.
+     */
+    public static function ajax_reset_rental_defaults(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        delete_option('bmn_flip_rental_defaults');
+
+        wp_send_json_success([
+            'defaults' => Flip_Database::get_rental_defaults(),
+            'message'  => 'Rental defaults reset.',
         ]);
     }
 

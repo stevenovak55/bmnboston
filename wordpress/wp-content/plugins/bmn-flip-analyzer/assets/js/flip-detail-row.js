@@ -15,12 +15,29 @@
               + '<span class="dashicons dashicons-update"></span> Force Full Analysis'
               + '</button>'
             : '';
+
+        // Strategy recommendation badge
+        var stratBadge = '';
+        if (r.rental_analysis && r.rental_analysis.strategy) {
+            stratBadge = h.strategyBadge(r.rental_analysis.strategy);
+        }
+
         html += '<div class="flip-detail-toolbar">'
+            + stratBadge
             + forceBtn
             + '<button class="button button-small flip-pdf-btn" data-listing="' + r.listing_id + '">'
             + '<span class="dashicons dashicons-pdf"></span> Download PDF Report'
             + '</button></div>';
 
+        // Tab bar
+        html += '<div class="flip-strategy-tabs">'
+            + '<button class="flip-strategy-tab active" data-pane="flip">Flip Analysis</button>'
+            + '<button class="flip-strategy-tab" data-pane="rental">Rental Hold</button>'
+            + '<button class="flip-strategy-tab" data-pane="brrrr">BRRRR</button>'
+            + '</div>';
+
+        // === Flip tab pane (existing content) ===
+        html += '<div class="flip-tab-pane active" data-pane="flip">';
         html += '<div class="flip-details">';
 
         html += '<div class="flip-detail-col">';
@@ -39,7 +56,19 @@
         html += FD.detail.buildRemarksSection(r);
         html += '</div>';
 
-        html += '</div></td></tr>';
+        html += '</div></div>';
+
+        // === Rental tab pane ===
+        html += '<div class="flip-tab-pane" data-pane="rental">';
+        html += FD.rental.buildRentalPane(r);
+        html += '</div>';
+
+        // === BRRRR tab pane ===
+        html += '<div class="flip-tab-pane" data-pane="brrrr">';
+        html += FD.rental.buildBRRRRPane(r);
+        html += '</div>';
+
+        html += '</td></tr>';
         return $(html);
     };
 
