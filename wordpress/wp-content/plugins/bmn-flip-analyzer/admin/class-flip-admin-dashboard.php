@@ -130,7 +130,7 @@ class Flip_Admin_Dashboard {
             'data'             => self::get_dashboard_data(),
             'filters'          => Flip_Database::get_analysis_filters(),
             'propertySubTypes' => Flip_Database::get_available_property_sub_types(),
-            'reports'          => self::get_reports_list(),
+            'reports'          => Flip_Report_AJAX::get_reports_list(),
             'activeReportId'   => null,
         ]);
     }

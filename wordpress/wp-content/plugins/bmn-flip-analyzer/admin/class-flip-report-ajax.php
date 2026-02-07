@@ -251,7 +251,7 @@ class Flip_Report_AJAX {
     /**
      * Get lightweight reports list for JS.
      */
-    private static function get_reports_list(): array {
+    public static function get_reports_list(): array {
         $reports = Flip_Database::get_reports();
         $list = [];
 
