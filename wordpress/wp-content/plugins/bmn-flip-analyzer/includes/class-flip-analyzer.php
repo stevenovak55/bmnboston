@@ -698,7 +698,11 @@ class Flip_Analyzer {
             'year_built'          => (int) $property->year_built,
             'city'                => $property->city ?? '',
             'actual_tax_rate'     => $fin['actual_tax_rate'] ?? null,
+            'estimated_arv'       => (float) ($data['estimated_arv'] ?? 0),
         ];
+
+        // Augment $fin with data not returned by calculate_financials()
+        $fin['deal_risk_grade'] = $data['deal_risk_grade'] ?? 'C';
 
         $rental   = Flip_Rental_Calculator::calculate_rental($fin, $property_data);
         $brrrr    = Flip_Rental_Calculator::calculate_brrrr($fin, $rental, $property_data);

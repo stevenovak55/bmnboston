@@ -142,15 +142,15 @@ class Flip_Rental_Calculator {
         $params   = array_merge($defaults, $overrides);
 
         // Property value = ARV after rehab (rental is post-renovation)
-        $arv        = (float) ($flip_fin['estimated_arv'] ?? $property_data['list_price'] ?? 0);
+        // ARV comes from property_data (set by attach_rental_analysis), NOT flip_fin
+        $arv        = (float) ($property_data['estimated_arv'] ?? $property_data['list_price'] ?? 0);
         $list_price = (float) ($property_data['list_price'] ?? 0);
         $sqft       = (int) ($property_data['building_area_total'] ?? 0);
         $year_built = (int) ($property_data['year_built'] ?? 1980);
 
         // Total acquisition cost (purchase + rehab + closing)
-        $rehab_cost       = (float) ($flip_fin['rehab_cost'] ?? 0);
-        $rehab_contingency = (float) ($flip_fin['rehab_contingency'] ?? 0);
-        $total_rehab      = $rehab_cost + $rehab_contingency;
+        // Note: flip_fin['rehab_cost'] already includes contingency
+        $total_rehab      = (float) ($flip_fin['rehab_cost'] ?? 0);
         $purchase_closing  = (float) ($flip_fin['purchase_closing'] ?? $list_price * 0.015);
         $total_investment  = $list_price + $total_rehab + $purchase_closing;
 
@@ -358,12 +358,12 @@ class Flip_Rental_Calculator {
         $params   = array_merge($defaults, $overrides);
 
         $list_price  = (float) ($property_data['list_price'] ?? 0);
-        $arv         = (float) ($flip_fin['estimated_arv'] ?? 0);
+        // ARV comes from property_data (set by attach_rental_analysis), NOT flip_fin
+        $arv         = (float) ($property_data['estimated_arv'] ?? 0);
 
         // Total cash invested before refinance
-        $rehab_cost       = (float) ($flip_fin['rehab_cost'] ?? 0);
-        $rehab_contingency = (float) ($flip_fin['rehab_contingency'] ?? 0);
-        $total_rehab      = $rehab_cost + $rehab_contingency;
+        // Note: flip_fin['rehab_cost'] already includes contingency
+        $total_rehab      = (float) ($flip_fin['rehab_cost'] ?? 0);
         $purchase_closing  = (float) ($flip_fin['purchase_closing'] ?? $list_price * 0.015);
         $total_cash_in    = $list_price + $total_rehab + $purchase_closing;
 
