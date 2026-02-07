@@ -1,6 +1,6 @@
 # BMN Flip Analyzer - Development Log
 
-## Current Version: 0.13.0
+## Current Version: 0.13.1
 
 ## Status: Phase 4.3 Complete (Saved Reports & Monitor System) - Pre-Phase 5 (iOS)
 
@@ -571,6 +571,10 @@ Five root causes identified: (1) year-built scoring was backwards (newer = highe
 | 25-report cap | Prevents unbounded growth; soft-deleted reports don't count toward cap | 2026-02-06 |
 | Transient-based concurrency locks | Prevents parallel re-runs of same report; auto-expires after 5 min if process crashes | 2026-02-06 |
 | Cron in both activation + plugins_loaded | File-only updates (SCP) skip activation hook; migration block ensures cron is scheduled | 2026-02-06 |
+| Latest manual report for dashboard | Global "latest" view must prefer manual reports over monitor-created ones; prevents cron runs from hijacking dashboard | 2026-02-07 |
+| Orphan score scoping via report_id IS NULL | Summary stats for non-report context must exclude report-scoped scores; WHERE clause ensures clean separation | 2026-02-07 |
+| Deferred mark_listings_seen | Mark new listings as seen AFTER analysis, not before; prevents data loss if analysis crashes mid-run | 2026-02-07 |
+| Periodic cleanup on monitor cron | Piggyback cleanup of deleted report scores/seen data on existing twicedaily cron; avoids separate schedule | 2026-02-07 |
 | ARV confidence discount on DQ thresholds | Low/none confidence means profit estimate is unreliable; require 25-50% more to pass | 2026-02-06 |
 | Pre-DQ rehab with full multipliers | Base-only estimate missed age+remarks adjustments; new construction got inflated rehab in DQ check | 2026-02-06 |
 | Scope-based contingency rate | Contingency should reflect work complexity (base × remarks), not age-discounted cost | 2026-02-06 |
@@ -848,6 +852,68 @@ Five root causes identified: (1) year-built scoring was backwards (newer = highe
 2. Phase 5: iOS SwiftUI integration
 3. Consider further refactoring: `class-flip-admin-dashboard.php` (now ~789 lines)
 
+### Session 16 - 2026-02-07
+
+**What was done (v0.13.1 — Reports & Monitor System Audit Fixes):**
+
+**TCPDF Investigation:**
+- Investigated TCPDF "not installed" issue from Session 15 — discovered it was a misdiagnosis
+- TCPDF 6.10.1 already installed in MLS Listings Display vendor directory (since Nov 21)
+- Successfully generated a 4.9MB PDF on production via WP-CLI
+- Original test failure was because the listing had no analysis data, not a missing TCPDF
+
+**Reports & Monitor System Audit:**
+- Conducted comprehensive audit of saved reports and monitor system (v0.13.0)
+- Identified 9 bugs across 5 files, ranging from HIGH to TRIVIAL severity
+
+**Bug fixes (9 total):**
+
+1. **[HIGH] Global "latest" view contaminated by monitor runs** — `get_dashboard_data(null)` used `MAX(run_date)` which could pick up monitor-created reports. Fixed: added `get_latest_manual_report()` method that queries for most recent `type='manual'` report. Dashboard now prefers manual reports for default view.
+
+2. **[HIGH] `get_summary()` included report-scoped data** — Summary stats for the global "latest" view included scores from all reports. Fixed: added `WHERE report_id IS NULL` to scope to orphan scores only.
+
+3. **[MEDIUM] `viable_count` inconsistency** — Counted all non-DQ properties as viable instead of using score >= 60 threshold. Fixed in both `ajax_run_analysis()` and `ajax_rerun_report()`: `WHERE total_score >= 60`.
+
+4. **[MEDIUM] `fetch_matching_listing_ids()` skipped archive table** — When filters included Closed status, only queried active table. Fixed: added UNION query to `bme_listing_summary_archive` for Closed status.
+
+5. **[MEDIUM] `fetch_properties_by_ids()` didn't check archive** — Properties that had since moved to archive table were silently missing. Fixed: added fallback query to archive table for any IDs not found in active table.
+
+6. **[MEDIUM] Monitor marked listings seen BEFORE analysis** — If analysis failed or crashed, listings were already marked as seen and would never be re-analyzed. Fixed: deferred `mark_listings_seen()` for new IDs until AFTER analysis completes.
+
+7. **[LOW] Empty reports from 0-result runs persisted** — Running analysis with 0 matching results created empty report records. Fixed: auto-delete report if 0 results after run.
+
+8. **[LOW] Re-run with 0 results preserved stale data** — Re-running a report that now matches 0 properties kept old scores. Fixed: removed `if (!empty($result['analyzed']))` guard so old scores are always deleted on re-run.
+
+9. **[LOW] Deleted report scores/seen data never cleaned up** — Soft-deleted reports accumulated orphaned data in scores and monitor_seen tables. Fixed: replaced dead code methods with `cleanup_deleted_report_scores()` and `cleanup_deleted_monitor_seen()`, triggered on monitor cron.
+
+**Additional improvements:**
+- Increased concurrency lock timeout from 10 to 15 minutes (both analyzer and monitor)
+- Removed dead code: `stamp_scores_with_report()` and `delete_scores_for_report()`
+
+**Files modified (5):**
+1. `includes/class-flip-database.php` — `get_latest_manual_report()`, fixed `get_summary()`, cleanup methods
+2. `admin/class-flip-admin-dashboard.php` — Latest manual report preference, viable_count fix, empty report cleanup, re-run fix, lock timeout
+3. `includes/class-flip-analyzer.php` — Archive table UNION for Closed status, archive fallback for property lookup
+4. `includes/class-flip-monitor-runner.php` — Deferred mark_listings_seen, lock timeout
+5. `bmn-flip-analyzer.php` — Version bump, periodic cleanup hook on cron
+
+**Deployment & verification:**
+- All 5 files deployed via SCP
+- Version verified: 0.13.1
+- `get_latest_manual_report()`: correctly returns Burlington/Woburn report (ID 9)
+- `get_summary()`: scoped to orphan scores (0 rows, correct — all scores belong to reports)
+- Cleanup: purged 2 orphaned scores from deleted reports
+- E2E test: created Stoneham report → dashboard shows it → deleted it → dashboard falls back to Wakefield
+- Production state: 3 active reports (Burlington #8, Burlington/Woburn #9, Wakefield #10), 0 monitors
+
+**Commit:** 9246486 pushed to main
+
+**Next steps:**
+1. Phase 5: iOS SwiftUI integration
+2. Test monitor system end-to-end (create monitor, wait for cron, verify notifications)
+3. Consider further refactoring: `class-flip-admin-dashboard.php` (now ~820 lines)
+4. Consider further refactoring: `class-flip-analyzer.php` (1,335 lines)
+
 ---
 
 ## Scoring Weight Tuning Log
@@ -1088,6 +1154,19 @@ bmn-flip-analyzer/
   10. New PHP class: `Flip_Monitor_Runner` with cron integration
   11. All AJAX handlers (run, refresh, PDF, force-analyze) accept `report_id`
   12. 25-report cap with soft delete, concurrency locks, incremental analysis
+
+### v0.13.1 (Complete)
+- **Reports & Monitor System Audit Fixes** — 9 bugs fixed across 5 files:
+  1. Global "latest" view now prefers latest manual report (monitor runs no longer contaminate)
+  2. `get_summary()` scoped to orphan scores only (excludes report-scoped data)
+  3. `viable_count` uses `total_score >= 60` threshold (was counting all non-DQ as viable)
+  4. `fetch_matching_listing_ids()` and `fetch_properties_by_ids()` now query archive table for Closed status
+  5. Monitor marks new listings as "seen" AFTER analysis (was before, causing data loss on failure)
+  6. Empty reports (0 results) auto-deleted instead of persisting as clutter
+  7. Re-run with 0 results now clears stale data (was preserving old scores)
+  8. Concurrency lock increased from 10 to 15 minutes
+  9. Periodic cleanup of scores/seen data for deleted reports (runs on monitor cron)
+- Removed dead code: `stamp_scores_with_report()`, `delete_scores_for_report()`
 
 ### v0.14.0 (Planned)
 - iOS SwiftUI integration
