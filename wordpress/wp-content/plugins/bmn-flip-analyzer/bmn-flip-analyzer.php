@@ -18,12 +18,15 @@
  *   rest_do_request(), gracefully defaults to score 50 if unavailable
  * - Docs: Documented rental rate constants as Tier 3 fallback (comp-based is primary since v0.19.0)
  * - Docs: Added threshold derivation comments to financial and property scorers
+ * - Fix: PDF KV rows wrap long text (Interior Features, Appliances, Fee Includes) instead
+ *   of overflowing card boundary — render_kv_row() uses MultiCell when value exceeds width,
+ *   card height now dynamically estimated via estimate_kv_row_height()
  * - DB migration: migrate_v0199() adds composite index
- * - Modified: class-flip-pdf-generator.php, class-flip-monitor-runner.php,
- *   class-flip-analyzer.php, class-flip-database.php, class-flip-location-scorer.php,
- *   class-flip-rental-calculator.php, class-flip-financial-scorer.php,
- *   class-flip-property-scorer.php, class-flip-disqualifier.php,
- *   class-flip-photo-analyzer.php, force-analyze.php
+ * - Modified: class-flip-pdf-generator.php, class-flip-pdf-components.php,
+ *   class-flip-monitor-runner.php, class-flip-analyzer.php, class-flip-database.php,
+ *   class-flip-location-scorer.php, class-flip-rental-calculator.php,
+ *   class-flip-financial-scorer.php, class-flip-property-scorer.php,
+ *   class-flip-disqualifier.php, class-flip-photo-analyzer.php, force-analyze.php
  *
  * Version 0.19.0 - Comp-Based Rental Rate Estimation
  * - Rental comp calculator: estimates monthly rent from MLS lease data (active + closed)
