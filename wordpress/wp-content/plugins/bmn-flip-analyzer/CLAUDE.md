@@ -11,7 +11,8 @@ Standalone WordPress plugin that identifies residential investment property cand
 - **Interior Features + Appliances:** Two new rows in Property Details card (between Flooring and Basement), using existing `format_bme_array()` — data was fetched in v0.19.7 but not displayed
 - **Price Reduction row:** Added to Financial & Tax card when `original_list_price > list_price`. Format: `$1,597,500 → $1,250,000 (-21.7%)`. Null-safe, skips when either value is 0 or null
 - **MLS income delta caveat:** Small italic gray note (7.5pt) below MLS vs Estimates comparison table when gross income diverges >50%. Uses `MultiCell` for word-wrap. Only renders when both MLS and estimated values are >0
-- Modified: `class-flip-pdf-generator.php` (3 insertions, ~25 lines), `bmn-flip-analyzer.php` (version bump)
+- **HOA fee guard fix:** Relaxed `association_yn` check — now shows HOA row whenever `association_fee > 0`, regardless of `association_yn` value (some condos have fee data but NULL for the boolean flag)
+- Modified: `class-flip-pdf-generator.php` (3 insertions + 1 fix, ~25 lines), `bmn-flip-analyzer.php` (version bump)
 
 **v0.19.7 Enhancement (PDF Content Enrichment):**
 - **BME data enrichment:** New `fetch_enriched_data()` queries `bme_listings`, `bme_listing_details`, `bme_listing_financial` by listing_id (indexed, sub-ms)
