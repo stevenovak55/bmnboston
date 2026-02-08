@@ -2,9 +2,22 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies residential investment property candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis. Supports SFR, multifamily, and Residential Income properties.
- * Version: 0.18.0
+ * Version: 0.19.0
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.19.0 - Comp-Based Rental Rate Estimation
+ * - Rental comp calculator: estimates monthly rent from MLS lease data (active + closed)
+ * - Expanding radius pattern (0.5→1.0→2.0→3.0mi) with ±1 bed, ±40% sqft, 18-month lookback
+ * - Sale-to-lease type mapping with dynamic discovery of Residential Lease sub-types
+ * - Rental comp adjustments scaled to city avg rental $/sqft (beds, baths, sqft)
+ * - Multi-factor confidence scoring (relaxed thresholds: high >= 65, medium >= 40)
+ * - Cross-reference with MLS gross_income (strong/moderate/weak agreement)
+ * - New rent tier priority: user override → rental comps → MLS income → city rate → value rule
+ * - Dashboard: rental comp table with address, beds, sqft, rent, adjusted rent, distance, status
+ * - CLI: rental comp details in verbose property output
+ * - New class: Flip_Rental_Comp_Calculator (includes/class-flip-rental-comp-calculator.php)
+ * - No DB migration needed — data stored in existing rental_analysis_json LONGTEXT column
  *
  * Version 0.18.0 - Multi-Strategy Scoring & Per-Strategy Disqualification
  * - Per-strategy scores: flip_score, rental_score, brrrr_score (0-100 each)
@@ -231,7 +244,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.18.0');
+define('FLIP_VERSION', '0.19.0');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -245,6 +258,7 @@ require_once FLIP_PLUGIN_PATH . 'includes/class-flip-road-analyzer.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-market-scorer.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-property-fetcher.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-disqualifier.php';
+require_once FLIP_PLUGIN_PATH . 'includes/class-flip-rental-comp-calculator.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-rental-calculator.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-analyzer.php';
 require_once FLIP_PLUGIN_PATH . 'includes/class-flip-photo-analyzer.php';

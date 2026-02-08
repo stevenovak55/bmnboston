@@ -89,6 +89,16 @@
         var confCls = 'flip-conf-' + (rental.rent_confidence || 'low');
         html += h.kv('Monthly Rent', '<strong>' + h.formatCurrency(monthlyRent) + '</strong>'
             + ' <span class="' + confCls + '">(' + sourceLabel + ')</span>');
+
+        // Show cross-reference indicator if available
+        if (rental.cross_reference) {
+            var xref = rental.cross_reference;
+            var xrefCls = xref.agreement === 'strong' ? 'flip-positive' :
+                          xref.agreement === 'moderate' ? '' : 'flip-negative';
+            html += h.kv('MLS Cross-Ref', '<span class="' + xrefCls + '">'
+                + xref.agreement + ' (' + xref.pct_diff + '% diff)</span>');
+        }
+
         html += h.kv('Annual Gross', h.formatCurrency(rental.annual_gross_income));
 
         var vacRate = rental.vacancy_rate || 0.05;
@@ -96,6 +106,70 @@
         html += h.kv('Effective Gross', '<strong>' + h.formatCurrency(rental.effective_gross) + '</strong>/yr');
 
         html += '</div></div>';
+
+        // Rental comp summary (v0.19.0)
+        var rc = r.rental_analysis && r.rental_analysis.rental_comps;
+        if (rc && rc.comp_count > 0) {
+            html += buildRentalCompSection(rc);
+        }
+
+        return html;
+    }
+
+    /**
+     * Build rental comp summary and table (v0.19.0).
+     */
+    function buildRentalCompSection(rc) {
+        var html = '<div class="flip-section"><h4>Rental Comps</h4>';
+
+        // Summary stats
+        html += '<div class="flip-kv-list">';
+        var confCls = 'flip-conf-' + (rc.confidence || 'low');
+        html += h.kv('Comps Found', '<strong>' + rc.comp_count + '</strong>'
+            + ' <span style="color:#999;font-size:11px">('
+            + rc.active_count + ' active, ' + rc.closed_count + ' leased)</span>');
+        html += h.kv('Confidence', '<span class="' + confCls + '">' + rc.confidence + '</span>');
+        html += h.kv('Avg Rental $/sqft', '$' + (rc.avg_rental_ppsf || 0).toFixed(2) + '/sqft/mo');
+        html += h.kv('Search Radius', rc.search_radius_used + ' mi');
+
+        if (rc.cross_reference) {
+            var xref = rc.cross_reference;
+            var xrefCls = xref.agreement === 'strong' ? 'flip-positive' :
+                          xref.agreement === 'moderate' ? '' : 'flip-negative';
+            html += h.kv('vs MLS Income', '<span class="' + xrefCls + '">'
+                + xref.agreement + ' (' + xref.pct_diff + '% diff)</span>');
+        }
+        html += '</div>';
+
+        // Comp table
+        var comps = rc.comps;
+        if (comps && comps.length > 0) {
+            html += '<table class="flip-comp-table flip-rental-comp-table"><thead><tr>'
+                + '<th>Address</th><th>Beds</th><th>Sqft</th><th>Rent</th>'
+                + '<th>Adj. Rent</th><th>Dist</th><th>Status</th>'
+                + '</tr></thead><tbody>';
+
+            comps.forEach(function (c) {
+                var status = c.is_closed ? 'Leased' : 'Active';
+                var statusCls = c.is_closed ? 'flip-conf-city_lookup' : 'flip-positive';
+                var addr = c.address || 'N/A';
+                if (addr.length > 22) addr = addr.substring(0, 21) + '~';
+
+                html += '<tr>'
+                    + '<td title="' + (c.address || '') + '">' + addr + '</td>'
+                    + '<td>' + c.bedrooms + '</td>'
+                    + '<td>' + (c.sqft ? c.sqft.toLocaleString() : '--') + '</td>'
+                    + '<td>' + h.formatCurrency(c.rent_amount) + '</td>'
+                    + '<td>' + h.formatCurrency(c.adjusted_rent) + '</td>'
+                    + '<td>' + c.distance_miles + 'mi</td>'
+                    + '<td><span class="' + statusCls + '">' + status + '</span></td>'
+                    + '</tr>';
+            });
+
+            html += '</tbody></table>';
+        }
+
+        html += '</div>';
         return html;
     }
 

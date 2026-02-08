@@ -35,17 +35,23 @@ class Flip_ARV_Calculator {
      *
      * For multifamily, groups by unit count (2-family, 3-family, 4-family, 5+).
      * "Multi Family" (generic) is compatible with all 2-4 unit types.
+     * 2-family and small multi-family (≤2 units) also include SFR — luxury duplexes
+     * are more comparable to SFRs than to typical multi-family buildings.
      * Falls back to COMPATIBLE_TYPES const for standard residential.
+     *
+     * @param string   $sub_type Property sub-type from MLS.
+     * @param int|null $units    Number of units (from bme_listing_details), null if unknown.
      */
-    public static function get_compatible_types(string $sub_type): array {
+    public static function get_compatible_types(string $sub_type, ?int $units = null): array {
         // Check standard residential types first
         if (isset(self::COMPATIBLE_TYPES[$sub_type])) {
             return self::COMPATIBLE_TYPES[$sub_type];
         }
 
         // Multifamily: group by unit count
+        // 2-family/duplex: include SFR — these are often valued more like SFRs
         if (stripos($sub_type, '2 Family') === 0 || $sub_type === 'Duplex') {
-            return ['2 Family - 2 Units Up/Down', '2 Family - 2 Units Side by Side', 'Duplex', '2 Family - Rooming House', 'Multi Family'];
+            return ['2 Family - 2 Units Up/Down', '2 Family - 2 Units Side by Side', 'Duplex', '2 Family - Rooming House', 'Multi Family', 'Single Family Residence'];
         }
         if (stripos($sub_type, '3 Family') === 0) {
             return ['3 Family', '3 Family - 3 Units Up/Down', '3 Family - 3 Units Side by Side', 'Multi Family'];
@@ -57,7 +63,12 @@ class Flip_ARV_Calculator {
             return ['5-9 Family', '5+ Family - 5+ Units Up/Down', '5+ Family - 5+ Units Side by Side', '5+ Family - Rooming House', 'Multi Family'];
         }
         if ($sub_type === 'Multi Family') {
-            return ['Multi Family', '2 Family - 2 Units Up/Down', '2 Family - 2 Units Side by Side', '3 Family', '3 Family - 3 Units Up/Down', '4 Family', '4 Family - 4 Units Up/Down'];
+            $types = ['Multi Family', '2 Family - 2 Units Up/Down', '2 Family - 2 Units Side by Side', '3 Family', '3 Family - 3 Units Up/Down', '4 Family', '4 Family - 4 Units Up/Down'];
+            // Include SFR for small multi-family (≤2 units) or unknown unit count
+            if ($units === null || $units <= 2) {
+                $types[] = 'Single Family Residence';
+            }
+            return $types;
         }
 
         return [$sub_type];
@@ -66,7 +77,8 @@ class Flip_ARV_Calculator {
     /**
      * Calculate ARV for a property.
      *
-     * @param object $property Row from bme_listing_summary.
+     * @param object   $property Row from bme_listing_summary.
+     * @param int|null $units    Number of units (for multifamily SFR comp fallback).
      * @return array {
      *     estimated_arv, arv_confidence, comp_count, avg_comp_ppsf,
      *     comps, neighborhood_avg_ppsf, neighborhood_ceiling,
@@ -74,7 +86,7 @@ class Flip_ARV_Calculator {
      *     bath_filter_relaxed,
      * }
      */
-    public static function calculate(object $property): array {
+    public static function calculate(object $property, ?int $units = null): array {
         $lat  = (float) $property->latitude;
         $lng  = (float) $property->longitude;
         $sqft = (int) $property->building_area_total;
@@ -108,8 +120,17 @@ class Flip_ARV_Calculator {
         // 2. Compatible types (e.g., Townhouse ↔ Condominium)
         // 3. All residential types as last resort
         $exact_types = [$sub_type];
-        $compatible_types = self::get_compatible_types($sub_type);
+        $compatible_types = self::get_compatible_types($sub_type, $units);
         $all_types = null; // null = no type filter
+
+        // For 2-family/duplex or small multi-family (≤2 units), use compatible
+        // types (which include SFR) from the initial search. These properties
+        // compete directly with SFRs — searching only "Multi Family" yields
+        // poor comps (e.g. triple-deckers instead of luxury duplexes).
+        if (stripos($sub_type, '2 Family') === 0 || $sub_type === 'Duplex'
+            || ($sub_type === 'Multi Family' && ($units === null || $units <= 2))) {
+            $exact_types = $compatible_types;
+        }
 
         // Find comps with bathroom filter, expanding radius: 0.5→1.0→2.0mi
         $comps = self::find_comps_with_expansion($lat, $lng, $sqft, $beds, $baths, $exact_types);
@@ -226,9 +247,9 @@ class Flip_ARV_Calculator {
 
         // Neighborhood ceiling (type-aware)
         $ceiling_type_mixed = false;
-        $ceiling = self::get_neighborhood_ceiling($lat, $lng, 0.5, $sub_type);
+        $ceiling = self::get_neighborhood_ceiling($lat, $lng, 0.5, $sub_type, $units);
         if ($ceiling <= 0) {
-            $ceiling = self::get_neighborhood_ceiling($lat, $lng, 1.0, $sub_type);
+            $ceiling = self::get_neighborhood_ceiling($lat, $lng, 1.0, $sub_type, $units);
         }
         // Fallback: use all types for ceiling if type-specific has no data
         if ($ceiling <= 0) {
@@ -437,7 +458,7 @@ class Flip_ARV_Calculator {
      *
      * @param string|null $sub_type Property sub-type filter, null for all.
      */
-    public static function get_neighborhood_ceiling(float $lat, float $lng, float $radius_miles = 0.5, ?string $sub_type = null): float {
+    public static function get_neighborhood_ceiling(float $lat, float $lng, float $radius_miles = 0.5, ?string $sub_type = null, ?int $units = null): float {
         global $wpdb;
         $archive_table = $wpdb->prefix . 'bme_listing_summary_archive';
 
@@ -447,7 +468,7 @@ class Flip_ARV_Calculator {
         $type_filter = '';
         $type_params = [];
         if ($sub_type !== null) {
-            $compatible = self::get_compatible_types($sub_type);
+            $compatible = self::get_compatible_types($sub_type, $units);
             $placeholders = implode(',', array_fill(0, count($compatible), '%s'));
             $type_filter = "AND property_sub_type IN ({$placeholders})";
             $type_params = $compatible;

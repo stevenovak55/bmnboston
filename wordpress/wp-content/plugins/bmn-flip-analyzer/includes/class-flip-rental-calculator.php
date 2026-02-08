@@ -8,6 +8,7 @@
  * - Strategy Recommendation: scores and compares all three strategies
  *
  * v0.16.0: Initial implementation
+ * v0.19.0: Comp-based rental rate estimation tier added
  */
 
 if (!defined('ABSPATH')) {
@@ -55,26 +56,26 @@ class Flip_Rental_Calculator {
     // ---------------------------------------------------------------
 
     /**
-     * Estimate monthly rental income using three-tier approach.
+     * Estimate monthly rental income using tiered approach.
      *
-     * @param array      $property_data  Property snapshot
-     * @param float|null $user_override  User-specified monthly rent
-     * @return array {amount, annual, source, confidence}
+     * Priority order (v0.19.0):
+     *   0. User override (always top)
+     *   1. Rental comp analysis from MLS data
+     *   2. MLS gross_income from listing (boosted if comps agree)
+     *   3. City $/sqft lookup (hardcoded + admin overrides)
+     *   4. 0.7% value rule (last resort)
+     *
+     * @param array      $property_data       Property snapshot
+     * @param float|null $user_override        User-specified monthly rent
+     * @param array|null $rental_comp_result   From Flip_Rental_Comp_Calculator::calculate()
+     * @return array {amount, annual, source, confidence, rental_comp_count?, cross_reference?}
      */
-    public static function estimate_monthly_rent(array $property_data, ?float $user_override = null): array {
-        // Tier 0: MLS gross income (most reliable for income properties)
-        $mls_gross = $property_data['gross_income'] ?? null;
-        if ($mls_gross !== null && $mls_gross > 0) {
-            $monthly = round($mls_gross / 12, 2);
-            return [
-                'amount'     => $monthly,
-                'annual'     => round($mls_gross, 2),
-                'source'     => 'mls_gross_income',
-                'confidence' => 'high',
-            ];
-        }
-
-        // Tier 1: User override
+    public static function estimate_monthly_rent(
+        array $property_data,
+        ?float $user_override = null,
+        ?array $rental_comp_result = null
+    ): array {
+        // Tier 0: User override (always wins)
         if ($user_override !== null && $user_override > 0) {
             return [
                 'amount'     => round($user_override, 2),
@@ -84,11 +85,69 @@ class Flip_Rental_Calculator {
             ];
         }
 
+        // Tier 1: Rental comp analysis (NEW in v0.19.0)
+        $comp_monthly = 0;
+        if ($rental_comp_result !== null
+            && ($rental_comp_result['comp_count'] ?? 0) >= 3
+            && ($rental_comp_result['confidence'] ?? 'none') !== 'none'
+        ) {
+            $comp_monthly = (float) ($rental_comp_result['estimated_monthly_rent'] ?? 0);
+            if ($comp_monthly > 0) {
+                $result = [
+                    'amount'            => round($comp_monthly, 2),
+                    'annual'            => round($comp_monthly * 12, 2),
+                    'source'            => 'rental_comps',
+                    'confidence'        => $rental_comp_result['confidence'],
+                    'rental_comp_count' => $rental_comp_result['comp_count'],
+                ];
+
+                // Cross-reference with MLS gross_income if available
+                $mls_gross = $property_data['gross_income'] ?? null;
+                if ($mls_gross !== null && $mls_gross > 0) {
+                    $xref = Flip_Rental_Comp_Calculator::cross_reference($comp_monthly, (float) $mls_gross);
+                    $result['cross_reference'] = $xref;
+                }
+
+                return $result;
+            }
+        }
+
+        // Tier 2: MLS gross income (demoted from tier 0 in v0.19.0)
+        $mls_gross = $property_data['gross_income'] ?? null;
+        if ($mls_gross !== null && $mls_gross > 0) {
+            $monthly = round($mls_gross / 12, 2);
+            $confidence = 'high';
+
+            // If rental comps exist but didn't meet the 3-comp threshold,
+            // still cross-reference for validation
+            if ($comp_monthly > 0) {
+                $xref = Flip_Rental_Comp_Calculator::cross_reference($comp_monthly, (float) $mls_gross);
+                // Boost confidence if comps agree within 15%
+                if ($xref['agreement'] === 'strong') {
+                    $confidence = 'high';
+                }
+                return [
+                    'amount'          => $monthly,
+                    'annual'          => round($mls_gross, 2),
+                    'source'          => 'mls_gross_income',
+                    'confidence'      => $confidence,
+                    'cross_reference' => $xref,
+                ];
+            }
+
+            return [
+                'amount'     => $monthly,
+                'annual'     => round($mls_gross, 2),
+                'source'     => 'mls_gross_income',
+                'confidence' => $confidence,
+            ];
+        }
+
         $sqft = (int) ($property_data['building_area_total'] ?? 0);
         $city = $property_data['city'] ?? '';
         $value = (float) ($property_data['list_price'] ?? 0);
 
-        // Tier 2: City-level rate lookup
+        // Tier 3: City-level rate lookup
         $defaults = Flip_Database::get_rental_defaults();
         $city_overrides = $defaults['rental_rate_overrides'] ?? [];
 
@@ -106,7 +165,7 @@ class Flip_Rental_Calculator {
             ];
         }
 
-        // Tier 2b: Default rate with sqft
+        // Tier 3b: Default rate with sqft
         if ($sqft > 0) {
             $monthly = round($sqft * self::DEFAULT_RENTAL_RATE, 2);
             return [
@@ -118,7 +177,7 @@ class Flip_Rental_Calculator {
             ];
         }
 
-        // Tier 3: Value-based fallback (0.7% rule)
+        // Tier 4: Value-based fallback (0.7% rule)
         if ($value > 0) {
             $monthly = round($value * self::VALUE_RENT_RATIO, 2);
             return [
@@ -144,12 +203,13 @@ class Flip_Rental_Calculator {
     /**
      * Calculate full rental hold analysis.
      *
-     * @param array $flip_fin       From Flip_Analyzer::calculate_financials()
-     * @param array $property_data  Property snapshot
-     * @param array $overrides      User overrides for rates/assumptions
+     * @param array      $flip_fin            From Flip_Analyzer::calculate_financials()
+     * @param array      $property_data       Property snapshot
+     * @param array      $overrides           User overrides for rates/assumptions
+     * @param array|null $rental_comp_result   From Flip_Rental_Comp_Calculator::calculate()
      * @return array Rental analysis results
      */
-    public static function calculate_rental(array $flip_fin, array $property_data, array $overrides = []): array {
+    public static function calculate_rental(array $flip_fin, array $property_data, array $overrides = [], ?array $rental_comp_result = null): array {
         $defaults = Flip_Database::get_rental_defaults();
         $params   = array_merge($defaults, $overrides);
 
@@ -173,9 +233,9 @@ class Flip_Rental_Calculator {
         $purchase_closing  = (float) ($flip_fin['purchase_closing'] ?? $list_price * 0.015);
         $total_investment  = $list_price + $total_rehab + $purchase_closing;
 
-        // Estimate rent
+        // Estimate rent (pass rental comps for tier 1 comp-based estimation)
         $rent_override = $overrides['monthly_rent'] ?? null;
-        $rent_data     = self::estimate_monthly_rent($property_data, $rent_override);
+        $rent_data     = self::estimate_monthly_rent($property_data, $rent_override, $rental_comp_result);
         $monthly_rent  = $rent_data['amount'];
         $annual_gross  = $monthly_rent * 12;
 

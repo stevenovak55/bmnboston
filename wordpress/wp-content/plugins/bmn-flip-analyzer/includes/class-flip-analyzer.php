@@ -313,8 +313,9 @@ class Flip_Analyzer {
             $remarks = Flip_Market_Scorer::get_remarks($listing_id);
             $property_condition = Flip_Disqualifier::get_property_condition($listing_id);
 
-            // Calculate ARV
-            $arv_data = Flip_ARV_Calculator::calculate($property);
+            // Calculate ARV (pass unit count for multifamily SFR comp fallback)
+            $unit_count = self::get_unit_count($property);
+            $arv_data = Flip_ARV_Calculator::calculate($property, $unit_count);
 
             // ---- UNIVERSAL DQ: blocks ALL strategies ----
             $universal_dq = Flip_Disqualifier::check_universal_disqualifiers($property, $arv_data);
@@ -414,6 +415,9 @@ class Flip_Analyzer {
             }
             $flip_viable = ($flip_dq_reason === null && $flip_post_dq === null);
 
+            // Calculate rental comps (v0.19.0)
+            $rental_comp_result = Flip_Rental_Comp_Calculator::calculate($property);
+
             // Calculate rental/BRRRR data
             $property_data_for_rental = [
                 'list_price'          => $list_price,
@@ -425,12 +429,12 @@ class Flip_Analyzer {
                 'actual_tax_rate'     => $fin['actual_tax_rate'] ?? null,
                 'estimated_arv'       => $arv,
                 'property_sub_type'      => $property->property_sub_type ?? 'Single Family Residence',
-                'number_of_units_total'  => self::get_unit_count($property),
+                'number_of_units_total'  => $unit_count,
                 'gross_income'           => self::get_gross_income($property),
             ];
 
             $fin['deal_risk_grade'] = $deal_risk_grade;
-            $rental_data = Flip_Rental_Calculator::calculate_rental($fin, $property_data_for_rental);
+            $rental_data = Flip_Rental_Calculator::calculate_rental($fin, $property_data_for_rental, [], $rental_comp_result);
             $brrrr_data  = Flip_Rental_Calculator::calculate_brrrr($fin, $rental_data, $property_data_for_rental);
 
             // Rental and BRRRR viability
@@ -509,10 +513,12 @@ class Flip_Analyzer {
             $data['best_strategy']   = $best_strategy;
 
             // Attach rental analysis JSON (already computed above)
+            $rental_comps_for_json = self::build_rental_comps_json($rental_comp_result);
             $data['rental_analysis_json'] = wp_json_encode([
-                'rental'   => $rental_data,
-                'brrrr'    => $brrrr_data,
-                'strategy' => $strategy,
+                'rental'       => $rental_data,
+                'brrrr'        => $brrrr_data,
+                'strategy'     => $strategy,
+                'rental_comps' => $rental_comps_for_json,
             ]);
 
             if ($report_id) {
@@ -663,8 +669,9 @@ class Flip_Analyzer {
         Flip_Location_Scorer::precompute_city_metrics([$property->city]);
         $city_metrics = Flip_Location_Scorer::get_city_metrics($property->city);
 
-        // 4. Calculate ARV
-        $arv_data = Flip_ARV_Calculator::calculate($property);
+        // 4. Calculate ARV (pass unit count for multifamily SFR comp fallback)
+        $unit_count = self::get_unit_count($property);
+        $arv_data = Flip_ARV_Calculator::calculate($property, $unit_count);
 
         // 5. Run all scorers (NO DQ checks)
         $financial  = Flip_Financial_Scorer::score($property, $arv_data, $city_metrics['avg_ppsf']);
@@ -736,7 +743,10 @@ class Flip_Analyzer {
             $arv_data['comp_count']
         );
 
-        // 9. Compute rental/BRRRR data (remarks already fetched at step 5)
+        // 9. Compute rental comps (v0.19.0)
+        $rental_comp_result = Flip_Rental_Comp_Calculator::calculate($property);
+
+        // 9b. Compute rental/BRRRR data (remarks already fetched at step 5)
         $property_data_for_rental = [
             'list_price'          => $list_price,
             'building_area_total' => $sqft,
@@ -747,12 +757,12 @@ class Flip_Analyzer {
             'actual_tax_rate'     => $fin['actual_tax_rate'] ?? null,
             'estimated_arv'       => $arv,
             'property_sub_type'      => $property->property_sub_type ?? 'Single Family Residence',
-            'number_of_units_total'  => self::get_unit_count($property),
+            'number_of_units_total'  => $unit_count,
             'gross_income'           => self::get_gross_income($property),
         ];
 
         $fin['deal_risk_grade'] = $deal_risk_grade;
-        $rental_data = Flip_Rental_Calculator::calculate_rental($fin, $property_data_for_rental);
+        $rental_data = Flip_Rental_Calculator::calculate_rental($fin, $property_data_for_rental, [], $rental_comp_result);
         $brrrr_data  = Flip_Rental_Calculator::calculate_brrrr($fin, $rental_data, $property_data_for_rental);
 
         // 10. Per-strategy viability (force-analyze bypasses flip DQ, but still compute viability flags)
@@ -807,10 +817,12 @@ class Flip_Analyzer {
         $data['best_strategy']   = $best_strategy;
 
         // Attach rental analysis JSON
+        $rental_comps_for_json = self::build_rental_comps_json($rental_comp_result);
         $data['rental_analysis_json'] = wp_json_encode([
-            'rental'   => $rental_data,
-            'brrrr'    => $brrrr_data,
-            'strategy' => $strategy,
+            'rental'       => $rental_data,
+            'brrrr'        => $brrrr_data,
+            'strategy'     => $strategy,
+            'rental_comps' => $rental_comps_for_json,
         ]);
 
         if ($report_id) {
@@ -855,14 +867,19 @@ class Flip_Analyzer {
             'gross_income'           => self::get_gross_income($property),
         ];
 
-        $rental   = Flip_Rental_Calculator::calculate_rental($fin, $property_data);
+        // Calculate rental comps (v0.19.0)
+        $rental_comp_result = Flip_Rental_Comp_Calculator::calculate($property);
+
+        $rental   = Flip_Rental_Calculator::calculate_rental($fin, $property_data, [], $rental_comp_result);
         $brrrr    = Flip_Rental_Calculator::calculate_brrrr($fin, $rental, $property_data);
         $strategy = Flip_Rental_Calculator::recommend_strategy($fin, $rental, $brrrr);
 
+        $rental_comps_for_json = self::build_rental_comps_json($rental_comp_result);
         return wp_json_encode([
-            'rental'   => $rental,
-            'brrrr'    => $brrrr,
-            'strategy' => $strategy,
+            'rental'       => $rental,
+            'brrrr'        => $brrrr,
+            'strategy'     => $strategy,
+            'rental_comps' => $rental_comps_for_json,
         ]);
     }
 
@@ -884,20 +901,67 @@ class Flip_Analyzer {
         // Augment $fin with data not returned by calculate_financials()
         $fin['deal_risk_grade'] = $data['deal_risk_grade'] ?? 'C';
 
-        $rental   = Flip_Rental_Calculator::calculate_rental($fin, $property_data);
+        // Calculate rental comps (v0.19.0)
+        $rental_comp_result = Flip_Rental_Comp_Calculator::calculate($property);
+
+        $rental   = Flip_Rental_Calculator::calculate_rental($fin, $property_data, [], $rental_comp_result);
         $brrrr    = Flip_Rental_Calculator::calculate_brrrr($fin, $rental, $property_data);
         $strategy = Flip_Rental_Calculator::recommend_strategy($fin, $rental, $brrrr);
 
+        $rental_comps_for_json = self::build_rental_comps_json($rental_comp_result);
         $data['rental_analysis_json'] = wp_json_encode([
-            'rental'   => $rental,
-            'brrrr'    => $brrrr,
-            'strategy' => $strategy,
+            'rental'       => $rental,
+            'brrrr'        => $brrrr,
+            'strategy'     => $strategy,
+            'rental_comps' => $rental_comps_for_json,
         ]);
     }
 
     // Property fetching methods extracted to Flip_Property_Fetcher in v0.14.0
 
     // Disqualification methods extracted to Flip_Disqualifier in v0.14.0
+
+    /**
+     * Build rental comp details for JSON storage (v0.19.0).
+     *
+     * Strips large objects from comps array to keep JSON size reasonable.
+     */
+    private static function build_rental_comps_json(?array $rental_comp_result): ?array {
+        if ($rental_comp_result === null || ($rental_comp_result['comp_count'] ?? 0) === 0) {
+            return null;
+        }
+
+        $comp_details = array_map(function ($comp) {
+            return [
+                'listing_id'       => $comp->listing_id ?? '',
+                'address'          => $comp->address ?? '',
+                'city'             => $comp->city ?? '',
+                'rent_amount'      => round((float) ($comp->rent_amount ?? 0), 2),
+                'adjusted_rent'    => round((float) ($comp->adjusted_rent ?? $comp->rent_amount ?? 0), 2),
+                'sqft'             => (int) ($comp->sqft ?? 0),
+                'bedrooms'         => (int) ($comp->bedrooms_total ?? 0),
+                'bathrooms'        => (float) ($comp->bathrooms_total ?? 0),
+                'distance_miles'   => round((float) ($comp->distance_miles ?? 0), 2),
+                'is_closed'        => (int) ($comp->is_closed ?? 0),
+                'close_date'       => $comp->close_date ?? null,
+                'sub_type'         => $comp->property_sub_type ?? '',
+                'adjustments'      => $comp->adjustments ?? [],
+                'total_adjustment' => round((float) ($comp->total_adjustment ?? 0), 2),
+            ];
+        }, $rental_comp_result['comps'] ?? []);
+
+        return [
+            'estimated_monthly_rent' => $rental_comp_result['estimated_monthly_rent'],
+            'confidence'             => $rental_comp_result['confidence'],
+            'comp_count'             => $rental_comp_result['comp_count'],
+            'avg_rental_ppsf'        => $rental_comp_result['avg_rental_ppsf'],
+            'search_radius_used'     => $rental_comp_result['search_radius_used'],
+            'active_count'           => $rental_comp_result['active_count'],
+            'closed_count'           => $rental_comp_result['closed_count'],
+            'cross_reference'        => $rental_comp_result['cross_reference'] ?? null,
+            'comps'                  => $comp_details,
+        ];
+    }
 
     /**
      * Get unit count from bme_listing_details for multifamily properties.

@@ -1,11 +1,26 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.18.0
+**Current Version:** 0.19.0
 **Last Updated:** 2026-02-07
 
 ## Overview
 
 Standalone WordPress plugin that identifies residential investment property candidates (SFR, multifamily, income properties) by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates. As of v0.18.0, evaluates **three investment strategies (Flip, Rental Hold, BRRRR)** with per-strategy 0-100 scores and per-strategy disqualification — properties are only DQ'd if ALL strategies fail.
+
+**v0.19.0 Enhancements (Comp-Based Rental Rate Estimation):**
+- **Rental comp calculator:** New `Flip_Rental_Comp_Calculator` class (~400 lines) replaces hardcoded city-level $/sqft rates with real MLS lease data (active + closed rentals)
+- **UNION query:** Searches both `bme_listing_summary` (active leases) and `bme_listing_summary_archive` (closed leases) via UNION for maximum comp coverage
+- **Expanding radius:** 0.5 → 1.0 → 2.0 → 3.0 mi (extra step vs ARV's 0.5 → 1.0 → 2.0 due to thinner rental inventory)
+- **Wider tolerances:** ±40% sqft (vs ARV's ±30%), 18-month lookback (vs 12), ±1 bed/bath with fallback
+- **Time decay:** Half-life 9 months (vs ARV's 6), closed leases weighted 1.2x vs active 1.0x
+- **New rent estimation priority:** User override → Rental comps (NEW) → MLS gross_income (demoted) → City averages → 0.7% value rule
+- **Cross-reference:** When both comp estimate and MLS gross_income exist, compares them and reports agreement level (strong/moderate/weak)
+- **Dynamic type mapping:** Discovers available lease sub-types from DB, fuzzy-maps from sale sub-types
+- **Confidence scoring:** Same 4-factor formula as ARV with relaxed thresholds (high >= 65, medium >= 40, low >= 20)
+- **Dashboard UI:** Rental comp summary (count, active/closed split, confidence, avg $/sqft, radius) + comp table in Rental tab
+- **CLI enhancement:** Rental comp details in `wp flip property <id> --verbose` output; rent source in Financial Summary
+- New file: `includes/class-flip-rental-comp-calculator.php`
+- Modified: `class-flip-rental-calculator.php` (new tier system), `class-flip-analyzer.php` (3 integration points), `class-flip-cli.php`, `flip-rental.js`, `flip-strategy.css`
 
 **v0.18.0 Enhancements (Multi-Strategy Scoring & Per-Strategy Disqualification):**
 - **Per-strategy scores:** Each property gets separate `flip_score`, `rental_score`, `brrrr_score` (0-100)
@@ -222,6 +237,7 @@ Standalone WordPress plugin that identifies residential investment property cand
 | `includes/class-flip-pdf-images.php` | PDF photo download, strip, comp cards (extracted v0.14.0) |
 | `includes/class-flip-rest-api.php` | REST API endpoints (6 endpoints) |
 | `includes/class-flip-photo-analyzer.php` | Claude Vision photo analysis |
+| `includes/class-flip-rental-comp-calculator.php` | Comp-based rental rate estimation from MLS lease data (v0.19.0) |
 | `includes/class-flip-rental-calculator.php` | Rental Hold + BRRRR calculator + strategy recommendation (v0.16.0) |
 | `includes/class-flip-monitor-runner.php` | Cron-based incremental monitor analysis |
 | `admin/class-flip-admin-dashboard.php` | Admin page, core AJAX handlers (~548 lines) |
@@ -366,10 +382,12 @@ Uses OpenStreetMap Overpass API to classify roads by highway tag:
 
 ## Important Patterns
 
-### ARV Calculation (v0.6.0)
-- Comps from `bme_listing_summary_archive` (sold SFR within 12 months)
+### ARV Calculation (v0.6.0, updated v0.19.0)
+- Comps from `bme_listing_summary_archive` (sold within 12 months)
 - ±1 bedroom, ±1 bathroom, ±30% sqft, expanding radius: 0.5mi → 1.0mi → 2.0mi
 - Bathroom filter with fallback: if <3 comps with bath filter, re-run without it
+- **Small multifamily SFR fallback (v0.19.0):** For 2-family, duplex, or generic "Multi Family" with ≤2 units (or unknown), SFR is included in the initial comp search — not just in the compatible-types fallback. This prevents luxury duplexes from being comped only against triple-deckers. 3-family, 4-family, and 5+ are NOT affected.
+- `get_compatible_types()` and `calculate()` accept optional `?int $units` parameter; `get_neighborhood_ceiling()` also passes units for consistent type matching
 - **Appraisal-style adjustments** scale with city avg $/sqft:
   - Bedroom: ppsf×40, Full bath: ppsf×55, Half bath: ppsf×25
   - Sqft: ppsf×0.5/sqft (capped ±15%), Garage: ppsf×40, Basement: ppsf×28
@@ -481,6 +499,7 @@ Uses Claude Vision API (`claude-sonnet-4-5-20250929`) to analyze up to 5 photos 
 | 4.5 - Email & Weight Tuning | Complete | Branded emails, digest, notification levels, scoring weights admin UI |
 | 4.7 - Multi-Exit Strategy | Complete | Rental Hold, BRRRR, strategy comparison, tab system, defaults panel |
 | 4.8 - Multi-Strategy Scoring | Complete | Per-strategy scores, two-tier DQ, strategy filter/sort, photo enhancement |
+| 4.9 - Comp-Based Rental Rates | Complete | Rental comp calculator, MLS lease data, UNION queries, cross-reference, UI/CLI |
 | 5 - iOS | Pending | SwiftUI views, ViewModel, API |
 | 6 - Polish | Pending | Testing, weight tuning |
 
@@ -603,7 +622,7 @@ SSHPASS='cFDIB2uPBj5LydX' sshpass -e ssh -o StrictHostKeyChecking=no -p 57105 st
 
 - **Scope vs cost:** Age discount reduces *cost* (what you pay), not *scope* (what work needs doing). Contingency rates and hold periods use scope (`base * remarks_mult`), not age-discounted cost (`base * age_mult * remarks_mult`).
 - **Multiplier stacking floors:** When multipliers stack (age x remarks x base), always apply `max()` floor to prevent unrealistic sub-$1/sqft values. Current floor: `$2/sqft`.
-- **Comp type matching:** SFR comps must not be used for condos/townhouses. `COMPATIBLE_TYPES` in `class-flip-arv-calculator.php` handles fallback grouping.
+- **Comp type matching:** SFR comps must not be used for condos/townhouses. `COMPATIBLE_TYPES` in `class-flip-arv-calculator.php` handles fallback grouping. Exception: 2-family/duplex and small multi-family (≤2 units) DO include SFR comps — these compete directly with SFRs in the market and comping only against other multifamily produces inaccurate ARVs (e.g., luxury waterfront duplexes comped against triple-deckers).
 - **ARV confidence safety margin:** Low/none confidence requires 25-50% higher profit/ROI to pass DQ — unreliable estimates need wider margin.
 
 ## Known Issues (v0.3.1)

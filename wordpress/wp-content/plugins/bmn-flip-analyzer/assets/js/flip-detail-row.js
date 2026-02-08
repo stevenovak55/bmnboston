@@ -119,13 +119,17 @@
             var pct = Math.min(100, Math.max(0, b.score));
             var weighted = b.weight ? (b.score * b.weight).toFixed(1) : '';
             var suffix = weighted ? ' (' + weighted + ')' : '';
+            var valueText = b.score.toFixed(1) + suffix;
+            var isNarrow = pct < 35;
 
             html += '<div class="flip-bar-row">'
                 + '<span class="flip-bar-label">' + b.label + '</span>'
                 + '<div class="flip-bar-track">'
                 + '<div class="flip-bar-fill ' + h.scoreClass(b.score) + '" style="width:' + pct + '%">'
-                + b.score.toFixed(1) + suffix
-                + '</div></div></div>';
+                + (isNarrow ? '' : valueText)
+                + '</div></div>'
+                + (isNarrow ? '<span class="flip-bar-value">' + valueText + '</span>' : '')
+                + '</div>';
         });
 
         html += '</div></div>';

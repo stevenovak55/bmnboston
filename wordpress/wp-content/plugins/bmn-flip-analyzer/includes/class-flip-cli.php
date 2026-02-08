@@ -412,6 +412,19 @@ class Flip_CLI {
         WP_CLI::line(sprintf("  ARV Confidence:  %s (%d comps)", strtoupper($result->arv_confidence), $result->comp_count));
         WP_CLI::line(sprintf("  Avg Comp $/sqft: $%s", number_format($result->avg_comp_ppsf, 2)));
 
+        // Rental income summary (v0.19.0)
+        $rental_data = json_decode($result->rental_analysis_json ?? '{}', true);
+        if (!empty($rental_data['rental'])) {
+            $rent = $rental_data['rental'];
+            $rent_src = $rent['rent_source'] ?? 'unknown';
+            $monthly = $rent['monthly_rent'] ?? 0;
+            $rc_info = $rental_data['rental_comps'] ?? null;
+            $rc_count = $rc_info['comp_count'] ?? 0;
+            $rent_label = $monthly > 0 ? ('$' . number_format($monthly) . '/mo') : 'N/A';
+            $src_detail = $rent_src === 'rental_comps' ? sprintf('%s (%d comps)', $rent_src, $rc_count) : $rent_src;
+            WP_CLI::line(sprintf("  Est. Rent:       %s [%s]", $rent_label, $src_detail));
+        }
+
         WP_CLI::line('');
         WP_CLI::line('Property Details');
         WP_CLI::line(str_repeat('-', 40));
@@ -471,6 +484,45 @@ class Flip_CLI {
                     ];
                 }
                 WP_CLI\Utils\format_items('table', $comp_table, array_keys($comp_table[0]));
+            }
+
+            // Show rental comps (v0.19.0)
+            $rental_json = json_decode($result->rental_analysis_json ?? '{}', true);
+            $rc = $rental_json['rental_comps'] ?? null;
+            if (!empty($rc) && ($rc['comp_count'] ?? 0) > 0) {
+                WP_CLI::line('');
+                WP_CLI::line('Rental Comps');
+                WP_CLI::line(str_repeat('-', 40));
+                WP_CLI::line(sprintf("  Comps Found:     %d (%d active, %d leased)",
+                    $rc['comp_count'], $rc['active_count'] ?? 0, $rc['closed_count'] ?? 0));
+                WP_CLI::line(sprintf("  Confidence:      %s", strtoupper($rc['confidence'] ?? 'none')));
+                WP_CLI::line(sprintf("  Avg Rental $/sf: $%s/sqft/mo", number_format($rc['avg_rental_ppsf'] ?? 0, 2)));
+                WP_CLI::line(sprintf("  Search Radius:   %s mi", $rc['search_radius_used'] ?? '--'));
+                if (!empty($rc['estimated_monthly_rent'])) {
+                    WP_CLI::line(sprintf("  Est. Rent:       $%s/mo", number_format($rc['estimated_monthly_rent'])));
+                }
+                if (!empty($rc['cross_reference'])) {
+                    $xref = $rc['cross_reference'];
+                    WP_CLI::line(sprintf("  vs MLS Income:   %s (%s%% diff)",
+                        $xref['agreement'] ?? '--', $xref['pct_diff'] ?? '--'));
+                }
+
+                $rc_comps = $rc['comps'] ?? [];
+                if (!empty($rc_comps)) {
+                    $comp_table = [];
+                    foreach ($rc_comps as $c) {
+                        $comp_table[] = [
+                            'Address'  => self::truncate($c['address'] ?? 'N/A', 20),
+                            'Beds'     => $c['bedrooms'] ?? '--',
+                            'Sqft'     => isset($c['sqft']) ? number_format($c['sqft']) : '--',
+                            'Rent'     => '$' . number_format($c['rent_amount'] ?? 0),
+                            'Adj.Rent' => '$' . number_format($c['adjusted_rent'] ?? 0),
+                            'Dist'     => ($c['distance_miles'] ?? '--') . 'mi',
+                            'Status'   => !empty($c['is_closed']) ? 'Leased' : 'Active',
+                        ];
+                    }
+                    WP_CLI\Utils\format_items('table', $comp_table, array_keys($comp_table[0]));
+                }
             }
 
             // Show remarks signals

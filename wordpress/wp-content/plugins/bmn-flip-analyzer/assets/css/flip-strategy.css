@@ -244,3 +244,22 @@
     border-radius: 6px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
+
+/* ==========================================
+   Rental Comp Table (v0.19.0)
+   ========================================== */
+.flip-rental-comp-table {
+    margin-top: 8px;
+    font-size: 12px;
+}
+
+.flip-rental-comp-table th {
+    font-size: 11px;
+}
+
+.flip-rental-comp-table td:nth-child(4),
+.flip-rental-comp-table td:nth-child(5) {
+    font-variant-numeric: tabular-nums;
+}
+
+.flip-conf-rental_comps { color: #198754; font-weight: 600; }
