@@ -1712,8 +1712,14 @@ class Flip_PDF_Generator {
 
         if (empty($rows)) return;
 
+        // Estimate card height accounting for wrapped rows
+        $est_rows_h = 0;
+        foreach ($rows as $r) {
+            $est_rows_h += $this->c->estimate_kv_row_height($r[1]);
+        }
+        $needed = 6 + $est_rows_h + 10;
+
         // Page break guard
-        $needed = 6 + count($rows) * 7 + 10;
         $page_bottom = $this->pdf->getPageHeight() - $this->pdf->getBreakMargin();
         if (($page_bottom - $this->pdf->GetY()) < $needed) {
             $this->pdf->AddPage();
@@ -1722,7 +1728,7 @@ class Flip_PDF_Generator {
         $this->c->add_subsection_header('Property Details');
 
         $card_y = $this->pdf->GetY();
-        $card_h = 6 + count($rows) * 7 + 4;
+        $card_h = 6 + $est_rows_h + 4;
         $this->c->render_card_start($card_y, $card_h);
         $this->pdf->SetY($card_y + 4);
         foreach ($rows as $r) {
@@ -1799,8 +1805,14 @@ class Flip_PDF_Generator {
 
         if (empty($rows)) return;
 
+        // Estimate card height accounting for wrapped rows
+        $est_rows_h = 0;
+        foreach ($rows as $r) {
+            $est_rows_h += $this->c->estimate_kv_row_height($r[1]);
+        }
+        $needed = 6 + $est_rows_h + 10;
+
         // Page break guard
-        $needed = 6 + count($rows) * 7 + 10;
         $page_bottom = $this->pdf->getPageHeight() - $this->pdf->getBreakMargin();
         if (($page_bottom - $this->pdf->GetY()) < $needed) {
             $this->pdf->AddPage();
@@ -1809,7 +1821,7 @@ class Flip_PDF_Generator {
         $this->c->add_subsection_header('Financial & Tax');
 
         $card_y = $this->pdf->GetY();
-        $card_h = 6 + count($rows) * 7 + 4;
+        $card_h = 6 + $est_rows_h + 4;
         $this->c->render_card_start($card_y, $card_h);
         $this->pdf->SetY($card_y + 4);
         foreach ($rows as $r) {
@@ -1976,16 +1988,22 @@ class Flip_PDF_Generator {
 
         if (empty($rows)) return;
 
+        // Estimate card height accounting for wrapped rows
+        $est_rows_h = 0;
+        foreach ($rows as $r) {
+            $est_rows_h += $this->c->estimate_kv_row_height($r[1]);
+        }
+
         // Page break guard
         $page_bottom = $this->pdf->getPageHeight() - $this->pdf->getBreakMargin();
-        if (($page_bottom - $this->pdf->GetY()) < 40) {
+        if (($page_bottom - $this->pdf->GetY()) < (6 + $est_rows_h + 10)) {
             $this->pdf->AddPage();
         }
 
         $this->c->add_subsection_header('Rental Terms');
 
         $card_y = $this->pdf->GetY();
-        $card_h = 6 + count($rows) * 7 + 4;
+        $card_h = 6 + $est_rows_h + 4;
         $this->c->render_card_start($card_y, $card_h);
         $this->pdf->SetY($card_y + 4);
         foreach ($rows as $r) {

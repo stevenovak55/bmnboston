@@ -293,27 +293,70 @@ class Flip_PDF_Components {
 
     // ─── ROW & BADGE HELPERS ───────────────────────────────────────
 
-    public function render_kv_row(string $label, string $value, array $opts = []): void {
+    public function render_kv_row(string $label, string $value, array $opts = []): float {
         $label_w = 90;
         $value_w = self::PW - $label_w;
-
-        $this->pdf->SetFont('helvetica', '', 9);
-        $this->set_color($this->gray);
-        $this->pdf->Cell($label_w, 6.5, $label, 0, 0, 'L');
+        $row_h   = 6.5;
 
         $this->pdf->SetFont('helvetica', !empty($opts['bold']) ? 'B' : '', 10);
-        if (!empty($opts['color'])) {
-            $this->set_color($opts['color']);
+        $text_w = $this->pdf->GetStringWidth($value);
+
+        // If value fits in one line, use simple Cell layout
+        if ($text_w <= $value_w - 2) {
+            $this->pdf->SetFont('helvetica', '', 9);
+            $this->set_color($this->gray);
+            $this->pdf->Cell($label_w, $row_h, $label, 0, 0, 'L');
+
+            $this->pdf->SetFont('helvetica', !empty($opts['bold']) ? 'B' : '', 10);
+            if (!empty($opts['color'])) {
+                $this->set_color($opts['color']);
+            } else {
+                $this->set_text_color();
+            }
+            $this->pdf->Cell($value_w, $row_h, $value, 0, 1, 'R');
         } else {
-            $this->set_text_color();
+            // Multi-line: label on left, wrapped value on right
+            $start_y = $this->pdf->GetY();
+
+            $this->pdf->SetFont('helvetica', '', 9);
+            $this->set_color($this->gray);
+            $this->pdf->Cell($label_w, $row_h, $label, 0, 0, 'L');
+
+            $this->pdf->SetFont('helvetica', !empty($opts['bold']) ? 'B' : '', 9);
+            if (!empty($opts['color'])) {
+                $this->set_color($opts['color']);
+            } else {
+                $this->set_text_color();
+            }
+            $this->pdf->MultiCell($value_w, 4.5, $value, 0, 'R', false, 1);
+
+            $row_h = max($row_h, $this->pdf->GetY() - $start_y);
+            $this->pdf->SetY($start_y + $row_h);
         }
-        $this->pdf->Cell($value_w, 6.5, $value, 0, 1, 'R');
 
         // Thin separator
         $y = $this->pdf->GetY();
         $this->pdf->SetDrawColor(235, 235, 235);
         $this->pdf->SetLineWidth(0.1);
         $this->pdf->Line(self::LM + 3, $y, self::LM + self::PW - 3, $y);
+
+        return $row_h;
+    }
+
+    /**
+     * Estimate the height of a KV row, accounting for text wrapping.
+     */
+    public function estimate_kv_row_height(string $value): float {
+        $value_w = self::PW - 90;
+        $this->pdf->SetFont('helvetica', '', 10);
+        $text_w = $this->pdf->GetStringWidth($value);
+        if ($text_w <= $value_w - 2) {
+            return 7; // Standard single-line row height (6.5 + small gap)
+        }
+        // Estimate wrapped lines at font size 9
+        $this->pdf->SetFont('helvetica', '', 9);
+        $lines = $this->pdf->getNumLines($value, $value_w);
+        return max(7, $lines * 4.5 + 1);
     }
 
     public function draw_badge(float $x, float $y, string $text, array $color): float {
