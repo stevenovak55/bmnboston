@@ -1684,6 +1684,8 @@ class Flip_PDF_Generator {
         if ($val = $this->format_bme_array($det->roof ?? null)) $rows[] = ['Roof', $val];
         if ($val = $this->format_bme_array($det->construction_materials ?? null)) $rows[] = ['Exterior', $val];
         if ($val = $this->format_bme_array($det->flooring ?? null)) $rows[] = ['Flooring', $val];
+        if ($val = $this->format_bme_array($det->interior_features ?? null)) $rows[] = ['Interior Features', $val];
+        if ($val = $this->format_bme_array($det->appliances ?? null)) $rows[] = ['Appliances', $val];
         if ($val = $this->format_bme_array($det->basement ?? null)) $rows[] = ['Basement', $val];
 
         // Parking — combine garage + total
@@ -1737,6 +1739,15 @@ class Flip_PDF_Generator {
         if (!$fin) return;
 
         $rows = [];
+
+        // Price Reduction (original → current)
+        $orig = (float) ($this->bme->listing->original_list_price ?? 0);
+        $curr = (float) ($this->d['list_price'] ?? 0);
+        if ($orig > 0 && $curr > 0 && $orig > $curr) {
+            $reduction = $orig - $curr;
+            $pct = ($reduction / $orig) * 100;
+            $rows[] = ['Price Reduction', '$' . number_format($orig) . ' → $' . number_format($curr) . ' (-' . number_format($pct, 1) . '%)'];
+        }
 
         // Annual Property Tax
         $tax = $fin->tax_annual_amount ?? null;
@@ -1933,6 +1944,21 @@ class Flip_PDF_Generator {
         }
 
         $this->pdf->Ln(4);
+
+        // Caveat note when MLS vs estimated income diverge significantly
+        if ($mls_gross > 0 && $est_gross > 0) {
+            $gross_delta = abs($est_gross - $mls_gross) / $mls_gross;
+            if ($gross_delta > 0.50) {
+                $this->pdf->SetFont('helvetica', 'I', 7.5);
+                $this->pdf->SetTextColor(140, 140, 140);
+                $this->pdf->MultiCell(
+                    Flip_PDF_Components::PW, 3.5,
+                    'Note: MLS reported income reflects historical lease terms. Estimated income uses current market rental comparables and may differ for properties with older leases, furnished rentals, or commercial tenants.',
+                    0, 'L'
+                );
+                $this->pdf->Ln(2);
+            }
+        }
 
         // Rental terms card
         $this->render_rental_terms_card();
