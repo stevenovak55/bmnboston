@@ -1,11 +1,32 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.19.0
+**Current Version:** 0.19.5
 **Last Updated:** 2026-02-07
 
 ## Overview
 
 Standalone WordPress plugin that identifies residential investment property candidates (SFR, multifamily, income properties) by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates. As of v0.18.0, evaluates **three investment strategies (Flip, Rental Hold, BRRRR)** with per-strategy 0-100 scores and per-strategy disqualification — properties are only DQ'd if ALL strategies fail.
+
+**v0.19.1–0.19.5 Enhancements (Safari Fix, Batched Analysis, Live Progress UI):**
+- **v0.19.1:** Fixed Safari "Invalid Date" on dashboard last run display (ISO 8601 format)
+- **v0.19.2:** Fixed 5-hour timezone offset — `run_date` stored via `current_time('mysql')` is already Eastern, don't treat as UTC
+- **v0.19.3:** Batched analysis to avoid Kinsta nginx 60s timeout — 3-phase AJAX chain: `flip_analysis_init` → `flip_analysis_batch` ×N → `flip_analysis_finalize`
+  - 3 new PHP AJAX actions in `class-flip-admin-dashboard.php`
+  - `flip_rerun_init` action in `class-flip-report-ajax.php` for report rerun
+  - Transient-based concurrency lock (`flip_analysis_lock_{report_id}`, 15 min TTL)
+  - Cancel support between batches with partial result finalization
+  - `Flip_Analyzer::run()` now accepts optional `run_date` in options array
+- **v0.19.4:** Live per-property progress with scrolling activity log
+  - Batch size reduced from 25 to 5 for more frequent UI updates
+  - `logProperties()` renders each property as a row: index, address, city, color-coded score, strategy badge (FLIP/RENTAL/BRRRR/DQ)
+  - `logInit()` for status messages in the activity log
+  - Score color classes: green (65+), amber (45-64), red (<45)
+  - Strategy badge styles: green (flip), blue (rental), pink (brrrr), gray (dq)
+  - Wider modal (600px), 260px scrollable log area
+- **v0.19.5:** API cost estimate in progress modal
+  - Data analysis shows "Est. cost: Free" (no paid API calls)
+  - Photo analysis shows "Est. cost: ~$X.XX" (calculated at $0.04/property)
+- Modified: `class-flip-admin-dashboard.php`, `class-flip-report-ajax.php`, `class-flip-analyzer.php`, `flip-ajax.js`, `flip-reports.js`, `dashboard.php`, `flip-dashboard.css`, `flip-stats-chart.js`
 
 **v0.19.0 Enhancements (Comp-Based Rental Rate Estimation):**
 - **Rental comp calculator:** New `Flip_Rental_Comp_Calculator` class (~400 lines) replaces hardcoded city-level $/sqft rates with real MLS lease data (active + closed rentals)

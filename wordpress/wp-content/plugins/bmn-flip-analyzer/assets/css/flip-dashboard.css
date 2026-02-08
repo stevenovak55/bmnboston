@@ -890,43 +890,109 @@
     display: inline-block;
 }
 
-/* Progress bar */
+/* Progress modal — wide layout */
+.flip-modal-wide {
+    max-width: 600px !important;
+    padding: 24px 28px !important;
+    text-align: left !important;
+}
+.flip-progress-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.flip-progress-header .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: #2271b1;
+}
+.flip-progress-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
 .flip-progress-bar-wrap {
     width: 100%;
-    height: 8px;
+    height: 6px;
     background: #e0e0e0;
-    border-radius: 4px;
-    margin: 16px 0 8px;
+    border-radius: 3px;
+    margin: 0 0 8px;
     overflow: hidden;
 }
 .flip-progress-bar {
     height: 100%;
     background: #2271b1;
-    border-radius: 4px;
+    border-radius: 3px;
     transition: width 0.3s ease;
 }
-.flip-progress-pct {
-    font-size: 13px;
-    color: #666;
-    margin: 0 0 4px;
-}
-.flip-progress-status {
-    font-size: 13px;
-    color: #333;
-    margin: 0 0 8px;
-    min-height: 20px;
-}
-.flip-progress-counts {
+.flip-progress-summary {
     display: flex;
-    justify-content: center;
-    gap: 20px;
-    font-size: 13px;
-    color: #555;
-    margin-top: 8px;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 10px;
 }
-.flip-progress-counts strong { font-weight: 600; }
+.flip-progress-pct { font-weight: 600; color: #333; }
+.flip-progress-counts { display: inline-flex; gap: 12px; }
+.flip-count-viable strong { color: #198754; }
 .flip-count-dq strong { color: #dc3545; }
-#flip-prog-viable { color: #198754; }
+.flip-prog-cost { color: #888; }
+.flip-prog-cost strong { color: #198754; }
+.flip-prog-elapsed { color: #888; }
+
+/* Activity log */
+.flip-progress-log {
+    height: 260px;
+    overflow-y: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background: #f9f9f9;
+    font-size: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin-bottom: 12px;
+}
+.flip-log-row {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-bottom: 1px solid #eee;
+    gap: 8px;
+}
+.flip-log-row:last-child { border-bottom: none; }
+.flip-log-idx { color: #999; min-width: 28px; text-align: right; }
+.flip-log-addr { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.flip-log-city { color: #666; min-width: 60px; }
+.flip-log-score {
+    font-weight: 600;
+    min-width: 32px;
+    text-align: right;
+}
+.flip-log-score.score-high { color: #198754; }
+.flip-log-score.score-mid { color: #856404; }
+.flip-log-score.score-low { color: #dc3545; }
+.flip-log-strategy {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    min-width: 40px;
+    text-align: center;
+}
+.flip-log-strategy.strat-flip { background: #e8f5e9; color: #2e7d32; }
+.flip-log-strategy.strat-rental { background: #e3f2fd; color: #1565c0; }
+.flip-log-strategy.strat-brrrr { background: #fce4ec; color: #c62828; }
+.flip-log-strategy.strat-dq { background: #f5f5f5; color: #999; }
+.flip-log-init {
+    padding: 6px 10px;
+    color: #666;
+    font-style: italic;
+}
+
+#flip-cancel-analysis { display: block; margin: 0 auto; }
 
 /* ── Report Context Bar ────────────────────────── */
 

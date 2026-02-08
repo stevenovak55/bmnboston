@@ -634,26 +634,29 @@ if (!defined('ABSPATH')) {
 
     <!-- Progress Modal -->
     <div id="flip-modal-overlay" class="flip-modal-overlay" style="display:none;">
-        <div class="flip-modal">
-            <div class="flip-modal-icon">
+        <div class="flip-modal flip-modal-wide">
+            <div class="flip-progress-header">
                 <span class="dashicons dashicons-update flip-spin"></span>
+                <h3 id="flip-progress-title">Preparing Analysis...</h3>
             </div>
-            <h3 id="flip-progress-title">Preparing Analysis...</h3>
 
             <div class="flip-progress-bar-wrap">
                 <div class="flip-progress-bar" id="flip-progress-bar" style="width:0%"></div>
             </div>
-            <p id="flip-progress-pct" class="flip-progress-pct">0 of 0 properties</p>
 
-            <p id="flip-progress-status" class="flip-progress-status">Loading properties...</p>
-
-            <div id="flip-progress-counts" class="flip-progress-counts" style="display:none;">
-                <span>Viable: <strong id="flip-prog-viable">0</strong></span>
-                <span class="flip-count-dq">DQ: <strong id="flip-prog-dq">0</strong></span>
-                <span>Elapsed: <strong id="flip-prog-elapsed">0:00</strong></span>
+            <div class="flip-progress-summary">
+                <span id="flip-progress-pct" class="flip-progress-pct">0 of 0</span>
+                <span id="flip-progress-counts" class="flip-progress-counts" style="display:none;">
+                    <span class="flip-count-viable">Viable: <strong id="flip-prog-viable">0</strong></span>
+                    <span class="flip-count-dq">DQ: <strong id="flip-prog-dq">0</strong></span>
+                </span>
+                <span id="flip-prog-cost" class="flip-prog-cost"></span>
+                <span id="flip-prog-elapsed" class="flip-prog-elapsed">0:00</span>
             </div>
 
-            <button id="flip-cancel-analysis" class="button" style="margin-top:16px;">Cancel</button>
+            <div id="flip-progress-log" class="flip-progress-log"></div>
+
+            <button id="flip-cancel-analysis" class="button">Cancel</button>
         </div>
     </div>
 </div>

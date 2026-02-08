@@ -8,12 +8,13 @@
     'use strict';
 
     var h = FD.helpers;
-    var BATCH_SIZE = 25;
+    var BATCH_SIZE = 5;
 
     // --- Batched analysis state ---
     var _cancelRequested = false;
     var _elapsedTimer = null;
     var _startTime = null;
+    var _completedCount = 0;
 
     /**
      * Show the report name prompt and run analysis when confirmed.
@@ -26,35 +27,70 @@
 
     // --- Progress modal helpers ---
 
-    function showProgress(title, status) {
+    function showProgress(title, total, costPerItem) {
         _cancelRequested = false;
+        _completedCount = 0;
         $('#flip-progress-title').text(title || 'Preparing Analysis...');
-        $('#flip-progress-status').text(status || 'Loading properties...');
         $('#flip-progress-bar').css('width', '0%');
-        $('#flip-progress-pct').text('0 of 0 properties');
+        $('#flip-progress-pct').text('0 of ' + (total || '?'));
         $('#flip-prog-viable').text('0');
         $('#flip-prog-dq').text('0');
         $('#flip-prog-elapsed').text('0:00');
         $('#flip-progress-counts').hide();
-        $('#flip-cancel-analysis').show().prop('disabled', false);
+        $('#flip-progress-log').empty();
+        $('#flip-cancel-analysis').show().prop('disabled', false).text('Cancel');
         $('#flip-modal-overlay').show();
         $('#flip-run-analysis').prop('disabled', true);
+
+        // Cost estimate
+        if (costPerItem && total) {
+            var est = (total * costPerItem).toFixed(2);
+            $('#flip-prog-cost').html('Est. cost: <strong>~$' + est + '</strong>');
+        } else {
+            $('#flip-prog-cost').html('Est. cost: <strong>Free</strong>');
+        }
 
         _startTime = Date.now();
         _elapsedTimer = setInterval(updateElapsed, 1000);
     }
 
-    function updateProgress(completed, total, viable, dq, lastProp) {
+    function logInit(msg) {
+        $('#flip-progress-log').append('<div class="flip-log-init">' + msg + '</div>');
+    }
+
+    function logProperties(properties, startIdx) {
+        var $log = $('#flip-progress-log');
+        for (var i = 0; i < properties.length; i++) {
+            var p = properties[i];
+            var idx = startIdx + i + 1;
+            var scoreVal = p.total_score ? p.total_score.toFixed(0) : '--';
+            var scoreClass = p.disqualified ? 'score-low'
+                : p.total_score >= 65 ? 'score-high'
+                : p.total_score >= 45 ? 'score-mid' : 'score-low';
+            var strat = p.disqualified ? 'dq' : (p.best_strategy || 'dq');
+            var stratLabel = p.disqualified ? 'DQ' : (p.best_strategy ? p.best_strategy.toUpperCase() : '--');
+
+            $log.append(
+                '<div class="flip-log-row">'
+                + '<span class="flip-log-idx">' + idx + '</span>'
+                + '<span class="flip-log-addr">' + (p.address || 'Unknown') + '</span>'
+                + '<span class="flip-log-city">' + (p.city || '') + '</span>'
+                + '<span class="flip-log-score ' + scoreClass + '">' + scoreVal + '</span>'
+                + '<span class="flip-log-strategy strat-' + strat + '">' + stratLabel + '</span>'
+                + '</div>'
+            );
+        }
+        // Auto-scroll to bottom
+        $log.scrollTop($log[0].scrollHeight);
+    }
+
+    function updateProgress(completed, total, viable, dq) {
         var pct = total > 0 ? Math.round(completed / total * 100) : 0;
         $('#flip-progress-bar').css('width', pct + '%');
-        $('#flip-progress-pct').text(completed + ' of ' + total + ' properties');
+        $('#flip-progress-pct').text(completed + ' of ' + total);
         $('#flip-prog-viable').text(viable);
         $('#flip-prog-dq').text(dq);
         $('#flip-progress-counts').show();
-
-        if (lastProp) {
-            $('#flip-progress-status').text(lastProp.address + ', ' + lastProp.city);
-        }
     }
 
     function updateElapsed() {
@@ -107,7 +143,8 @@
      * Execute analysis in batches: init → batch×N → finalize.
      */
     FD.ajax._executeAnalysis = function (reportName) {
-        showProgress('Preparing Analysis...', 'Fetching property list...');
+        showProgress('Preparing Analysis...');
+        logInit('Fetching property list...');
 
         // Phase 1: Init
         $.ajax({
@@ -137,7 +174,8 @@
                 }
 
                 $('#flip-progress-title').text('Running Analysis...');
-                $('#flip-progress-status').text('Starting analysis of ' + total + ' properties...');
+                $('#flip-progress-pct').text('0 of ' + total);
+                logInit('Found ' + total + ' properties. Starting analysis...');
 
                 // Split into batches
                 var batches = [];
@@ -173,7 +211,6 @@
                         },
                         success: function (resp) {
                             if (!resp.success) {
-                                // Batch failed — finalize with what we have
                                 hideProgress();
                                 alert('Batch error: ' + (resp.data || 'Unknown error') + '\nPartial results saved.');
                                 finalize(d.report_id, completed, false);
@@ -181,15 +218,15 @@
                             }
 
                             var bd = resp.data;
-                            completed += bd.batch_analyzed || batch.length;
+                            var batchCount = bd.batch_analyzed || batch.length;
+                            if (bd.properties && bd.properties.length > 0) {
+                                logProperties(bd.properties, completed);
+                            }
+                            completed += batchCount;
                             totalViable += bd.batch_viable || 0;
                             totalDQ += bd.batch_disqualified || 0;
 
-                            var lastProp = (bd.properties && bd.properties.length > 0)
-                                ? bd.properties[bd.properties.length - 1]
-                                : null;
-
-                            updateProgress(completed, total, totalViable, totalDQ, lastProp);
+                            updateProgress(completed, total, totalViable, totalDQ);
                             runNextBatch();
                         },
                         error: function (xhr, status) {
@@ -208,17 +245,22 @@
                                 success: function (resp) {
                                     if (resp.success) {
                                         var bd = resp.data;
-                                        completed += bd.batch_analyzed || batch.length;
+                                        var batchCount = bd.batch_analyzed || batch.length;
+                                        if (bd.properties && bd.properties.length > 0) {
+                                            logProperties(bd.properties, completed);
+                                        }
+                                        completed += batchCount;
                                         totalViable += bd.batch_viable || 0;
                                         totalDQ += bd.batch_disqualified || 0;
-                                        updateProgress(completed, total, totalViable, totalDQ, null);
+                                        updateProgress(completed, total, totalViable, totalDQ);
                                     }
                                     runNextBatch();
                                 },
                                 error: function () {
                                     // Give up on this batch, continue with rest
+                                    logInit('Batch failed, skipping ' + batch.length + ' properties...');
                                     completed += batch.length;
-                                    updateProgress(completed, total, totalViable, totalDQ, null);
+                                    updateProgress(completed, total, totalViable, totalDQ);
                                     runNextBatch();
                                 }
                             });
@@ -240,7 +282,7 @@
      */
     function finalize(reportId, totalAnalyzed, wasCancelled) {
         $('#flip-progress-title').text(wasCancelled ? 'Saving partial results...' : 'Finalizing...');
-        $('#flip-progress-status').text('Updating dashboard...');
+        logInit(wasCancelled ? 'Saving partial results...' : 'Updating dashboard...');
         $('#flip-cancel-analysis').hide();
 
         $.ajax({
@@ -286,7 +328,8 @@
      */
     FD.ajax.runBatchedAnalysis = function (listingIds, reportId, runDate) {
         var total = listingIds.length;
-        showProgress('Running Analysis...', 'Starting analysis of ' + total + ' properties...');
+        showProgress('Re-running Analysis...', total);
+        logInit('Found ' + total + ' properties. Starting analysis...');
 
         var batches = [];
         for (var i = 0; i < listingIds.length; i += BATCH_SIZE) {
@@ -324,17 +367,20 @@
                         return;
                     }
                     var bd = resp.data;
-                    completed += bd.batch_analyzed || batch.length;
+                    var batchCount = bd.batch_analyzed || batch.length;
+                    if (bd.properties && bd.properties.length > 0) {
+                        logProperties(bd.properties, completed);
+                    }
+                    completed += batchCount;
                     totalViable += bd.batch_viable || 0;
                     totalDQ += bd.batch_disqualified || 0;
-                    var lastProp = (bd.properties && bd.properties.length > 0)
-                        ? bd.properties[bd.properties.length - 1] : null;
-                    updateProgress(completed, total, totalViable, totalDQ, lastProp);
+                    updateProgress(completed, total, totalViable, totalDQ);
                     runNext();
                 },
                 error: function () {
+                    logInit('Batch failed, skipping ' + batch.length + ' properties...');
                     completed += batch.length;
-                    updateProgress(completed, total, totalViable, totalDQ, null);
+                    updateProgress(completed, total, totalViable, totalDQ);
                     runNext();
                 }
             });
@@ -362,7 +408,8 @@
             return;
         }
 
-        showProgress('Running Photo Analysis...', 'Analyzing photos for ' + count + ' properties...');
+        showProgress('Running Photo Analysis...', count, 0.04);
+        logInit('Analyzing photos for ' + count + ' properties...');
         $('#flip-cancel-analysis').hide(); // Photo analysis is single-request, no cancel
         $('#flip-progress-counts').hide();
         $('#flip-run-photos').prop('disabled', true);
