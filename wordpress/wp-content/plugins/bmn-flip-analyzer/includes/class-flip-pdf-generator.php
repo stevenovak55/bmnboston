@@ -352,7 +352,14 @@ class Flip_PDF_Generator {
 
         $this->pdf->SetY($card_y + $card_h + 6);
 
-        // Valuation section
+        // Strategy scores
+        $this->render_strategy_cards();
+
+        // Valuation section — needs ~90mm; start new page if not enough room
+        $page_bottom = $this->pdf->getPageHeight() - $this->pdf->getBreakMargin();
+        if (($page_bottom - $this->pdf->GetY()) < 90) {
+            $this->pdf->AddPage();
+        }
         $this->c->add_section_header('Property Valuation');
 
         $arv = $d['estimated_arv'];
@@ -402,6 +409,117 @@ class Flip_PDF_Generator {
 
         if (($d['road_arv_discount'] ?? 0) > 0) {
             $this->c->render_kv_row('Road Discount', '-' . ($d['road_arv_discount'] * 100) . '% (' . $d['road_type'] . ')', ['color' => $this->c->danger]);
+        }
+    }
+
+    /**
+     * Render strategy score cards (Flip / Rental / BRRRR) — 3-column layout.
+     */
+    private function render_strategy_cards(): void {
+        $d = $this->d;
+
+        $this->c->add_section_header('Strategy Analysis');
+
+        $strategies = [
+            ['key' => 'flip',   'label' => 'FLIP',   'score' => $d['flip_score'],   'viable' => $d['flip_viable']],
+            ['key' => 'rental', 'label' => 'RENTAL', 'score' => $d['rental_score'], 'viable' => $d['rental_viable']],
+            ['key' => 'brrrr',  'label' => 'BRRRR',  'score' => $d['brrrr_score'],  'viable' => $d['brrrr_viable']],
+        ];
+
+        $gap    = 4;
+        $card_w = (Flip_PDF_Components::PW - 2 * $gap) / 3;
+        $card_h = 32;
+        $y      = $this->pdf->GetY();
+
+        foreach ($strategies as $i => $strat) {
+            $x = Flip_PDF_Components::LM + $i * ($card_w + $gap);
+
+            $is_best = ($d['best_strategy'] === $strat['key']);
+            $has_score = ($strat['score'] !== null);
+
+            // Card background
+            $this->pdf->SetFillColor($this->c->light[0], $this->c->light[1], $this->c->light[2]);
+            $this->pdf->RoundedRect($x, $y, $card_w, $card_h, 2.5, '1111', 'F');
+
+            // Best strategy accent border
+            if ($is_best) {
+                $this->pdf->SetDrawColor($this->c->success[0], $this->c->success[1], $this->c->success[2]);
+                $this->pdf->SetLineWidth(0.6);
+                $this->pdf->RoundedRect($x, $y, $card_w, $card_h, 2.5, '1111', 'D');
+                $this->pdf->SetLineWidth(0.3);
+
+                // "BEST" pill badge centered at top
+                $badge_text = 'BEST';
+                $this->pdf->SetFont('helvetica', 'B', 6.5);
+                $badge_w = $this->pdf->GetStringWidth($badge_text) + 6;
+                $badge_x = $x + ($card_w - $badge_w) / 2;
+                $this->pdf->SetFillColor($this->c->success[0], $this->c->success[1], $this->c->success[2]);
+                $this->pdf->RoundedRect($badge_x, $y + 2.5, $badge_w, 5, 2, '1111', 'F');
+                $this->pdf->SetTextColor(255, 255, 255);
+                $this->pdf->SetXY($badge_x, $y + 2.5);
+                $this->pdf->Cell($badge_w, 5, $badge_text, 0, 0, 'C');
+            }
+
+            // Score value
+            $score_y = $y + ($is_best ? 9 : 6);
+            if ($has_score) {
+                $color = $this->c->get_score_color($strat['score']);
+                $this->c->set_color($color);
+                $this->pdf->SetFont('helvetica', 'B', 20);
+                $this->pdf->SetXY($x, $score_y);
+                $this->pdf->Cell($card_w, 9, $this->c->fmt_score($strat['score']), 0, 0, 'C');
+            } else {
+                $this->c->set_color($this->c->gray);
+                $this->pdf->SetFont('helvetica', 'B', 20);
+                $this->pdf->SetXY($x, $score_y);
+                $this->pdf->Cell($card_w, 9, '--', 0, 0, 'C');
+            }
+
+            // Strategy label
+            $this->pdf->SetXY($x, $score_y + 10);
+            $this->pdf->SetFont('helvetica', 'B', 9);
+            $this->c->set_color($this->c->gray);
+            $this->pdf->Cell($card_w, 5, $strat['label'], 0, 0, 'C');
+
+            // Viability indicator
+            $indicator_y = $score_y + 16;
+            if ($has_score) {
+                if ($strat['viable']) {
+                    $dot_color = $this->c->success;
+                    $label = 'Viable';
+                } else {
+                    $dot_color = $this->c->danger;
+                    $label = 'Not Viable';
+                }
+            } else {
+                $dot_color = $this->c->gray;
+                $label = 'N/A';
+            }
+
+            // Draw small circle
+            $this->pdf->SetFillColor($dot_color[0], $dot_color[1], $dot_color[2]);
+            $dot_r = 1.2;
+            $this->pdf->SetFont('helvetica', '', 7.5);
+            $label_w = $this->pdf->GetStringWidth($label);
+            $total_w = $dot_r * 2 + 2 + $label_w;
+            $dot_x = $x + ($card_w - $total_w) / 2 + $dot_r;
+            $this->pdf->Circle($dot_x, $indicator_y + 2.5, $dot_r, 0, 360, 'F');
+
+            // Viability label
+            $this->pdf->SetXY($dot_x + $dot_r + 2, $indicator_y);
+            $this->c->set_color($dot_color);
+            $this->pdf->Cell($label_w + 2, 5, $label, 0, 0, 'L');
+        }
+
+        $this->pdf->SetY($y + $card_h + 4);
+
+        // Strategy reasoning (if available)
+        $reasoning = $d['rental_analysis']['strategy']['reasoning'] ?? null;
+        if (!empty($reasoning)) {
+            $this->pdf->SetFont('helvetica', 'I', 8.5);
+            $this->c->set_color($this->c->gray);
+            $this->pdf->MultiCell(Flip_PDF_Components::PW, 4, $reasoning, 0, 'L');
+            $this->pdf->Ln(2);
         }
     }
 

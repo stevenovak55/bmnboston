@@ -2,7 +2,7 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies residential investment property candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis. Supports SFR, multifamily, and Residential Income properties.
- * Version: 0.19.5
+ * Version: 0.19.6
  * Author: BMN Boston
  * Requires PHP: 8.0
  *
@@ -244,7 +244,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.19.5');
+define('FLIP_VERSION', '0.19.6');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 

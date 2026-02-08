@@ -1,11 +1,20 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.19.5
+**Current Version:** 0.19.6
 **Last Updated:** 2026-02-07
 
 ## Overview
 
 Standalone WordPress plugin that identifies residential investment property candidates (SFR, multifamily, income properties) by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates. As of v0.18.0, evaluates **three investment strategies (Flip, Rental Hold, BRRRR)** with per-strategy 0-100 scores and per-strategy disqualification — properties are only DQ'd if ALL strategies fail.
+
+**v0.19.6 Enhancement (PDF Per-Strategy Scores):**
+- **Strategy Analysis section** added to PDF Page 2 between Score Breakdown and Property Valuation
+- **3-column strategy cards:** Flip / Rental / BRRRR with color-coded 0-100 scores
+- **BEST badge:** Green pill badge + green border on the best strategy card
+- **Viability indicators:** Green dot "Viable" / red dot "Not Viable" / gray "N/A" per strategy
+- **Strategy reasoning:** Italic text below cards showing recommendation rationale
+- **Page break guard:** Valuation section auto-flows to next page when strategy cards take up space
+- Modified: `class-flip-pdf-generator.php` (new `render_strategy_cards()` method)
 
 **v0.19.1–0.19.5 Enhancements (Safari Fix, Batched Analysis, Live Progress UI):**
 - **v0.19.1:** Fixed Safari "Invalid Date" on dashboard last run display (ISO 8601 format)
