@@ -135,6 +135,8 @@ class Flip_PDF_Generator {
         $this->add_cover_page();
         $this->add_scores_and_valuation();
         $this->add_financial_analysis();
+        $this->add_rental_analysis();
+        $this->add_brrrr_analysis();
         $this->add_risk_and_sensitivity();
         $this->add_comparables();
         $this->add_property_and_location();
@@ -648,7 +650,321 @@ class Flip_PDF_Generator {
         $this->charts->render_financial_bar_chart($this->d,$this->pdf->GetY() + 4);
     }
 
-    // ─── PAGE 4: RISK & SENSITIVITY ────────────────────────────────
+    // ─── RENTAL HOLD ANALYSIS ─────────────────────────────────────
+
+    private function add_rental_analysis(): void {
+        $rental = $this->d['rental_analysis']['rental'] ?? null;
+        if (!$rental) return;
+
+        $this->pdf->AddPage();
+        $this->c->add_section_header('Rental Hold Analysis');
+
+        // ── Rental Income card ──
+        $vacancy_loss = ($rental['annual_gross_income'] ?? 0) - ($rental['effective_gross'] ?? 0);
+        $income_rows = [
+            ['Monthly Rent', '$' . number_format($rental['monthly_rent'] ?? 0)],
+            ['Rent Source', ucfirst($rental['rent_source'] ?? 'unknown')],
+            ['Annual Gross Income', '$' . number_format($rental['annual_gross_income'] ?? 0)],
+            ['Vacancy (' . round(($rental['vacancy_rate'] ?? 0.05) * 100) . '%)',
+             '-$' . number_format($vacancy_loss)],
+            ['Effective Gross Income', '$' . number_format($rental['effective_gross'] ?? 0)],
+        ];
+        $inc_y = $this->pdf->GetY();
+        $inc_h = 6 + count($income_rows) * 7 + 4;
+        $this->c->render_card_start($inc_y, $inc_h, ['accent' => $this->c->success]);
+        $this->pdf->SetY($inc_y + 4);
+        foreach ($income_rows as $r) {
+            $bold = ($r[0] === 'Effective Gross Income');
+            $this->c->render_kv_row($r[0], $r[1], $bold ? ['bold' => true] : []);
+        }
+        $this->pdf->SetY($inc_y + $inc_h + 4);
+
+        // ── Operating Expenses card ──
+        $exp = $rental['expenses'] ?? [];
+        $exp_rows = [
+            ['Property Tax', '$' . number_format($exp['property_tax'] ?? 0)],
+            ['Insurance', '$' . number_format($exp['insurance'] ?? 0)],
+            ['Management', '$' . number_format($exp['management'] ?? 0)],
+            ['Maintenance', '$' . number_format($exp['maintenance'] ?? 0)],
+            ['CapEx Reserve', '$' . number_format($exp['capex_reserve'] ?? 0)],
+            ['Total Annual Expenses', '$' . number_format($exp['total_annual'] ?? 0)],
+        ];
+        $exp_y = $this->pdf->GetY();
+        $exp_h = 6 + count($exp_rows) * 7 + 4;
+        $this->c->render_card_start($exp_y, $exp_h, ['accent' => $this->c->danger]);
+        $this->pdf->SetY($exp_y + 4);
+        foreach ($exp_rows as $r) {
+            $bold = ($r[0] === 'Total Annual Expenses');
+            $this->c->render_kv_row($r[0], $r[1], $bold ? ['bold' => true] : []);
+        }
+        $this->pdf->SetY($exp_y + $exp_h + 6);
+
+        // ── Key Metrics (4 metric cards) ──
+        $noi = $rental['noi'] ?? 0;
+        $cap_rate = $rental['cap_rate'] ?? 0;
+        $coc = $rental['cash_on_cash'] ?? 0;
+        $grm = $rental['grm'] ?? 0;
+
+        $metric_cards = [
+            ['label' => 'NOI', 'value' => '$' . number_format($noi) . '/yr', 'color' => $noi >= 0 ? $this->c->success : $this->c->danger],
+            ['label' => 'Cap Rate', 'value' => number_format($cap_rate, 1) . '%', 'color' => $cap_rate >= 6 ? $this->c->success : ($cap_rate >= 4 ? $this->c->warning : $this->c->danger)],
+            ['label' => 'Cash-on-Cash', 'value' => number_format($coc, 1) . '%', 'color' => $coc >= 8 ? $this->c->success : ($coc >= 5 ? $this->c->warning : $this->c->danger)],
+            ['label' => 'GRM', 'value' => number_format($grm, 1), 'color' => $this->c->text],
+        ];
+        $this->c->render_metric_grid($metric_cards, 4, $this->pdf->GetY());
+
+        // ── Monthly Cash Flow callout ──
+        $monthly_cf = $noi / 12;
+        $cf_color = $monthly_cf >= 0 ? $this->c->success : $this->c->danger;
+        $cf_text = 'Monthly Cash Flow: ' . ($monthly_cf >= 0 ? '$' : '-$') . number_format(abs($monthly_cf)) . '/mo'
+                 . '  |  Annual: ' . ($noi >= 0 ? '$' : '-$') . number_format(abs($noi)) . '/yr';
+        $this->c->render_callout_box($cf_text, $cf_color, $this->pdf->GetY() + 2);
+
+        // ── Tax Benefits card ──
+        $tax = $rental['tax_benefits'] ?? null;
+        if ($tax) {
+            $tax_y = $this->pdf->GetY();
+            $this->c->add_subsection_header('Tax Benefits');
+            $tax_card_y = $this->pdf->GetY();
+            $tax_rows = [
+                ['Depreciable Basis', '$' . number_format($tax['depreciable_basis'] ?? 0)],
+                ['Annual Depreciation (27.5yr)', '$' . number_format($tax['annual_depreciation'] ?? 0)],
+                ['Annual Tax Savings (' . round(($tax['marginal_tax_rate'] ?? 0.32) * 100) . '% bracket)',
+                 '$' . number_format($tax['annual_tax_savings'] ?? 0)],
+            ];
+            $tax_h = 6 + count($tax_rows) * 7 + 4;
+            $this->c->render_card_start($tax_card_y, $tax_h);
+            $this->pdf->SetY($tax_card_y + 4);
+            foreach ($tax_rows as $r) {
+                $this->c->render_kv_row($r[0], $r[1]);
+            }
+            $this->pdf->SetY($tax_card_y + $tax_h + 4);
+        }
+
+        // ── Multi-Year Projections table ──
+        $proj = $rental['projections'] ?? [];
+        if (!empty($proj)) {
+            // Check if we need a new page
+            if ($this->pdf->GetY() > 200) {
+                $this->pdf->AddPage();
+            }
+            $this->c->add_subsection_header('Multi-Year Projections');
+
+            $cols = [38, 38, 38, 38, 40];
+            $this->c->render_styled_table_header($cols, ['Year', 'Property Value', 'Equity Gain', 'Cum. Cash Flow', 'Total Return']);
+
+            $this->pdf->SetFont('helvetica', '', 9);
+            $zebra = false;
+            foreach ($proj as $p) {
+                if ($zebra) {
+                    $this->pdf->SetFillColor($this->c->zebra[0], $this->c->zebra[1], $this->c->zebra[2]);
+                    $this->pdf->Rect(Flip_PDF_Components::LM, $this->pdf->GetY(), Flip_PDF_Components::PW, 7, 'F');
+                }
+                $this->c->set_text_color();
+                $this->pdf->Cell($cols[0], 7, 'Year ' . $p['year'], 0, 0, 'L');
+                $this->pdf->Cell($cols[1], 7, '$' . number_format($p['property_value']), 0, 0, 'R');
+                $this->pdf->Cell($cols[2], 7, '$' . number_format($p['equity_gain']), 0, 0, 'R');
+
+                $cf_val = $p['cumulative_cf'] ?? 0;
+                $this->c->set_color($cf_val >= 0 ? $this->c->success : $this->c->danger);
+                $this->pdf->Cell($cols[3], 7, ($cf_val >= 0 ? '$' : '-$') . number_format(abs($cf_val)), 0, 0, 'R');
+
+                $ret_pct = $p['total_return_pct'] ?? 0;
+                $this->c->set_color($ret_pct >= 0 ? $this->c->success : $this->c->danger);
+                $this->pdf->Cell($cols[4], 7, number_format($ret_pct, 1) . '%', 0, 1, 'R');
+
+                $zebra = !$zebra;
+            }
+        }
+
+        // ── Per-unit metrics (multifamily) ──
+        $per_unit = $rental['per_unit'] ?? null;
+        if ($per_unit && ($per_unit['units'] ?? 0) > 1) {
+            $this->pdf->Ln(4);
+            $pu_y = $this->pdf->GetY();
+            $pu_rows = [
+                ['Units', (string) $per_unit['units']],
+                ['Price / Unit', '$' . number_format($per_unit['price_per_unit'] ?? 0)],
+                ['Rent / Unit', '$' . number_format($per_unit['rent_per_unit'] ?? 0) . '/mo'],
+                ['NOI / Unit', '$' . number_format($per_unit['noi_per_unit'] ?? 0) . '/yr'],
+            ];
+            $pu_h = 6 + count($pu_rows) * 7 + 4;
+            $this->c->render_card_start($pu_y, $pu_h);
+            $this->pdf->SetY($pu_y + 4);
+            foreach ($pu_rows as $r) {
+                $this->c->render_kv_row($r[0], $r[1]);
+            }
+        }
+    }
+
+    // ─── BRRRR ANALYSIS ───────────────────────────────────────────
+
+    private function add_brrrr_analysis(): void {
+        $brrrr = $this->d['rental_analysis']['brrrr'] ?? null;
+        $rental = $this->d['rental_analysis']['rental'] ?? null;
+        if (!$brrrr) return;
+
+        $this->pdf->AddPage();
+        $this->c->add_section_header('BRRRR Analysis');
+
+        // ── Capital Required card ──
+        $cap_rows = [
+            ['Purchase Price', '$' . number_format($brrrr['purchase_price'] ?? 0)],
+            ['Rehab Cost', '$' . number_format($brrrr['rehab_cost'] ?? 0)],
+            ['Purchase Closing', '$' . number_format($brrrr['purchase_closing'] ?? 0)],
+            ['Total Cash In', '$' . number_format($brrrr['total_cash_in'] ?? 0)],
+        ];
+        $cap_y = $this->pdf->GetY();
+        $cap_h = 6 + count($cap_rows) * 7 + 4;
+        $this->c->render_card_start($cap_y, $cap_h, ['accent' => $this->c->primary]);
+        $this->pdf->SetY($cap_y + 4);
+        foreach ($cap_rows as $r) {
+            $bold = ($r[0] === 'Total Cash In');
+            $this->c->render_kv_row($r[0], $r[1], $bold ? ['bold' => true] : []);
+        }
+        $this->pdf->SetY($cap_y + $cap_h + 6);
+
+        // ── Refinance Details card ──
+        $this->c->add_subsection_header('Refinance Details');
+        $refi_rows = [
+            ['After Repair Value (ARV)', '$' . number_format($brrrr['arv'] ?? 0)],
+            ['Refi LTV', round(($brrrr['refi_ltv'] ?? 0.75) * 100) . '%'],
+            ['Refi Loan Amount', '$' . number_format($brrrr['refi_loan'] ?? 0)],
+            ['Interest Rate', number_format(($brrrr['refi_rate'] ?? 0.065) * 100, 1) . '%'],
+            ['Loan Term', ($brrrr['refi_term'] ?? 30) . ' years'],
+            ['Monthly P&I', '$' . number_format($brrrr['monthly_payment'] ?? 0)],
+        ];
+        $refi_y = $this->pdf->GetY();
+        $refi_h = 6 + count($refi_rows) * 7 + 4;
+        $this->c->render_card_start($refi_y, $refi_h);
+        $this->pdf->SetY($refi_y + 4);
+        foreach ($refi_rows as $r) {
+            $this->c->render_kv_row($r[0], $r[1]);
+        }
+        $this->pdf->SetY($refi_y + $refi_h + 6);
+
+        // ── Capital Recovery hero metrics ──
+        $cash_out = $brrrr['cash_out'] ?? 0;
+        $cash_left = $brrrr['cash_left_in_deal'] ?? 0;
+        $equity = $brrrr['equity_captured'] ?? 0;
+        $infinite = $brrrr['infinite_return'] ?? false;
+        $total_in = $brrrr['total_cash_in'] ?? 1;
+        $recovery_pct = $total_in > 0 ? (($total_in - max(0, $cash_left)) / $total_in) * 100 : 0;
+
+        $recovery_cards = [
+            ['label' => 'Cash Out at Refi', 'value' => '$' . number_format($cash_out), 'color' => $this->c->success],
+            ['label' => 'Cash Left in Deal', 'value' => $cash_left <= 0 ? '$0' : '$' . number_format($cash_left),
+             'color' => $cash_left <= 0 ? $this->c->success : $this->c->warning],
+            ['label' => 'Equity Captured', 'value' => '$' . number_format($equity), 'color' => $this->c->primary],
+        ];
+        $this->c->render_metric_grid($recovery_cards, 3, $this->pdf->GetY());
+
+        // Infinite return callout
+        if ($infinite || $cash_left <= 0) {
+            $this->c->render_callout_box(
+                'Infinite Return — all capital recovered at refinance. ' .
+                'Capital Recovery: ' . number_format(min(100, $recovery_pct), 0) . '%',
+                $this->c->success,
+                $this->pdf->GetY() + 2
+            );
+        } else {
+            $this->c->render_callout_box(
+                'Capital Recovery: ' . number_format($recovery_pct, 0) . '% — $' .
+                number_format($cash_left) . ' still in the deal',
+                $recovery_pct >= 80 ? $this->c->warning : $this->c->danger,
+                $this->pdf->GetY() + 2
+            );
+        }
+
+        // ── Post-Refi Cash Flow table ──
+        $this->c->add_subsection_header('Post-Refi Monthly Cash Flow');
+        $mb = $brrrr['monthly_breakdown'] ?? [];
+        $monthly_rent = $mb['rent'] ?? 0;
+        $monthly_exp = $rental ? (($rental['expenses']['total_annual'] ?? 0) / 12) : 0;
+        $monthly_pi = $brrrr['monthly_payment'] ?? 0;
+        $monthly_net = $monthly_rent - $monthly_exp - $monthly_pi;
+
+        $cf_y = $this->pdf->GetY();
+        $cf_rows = [
+            ['Rental Income', '+$' . number_format($monthly_rent), '+$' . number_format($monthly_rent * 12)],
+            ['Operating Expenses', '-$' . number_format($monthly_exp), '-$' . number_format($monthly_exp * 12)],
+            ['Mortgage P&I', '-$' . number_format($monthly_pi), '-$' . number_format($monthly_pi * 12)],
+        ];
+
+        $cols = [76, 58, 58];
+        $this->c->render_styled_table_header($cols, ['', 'Monthly', 'Annual']);
+
+        $this->pdf->SetFont('helvetica', '', 9);
+        foreach ($cf_rows as $r) {
+            $this->c->set_text_color();
+            $this->pdf->Cell($cols[0], 7, $r[0], 0, 0, 'L');
+            $is_income = (strpos($r[1], '+') === 0);
+            $this->c->set_color($is_income ? $this->c->success : $this->c->danger);
+            $this->pdf->Cell($cols[1], 7, $r[1], 0, 0, 'R');
+            $this->pdf->Cell($cols[2], 7, $r[2], 0, 1, 'R');
+        }
+
+        // Net row
+        $this->pdf->SetFont('helvetica', 'B', 10);
+        $net_color = $monthly_net >= 0 ? $this->c->success : $this->c->danger;
+        $this->c->set_text_color();
+        $this->pdf->Cell($cols[0], 7, 'Net Cash Flow', 'T', 0, 'L');
+        $this->c->set_color($net_color);
+        $net_prefix = $monthly_net >= 0 ? '$' : '-$';
+        $this->pdf->Cell($cols[1], 7, $net_prefix . number_format(abs($monthly_net)), 'T', 0, 'R');
+        $this->pdf->Cell($cols[2], 7, $net_prefix . number_format(abs($monthly_net * 12)), 'T', 1, 'R');
+
+        // DSCR callout
+        $dscr = $brrrr['dscr'] ?? null;
+        if ($dscr !== null) {
+            $dscr_color = $dscr >= 1.25 ? $this->c->success : ($dscr >= 1.0 ? $this->c->warning : $this->c->danger);
+            $dscr_label = $dscr >= 1.25 ? 'Strong' : ($dscr >= 1.0 ? 'Adequate' : 'Below threshold');
+            $this->pdf->Ln(2);
+            $this->c->render_callout_box(
+                'DSCR: ' . number_format($dscr, 2) . ' — ' . $dscr_label . ' (1.25+ preferred by lenders)',
+                $dscr_color,
+                $this->pdf->GetY()
+            );
+        }
+
+        // ── BRRRR Projections table ──
+        $proj = $brrrr['projections'] ?? [];
+        if (!empty($proj)) {
+            if ($this->pdf->GetY() > 210) {
+                $this->pdf->AddPage();
+            }
+            $this->c->add_subsection_header('BRRRR Projections');
+
+            $cols = [38, 38, 38, 38, 40];
+            $this->c->render_styled_table_header($cols, ['Year', 'Property Value', 'Equity Gain', 'Cum. Cash Flow', 'Total Return']);
+
+            $this->pdf->SetFont('helvetica', '', 9);
+            $zebra = false;
+            foreach ($proj as $p) {
+                if ($zebra) {
+                    $this->pdf->SetFillColor($this->c->zebra[0], $this->c->zebra[1], $this->c->zebra[2]);
+                    $this->pdf->Rect(Flip_PDF_Components::LM, $this->pdf->GetY(), Flip_PDF_Components::PW, 7, 'F');
+                }
+                $this->c->set_text_color();
+                $this->pdf->Cell($cols[0], 7, 'Year ' . $p['year'], 0, 0, 'L');
+                $this->pdf->Cell($cols[1], 7, '$' . number_format($p['property_value']), 0, 0, 'R');
+                $this->pdf->Cell($cols[2], 7, '$' . number_format($p['equity_gain']), 0, 0, 'R');
+
+                $cf_val = $p['cumulative_cf'] ?? 0;
+                $this->c->set_color($cf_val >= 0 ? $this->c->success : $this->c->danger);
+                $this->pdf->Cell($cols[3], 7, ($cf_val >= 0 ? '$' : '-$') . number_format(abs($cf_val)), 0, 0, 'R');
+
+                // For BRRRR, cap display at 999.9% to avoid absurd infinite-return percentages
+                $ret_pct = min($p['total_return_pct'] ?? 0, 999.9);
+                $this->c->set_color($ret_pct >= 0 ? $this->c->success : $this->c->danger);
+                $this->pdf->Cell($cols[4], 7, number_format($ret_pct, 1) . '%', 0, 1, 'R');
+
+                $zebra = !$zebra;
+            }
+        }
+    }
+
+    // ─── RISK & SENSITIVITY ──────────────────────────────────────
 
     private function add_risk_and_sensitivity(): void {
         $this->pdf->AddPage();
