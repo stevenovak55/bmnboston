@@ -1765,7 +1765,7 @@ class Flip_PDF_Generator {
         // HOA/Condo Fee
         $assoc_yn = $fin->association_yn ?? null;
         $assoc_fee = $fin->association_fee ?? null;
-        if (($assoc_yn === 'Y' || $assoc_yn === '1' || $assoc_yn === 'true') && $assoc_fee && $assoc_fee > 0) {
+        if ($assoc_fee && $assoc_fee > 0) {
             $freq = $fin->association_fee_frequency ?? '';
             $fee_str = '$' . number_format($assoc_fee);
             if ($freq) $fee_str .= '/' . strtolower($freq);
