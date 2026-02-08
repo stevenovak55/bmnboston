@@ -7,6 +7,12 @@
 
 Standalone WordPress plugin that identifies residential investment property candidates (SFR, multifamily, income properties) by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates. As of v0.18.0, evaluates **three investment strategies (Flip, Rental Hold, BRRRR)** with per-strategy 0-100 scores and per-strategy disqualification — properties are only DQ'd if ALL strategies fail.
 
+**v0.19.8 Enhancement (PDF Follow-Up Enhancements):**
+- **Interior Features + Appliances:** Two new rows in Property Details card (between Flooring and Basement), using existing `format_bme_array()` — data was fetched in v0.19.7 but not displayed
+- **Price Reduction row:** Added to Financial & Tax card when `original_list_price > list_price`. Format: `$1,597,500 → $1,250,000 (-21.7%)`. Null-safe, skips when either value is 0 or null
+- **MLS income delta caveat:** Small italic gray note (7.5pt) below MLS vs Estimates comparison table when gross income diverges >50%. Uses `MultiCell` for word-wrap. Only renders when both MLS and estimated values are >0
+- Modified: `class-flip-pdf-generator.php` (3 insertions, ~25 lines), `bmn-flip-analyzer.php` (version bump)
+
 **v0.19.7 Enhancement (PDF Content Enrichment):**
 - **BME data enrichment:** New `fetch_enriched_data()` queries `bme_listings`, `bme_listing_details`, `bme_listing_financial` by listing_id (indexed, sub-ms)
 - **Property Description section:** Replaces blank "MLS Remarks Signals" on Photo Analysis page with full `public_remarks` text (truncated at 1,500 chars) in word-wrapped card, condensed keyword signals below
