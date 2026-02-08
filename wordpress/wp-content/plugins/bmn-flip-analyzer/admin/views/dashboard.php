@@ -638,10 +638,22 @@ if (!defined('ABSPATH')) {
             <div class="flip-modal-icon">
                 <span class="dashicons dashicons-update flip-spin"></span>
             </div>
-            <h3>Running Analysis...</h3>
-            <p>Scoring properties across all target cities.<br>
-               This may take 1-3 minutes depending on the number of properties.</p>
-            <p class="flip-modal-note">Do not close this page.</p>
+            <h3 id="flip-progress-title">Preparing Analysis...</h3>
+
+            <div class="flip-progress-bar-wrap">
+                <div class="flip-progress-bar" id="flip-progress-bar" style="width:0%"></div>
+            </div>
+            <p id="flip-progress-pct" class="flip-progress-pct">0 of 0 properties</p>
+
+            <p id="flip-progress-status" class="flip-progress-status">Loading properties...</p>
+
+            <div id="flip-progress-counts" class="flip-progress-counts" style="display:none;">
+                <span>Viable: <strong id="flip-prog-viable">0</strong></span>
+                <span class="flip-count-dq">DQ: <strong id="flip-prog-dq">0</strong></span>
+                <span>Elapsed: <strong id="flip-prog-elapsed">0:00</strong></span>
+            </div>
+
+            <button id="flip-cancel-analysis" class="button" style="margin-top:16px;">Cancel</button>
         </div>
     </div>
 </div>

@@ -25,6 +25,9 @@ class Flip_Admin_Dashboard {
         add_action('admin_menu', [__CLASS__, 'register_menu']);
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_assets']);
         add_action('wp_ajax_flip_run_analysis', [__CLASS__, 'ajax_run_analysis']);
+        add_action('wp_ajax_flip_analysis_init', [__CLASS__, 'ajax_analysis_init']);
+        add_action('wp_ajax_flip_analysis_batch', [__CLASS__, 'ajax_analysis_batch']);
+        add_action('wp_ajax_flip_analysis_finalize', [__CLASS__, 'ajax_analysis_finalize']);
         add_action('wp_ajax_flip_run_photo_analysis', [__CLASS__, 'ajax_run_photo_analysis']);
         add_action('wp_ajax_flip_refresh_data', [__CLASS__, 'ajax_refresh_data']);
         add_action('wp_ajax_flip_update_cities', [__CLASS__, 'ajax_update_cities']);
@@ -407,6 +410,201 @@ class Flip_Admin_Dashboard {
         $result['reports']     = Flip_Report_AJAX::get_reports_list();
 
         wp_send_json_success($result);
+    }
+
+    /**
+     * AJAX: Batched analysis — Phase 1: Init.
+     *
+     * Creates report, fetches matching listing IDs, pre-computes city metrics.
+     * Returns listing IDs for client to split into batches.
+     */
+    public static function ajax_analysis_init(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        if (Flip_Database::count_reports() >= Flip_Database::MAX_REPORTS) {
+            wp_send_json_error('Maximum of ' . Flip_Database::MAX_REPORTS . ' reports reached. Delete old reports first.');
+        }
+
+        $report_name = isset($_POST['report_name'])
+            ? sanitize_text_field(wp_unslash($_POST['report_name']))
+            : '';
+
+        $filters = Flip_Database::get_analysis_filters();
+        $cities  = Flip_Database::get_target_cities();
+        $now     = current_time('mysql');
+
+        if (empty($cities)) {
+            wp_send_json_error('No target cities configured.');
+        }
+
+        // Create report record
+        $report_id = Flip_Database::create_report([
+            'name'         => $report_name ?: (implode(', ', $cities) . ' - ' . wp_date('M j, Y')),
+            'type'         => 'manual',
+            'cities_json'  => wp_json_encode($cities),
+            'filters_json' => wp_json_encode($filters),
+            'run_date'     => $now,
+            'created_by'   => get_current_user_id(),
+        ]);
+
+        if (!$report_id) {
+            wp_send_json_error('Failed to create report.');
+        }
+
+        // Fetch matching listing IDs (lightweight — no full property data)
+        $listing_ids = Flip_Property_Fetcher::fetch_matching_listing_ids($cities, $filters);
+
+        // Pre-compute city metrics (cached for subsequent batch calls)
+        Flip_Location_Scorer::precompute_city_metrics($cities);
+
+        // Set concurrency lock
+        set_transient('flip_analysis_lock_' . $report_id, true, 900);
+
+        wp_send_json_success([
+            'report_id'   => $report_id,
+            'listing_ids' => array_values($listing_ids),
+            'total_count' => count($listing_ids),
+            'cities'      => $cities,
+            'run_date'    => $now,
+        ]);
+    }
+
+    /**
+     * AJAX: Batched analysis — Phase 2: Analyze a batch of properties.
+     *
+     * Receives a batch of listing IDs (~25), runs the full pipeline on each,
+     * returns per-property summary for progress display.
+     */
+    public static function ajax_analysis_batch(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        set_time_limit(120);
+
+        $report_id   = isset($_POST['report_id']) ? (int) $_POST['report_id'] : 0;
+        $listing_ids = isset($_POST['listing_ids']) ? json_decode(wp_unslash($_POST['listing_ids']), true) : [];
+        $run_date    = isset($_POST['run_date']) ? sanitize_text_field(wp_unslash($_POST['run_date'])) : current_time('mysql');
+
+        if (!$report_id || empty($listing_ids)) {
+            wp_send_json_error('Missing report_id or listing_ids.');
+        }
+
+        // Verify concurrency lock
+        if (!get_transient('flip_analysis_lock_' . $report_id)) {
+            wp_send_json_error('Analysis session expired. Please start a new run.');
+        }
+
+        $listing_ids = array_map('intval', $listing_ids);
+
+        // Run analysis on this batch
+        $result = Flip_Analyzer::run([
+            'listing_ids' => $listing_ids,
+            'report_id'   => $report_id,
+            'run_date'    => $run_date,
+        ]);
+
+        // Fetch brief summary of what was just analyzed
+        global $wpdb;
+        $table = Flip_Database::table_name();
+        $ph = implode(',', array_fill(0, count($listing_ids), '%d'));
+        $batch_results = $wpdb->get_results($wpdb->prepare(
+            "SELECT listing_id, address, city, total_score, disqualified,
+                    best_strategy, flip_score, rental_score, brrrr_score
+             FROM {$table}
+             WHERE report_id = %d AND listing_id IN ({$ph})",
+            array_merge([$report_id], $listing_ids)
+        ));
+
+        $batch_viable = 0;
+        $batch_dq = 0;
+        $properties = [];
+        foreach ($batch_results as $r) {
+            if ((int) $r->disqualified) {
+                $batch_dq++;
+            } else {
+                $batch_viable++;
+            }
+            $properties[] = [
+                'listing_id'    => (int) $r->listing_id,
+                'address'       => $r->address,
+                'city'          => $r->city,
+                'total_score'   => (float) $r->total_score,
+                'disqualified'  => (bool) $r->disqualified,
+                'best_strategy' => $r->best_strategy,
+            ];
+        }
+
+        wp_send_json_success([
+            'batch_analyzed'     => (int) ($result['analyzed'] ?? 0),
+            'batch_disqualified' => $batch_dq,
+            'batch_viable'       => $batch_viable,
+            'properties'         => $properties,
+        ]);
+    }
+
+    /**
+     * AJAX: Batched analysis — Phase 3: Finalize.
+     *
+     * Updates report metadata, clears lock, returns full dashboard data.
+     */
+    public static function ajax_analysis_finalize(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $report_id     = isset($_POST['report_id']) ? (int) $_POST['report_id'] : 0;
+        $total_count   = isset($_POST['total_analyzed']) ? (int) $_POST['total_analyzed'] : 0;
+        $was_cancelled = isset($_POST['cancelled']) && $_POST['cancelled'] === '1';
+
+        if (!$report_id) {
+            wp_send_json_error('Missing report_id.');
+        }
+
+        // Count viable in this report
+        global $wpdb;
+        $table = Flip_Database::table_name();
+        $viable_count = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table}
+             WHERE report_id = %d AND disqualified = 0 AND total_score >= 60",
+            $report_id
+        ));
+        $property_count = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE report_id = %d",
+            $report_id
+        ));
+
+        // Update report metadata
+        Flip_Database::update_report($report_id, [
+            'last_run_date'  => current_time('mysql'),
+            'run_count'      => 1,
+            'property_count' => $property_count,
+            'viable_count'   => $viable_count,
+        ]);
+
+        // Clean up empty reports
+        if ($property_count === 0) {
+            Flip_Database::delete_report($report_id);
+            $report_id = null;
+        }
+
+        // Clear lock
+        delete_transient('flip_analysis_lock_' . ($report_id ?? 0));
+
+        wp_send_json_success([
+            'dashboard'    => self::get_dashboard_data($report_id),
+            'report_id'    => $report_id,
+            'reports'      => Flip_Report_AJAX::get_reports_list(),
+            'cancelled'    => $was_cancelled,
+        ]);
     }
 
     /**

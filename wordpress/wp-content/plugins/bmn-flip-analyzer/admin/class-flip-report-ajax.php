@@ -20,6 +20,7 @@ class Flip_Report_AJAX {
         add_action('wp_ajax_flip_load_report', [__CLASS__, 'ajax_load_report']);
         add_action('wp_ajax_flip_rename_report', [__CLASS__, 'ajax_rename_report']);
         add_action('wp_ajax_flip_rerun_report', [__CLASS__, 'ajax_rerun_report']);
+        add_action('wp_ajax_flip_rerun_init', [__CLASS__, 'ajax_rerun_init']);
         add_action('wp_ajax_flip_delete_report', [__CLASS__, 'ajax_delete_report']);
         add_action('wp_ajax_flip_create_monitor', [__CLASS__, 'ajax_create_monitor']);
     }
@@ -164,6 +165,66 @@ class Flip_Report_AJAX {
         $result['reports']   = self::get_reports_list();
 
         wp_send_json_success($result);
+    }
+
+    /**
+     * AJAX: Batched report re-run — Phase 1: Init.
+     *
+     * Restores original criteria, fetches listing IDs, deletes old scores,
+     * sets concurrency lock. Client then sends batches via flip_analysis_batch.
+     */
+    public static function ajax_rerun_init(): void {
+        check_ajax_referer('flip_dashboard', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $report_id = isset($_POST['report_id']) ? (int) $_POST['report_id'] : 0;
+        if ($report_id <= 0) {
+            wp_send_json_error('Invalid report ID.');
+        }
+
+        $report = Flip_Database::get_report($report_id);
+        if (!$report || $report->status === 'deleted') {
+            wp_send_json_error('Report not found.');
+        }
+
+        // Concurrency lock
+        $lock_key = 'flip_analysis_lock_' . $report_id;
+        if (get_transient($lock_key)) {
+            wp_send_json_error('This report is already being processed. Please wait.');
+        }
+        set_transient($lock_key, true, 900);
+
+        // Restore original criteria
+        $cities  = json_decode($report->cities_json, true) ?: [];
+        $filters = json_decode($report->filters_json, true) ?: [];
+
+        // Pre-compute city metrics
+        Flip_Location_Scorer::precompute_city_metrics($cities);
+
+        // Fetch matching listing IDs
+        $listing_ids = Flip_Property_Fetcher::fetch_matching_listing_ids($cities, $filters);
+
+        // Delete old scores for this report (fresh re-run)
+        global $wpdb;
+        $table = Flip_Database::table_name();
+        $wpdb->query($wpdb->prepare(
+            "DELETE FROM {$table} WHERE report_id = %d",
+            $report_id
+        ));
+
+        $run_date = current_time('mysql');
+
+        wp_send_json_success([
+            'report_id'   => $report_id,
+            'listing_ids' => array_values($listing_ids),
+            'total_count' => count($listing_ids),
+            'cities'      => $cities,
+            'run_date'    => $run_date,
+            'run_count'   => (int) $report->run_count + 1,
+        ]);
     }
 
     /**

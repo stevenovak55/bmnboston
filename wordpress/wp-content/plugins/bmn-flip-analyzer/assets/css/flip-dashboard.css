@@ -890,6 +890,44 @@
     display: inline-block;
 }
 
+/* Progress bar */
+.flip-progress-bar-wrap {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    margin: 16px 0 8px;
+    overflow: hidden;
+}
+.flip-progress-bar {
+    height: 100%;
+    background: #2271b1;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+.flip-progress-pct {
+    font-size: 13px;
+    color: #666;
+    margin: 0 0 4px;
+}
+.flip-progress-status {
+    font-size: 13px;
+    color: #333;
+    margin: 0 0 8px;
+    min-height: 20px;
+}
+.flip-progress-counts {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    font-size: 13px;
+    color: #555;
+    margin-top: 8px;
+}
+.flip-progress-counts strong { font-weight: 600; }
+.flip-count-dq strong { color: #dc3545; }
+#flip-prog-viable { color: #198754; }
+
 /* ── Report Context Bar ────────────────────────── */
 
 .flip-report-context {

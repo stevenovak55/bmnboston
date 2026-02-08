@@ -8,6 +8,12 @@
     'use strict';
 
     var h = FD.helpers;
+    var BATCH_SIZE = 25;
+
+    // --- Batched analysis state ---
+    var _cancelRequested = false;
+    var _elapsedTimer = null;
+    var _startTime = null;
 
     /**
      * Show the report name prompt and run analysis when confirmed.
@@ -18,66 +24,323 @@
         });
     };
 
-    /**
-     * Execute the actual analysis run (called after name prompt).
-     */
-    FD.ajax._executeAnalysis = function (reportName) {
+    // --- Progress modal helpers ---
+
+    function showProgress(title, status) {
+        _cancelRequested = false;
+        $('#flip-progress-title').text(title || 'Preparing Analysis...');
+        $('#flip-progress-status').text(status || 'Loading properties...');
+        $('#flip-progress-bar').css('width', '0%');
+        $('#flip-progress-pct').text('0 of 0 properties');
+        $('#flip-prog-viable').text('0');
+        $('#flip-prog-dq').text('0');
+        $('#flip-prog-elapsed').text('0:00');
+        $('#flip-progress-counts').hide();
+        $('#flip-cancel-analysis').show().prop('disabled', false);
         $('#flip-modal-overlay').show();
         $('#flip-run-analysis').prop('disabled', true);
 
+        _startTime = Date.now();
+        _elapsedTimer = setInterval(updateElapsed, 1000);
+    }
+
+    function updateProgress(completed, total, viable, dq, lastProp) {
+        var pct = total > 0 ? Math.round(completed / total * 100) : 0;
+        $('#flip-progress-bar').css('width', pct + '%');
+        $('#flip-progress-pct').text(completed + ' of ' + total + ' properties');
+        $('#flip-prog-viable').text(viable);
+        $('#flip-prog-dq').text(dq);
+        $('#flip-progress-counts').show();
+
+        if (lastProp) {
+            $('#flip-progress-status').text(lastProp.address + ', ' + lastProp.city);
+        }
+    }
+
+    function updateElapsed() {
+        if (!_startTime) return;
+        var secs = Math.floor((Date.now() - _startTime) / 1000);
+        var m = Math.floor(secs / 60);
+        var s = secs % 60;
+        $('#flip-prog-elapsed').text(m + ':' + (s < 10 ? '0' : '') + s);
+    }
+
+    function hideProgress() {
+        $('#flip-modal-overlay').hide();
+        $('#flip-run-analysis').prop('disabled', false);
+        if (_elapsedTimer) {
+            clearInterval(_elapsedTimer);
+            _elapsedTimer = null;
+        }
+        _startTime = null;
+    }
+
+    function finishDashboard(d) {
+        if (d.report_id) {
+            FD.activeReportId = d.report_id;
+        }
+        if (d.dashboard) {
+            FD.data = d.dashboard;
+            FD.stats.renderStats(FD.data.summary);
+            FD.stats.renderChart(FD.data.summary.cities || []);
+            FD.filters.applyFilters();
+        }
+        if (d.reports) {
+            FD.reports.renderList(d.reports);
+        }
+        if (d.dashboard && d.dashboard.report) {
+            FD.reports.showReportHeader(d.dashboard.report);
+        }
+    }
+
+    // --- Cancel button ---
+
+    $(document).on('click', '#flip-cancel-analysis', function () {
+        _cancelRequested = true;
+        $(this).prop('disabled', true).text('Cancelling...');
+        $('#flip-progress-title').text('Cancelling...');
+    });
+
+    // --- Batched analysis execution ---
+
+    /**
+     * Execute analysis in batches: init → batch×N → finalize.
+     */
+    FD.ajax._executeAnalysis = function (reportName) {
+        showProgress('Preparing Analysis...', 'Fetching property list...');
+
+        // Phase 1: Init
         $.ajax({
             url: flipData.ajaxUrl,
             method: 'POST',
-            timeout: 300000,
+            timeout: 30000,
             data: {
-                action: 'flip_run_analysis',
+                action: 'flip_analysis_init',
                 nonce: flipData.nonce,
                 report_name: reportName || '',
             },
             success: function (response) {
-                $('#flip-modal-overlay').hide();
-                $('#flip-run-analysis').prop('disabled', false);
-
-                if (response.success) {
-                    var d = response.data;
-                    var msg = 'Analysis complete: ' + d.analyzed + ' properties analyzed, '
-                        + d.disqualified + ' disqualified.';
-                    alert(msg);
-
-                    if (d.report_id) {
-                        FD.activeReportId = d.report_id;
-                    }
-
-                    if (d.dashboard) {
-                        FD.data = d.dashboard;
-                        FD.stats.renderStats(FD.data.summary);
-                        FD.stats.renderChart(FD.data.summary.cities || []);
-                        FD.filters.applyFilters();
-                    }
-
-                    if (d.reports) {
-                        FD.reports.renderList(d.reports);
-                    }
-
-                    if (d.dashboard && d.dashboard.report) {
-                        FD.reports.showReportHeader(d.dashboard.report);
-                    }
-                } else {
+                if (!response.success) {
+                    hideProgress();
                     alert('Error: ' + (response.data || 'Unknown error'));
+                    return;
                 }
+
+                var d = response.data;
+                var listingIds = d.listing_ids || [];
+                var total = listingIds.length;
+
+                if (total === 0) {
+                    hideProgress();
+                    alert('No matching properties found for the current filters.');
+                    return;
+                }
+
+                $('#flip-progress-title').text('Running Analysis...');
+                $('#flip-progress-status').text('Starting analysis of ' + total + ' properties...');
+
+                // Split into batches
+                var batches = [];
+                for (var i = 0; i < listingIds.length; i += BATCH_SIZE) {
+                    batches.push(listingIds.slice(i, i + BATCH_SIZE));
+                }
+
+                // Run batches sequentially
+                var completed = 0;
+                var totalViable = 0;
+                var totalDQ = 0;
+                var batchIdx = 0;
+
+                function runNextBatch() {
+                    if (_cancelRequested || batchIdx >= batches.length) {
+                        finalize(d.report_id, completed, _cancelRequested);
+                        return;
+                    }
+
+                    var batch = batches[batchIdx];
+                    batchIdx++;
+
+                    $.ajax({
+                        url: flipData.ajaxUrl,
+                        method: 'POST',
+                        timeout: 120000,
+                        data: {
+                            action: 'flip_analysis_batch',
+                            nonce: flipData.nonce,
+                            report_id: d.report_id,
+                            listing_ids: JSON.stringify(batch),
+                            run_date: d.run_date,
+                        },
+                        success: function (resp) {
+                            if (!resp.success) {
+                                // Batch failed — finalize with what we have
+                                hideProgress();
+                                alert('Batch error: ' + (resp.data || 'Unknown error') + '\nPartial results saved.');
+                                finalize(d.report_id, completed, false);
+                                return;
+                            }
+
+                            var bd = resp.data;
+                            completed += bd.batch_analyzed || batch.length;
+                            totalViable += bd.batch_viable || 0;
+                            totalDQ += bd.batch_disqualified || 0;
+
+                            var lastProp = (bd.properties && bd.properties.length > 0)
+                                ? bd.properties[bd.properties.length - 1]
+                                : null;
+
+                            updateProgress(completed, total, totalViable, totalDQ, lastProp);
+                            runNextBatch();
+                        },
+                        error: function (xhr, status) {
+                            // Retry once on failure
+                            $.ajax({
+                                url: flipData.ajaxUrl,
+                                method: 'POST',
+                                timeout: 120000,
+                                data: {
+                                    action: 'flip_analysis_batch',
+                                    nonce: flipData.nonce,
+                                    report_id: d.report_id,
+                                    listing_ids: JSON.stringify(batch),
+                                    run_date: d.run_date,
+                                },
+                                success: function (resp) {
+                                    if (resp.success) {
+                                        var bd = resp.data;
+                                        completed += bd.batch_analyzed || batch.length;
+                                        totalViable += bd.batch_viable || 0;
+                                        totalDQ += bd.batch_disqualified || 0;
+                                        updateProgress(completed, total, totalViable, totalDQ, null);
+                                    }
+                                    runNextBatch();
+                                },
+                                error: function () {
+                                    // Give up on this batch, continue with rest
+                                    completed += batch.length;
+                                    updateProgress(completed, total, totalViable, totalDQ, null);
+                                    runNextBatch();
+                                }
+                            });
+                        }
+                    });
+                }
+
+                runNextBatch();
             },
             error: function (xhr, status) {
-                $('#flip-modal-overlay').hide();
-                $('#flip-run-analysis').prop('disabled', false);
-
-                if (status === 'timeout') {
-                    alert('Analysis timed out. Check server logs for progress. Refreshing data...');
-                    FD.ajax.refreshData();
-                } else {
-                    alert('Request failed: ' + status);
-                }
+                hideProgress();
+                alert('Failed to initialize analysis: ' + status);
             }
         });
+    };
+
+    /**
+     * Phase 3: Finalize — update report metadata and refresh dashboard.
+     */
+    function finalize(reportId, totalAnalyzed, wasCancelled) {
+        $('#flip-progress-title').text(wasCancelled ? 'Saving partial results...' : 'Finalizing...');
+        $('#flip-progress-status').text('Updating dashboard...');
+        $('#flip-cancel-analysis').hide();
+
+        $.ajax({
+            url: flipData.ajaxUrl,
+            method: 'POST',
+            timeout: 30000,
+            data: {
+                action: 'flip_analysis_finalize',
+                nonce: flipData.nonce,
+                report_id: reportId,
+                total_analyzed: totalAnalyzed,
+                cancelled: wasCancelled ? '1' : '0',
+            },
+            success: function (response) {
+                hideProgress();
+                if (response.success) {
+                    var d = response.data;
+                    finishDashboard(d);
+
+                    var msg = wasCancelled
+                        ? 'Analysis cancelled. Partial results saved.'
+                        : 'Analysis complete!';
+                    alert(msg);
+                } else {
+                    alert('Finalize error: ' + (response.data || 'Unknown'));
+                    FD.ajax.refreshData();
+                }
+            },
+            error: function () {
+                hideProgress();
+                alert('Failed to finalize. Refreshing data...');
+                FD.ajax.refreshData();
+            }
+        });
+    }
+
+    /**
+     * Public batched analysis runner for use by report rerun.
+     *
+     * @param {number[]} listingIds Array of listing IDs to analyze.
+     * @param {number}   reportId   Report to scope results to.
+     * @param {string}   runDate    Run date string for consistency across batches.
+     */
+    FD.ajax.runBatchedAnalysis = function (listingIds, reportId, runDate) {
+        var total = listingIds.length;
+        showProgress('Running Analysis...', 'Starting analysis of ' + total + ' properties...');
+
+        var batches = [];
+        for (var i = 0; i < listingIds.length; i += BATCH_SIZE) {
+            batches.push(listingIds.slice(i, i + BATCH_SIZE));
+        }
+
+        var completed = 0;
+        var totalViable = 0;
+        var totalDQ = 0;
+        var batchIdx = 0;
+
+        function runNext() {
+            if (_cancelRequested || batchIdx >= batches.length) {
+                finalize(reportId, completed, _cancelRequested);
+                return;
+            }
+
+            var batch = batches[batchIdx];
+            batchIdx++;
+
+            $.ajax({
+                url: flipData.ajaxUrl,
+                method: 'POST',
+                timeout: 120000,
+                data: {
+                    action: 'flip_analysis_batch',
+                    nonce: flipData.nonce,
+                    report_id: reportId,
+                    listing_ids: JSON.stringify(batch),
+                    run_date: runDate,
+                },
+                success: function (resp) {
+                    if (!resp.success) {
+                        finalize(reportId, completed, false);
+                        return;
+                    }
+                    var bd = resp.data;
+                    completed += bd.batch_analyzed || batch.length;
+                    totalViable += bd.batch_viable || 0;
+                    totalDQ += bd.batch_disqualified || 0;
+                    var lastProp = (bd.properties && bd.properties.length > 0)
+                        ? bd.properties[bd.properties.length - 1] : null;
+                    updateProgress(completed, total, totalViable, totalDQ, lastProp);
+                    runNext();
+                },
+                error: function () {
+                    completed += batch.length;
+                    updateProgress(completed, total, totalViable, totalDQ, null);
+                    runNext();
+                }
+            });
+        }
+
+        runNext();
     };
 
     FD.ajax.runPhotoAnalysis = function () {
@@ -99,12 +362,9 @@
             return;
         }
 
-        $('#flip-modal-overlay').find('h3').text('Running Photo Analysis...');
-        $('#flip-modal-overlay').find('p').first().html(
-            'Analyzing photos for ' + count + ' properties using Claude Vision.<br>'
-            + 'This may take 1-5 minutes depending on the number of properties.'
-        );
-        $('#flip-modal-overlay').show();
+        showProgress('Running Photo Analysis...', 'Analyzing photos for ' + count + ' properties...');
+        $('#flip-cancel-analysis').hide(); // Photo analysis is single-request, no cancel
+        $('#flip-progress-counts').hide();
         $('#flip-run-photos').prop('disabled', true);
 
         $.ajax({
@@ -117,20 +377,13 @@
                 report_id: FD.activeReportId || '',
             },
             success: function (response) {
-                $('#flip-modal-overlay').hide();
+                hideProgress();
                 $('#flip-run-photos').prop('disabled', false);
-                // Reset modal text for next use
-                $('#flip-modal-overlay').find('h3').text('Running Analysis...');
-                $('#flip-modal-overlay').find('p').first().html(
-                    'Scoring properties across all target cities.<br>'
-                    + 'This may take 1-3 minutes depending on the number of properties.'
-                );
 
                 if (response.success) {
                     var d = response.data;
-                    var msg = 'Photo analysis complete: ' + d.analyzed + ' analyzed, '
-                        + d.updated + ' updated, ' + d.errors + ' errors.';
-                    alert(msg);
+                    alert('Photo analysis complete: ' + d.analyzed + ' analyzed, '
+                        + d.updated + ' updated, ' + d.errors + ' errors.');
 
                     if (d.dashboard) {
                         FD.data = d.dashboard;
@@ -143,14 +396,8 @@
                 }
             },
             error: function (xhr, status) {
-                $('#flip-modal-overlay').hide();
+                hideProgress();
                 $('#flip-run-photos').prop('disabled', false);
-                // Reset modal text for next use
-                $('#flip-modal-overlay').find('h3').text('Running Analysis...');
-                $('#flip-modal-overlay').find('p').first().html(
-                    'Scoring properties across all target cities.<br>'
-                    + 'This may take 1-3 minutes depending on the number of properties.'
-                );
 
                 if (status === 'timeout') {
                     alert('Photo analysis timed out. Check server logs. Refreshing data...');

@@ -274,7 +274,7 @@ class Flip_Analyzer {
         $report_id = $options['report_id'] ?? null;
 
         $log = $progress ?? function ($msg) {};
-        $run_date = current_time('mysql');
+        $run_date = $options['run_date'] ?? current_time('mysql');
 
         // Step 1: Pre-compute city-level metrics
         $log("Pre-computing metrics for " . count($cities) . " cities...");

@@ -181,51 +181,35 @@
             return;
         }
 
-        $('#flip-modal-overlay').show();
-
+        // Phase 1: Init — fetch listing IDs, delete old scores
         $.ajax({
             url: flipData.ajaxUrl,
             method: 'POST',
-            timeout: 300000,
+            timeout: 30000,
             data: {
-                action: 'flip_rerun_report',
+                action: 'flip_rerun_init',
                 nonce: flipData.nonce,
                 report_id: id,
             },
             success: function (response) {
-                $('#flip-modal-overlay').hide();
-
-                if (response.success) {
-                    var d = response.data;
-                    alert('Re-run complete: ' + d.analyzed + ' analyzed, ' + d.disqualified + ' disqualified.');
-
-                    FD.activeReportId = id;
-
-                    if (d.dashboard) {
-                        FD.data = d.dashboard;
-                        FD.stats.renderStats(FD.data.summary);
-                        FD.stats.renderChart(FD.data.summary.cities || []);
-                        FD.filters.applyFilters();
-                    }
-
-                    if (d.reports) {
-                        FD.reports.renderList(d.reports);
-                    }
-
-                    if (d.dashboard && d.dashboard.report) {
-                        FD.reports.showReportHeader(d.dashboard.report);
-                    }
-                } else {
+                if (!response.success) {
                     alert('Error: ' + (response.data || 'Unknown error'));
+                    return;
                 }
+
+                var d = response.data;
+                FD.activeReportId = d.report_id;
+
+                if (d.listing_ids.length === 0) {
+                    alert('No matching properties found for this report\'s criteria.');
+                    return;
+                }
+
+                // Phase 2+3: Use shared batched runner
+                FD.ajax.runBatchedAnalysis(d.listing_ids, d.report_id, d.run_date);
             },
             error: function (xhr, status) {
-                $('#flip-modal-overlay').hide();
-                if (status === 'timeout') {
-                    alert('Re-run timed out. Check server logs.');
-                } else {
-                    alert('Request failed: ' + status);
-                }
+                alert('Failed to initialize re-run: ' + status);
             }
         });
     };
