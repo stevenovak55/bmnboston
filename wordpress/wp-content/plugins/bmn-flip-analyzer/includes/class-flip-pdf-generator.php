@@ -88,6 +88,9 @@ class Flip_PDF_Generator {
     /** @var object Raw database row */
     private $raw;
 
+    /** @var object|null BME enrichment data (listings + details + financial) */
+    private $bme = null;
+
     // ─── BRANDING ────────────────────────────────────────────────
 
     private $logo_url       = 'https://bmnboston.com/wp-content/uploads/2025/12/BMN-Logo-Croped.png';
@@ -130,6 +133,7 @@ class Flip_PDF_Generator {
         }
 
         $this->d = Flip_Admin_Dashboard::format_result($this->raw);
+        $this->fetch_enriched_data($listing_id);
 
         $this->initialize_pdf();
         $this->add_cover_page();
@@ -161,7 +165,7 @@ class Flip_PDF_Generator {
 
         $this->pdf->SetCreator('BMN Flip Analyzer');
         $this->pdf->SetAuthor('BMN Boston');
-        $this->pdf->SetTitle('Flip Analysis - ' . $this->d['address']);
+        $this->pdf->SetTitle('Property Investment Report - ' . $this->d['address']);
 
         $this->pdf->SetMargins(Flip_PDF_Components::LM, Flip_PDF_Components::LM, Flip_PDF_Components::LM);
         $this->pdf->SetAutoPageBreak(true, 15);
@@ -224,7 +228,7 @@ class Flip_PDF_Generator {
         $this->pdf->SetTextColor(255, 255, 255);
         $this->pdf->SetXY(Flip_PDF_Components::LM + 8, Flip_PDF_Components::LM + $hero_h - 30);
         $this->pdf->SetFont('helvetica', 'B', 26);
-        $this->pdf->Cell(Flip_PDF_Components::PW - 16, 12, 'FLIP ANALYSIS REPORT', 0, 1, 'L');
+        $this->pdf->Cell(Flip_PDF_Components::PW - 16, 12, 'PROPERTY INVESTMENT REPORT', 0, 1, 'L');
 
         $this->pdf->SetX(Flip_PDF_Components::LM + 8);
         $this->pdf->SetFont('helvetica', '', 11);
@@ -795,6 +799,9 @@ class Flip_PDF_Generator {
                 $this->c->render_kv_row($r[0], $r[1]);
             }
         }
+
+        // ── MLS Financial Data — actuals vs estimates (BME enrichment) ──
+        $this->render_mls_actuals_card($rental);
     }
 
     // ─── BRRRR ANALYSIS ───────────────────────────────────────────
@@ -1226,6 +1233,15 @@ class Flip_PDF_Generator {
 
         $this->pdf->SetY($loc_y + $loc_h + 6);
 
+        // ── Property Details card (BME enrichment) ──
+        $this->render_property_details_card();
+
+        // ── Financial & Tax card (BME enrichment) ──
+        $this->render_financial_tax_card();
+
+        // ── Rent Roll card (multifamily — BME enrichment) ──
+        $this->render_rent_roll_card();
+
         // ARV Projections
         $avg_ppsf = (float) ($this->raw->avg_comp_ppsf ?? 0);
         if ($avg_ppsf > 0 && $sqft > 0) {
@@ -1362,58 +1378,93 @@ class Flip_PDF_Generator {
             }
         }
 
-        // Remarks signals
-        if (!empty($signals)) {
+        // Property Description (from BME public_remarks)
+        $remarks_text = $this->bme->listing->public_remarks ?? null;
+        $positives = $signals['positive'] ?? [];
+        $negatives = $signals['negative'] ?? [];
+        $adj_total = $signals['adjustment'] ?? 0;
+        $has_signals = !empty($positives) || !empty($negatives);
+
+        if (!empty($remarks_text) || $has_signals) {
             $this->pdf->Ln(4);
-            $this->c->add_section_header('MLS Remarks Signals');
 
-            $positives = $signals['positive'] ?? [];
-            $negatives = $signals['negative'] ?? [];
-            $adj_total = $signals['adjustment'] ?? 0;
-
-            if (!empty($positives)) {
-                $this->pdf->SetFont('helvetica', 'B', 9);
-                $this->c->set_color($this->c->success);
-                $this->pdf->Cell(28, 6, 'Positive:', 0, 0, 'L');
-
-                // Render as pill badges
-                $pill_x = $this->pdf->GetX();
-                $pill_y = $this->pdf->GetY();
-                foreach ($positives as $pi => $p) {
-                    if ($pill_x > Flip_PDF_Components::LM + Flip_PDF_Components::PW - 30) {
-                        $this->pdf->Ln(8);
-                        $pill_x = Flip_PDF_Components::LM + 28;
-                        $pill_y = $this->pdf->GetY();
-                    }
-                    $pill_x = $this->c->render_pill_badge($p, $this->c->success, $pill_x, $pill_y);
-                }
-                $this->pdf->Ln(10);
+            // Page break guard — need at least 60mm for description block
+            $page_bottom = $this->pdf->getPageHeight() - $this->pdf->getBreakMargin();
+            if (($page_bottom - $this->pdf->GetY()) < 60) {
+                $this->pdf->AddPage();
             }
 
-            if (!empty($negatives)) {
-                $this->pdf->SetFont('helvetica', 'B', 9);
-                $this->c->set_color($this->c->danger);
-                $this->pdf->Cell(28, 6, 'Negative:', 0, 0, 'L');
+            $this->c->add_section_header('Property Description');
 
-                $pill_x = $this->pdf->GetX();
-                $pill_y = $this->pdf->GetY();
-                foreach ($negatives as $ni => $n) {
-                    if ($pill_x > Flip_PDF_Components::LM + Flip_PDF_Components::PW - 30) {
-                        $this->pdf->Ln(8);
-                        $pill_x = Flip_PDF_Components::LM + 28;
-                        $pill_y = $this->pdf->GetY();
-                    }
-                    $pill_x = $this->c->render_pill_badge($n, $this->c->danger, $pill_x, $pill_y);
+            if (!empty($remarks_text)) {
+                // Truncate at ~1,500 characters
+                $display_text = $remarks_text;
+                if (mb_strlen($display_text) > 1500) {
+                    $display_text = mb_substr($display_text, 0, 1497) . '...';
                 }
-                $this->pdf->Ln(10);
+
+                // Render in a card with word-wrapped text
+                $this->pdf->SetFont('helvetica', '', 9);
+                // Estimate card height: ~4.5mm per line, ~95 chars per line at 9pt
+                $line_count = max(3, ceil(mb_strlen($display_text) / 95));
+                $text_h = $line_count * 4.5;
+                $card_h = $text_h + 10;
+
+                $card_y = $this->pdf->GetY();
+                $this->c->render_card_start($card_y, $card_h);
+                $this->pdf->SetXY(Flip_PDF_Components::LM + 5, $card_y + 5);
+                $this->c->set_text_color();
+                $this->pdf->MultiCell(Flip_PDF_Components::PW - 10, 4.5, $display_text, 0, 'L');
+                $this->pdf->SetY($card_y + $card_h + 4);
             }
 
-            if ($adj_total != 0) {
-                $adj_color = $adj_total > 0 ? $this->c->success : $this->c->danger;
-                $this->pdf->SetFont('helvetica', 'B', 10);
-                $this->c->set_color($adj_color);
-                $arrow = $adj_total > 0 ? '+' : '';
-                $this->pdf->Cell(Flip_PDF_Components::PW, 6, 'Score Adjustment: ' . $arrow . $adj_total . ' pts', 0, 1, 'L');
+            // Condensed keyword signals below description
+            if ($has_signals) {
+                $this->c->add_subsection_header('Keyword Signals');
+
+                if (!empty($positives)) {
+                    $this->pdf->SetFont('helvetica', 'B', 9);
+                    $this->c->set_color($this->c->success);
+                    $this->pdf->Cell(28, 6, 'Positive:', 0, 0, 'L');
+
+                    $pill_x = $this->pdf->GetX();
+                    $pill_y = $this->pdf->GetY();
+                    foreach ($positives as $p) {
+                        if ($pill_x > Flip_PDF_Components::LM + Flip_PDF_Components::PW - 30) {
+                            $this->pdf->Ln(8);
+                            $pill_x = Flip_PDF_Components::LM + 28;
+                            $pill_y = $this->pdf->GetY();
+                        }
+                        $pill_x = $this->c->render_pill_badge($p, $this->c->success, $pill_x, $pill_y);
+                    }
+                    $this->pdf->Ln(10);
+                }
+
+                if (!empty($negatives)) {
+                    $this->pdf->SetFont('helvetica', 'B', 9);
+                    $this->c->set_color($this->c->danger);
+                    $this->pdf->Cell(28, 6, 'Negative:', 0, 0, 'L');
+
+                    $pill_x = $this->pdf->GetX();
+                    $pill_y = $this->pdf->GetY();
+                    foreach ($negatives as $n) {
+                        if ($pill_x > Flip_PDF_Components::LM + Flip_PDF_Components::PW - 30) {
+                            $this->pdf->Ln(8);
+                            $pill_x = Flip_PDF_Components::LM + 28;
+                            $pill_y = $this->pdf->GetY();
+                        }
+                        $pill_x = $this->c->render_pill_badge($n, $this->c->danger, $pill_x, $pill_y);
+                    }
+                    $this->pdf->Ln(10);
+                }
+
+                if ($adj_total != 0) {
+                    $adj_color = $adj_total > 0 ? $this->c->success : $this->c->danger;
+                    $this->pdf->SetFont('helvetica', 'B', 10);
+                    $this->c->set_color($adj_color);
+                    $arrow = $adj_total > 0 ? '+' : '';
+                    $this->pdf->Cell(Flip_PDF_Components::PW, 6, 'Score Adjustment: ' . $arrow . $adj_total . ' pts', 0, 1, 'L');
+                }
             }
         }
     }
@@ -1609,6 +1660,395 @@ class Flip_PDF_Generator {
             'Disclaimer: This analysis is for informational purposes only and does not constitute financial advice. All estimates including ARV, rehab costs, and projected returns are based on comparable sales data and algorithmic modeling. Actual results may vary. Consult with your financial advisor, contractor, and real estate attorney before making investment decisions.',
             0, 'C'
         );
+    }
+
+    // ─── ENRICHMENT CARDS ────────────────────────────────────────
+
+    /**
+     * Property Details card — systems, construction, features from BME.
+     */
+    private function render_property_details_card(): void {
+        $det = $this->bme->details ?? null;
+        $listing = $this->bme->listing ?? null;
+        if (!$det && !$listing) return;
+
+        $rows = [];
+        if ($val = $listing->property_sub_type ?? null) $rows[] = ['Property Type', $val];
+        if ($val = $this->format_bme_array($det->architectural_style ?? null)) $rows[] = ['Architectural Style', $val];
+        if ($val = $det->stories_total ?? null) $rows[] = ['Stories', (string) $val];
+        if ($val = $this->format_bme_array($det->heating ?? null)) $rows[] = ['Heating', $val];
+        if ($val = $this->format_bme_array($det->cooling ?? null)) $rows[] = ['Cooling', $val];
+        if ($val = $this->format_bme_array($det->water_source ?? null)) $rows[] = ['Water', $val];
+        if ($val = $this->format_bme_array($det->sewer ?? null)) $rows[] = ['Sewer', $val];
+        if ($val = $this->format_bme_array($det->foundation_details ?? null)) $rows[] = ['Foundation', $val];
+        if ($val = $this->format_bme_array($det->roof ?? null)) $rows[] = ['Roof', $val];
+        if ($val = $this->format_bme_array($det->construction_materials ?? null)) $rows[] = ['Exterior', $val];
+        if ($val = $this->format_bme_array($det->flooring ?? null)) $rows[] = ['Flooring', $val];
+        if ($val = $this->format_bme_array($det->basement ?? null)) $rows[] = ['Basement', $val];
+
+        // Parking — combine garage + total
+        $garage = $det->garage_spaces ?? null;
+        $parking_total = $det->parking_total ?? null;
+        if ($garage || $parking_total) {
+            $parking_str = '';
+            if ($garage && $garage > 0) $parking_str .= $garage . ' garage';
+            if ($parking_total && $parking_total > 0) {
+                if ($parking_str) $parking_str .= ', ';
+                $parking_str .= $parking_total . ' total';
+            }
+            if ($parking_str) $rows[] = ['Parking', $parking_str];
+        }
+
+        // Fireplace
+        $fp_yn = $det->fireplace_yn ?? null;
+        $fp_count = $det->fireplaces_total ?? null;
+        if ($fp_yn === 'Y' || $fp_yn === '1' || $fp_yn === 'true' || ($fp_count && $fp_count > 0)) {
+            $rows[] = ['Fireplace', $fp_count ? $fp_count . ' fireplace(s)' : 'Yes'];
+        }
+
+        if ($val = $this->format_bme_array($det->property_condition ?? null)) $rows[] = ['Property Condition', $val];
+
+        if (empty($rows)) return;
+
+        // Page break guard
+        $needed = 6 + count($rows) * 7 + 10;
+        $page_bottom = $this->pdf->getPageHeight() - $this->pdf->getBreakMargin();
+        if (($page_bottom - $this->pdf->GetY()) < $needed) {
+            $this->pdf->AddPage();
+        }
+
+        $this->c->add_subsection_header('Property Details');
+
+        $card_y = $this->pdf->GetY();
+        $card_h = 6 + count($rows) * 7 + 4;
+        $this->c->render_card_start($card_y, $card_h);
+        $this->pdf->SetY($card_y + 4);
+        foreach ($rows as $r) {
+            $this->c->render_kv_row($r[0], $r[1]);
+        }
+        $this->pdf->SetY($card_y + $card_h + 6);
+    }
+
+    /**
+     * Financial & Tax card — tax, HOA, zoning, REO flags from BME.
+     */
+    private function render_financial_tax_card(): void {
+        $fin = $this->bme->financial ?? null;
+        if (!$fin) return;
+
+        $rows = [];
+
+        // Annual Property Tax
+        $tax = $fin->tax_annual_amount ?? null;
+        if ($tax && $tax > 0) {
+            $tax_str = '$' . number_format($tax);
+            if ($yr = $fin->tax_year ?? null) $tax_str .= ' (' . $yr . ')';
+            $rows[] = ['Annual Property Tax', $tax_str];
+        }
+
+        // Tax Assessed Value
+        if (($val = $fin->tax_assessed_value ?? null) && $val > 0) {
+            $rows[] = ['Tax Assessed Value', '$' . number_format($val)];
+        }
+
+        // HOA/Condo Fee
+        $assoc_yn = $fin->association_yn ?? null;
+        $assoc_fee = $fin->association_fee ?? null;
+        if (($assoc_yn === 'Y' || $assoc_yn === '1' || $assoc_yn === 'true') && $assoc_fee && $assoc_fee > 0) {
+            $freq = $fin->association_fee_frequency ?? '';
+            $fee_str = '$' . number_format($assoc_fee);
+            if ($freq) $fee_str .= '/' . strtolower($freq);
+            $rows[] = ['HOA / Condo Fee', $fee_str];
+
+            if ($val = $this->format_bme_array($fin->association_fee_includes ?? null)) {
+                $rows[] = ['Fee Includes', $val];
+            }
+        }
+
+        if ($val = $this->format_bme_array($fin->zoning ?? null)) $rows[] = ['Zoning', $val];
+
+        // Lead Paint flag
+        $lead = $fin->mlspin_lead_paint ?? null;
+        if ($lead !== null && $lead !== '') {
+            $lead_lower = strtolower($lead);
+            if ($lead_lower === 'y' || $lead_lower === 'yes' || $lead_lower === '1' || $lead_lower === 'true') {
+                $rows[] = ['Lead Paint', 'Yes'];
+            } elseif ($lead_lower === 'n' || $lead_lower === 'no' || $lead_lower === '0' || $lead_lower === 'false' || $lead_lower === 'unknown') {
+                $rows[] = ['Lead Paint', ucfirst($lead_lower === '0' || $lead_lower === 'false' ? 'no' : $lead_lower)];
+            }
+        }
+
+        // Lender Owned (REO)
+        $reo = $fin->mlspin_lender_owned ?? null;
+        if ($reo !== null && $reo !== '') {
+            $reo_lower = strtolower($reo);
+            if ($reo_lower === 'y' || $reo_lower === 'yes' || $reo_lower === '1' || $reo_lower === 'true') {
+                $rows[] = ['Lender Owned (REO)', 'Yes'];
+            }
+        }
+
+        if (empty($rows)) return;
+
+        // Page break guard
+        $needed = 6 + count($rows) * 7 + 10;
+        $page_bottom = $this->pdf->getPageHeight() - $this->pdf->getBreakMargin();
+        if (($page_bottom - $this->pdf->GetY()) < $needed) {
+            $this->pdf->AddPage();
+        }
+
+        $this->c->add_subsection_header('Financial & Tax');
+
+        $card_y = $this->pdf->GetY();
+        $card_h = 6 + count($rows) * 7 + 4;
+        $this->c->render_card_start($card_y, $card_h);
+        $this->pdf->SetY($card_y + 4);
+        foreach ($rows as $r) {
+            $this->c->render_kv_row($r[0], $r[1]);
+        }
+        $this->pdf->SetY($card_y + $card_h + 6);
+    }
+
+    /**
+     * Rent Roll card — per-unit rents for multifamily properties from BME.
+     */
+    private function render_rent_roll_card(): void {
+        $fin = $this->bme->financial ?? null;
+        if (!$fin) return;
+
+        // Only show when mlspin_rent1 data exists (multifamily)
+        $rent1 = $fin->mlspin_rent1 ?? null;
+        if (!$rent1 || $rent1 <= 0) return;
+
+        // Page break guard
+        $page_bottom = $this->pdf->getPageHeight() - $this->pdf->getBreakMargin();
+        if (($page_bottom - $this->pdf->GetY()) < 80) {
+            $this->pdf->AddPage();
+        }
+
+        $this->c->add_subsection_header('Rent Roll');
+
+        // Build rent rows
+        $rent_rows = [];
+        $rent_sum = 0;
+        for ($i = 1; $i <= 4; $i++) {
+            $rent_key = "mlspin_rent{$i}";
+            $lease_key = "mlspin_lease_{$i}";
+            $rent = $fin->$rent_key ?? null;
+            if ($rent && $rent > 0) {
+                $lease = $fin->$lease_key ?? null;
+                $lease_str = $lease ? ' (' . $lease . ')' : '';
+                $rent_rows[] = ['Unit ' . $i, '$' . number_format($rent) . '/mo' . $lease_str];
+                $rent_sum += $rent;
+            }
+        }
+
+        // Total actual rent from MLS
+        $total_actual = $fin->total_actual_rent ?? null;
+        if ($total_actual && $total_actual > 0) {
+            $rent_rows[] = ['Total Actual Rent', '$' . number_format($total_actual) . '/mo'];
+        } elseif ($rent_sum > 0) {
+            $rent_rows[] = ['Total (Sum)', '$' . number_format($rent_sum) . '/mo'];
+        }
+
+        // MLS income fields
+        if (($val = $fin->gross_income ?? null) && $val > 0) {
+            $rent_rows[] = ['MLS Gross Income', '$' . number_format($val) . '/yr'];
+        }
+        if (($val = $fin->net_operating_income ?? null) && $val > 0) {
+            $rent_rows[] = ['MLS NOI', '$' . number_format($val) . '/yr'];
+        }
+
+        if (empty($rent_rows)) return;
+
+        $card_y = $this->pdf->GetY();
+        $card_h = 6 + count($rent_rows) * 7 + 4;
+        $this->c->render_card_start($card_y, $card_h, ['accent' => $this->c->success]);
+        $this->pdf->SetY($card_y + 4);
+        foreach ($rent_rows as $r) {
+            $bold = (strpos($r[0], 'Total') !== false || strpos($r[0], 'Gross') !== false || strpos($r[0], 'NOI') !== false);
+            $this->c->render_kv_row($r[0], $r[1], $bold ? ['bold' => true] : []);
+        }
+        $this->pdf->SetY($card_y + $card_h + 6);
+    }
+
+    /**
+     * MLS Actuals vs Estimates — comparison table + rental terms from BME.
+     */
+    private function render_mls_actuals_card(?array $rental): void {
+        $fin = $this->bme->financial ?? null;
+        if (!$fin) return;
+
+        $mls_gross = (float) ($fin->gross_income ?? 0);
+        $mls_noi = (float) ($fin->net_operating_income ?? 0);
+        $mls_opex = (float) ($fin->operating_expense ?? 0);
+
+        // Only show if MLS has financial data
+        if ($mls_gross <= 0 && $mls_noi <= 0) {
+            // Still check for rental terms
+            $this->render_rental_terms_card();
+            return;
+        }
+
+        // Page break guard
+        $page_bottom = $this->pdf->getPageHeight() - $this->pdf->getBreakMargin();
+        if (($page_bottom - $this->pdf->GetY()) < 70) {
+            $this->pdf->AddPage();
+        }
+
+        $this->pdf->Ln(4);
+        $this->c->add_subsection_header('MLS Financial Data vs Estimates');
+
+        // Build comparison rows
+        $est_gross = ($rental['annual_gross_income'] ?? 0);
+        $est_opex = ($rental['expenses']['total_annual'] ?? 0);
+        $est_noi = ($rental['noi'] ?? 0);
+
+        $cols = [68, 62, 62];
+        $this->c->render_styled_table_header($cols, ['Metric', 'MLS Reported', 'Estimated']);
+
+        $this->pdf->SetFont('helvetica', '', 9);
+        $comparison_rows = [];
+        if ($mls_gross > 0) {
+            $comparison_rows[] = ['Gross Income', '$' . number_format($mls_gross), '$' . number_format($est_gross)];
+        }
+        if ($mls_opex > 0) {
+            $comparison_rows[] = ['Operating Expenses', '$' . number_format($mls_opex), '$' . number_format($est_opex)];
+        }
+        if ($mls_noi > 0) {
+            $comparison_rows[] = ['Net Operating Income', '$' . number_format($mls_noi), '$' . number_format($est_noi)];
+        }
+
+        foreach ($comparison_rows as $ri => $r) {
+            $is_zebra = ($ri % 2 === 1);
+            if ($is_zebra) {
+                $this->pdf->SetFillColor($this->c->zebra[0], $this->c->zebra[1], $this->c->zebra[2]);
+            }
+            $this->c->set_text_color();
+            $this->pdf->Cell($cols[0], 7, $r[0], 0, 0, 'L', $is_zebra);
+            $this->pdf->SetFont('helvetica', 'B', 9);
+            $this->pdf->Cell($cols[1], 7, $r[1], 0, 0, 'R', $is_zebra);
+            $this->pdf->SetFont('helvetica', '', 9);
+            $this->c->set_color($this->c->gray);
+            $this->pdf->Cell($cols[2], 7, $r[2], 0, 1, 'R', $is_zebra);
+        }
+
+        $this->pdf->Ln(4);
+
+        // Rental terms card
+        $this->render_rental_terms_card();
+    }
+
+    /**
+     * Rental Terms card — rent includes, tenant pays, from BME.
+     */
+    private function render_rental_terms_card(): void {
+        $fin = $this->bme->financial ?? null;
+        if (!$fin) return;
+
+        $rows = [];
+        if ($val = $this->format_bme_array($fin->rent_includes ?? null)) $rows[] = ['Rent Includes', $val];
+        if ($val = $this->format_bme_array($fin->tenant_pays ?? null)) $rows[] = ['Tenant Pays', $val];
+
+        if (empty($rows)) return;
+
+        // Page break guard
+        $page_bottom = $this->pdf->getPageHeight() - $this->pdf->getBreakMargin();
+        if (($page_bottom - $this->pdf->GetY()) < 40) {
+            $this->pdf->AddPage();
+        }
+
+        $this->c->add_subsection_header('Rental Terms');
+
+        $card_y = $this->pdf->GetY();
+        $card_h = 6 + count($rows) * 7 + 4;
+        $this->c->render_card_start($card_y, $card_h);
+        $this->pdf->SetY($card_y + 4);
+        foreach ($rows as $r) {
+            $this->c->render_kv_row($r[0], $r[1]);
+        }
+        $this->pdf->SetY($card_y + $card_h + 4);
+    }
+
+    // ─── BME DATA ENRICHMENT ──────────────────────────────────────
+
+    /**
+     * Fetch enriched property data from BME tables (indexed by listing_id — sub-ms).
+     */
+    private function fetch_enriched_data(int $listing_id): void {
+        global $wpdb;
+
+        $this->bme = (object) [
+            'listing'   => null,
+            'details'   => null,
+            'financial' => null,
+        ];
+
+        // bme_listings → public_remarks, disclosures, property_sub_type, original_list_price
+        $this->bme->listing = $wpdb->get_row($wpdb->prepare(
+            "SELECT public_remarks, disclosures, property_sub_type, original_list_price
+             FROM {$wpdb->prefix}bme_listings WHERE listing_id = %s",
+            $listing_id
+        ));
+
+        // bme_listing_details → systems, construction, features
+        $this->bme->details = $wpdb->get_row($wpdb->prepare(
+            "SELECT heating, cooling, sewer, water_source, foundation_details, roof,
+                    construction_materials, flooring, basement, stories_total,
+                    fireplace_yn, fireplaces_total, garage_spaces, parking_total,
+                    parking_features, architectural_style, property_condition,
+                    interior_features, appliances, number_of_units_total
+             FROM {$wpdb->prefix}bme_listing_details WHERE listing_id = %s",
+            $listing_id
+        ));
+
+        // bme_listing_financial → tax, HOA, income, zoning
+        $this->bme->financial = $wpdb->get_row($wpdb->prepare(
+            "SELECT tax_annual_amount, tax_year, tax_assessed_value, association_yn,
+                    association_fee, association_fee_frequency, association_fee_includes,
+                    gross_income, net_operating_income, operating_expense,
+                    total_actual_rent, rent_includes, zoning,
+                    mlspin_lender_owned, mlspin_lead_paint
+             FROM {$wpdb->prefix}bme_listing_financial WHERE listing_id = %s",
+            $listing_id
+        ));
+
+        // Try to get per-unit rent columns (mlspin_rent1-4, mlspin_lease_1-4, tenant_pays)
+        // These may not exist in all schemas, so query separately
+        $rent_data = $wpdb->get_row($wpdb->prepare(
+            "SELECT mlspin_rent1, mlspin_rent2, mlspin_rent3, mlspin_rent4,
+                    mlspin_lease_1, mlspin_lease_2, mlspin_lease_3, mlspin_lease_4,
+                    tenant_pays
+             FROM {$wpdb->prefix}bme_listing_financial WHERE listing_id = %s",
+            $listing_id
+        ));
+
+        if ($rent_data && $this->bme->financial) {
+            foreach (get_object_vars($rent_data) as $k => $v) {
+                $this->bme->financial->$k = $v;
+            }
+        }
+    }
+
+    /**
+     * Parse a BME JSON-encoded array field into a comma-separated string.
+     * BME stores many fields as JSON arrays, e.g. '["Gas Forced Air","Natural Gas"]'.
+     *
+     * @param  string|null $raw Raw field value from BME table.
+     * @return string|null Comma-separated string or null if empty.
+     */
+    private function format_bme_array(?string $raw): ?string {
+        if ($raw === null || $raw === '' || $raw === 'null') {
+            return null;
+        }
+
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            $filtered = array_filter($decoded, fn($v) => $v !== null && $v !== '');
+            return !empty($filtered) ? implode(', ', $filtered) : null;
+        }
+
+        // If it's not JSON, return the raw string (some fields are plain text)
+        return trim($raw) !== '' ? trim($raw) : null;
     }
 
     // ─── FILE OUTPUT ──────────────────────────────────────────────

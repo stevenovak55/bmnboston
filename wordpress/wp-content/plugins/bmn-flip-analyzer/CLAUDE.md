@@ -1,11 +1,23 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.19.6
-**Last Updated:** 2026-02-07
+**Current Version:** 0.19.7
+**Last Updated:** 2026-02-08
 
 ## Overview
 
 Standalone WordPress plugin that identifies residential investment property candidates (SFR, multifamily, income properties) by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates. As of v0.18.0, evaluates **three investment strategies (Flip, Rental Hold, BRRRR)** with per-strategy 0-100 scores and per-strategy disqualification — properties are only DQ'd if ALL strategies fail.
+
+**v0.19.7 Enhancement (PDF Content Enrichment):**
+- **BME data enrichment:** New `fetch_enriched_data()` queries `bme_listings`, `bme_listing_details`, `bme_listing_financial` by listing_id (indexed, sub-ms)
+- **Property Description section:** Replaces blank "MLS Remarks Signals" on Photo Analysis page with full `public_remarks` text (truncated at 1,500 chars) in word-wrapped card, condensed keyword signals below
+- **Property Details card:** Systems info (heating, cooling, water, sewer, foundation, roof, exterior, flooring, basement, parking, fireplace, condition) on Property & Location page — null-safe, skips empty
+- **Financial & Tax card:** Property tax + year, assessed value, HOA fee + frequency + includes, zoning, lead paint, lender owned (REO) — only non-null rows
+- **Rent Roll card:** Per-unit rents 1-4 with lease types, total actual rent, MLS gross income, MLS NOI — conditional on multifamily (`mlspin_rent1` present)
+- **MLS Actuals vs Estimates:** Comparison table on Rental Analysis page showing MLS-reported vs estimated gross income, operating expenses, NOI — only when MLS financial data exists
+- **Rental Terms card:** Rent includes, tenant pays from BME financial data
+- **Helper:** `format_bme_array()` parses BME JSON-encoded array fields (e.g. `["Gas","Electric"]`) into comma-separated strings
+- **Page break guards** before each new card section to prevent overflow
+- Modified: `class-flip-pdf-generator.php` (7 new methods, ~440 lines added), `bmn-flip-analyzer.php` (version bump)
 
 **v0.19.6 Enhancement (PDF Per-Strategy Scores):**
 - **Strategy Analysis section** added to PDF Page 2 between Score Breakdown and Property Valuation
