@@ -181,6 +181,8 @@ struct BMNBostonApp: App {
                 #if DEBUG
                 debugLog("📎 Universal Link to property: \(mlsNumber)")
                 #endif
+                // Track email click if eid parameter present (v6.75.9)
+                trackEmailClickIfNeeded(url: url)
                 // Clear any existing property navigation state (v399 fix)
                 NotificationCenter.default.post(name: .clearPropertyNavigation, object: nil)
                 // Navigate to property detail
@@ -201,6 +203,8 @@ struct BMNBostonApp: App {
                 #if DEBUG
                 debugLog("📎 Universal Link to listing: \(mlsNumber)")
                 #endif
+                // Track email click if eid parameter present (v6.75.9)
+                trackEmailClickIfNeeded(url: url)
                 // Clear any existing property navigation state (v399 fix)
                 NotificationCenter.default.post(name: .clearPropertyNavigation, object: nil)
                 notificationStore.setPendingPropertyNavigation(listingId: mlsNumber, listingKey: nil)
@@ -244,6 +248,30 @@ struct BMNBostonApp: App {
         #if DEBUG
         debugLog("📎 Universal Link not handled: \(path)")
         #endif
+    }
+
+    /// Fire-and-forget email click tracking when app opens via email link (v6.75.9)
+    /// Email property links include ?eid=xxx&et=click for tracking. When iOS intercepts
+    /// the link via universal links, the server-side template_redirect hook never fires,
+    /// so we ping the tracking endpoint from the app instead.
+    private func trackEmailClickIfNeeded(url: URL) {
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let eid = components.queryItems?.first(where: { $0.name == "eid" })?.value,
+              !eid.isEmpty else {
+            return
+        }
+
+        let trackingURLString = "\(AppEnvironment.current.fullAPIURL)/email/track/click?eid=\(eid)"
+        guard let trackingURL = URL(string: trackingURLString) else { return }
+
+        #if DEBUG
+        debugLog("📎 Tracking email click for eid: \(eid)")
+        #endif
+
+        // Use detached task so it isn't cancelled if the parent task completes
+        Task.detached(priority: .utility) {
+            _ = try? await URLSession.shared.data(from: trackingURL)
+        }
     }
 
     // MARK: - Analytics Lifecycle

@@ -473,8 +473,14 @@ class MLD_Email_Template_Engine {
         $sqft = isset($listing['building_area_total']) ? number_format($listing['building_area_total']) : '';
 
         $photo_url = $listing['primary_photo'] ?? $listing['photo_url'] ?? $listing['main_photo_url'] ?? '';
-        $listing_id = $listing['listing_key'] ?? $listing['id'] ?? '';
-        $listing_url = $this->get_tracked_url(home_url('/property/' . $listing_id . '/'), 'property');
+        // Use listing_id (MLS number) for URLs, not listing_key (hash) - see Pitfall #8
+        $listing_id = $listing['listing_id'] ?? $listing['listing_key'] ?? $listing['id'] ?? '';
+        // Use direct property URL with inline tracking params so it matches AASA for iOS deep linking
+        // iOS ignores query parameters when matching universal link patterns (/property/*)
+        $listing_url = add_query_arg(array(
+            'eid' => $this->email_id,
+            'et'  => 'click',
+        ), home_url('/property/' . $listing_id . '/'));
 
         $html = '                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:20px;border:1px solid ' . esc_attr($theme['border_color']) . ';border-radius:10px;overflow:hidden;box-shadow:0 2px 4px rgba(0,0,0,0.08);">
 ';

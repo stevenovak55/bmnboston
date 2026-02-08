@@ -3,7 +3,7 @@
  * Plugin Name:       MLS Listings Display
  * Plugin URI:        https://example.com/
  * Description:       Displays real estate listings from the Bridge MLS Extractor Pro plugin using shortcodes with mobile-optimized property search and display.
- * Version: 6.75.8
+ * Version: 6.75.9
  * Author:            AZ Home Solutions LLC
  * Author URI:        https://example.com/
  * License:           GPL-2.0+
@@ -2548,7 +2548,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 // Define plugin constants.
 // Add timestamp for cache busting during development
-define('MLD_VERSION', '6.75.8');
+define('MLD_VERSION', '6.75.9');
 
 define( 'MLD_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MLD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) ); // Alias for MLD_PLUGIN_PATH for backward compatibility
@@ -3382,6 +3382,50 @@ function mld_configure_phpmailer($phpmailer) {
     }
 }
 add_action('phpmailer_init', 'mld_configure_phpmailer', 10, 1);
+
+/**
+ * Exclude property URLs from WP Mail SMTP Pro click tracking.
+ *
+ * WP Mail SMTP Pro rewrites all email links through its tracking endpoint
+ * (/wp-json/wp-mail-smtp/v1/e/...) which breaks iOS universal links because
+ * the tracking URL doesn't match the AASA patterns (/property/*).
+ * By returning false for property URLs, the direct /property/ link is preserved
+ * in the email, allowing iOS to intercept it and open the app.
+ *
+ * @since 6.75.9
+ */
+add_filter('wp_mail_smtp_pro_emails_logs_tracking_events_injectable_click_link_event_inject_link', function($is_trackable, $url) {
+    // Preserve direct property URLs for iOS deep linking (AASA pattern: /property/*)
+    if (strpos($url, '/property/') !== false) {
+        return false;
+    }
+    // Also preserve saved-search URLs (AASA pattern: /saved-search/*)
+    if (strpos($url, '/saved-search/') !== false) {
+        return false;
+    }
+    return $is_trackable;
+}, 10, 2);
+
+/**
+ * Track email clicks via inline URL parameters on property pages.
+ *
+ * Email property links use direct URLs with tracking params (e.g. /property/123/?eid=xxx&et=click)
+ * instead of redirect-based tracking, to preserve iOS universal links / deep linking.
+ * This hook logs the click when the property page loads in a browser.
+ *
+ * @since 6.75.9
+ */
+add_action('template_redirect', function() {
+    if (!isset($_GET['eid']) || !isset($_GET['et']) || $_GET['et'] !== 'click') {
+        return;
+    }
+
+    $email_id = sanitize_text_field($_GET['eid']);
+
+    if (!empty($email_id) && class_exists('MLD_Email_Template_Engine')) {
+        MLD_Email_Template_Engine::record_click($email_id);
+    }
+});
 
 /**
  * Initialize enhanced chatbot system components (v6.7.0)
