@@ -20,6 +20,8 @@ class Flip_Rental_Calculator {
     /**
      * City-level rental rate lookup ($/sqft/month).
      * Based on Greater Boston market data (2025-2026).
+     * Last updated: 2025-Q4 — Fallback only since v0.19.0 (comp-based estimation is primary).
+     * These rates are used as Tier 3 fallback when MLS comp data and gross_income are unavailable.
      */
     const RENTAL_RATES_PER_SQFT = [
         'Reading'        => 2.00,

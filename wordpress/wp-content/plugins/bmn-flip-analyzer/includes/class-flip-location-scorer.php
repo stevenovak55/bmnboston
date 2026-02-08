@@ -127,21 +127,33 @@ class Flip_Location_Scorer {
             return self::$school_cache[$cache_key];
         }
 
-        // Try internal REST API call
-        $request = new WP_REST_Request('GET', '/bmn-schools/v1/property/schools');
-        $request->set_param('lat', $lat);
-        $request->set_param('lng', $lng);
-        $response = rest_do_request($request);
+        $score = 50; // Default if schools plugin unavailable
 
-        $score = 50; // Default if API unavailable
+        // Guard: only call schools API if plugin is active
+        if (!function_exists('is_plugin_active')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+        if (!is_plugin_active('bmn-schools/bmn-schools.php')) {
+            self::$school_cache[$cache_key] = $score;
+            return $score;
+        }
 
-        if (!$response->is_error()) {
-            $data = $response->get_data();
-            $grade = $data['district_grade'] ?? $data['data']['district_grade'] ?? null;
+        try {
+            $request = new WP_REST_Request('GET', '/bmn-schools/v1/property/schools');
+            $request->set_param('lat', $lat);
+            $request->set_param('lng', $lng);
+            $response = rest_do_request($request);
 
-            if ($grade) {
-                $score = self::grade_to_score($grade);
+            if (!$response->is_error()) {
+                $data = $response->get_data();
+                $grade = $data['district_grade'] ?? $data['data']['district_grade'] ?? null;
+
+                if ($grade) {
+                    $score = self::grade_to_score($grade);
+                }
             }
+        } catch (\Throwable $e) {
+            // Schools API unavailable — use default score 50
         }
 
         self::$school_cache[$cache_key] = $score;

@@ -722,7 +722,7 @@ PROMPT;
             $table,
             [
                 'photo_score'          => round($analysis['photo_score'], 2),
-                'photo_analysis_json'  => json_encode($photo_data),
+                'photo_analysis_json'  => json_encode($photo_data, JSON_INVALID_UTF8_SUBSTITUTE),
                 'estimated_rehab_cost' => $fin['rehab_cost'],
                 'rehab_level'          => $analysis['analysis']['renovation_level'],
                 'rehab_contingency'    => $fin['rehab_contingency'],

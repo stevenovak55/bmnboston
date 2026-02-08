@@ -64,6 +64,11 @@ class Flip_Financial_Scorer {
         if ($arv <= 0 || $list_price <= 0) return 0;
         $ratio = $list_price / $arv;
 
+        // Thresholds derived from the 70% rule: investors target 70% of ARV minus rehab.
+        // 0.65 = deep value territory (well below 70% rule even before rehab deduction)
+        // 0.70 = classic 70% rule threshold
+        // 0.75 = still viable with moderate rehab
+        // 0.80 = thin margin, needs low rehab to work
         if ($ratio < 0.65) return 100;
         if ($ratio < 0.70) return 80;
         if ($ratio < 0.75) return 60;
@@ -76,6 +81,9 @@ class Flip_Financial_Scorer {
         if ($ppsf <= 0) return 30;      // Missing property data — penalty, not neutral
         $pct_below = (($avg_ppsf - $ppsf) / $avg_ppsf) * 100;
 
+        // % below neighborhood avg $/sqft — larger discount = more upside potential
+        // 25%+ below = severely underpriced relative to area (distress or deferred maintenance)
+        // 10-15% = moderate discount, typical of dated but livable properties
         if ($pct_below > 25) return 100;
         if ($pct_below > 20) return 80;
         if ($pct_below > 15) return 60;
@@ -95,6 +103,7 @@ class Flip_Financial_Scorer {
     }
 
     private static function score_dom_motivation(int $dom): float {
+        // DOM thresholds: 30d = typical market time, 60d = stale, 90d+ = highly motivated seller
         if ($dom > 90)  return 100;
         if ($dom > 60)  return 70;
         if ($dom > 30)  return 40;

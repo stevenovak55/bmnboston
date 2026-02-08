@@ -390,7 +390,7 @@ class Flip_Analyzer {
                 $arv_data['avg_sale_to_list'] ?? 1.0,
                 $arv_data['arv_confidence'] ?? 'medium'
             );
-            $thresholds_json = json_encode($thresholds);
+            $thresholds_json = json_encode($thresholds, JSON_INVALID_UTF8_SUBSTITUTE);
 
             // Deal risk grade
             $deal_risk_grade = self::calculate_deal_risk_grade(
@@ -589,7 +589,7 @@ class Flip_Analyzer {
             'arv_confidence'       => $arv_data['arv_confidence'],
             'comp_count'           => $arv_data['comp_count'],
             'avg_comp_ppsf'        => $arv_data['avg_comp_ppsf'],
-            'comp_details_json'    => json_encode($comp_details),
+            'comp_details_json'    => json_encode($comp_details, JSON_INVALID_UTF8_SUBSTITUTE),
             'neighborhood_ceiling' => round($arv_data['neighborhood_ceiling'] ?? 0, 2),
             'ceiling_pct'          => $arv_data['neighborhood_ceiling'] > 0
                 ? round(($arv / $arv_data['neighborhood_ceiling']) * 100, 1) : 0,
@@ -624,7 +624,7 @@ class Flip_Analyzer {
             'city'                 => $property->city ?? '',
             'address'              => trim(($property->street_number ?? '') . ' ' . ($property->street_name ?? '')),
             'main_photo_url'       => $property->main_photo_url ?? '',
-            'remarks_signals_json' => json_encode($market['remarks_signals']),
+            'remarks_signals_json' => json_encode($market['remarks_signals'], JSON_INVALID_UTF8_SUBSTITUTE),
             'disqualified'         => 0,
             'disqualify_reason'    => null,
             'annualized_roi'       => $fin['annualized_roi'],
@@ -804,7 +804,7 @@ class Flip_Analyzer {
             $total_score, $financial, $prop_score, $location, $market,
             $arv, $run_date
         );
-        $data['applied_thresholds_json'] = json_encode($thresholds);
+        $data['applied_thresholds_json'] = json_encode($thresholds, JSON_INVALID_UTF8_SUBSTITUTE);
         $data['deal_risk_grade']         = $deal_risk_grade;
 
         // Per-strategy fields (v0.18.0)

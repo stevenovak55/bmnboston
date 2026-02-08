@@ -144,6 +144,15 @@ class Flip_Property_Scorer {
      * Sweet spot is 41-70 years: full systems + finishes need updating,
      * but structure is still sound. Very new = nothing to renovate.
      * Very old = diminishing returns (lead, asbestos, irregular framing).
+     *
+     * Age thresholds based on typical component lifecycles:
+     * - ≤5yr: builder warranty period, nothing to renovate
+     * - 6-10yr: cosmetic only (paint, carpet), minimal value-add
+     * - 11-20yr: kitchen/bath starting to date but still functional
+     * - 21-40yr: major systems (HVAC, roof, windows) approaching end-of-life
+     * - 41-70yr: full gut potential — all finishes + systems dated, maximum value-add
+     * - 71-100yr: excellent candidate but add structural complexity (knob-and-tube, etc.)
+     * - 100yr+: diminishing returns from lead paint, asbestos, irregular framing
      */
     private static function score_renovation_need(int $year): float {
         if ($year <= 0) return 50; // Unknown

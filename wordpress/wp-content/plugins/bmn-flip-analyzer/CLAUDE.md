@@ -1,11 +1,20 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.19.8
+**Current Version:** 0.19.9
 **Last Updated:** 2026-02-08
 
 ## Overview
 
 Standalone WordPress plugin that identifies residential investment property candidates (SFR, multifamily, income properties) by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates. As of v0.18.0, evaluates **three investment strategies (Flip, Rental Hold, BRRRR)** with per-strategy 0-100 scores and per-strategy disqualification — properties are only DQ'd if ALL strategies fail.
+
+**v0.19.9 (Deep Audit & Remediation):**
+- **Dead code:** Removed unused `$assoc_yn` variable in PDF generator (leftover from v0.19.8 HOA guard simplification)
+- **Timezone fix:** Digest email "Activity since" and "Last Check" timestamps were 5 hours off — `strtotime()` treated Eastern-stored datetimes as UTC, then `wp_date()` applied -5h again. Fixed with `DateTime($string, wp_timezone())`
+- **JSON safety:** Added `JSON_INVALID_UTF8_SUBSTITUTE` flag to all `json_encode()` calls storing MLS data (comp details, remarks, thresholds, photo analysis). Prevents silent `false` return from non-UTF8 chars in agent names/remarks
+- **Database index:** New composite `idx_report_run (report_id, run_date)` on `wp_bmn_flip_scores` — optimizes the 4 correlated subqueries in `get_monitor_activity_since()` digest email builder
+- **School API guard:** `score_school_rating()` now checks `is_plugin_active('bmn-schools/bmn-schools.php')` before calling `rest_do_request()`, with try/catch wrapper. Gracefully defaults to score 50 if plugin unavailable
+- **Documentation:** Rental rate constants annotated as Tier 3 fallback (comp-based estimation is primary since v0.19.0). Financial scorer thresholds documented with derivations (70% rule, DOM lifecycle, neighborhood discount bands). Property scorer renovation-need thresholds documented with component lifecycle rationale
+- Modified: `class-flip-pdf-generator.php`, `class-flip-monitor-runner.php`, `class-flip-analyzer.php`, `class-flip-database.php`, `class-flip-location-scorer.php`, `class-flip-rental-calculator.php`, `class-flip-financial-scorer.php`, `class-flip-property-scorer.php`, `class-flip-disqualifier.php`, `class-flip-photo-analyzer.php`, `force-analyze.php`
 
 **v0.19.8 Enhancement (PDF Follow-Up Enhancements):**
 - **Interior Features + Appliances:** Two new rows in Property Details card (between Flooring and Basement), using existing `format_bme_array()` — data was fetched in v0.19.7 but not displayed

@@ -523,7 +523,7 @@ class Flip_Monitor_Runner {
         $total_viable   = array_sum(array_column($activity, 'new_viable'));
         $subject = "Flip Analyzer Digest: {$total_viable} viable from {$total_monitors} " . ($total_monitors === 1 ? 'monitor' : 'monitors');
 
-        $since_display = wp_date('M j, Y g:i A', strtotime($since));
+        $since_display = wp_date('M j, Y g:i A', (new DateTime($since, wp_timezone()))->getTimestamp());
         $content = "<h2 style='margin:0 0 12px;font-size:20px;color:#1d2327;'>Monitor Activity Digest</h2>\n";
         $content .= "<p style='margin:0 0 16px;color:#50575e;'>Activity since {$since_display}:</p>\n";
 
@@ -554,7 +554,7 @@ class Flip_Monitor_Runner {
         $content .= "</tr>\n";
 
         foreach ($activity as $row) {
-            $last_check = !empty($row['last_check']) ? wp_date('M j g:i A', strtotime($row['last_check'])) : 'N/A';
+            $last_check = !empty($row['last_check']) ? wp_date('M j g:i A', (new DateTime($row['last_check'], wp_timezone()))->getTimestamp()) : 'N/A';
             $content .= "<tr style='border-bottom:1px solid #ddd;'>";
             $content .= "<td style='padding:8px;font-weight:500;'>" . esc_html($row['name']) . "</td>";
             $content .= "<td style='padding:8px;text-align:right;'>" . (int) $row['new_analyzed'] . "</td>";

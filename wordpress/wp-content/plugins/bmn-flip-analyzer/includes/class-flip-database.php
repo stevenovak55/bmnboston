@@ -1051,6 +1051,20 @@ class Flip_Database {
     }
 
     /**
+     * v0.19.9: Add composite index for report activity queries.
+     */
+    public static function migrate_v0199(): void {
+        global $wpdb;
+        $table = self::table_name();
+
+        // Check if index already exists
+        $existing = $wpdb->get_results("SHOW INDEX FROM {$table} WHERE Key_name = 'idx_report_run'");
+        if (empty($existing)) {
+            $wpdb->query("ALTER TABLE {$table} ADD INDEX idx_report_run (report_id, run_date)");
+        }
+    }
+
+    /**
      * Default rental calculation parameters.
      */
     public static function get_default_rental_params(): array {

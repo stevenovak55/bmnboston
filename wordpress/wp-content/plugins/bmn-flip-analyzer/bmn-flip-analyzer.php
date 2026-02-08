@@ -2,9 +2,28 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies residential investment property candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis. Supports SFR, multifamily, and Residential Income properties.
- * Version: 0.19.8
+ * Version: 0.19.9
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.19.9 - Deep Audit & Remediation
+ * - Fix: Removed unused $assoc_yn variable in PDF generator (dead code from v0.19.8)
+ * - Fix: Digest email timezone display — strtotime() treated Eastern timestamps as UTC,
+ *   causing 5-hour offset in "Activity since" and "Last Check" displays
+ * - Fix: JSON encoding safety — added JSON_INVALID_UTF8_SUBSTITUTE to all json_encode()
+ *   calls storing MLS data (agent names with diacritics, special chars in remarks)
+ * - Add: Composite index idx_report_run (report_id, run_date) on wp_bmn_flip_scores
+ *   for faster monitor activity queries
+ * - Add: School API plugin guard — checks if BMN Schools plugin is active before calling
+ *   rest_do_request(), gracefully defaults to score 50 if unavailable
+ * - Docs: Documented rental rate constants as Tier 3 fallback (comp-based is primary since v0.19.0)
+ * - Docs: Added threshold derivation comments to financial and property scorers
+ * - DB migration: migrate_v0199() adds composite index
+ * - Modified: class-flip-pdf-generator.php, class-flip-monitor-runner.php,
+ *   class-flip-analyzer.php, class-flip-database.php, class-flip-location-scorer.php,
+ *   class-flip-rental-calculator.php, class-flip-financial-scorer.php,
+ *   class-flip-property-scorer.php, class-flip-disqualifier.php,
+ *   class-flip-photo-analyzer.php, force-analyze.php
  *
  * Version 0.19.0 - Comp-Based Rental Rate Estimation
  * - Rental comp calculator: estimates monthly rent from MLS lease data (active + closed)
@@ -244,7 +263,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.19.8');
+define('FLIP_VERSION', '0.19.9');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -315,6 +334,7 @@ register_activation_hook(__FILE__, function () {
     Flip_Database::migrate_v0150();
     Flip_Database::migrate_v0160();
     Flip_Database::migrate_v0180();
+    Flip_Database::migrate_v0199();
 
     // Schedule monitor cron if not already scheduled
     if (!wp_next_scheduled('bmn_flip_monitor_check')) {
@@ -358,6 +378,10 @@ add_action('plugins_loaded', function () {
     if (version_compare($db_version, '0.18.0', '<')) {
         Flip_Database::migrate_v0180();
         update_option('bmn_flip_db_version', '0.18.0');
+    }
+    if (version_compare($db_version, '0.19.9', '<')) {
+        Flip_Database::migrate_v0199();
+        update_option('bmn_flip_db_version', '0.19.9');
     }
 });
 
