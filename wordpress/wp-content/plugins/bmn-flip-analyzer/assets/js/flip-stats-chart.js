@@ -32,7 +32,7 @@
         $('#stat-best-brrrr').text(stratCounts.brrrr);
 
         if (summary.last_run) {
-            var d = new Date(summary.last_run.replace(' ', 'T') + 'Z');
+            var d = new Date(summary.last_run.replace(' ', 'T'));
             $('#flip-last-run').text('Last run: ' + d.toLocaleDateString() + ' ' + d.toLocaleTimeString());
         } else {
             $('#flip-last-run').text('No analysis run yet');
