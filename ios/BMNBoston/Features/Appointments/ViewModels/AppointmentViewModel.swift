@@ -200,6 +200,7 @@ class AppointmentViewModel: ObservableObject {
                 forceRefresh: forceRefresh
             )
             appointments = fetchedAppointments
+            updateBadgeCount()
         } catch {
             appointmentsError = error.userFriendlyMessage
         }
@@ -210,6 +211,12 @@ class AppointmentViewModel: ObservableObject {
     /// Refresh appointments (for pull-to-refresh)
     func refreshAppointments() async {
         await loadAppointments(forceRefresh: true)
+    }
+
+    /// Update the badge count on the Appointments tab
+    private func updateBadgeCount() {
+        let count = appointments.filter { $0.isUpcoming && $0.status != .cancelled }.count
+        AppointmentBadgeStore.shared.upcomingCount = count
     }
 
     // MARK: - Booking Flow

@@ -77,6 +77,7 @@
 		B10000010000000000000090 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000090 /* LaunchScreen.storyboard */; };
 		B10000010000000000000091 /* NotificationItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000091 /* NotificationItem.swift */; };
 		B10000010000000000000092 /* NotificationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000092 /* NotificationStore.swift */; };
+		B10000010000000000000140 /* AppointmentBadgeStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000140 /* AppointmentBadgeStore.swift */; };
 		B10000010000000000000093 /* NotificationCenterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000093 /* NotificationCenterView.swift */; };
 		B10000010000000000000094 /* NotificationPreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000094 /* NotificationPreferencesView.swift */; };
 		B10000010000000000000095 /* PermissionsOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000095 /* PermissionsOnboardingView.swift */; };
@@ -244,6 +245,7 @@
 		B20000020000000000000090 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		B20000020000000000000091 /* NotificationItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationItem.swift; sourceTree = "<group>"; };
 		B20000020000000000000092 /* NotificationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationStore.swift; sourceTree = "<group>"; };
+		B20000020000000000000140 /* AppointmentBadgeStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppointmentBadgeStore.swift; sourceTree = "<group>"; };
 		B20000020000000000000093 /* NotificationCenterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCenterView.swift; sourceTree = "<group>"; };
 		B20000020000000000000094 /* NotificationPreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPreferencesView.swift; sourceTree = "<group>"; };
 		B20000020000000000000095 /* PermissionsOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsOnboardingView.swift; sourceTree = "<group>"; };
@@ -468,6 +470,7 @@
 				B20000020000000000000099 /* ToastManager.swift */,
 				B20000020000000000000104 /* ComparisonStore.swift */,
 				B20000020000000000000110 /* SiteContactManager.swift */,
+				B20000020000000000000140 /* AppointmentBadgeStore.swift */,
 			);
 			path = Storage;
 			sourceTree = "<group>";
@@ -1136,6 +1139,7 @@
 				B10000010000000000000083 /* PublicAnalyticsService.swift in Sources */,
 				B10000010000000000000091 /* NotificationItem.swift in Sources */,
 				B10000010000000000000092 /* NotificationStore.swift in Sources */,
+				B10000010000000000000140 /* AppointmentBadgeStore.swift in Sources */,
 				B10000010000000000000093 /* NotificationCenterView.swift in Sources */,
 				B10000010000000000000094 /* NotificationPreferencesView.swift in Sources */,
 				B10000010000000000000095 /* PermissionsOnboardingView.swift in Sources */,
@@ -1363,7 +1367,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = BMNBoston/BMNBoston.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 403;
+				CURRENT_PROJECT_VERSION = 406;
 				DEVELOPMENT_ASSET_PATHS = "\"BMNBoston/Resources/Preview Content\"";
 				DEVELOPMENT_TEAM = 938F7PURZS;
 				ENABLE_PREVIEWS = YES;
@@ -1394,7 +1398,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = BMNBoston/BMNBoston.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 403;
+				CURRENT_PROJECT_VERSION = 406;
 				DEVELOPMENT_ASSET_PATHS = "\"BMNBoston/Resources/Preview Content\"";
 				DEVELOPMENT_TEAM = 938F7PURZS;
 				ENABLE_PREVIEWS = YES;
@@ -1423,7 +1427,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 403;
+				CURRENT_PROJECT_VERSION = 406;
 				DEVELOPMENT_TEAM = 938F7PURZS;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
@@ -1442,7 +1446,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 403;
+				CURRENT_PROJECT_VERSION = 406;
 				DEVELOPMENT_TEAM = 938F7PURZS;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
@@ -1460,7 +1464,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 403;
+				CURRENT_PROJECT_VERSION = 406;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bmnboston.app.uitests;
@@ -1476,7 +1480,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 403;
+				CURRENT_PROJECT_VERSION = 406;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bmnboston.app.uitests;
@@ -1493,7 +1497,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = NotificationServiceExtension/NotificationServiceExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 403;
+				CURRENT_PROJECT_VERSION = 406;
 				DEVELOPMENT_TEAM = 938F7PURZS;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = NotificationServiceExtension/Info.plist;
@@ -1519,7 +1523,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = NotificationServiceExtension/NotificationServiceExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 403;
+				CURRENT_PROJECT_VERSION = 406;
 				DEVELOPMENT_TEAM = 938F7PURZS;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = NotificationServiceExtension/Info.plist;

@@ -2,8 +2,8 @@
 
 Comprehensive reference for AI-assisted development.
 
-**Current Project Version:** 400 (Marketing Version 1.7)
-**Last Updated:** February 4, 2026
+**Current Project Version:** 406 (Marketing Version 1.8)
+**Last Updated:** February 8, 2026
 
 ---
 
@@ -334,6 +334,7 @@ Universal Links allow web URLs to open directly in the app instead of Safari.
 | My Clients View | `BMNBoston/Features/AgentClients/Views/MyClientsView.swift` |
 | Notification Service Extension | `NotificationServiceExtension/NotificationService.swift` |
 | Push Notification Manager | `BMNBoston/Core/Services/PushNotificationManager.swift` |
+| Appointment Badge Store | `BMNBoston/Core/Storage/AppointmentBadgeStore.swift` |
 | Notification Store | `BMNBoston/Core/Storage/NotificationStore.swift` |
 | Referral Code Manager | `BMNBoston/Core/Storage/ReferralCodeManager.swift` |
 | Notification Center View | `BMNBoston/Features/Notifications/Views/NotificationCenterView.swift` |
@@ -377,6 +378,39 @@ func login(email: String, password: String) async {
 ```
 
 **Rule:** Any method that receives user data from the server should save it, not just the primary login flow.
+
+---
+
+## Recent Changes (v404-v406)
+
+### Appointments UX Enhancements (Feb 8, 2026)
+
+Three UX improvements to the Appointments section:
+
+**1. Appointment Badge Count on Tab**
+- Added `AppointmentBadgeStore` singleton (`Core/Storage/AppointmentBadgeStore.swift`) to track upcoming appointment count
+- `AppointmentViewModel` updates badge count after loading appointments (filters upcoming, non-cancelled)
+- `MainTabView` shows badge on Appointments tab with 99+ cap (same pattern as notifications badge)
+
+**2. Clickable Property Links in Appointment Detail**
+- When an appointment references a property (`listingId` exists), the address is teal and tappable
+- Tapping navigates to the property detail page via `setPendingPropertyNavigation`
+- **Bug fix (v406):** The appointment API's `listing_id` field contains a `listing_key` (MD5 hash), not an MLS number. Fixed by passing as `listingKey` parameter instead of `listingId` to `setPendingPropertyNavigation()`
+
+**3. Get Directions Button**
+- Added "Get Directions" button in appointment detail sheet when address exists
+- Uses `.confirmationDialog` with Apple Maps and Google Maps options
+- Apple Maps: address-based URL (`maps.apple.com/?daddr=`)
+- Google Maps: `comgooglemaps://` with web fallback
+
+**Files Changed:**
+- `Core/Storage/AppointmentBadgeStore.swift` — **New** — badge count singleton
+- `Features/Appointments/ViewModels/AppointmentViewModel.swift` — badge count update after load
+- `Features/Appointments/Views/AppointmentsView.swift` — clickable property links + directions button
+- `App/MainTabView.swift` — badge on Appointments tab
+- `BMNBoston.xcodeproj/project.pbxproj` — new file registration, version 406
+
+**Pitfall Discovered:** Appointment API `listing_id` is actually a `listing_key` hash (e.g., `7eda792811d10cae90b2e95741098653`), not an MLS number. Must use `listingKey` parameter for property navigation. See CLAUDE.md pitfall #7.
 
 ---
 

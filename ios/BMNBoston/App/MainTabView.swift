@@ -10,6 +10,7 @@ import SwiftUI
 struct MainTabView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @StateObject private var notificationStore = NotificationStore.shared
+    @StateObject private var appointmentBadgeStore = AppointmentBadgeStore.shared
     @State private var selectedTab = 0
 
     var body: some View {
@@ -26,6 +27,9 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Appointments", systemImage: "calendar")
                 }
+                .badge(appointmentBadgeStore.upcomingCount > 0
+                    ? (appointmentBadgeStore.upcomingCount > 99 ? "99+" : "\(appointmentBadgeStore.upcomingCount)")
+                    : nil)
                 .tag(1)
 
             // Tab 2: Dynamic tab based on user type

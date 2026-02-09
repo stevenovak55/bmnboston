@@ -353,10 +353,15 @@ struct AppointmentRow: View {
                 if let address = appointment.propertyAddress {
                     HStack {
                         Image(systemName: "house")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(appointment.listingId != nil ? AppColors.brandTeal : .secondary)
                         Text(address)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(appointment.listingId != nil ? AppColors.brandTeal : .secondary)
                             .lineLimit(1)
+                        if appointment.listingId != nil {
+                            Image(systemName: "chevron.right")
+                                .font(.caption2)
+                                .foregroundStyle(AppColors.brandTeal)
+                        }
                     }
                     .font(.subheadline)
                 }
@@ -438,6 +443,9 @@ struct AppointmentDetailSheet: View {
     @State private var calendarError: String?
     @State private var isAddingToCalendar = false
 
+    // Directions
+    @State private var showDirectionsSheet = false
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -455,13 +463,47 @@ struct AppointmentDetailSheet: View {
                         }
 
                         if let address = appointment.propertyAddress {
-                            Label(address, systemImage: "house")
-                                .foregroundStyle(.secondary)
+                            if let listingId = appointment.listingId {
+                                Button {
+                                    // listing_id from appointments API is actually a listing_key (hash)
+                                    onDismiss()
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                        NotificationCenter.default.post(name: .switchToSearchTab, object: nil)
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                            NotificationStore.shared.setPendingPropertyNavigation(listingId: nil, listingKey: listingId)
+                                        }
+                                    }
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "house")
+                                        Text(address)
+                                            .multilineTextAlignment(.leading)
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption)
+                                    }
+                                    .foregroundStyle(AppColors.brandTeal)
+                                }
+                            } else {
+                                Label(address, systemImage: "house")
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
                     .padding()
                     .background(Color(.systemGray6))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                    // Get Directions
+                    if appointment.propertyAddress != nil {
+                        Button {
+                            showDirectionsSheet = true
+                        } label: {
+                            Label("Get Directions", systemImage: "arrow.triangle.turn.up.right.diamond.fill")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                    }
 
                     // Details
                     VStack(spacing: 16) {
@@ -675,6 +717,37 @@ struct AppointmentDetailSheet: View {
                         }
                     }
                 )
+            }
+            .confirmationDialog("Get Directions", isPresented: $showDirectionsSheet) {
+                Button("Apple Maps") { openInAppleMaps() }
+                Button("Google Maps") { openInGoogleMaps() }
+                Button("Cancel", role: .cancel) { }
+            }
+        }
+    }
+
+    // MARK: - Directions
+
+    private func openInAppleMaps() {
+        guard let address = appointment.propertyAddress else { return }
+        let encoded = address.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? address
+        if let url = URL(string: "https://maps.apple.com/?daddr=\(encoded)") {
+            UIApplication.shared.open(url)
+        }
+    }
+
+    private func openInGoogleMaps() {
+        guard let address = appointment.propertyAddress else { return }
+        let encoded = address.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? address
+
+        // Try Google Maps app first
+        if let url = URL(string: "comgooglemaps://?daddr=\(encoded)&directionsmode=driving"),
+           UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url)
+        } else {
+            // Fallback to web
+            if let url = URL(string: "https://www.google.com/maps/dir/?api=1&destination=\(encoded)") {
+                UIApplication.shared.open(url)
             }
         }
     }
