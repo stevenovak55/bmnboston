@@ -299,6 +299,7 @@ class Flip_Analyzer {
 
         // Step 3: Score each property
         foreach ($properties as $i => $property) {
+          try {
             $listing_id = (int) $property->listing_id;
             $city = $property->city;
 
@@ -393,7 +394,7 @@ class Flip_Analyzer {
                 $arv_data['avg_sale_to_list'] ?? 1.0,
                 $arv_data['arv_confidence'] ?? 'medium'
             );
-            $thresholds_json = json_encode($thresholds, JSON_INVALID_UTF8_SUBSTITUTE);
+            $thresholds_json = wp_json_encode($thresholds, JSON_INVALID_UTF8_SUBSTITUTE);
 
             // Deal risk grade
             $deal_risk_grade = self::calculate_deal_risk_grade(
@@ -533,6 +534,11 @@ class Flip_Analyzer {
                 $disqualified++;
             }
             $analyzed++;
+          } catch (\Throwable $e) {
+            $fail_id = (int) ($property->listing_id ?? 0);
+            error_log("[Flip Analyzer] Exception on listing_id {$fail_id}: " . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            continue;
+          }
         }
 
         $log("Analysis complete: {$analyzed} properties analyzed, {$disqualified} disqualified.");
@@ -592,7 +598,7 @@ class Flip_Analyzer {
             'arv_confidence'       => $arv_data['arv_confidence'],
             'comp_count'           => $arv_data['comp_count'],
             'avg_comp_ppsf'        => $arv_data['avg_comp_ppsf'],
-            'comp_details_json'    => json_encode($comp_details, JSON_INVALID_UTF8_SUBSTITUTE),
+            'comp_details_json'    => wp_json_encode($comp_details, JSON_INVALID_UTF8_SUBSTITUTE),
             'neighborhood_ceiling' => round($arv_data['neighborhood_ceiling'] ?? 0, 2),
             'ceiling_pct'          => $arv_data['neighborhood_ceiling'] > 0
                 ? round(($arv / $arv_data['neighborhood_ceiling']) * 100, 1) : 0,
@@ -627,7 +633,7 @@ class Flip_Analyzer {
             'city'                 => $property->city ?? '',
             'address'              => trim(($property->street_number ?? '') . ' ' . ($property->street_name ?? '')),
             'main_photo_url'       => $property->main_photo_url ?? '',
-            'remarks_signals_json' => json_encode($market['remarks_signals'], JSON_INVALID_UTF8_SUBSTITUTE),
+            'remarks_signals_json' => wp_json_encode($market['remarks_signals'], JSON_INVALID_UTF8_SUBSTITUTE),
             'disqualified'         => 0,
             'disqualify_reason'    => null,
             'annualized_roi'       => $fin['annualized_roi'],
@@ -810,7 +816,7 @@ class Flip_Analyzer {
             $total_score, $financial, $prop_score, $location, $market,
             $arv, $run_date
         );
-        $data['applied_thresholds_json'] = json_encode($thresholds, JSON_INVALID_UTF8_SUBSTITUTE);
+        $data['applied_thresholds_json'] = wp_json_encode($thresholds, JSON_INVALID_UTF8_SUBSTITUTE);
         $data['deal_risk_grade']         = $deal_risk_grade;
 
         // Per-strategy fields (v0.18.0)

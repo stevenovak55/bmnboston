@@ -67,6 +67,7 @@ class Flip_Monitor_Runner {
      * 4. Send tiered notifications based on results
      */
     private static function run_incremental(object $monitor): void {
+        global $wpdb;
         $report_id = (int) $monitor->id;
 
         // Concurrency lock — prevent overlapping runs on the same report
@@ -133,12 +134,10 @@ class Flip_Monitor_Runner {
         $new_total = (int) ($result['analyzed'] ?? 0);
 
         // Step 5: Identify viable properties from this batch
-        global $wpdb;
-        $table = Flip_Database::table_name();
         $viable_results = $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM {$table}
              WHERE report_id = %d AND disqualified = 0 AND total_score >= 60
-             AND listing_id IN (" . implode(',', array_map('intval', $new_listing_ids)) . ")",
+             AND listing_id IN ({$id_list})",
             $report_id
         ));
 
@@ -156,7 +155,7 @@ class Flip_Monitor_Runner {
             $near_viable_results = $wpdb->get_results($wpdb->prepare(
                 "SELECT * FROM {$table}
                  WHERE report_id = %d AND near_viable = 1
-                 AND listing_id IN (" . implode(',', array_map('intval', $new_listing_ids)) . ")",
+                 AND listing_id IN ({$id_list})",
                 $report_id
             ));
             if (!empty($near_viable_results)) {
@@ -168,7 +167,7 @@ class Flip_Monitor_Runner {
                 $dq_results = $wpdb->get_results($wpdb->prepare(
                     "SELECT * FROM {$table}
                      WHERE report_id = %d AND disqualified = 1
-                     AND listing_id IN (" . implode(',', array_map('intval', $new_listing_ids)) . ")
+                     AND listing_id IN ({$id_list})
                      ORDER BY total_score DESC LIMIT 20",
                     $report_id
                 ));
@@ -215,10 +214,10 @@ class Flip_Monitor_Runner {
                 try {
                     $result = Flip_Photo_Analyzer::analyze_and_update($lid, $report_id);
                     if (!$result['success']) {
-                        error_log("Flip Monitor: Photo analysis failed for listing {$lid}: " . ($result['error'] ?? 'unknown'));
+                        error_log("[Flip Monitor] Photo analysis failed for listing {$lid}: " . ($result['error'] ?? 'unknown'));
                     }
                 } catch (\Exception $e) {
-                    error_log("Flip Monitor: Photo analysis failed for listing {$lid}: " . $e->getMessage());
+                    error_log("[Flip Monitor] Photo analysis failed for listing {$lid}: " . $e->getMessage());
                 }
             }
         }
@@ -239,7 +238,7 @@ class Flip_Monitor_Runner {
                     $pdf_failures[] = $lid;
                 }
             } catch (\Exception $e) {
-                error_log("Flip Monitor: PDF generation failed for listing {$lid}: " . $e->getMessage());
+                error_log("[Flip Monitor] PDF generation failed for listing {$lid}: " . $e->getMessage());
                 $pdf_failures[] = $lid;
             }
         }

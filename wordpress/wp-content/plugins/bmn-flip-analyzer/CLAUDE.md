@@ -1,11 +1,22 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.20.0
-**Last Updated:** 2026-02-09
+**Current Version:** 0.20.1
+**Last Updated:** 2026-02-10
 
 ## Overview
 
 Standalone WordPress plugin that identifies residential investment property candidates (SFR, multifamily, income properties) by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates. As of v0.18.0, evaluates **three investment strategies (Flip, Rental Hold, BRRRR)** with per-strategy 0-100 scores and per-strategy disqualification — properties are only DQ'd if ALL strategies fail.
+
+**v0.20.1 (Hardening — Resilience, Safety, Performance):**
+- **Try-catch pipeline:** `Flip_Analyzer::run()` loop now catches `\Throwable` per-property — one bad property no longer halts a 500-property batch. Logs exception with listing_id and continues
+- **$wpdb error checking:** `upsert_result()` and `create_report()` now check return values from `$wpdb->insert()` / `$wpdb->query()` and log `$wpdb->last_error` on failure
+- **wp_json_encode migration:** All remaining `json_encode()` calls (11 locations across 6 files) replaced with `wp_json_encode()` for UTF-8 safety
+- **AJAX input validation:** Added `is_string()` checks on `$_POST['filters']`, `$_POST['weights']`, `$_POST['settings']`, `$_POST['defaults']` before `json_decode()` in all 4 AJAX handlers
+- **Scoring weights cache:** `Flip_Database::get_scoring_weights()` now uses a static cache — eliminates 1000-1500 redundant `json_decode()` + `array_replace_recursive()` calls per 500-property run. Cache auto-invalidates on save/reset
+- **Monitor runner $wpdb bug fix:** `global $wpdb;` was declared at line 136 but used at line 125 — moved to top of `run_incremental()`. Also consolidated duplicate `$table` lookups and reused `$id_list` variable across 4 queries (was recomputing `implode()` each time)
+- **Consistent logging:** All `error_log()` calls now use `[Flip ClassName]` bracket format for grep-friendly log parsing
+- **Return types verified:** `Flip_Property_Fetcher` and `Flip_Disqualifier` already have complete return type declarations (confirmed, no changes needed)
+- Modified: `class-flip-analyzer.php`, `class-flip-database.php`, `class-flip-admin-dashboard.php`, `class-flip-monitor-runner.php`, `class-flip-disqualifier.php`, `class-flip-photo-analyzer.php`, `class-flip-road-analyzer.php`, `class-flip-pdf-generator.php`, `force-analyze.php`
 
 **v0.20.0 (Bug Fixes — DQ, Pagination, Monitor):**
 - **Road-discounted ARV in DQ:** `check_flip_disqualifiers()` was using raw (non-road-discounted) ARV for price/ARV ratio and rehab/ARV checks. Properties on busy roads (-15%) or near highways (-25%) could pass DQ when they shouldn't. Fixed by updating `$arv_data['estimated_arv']` after road discount in both `run()` and `force_analyze_single()`
@@ -570,6 +581,7 @@ Uses Claude Vision API (`claude-sonnet-4-5-20250929`) to analyze up to 5 photos 
 | 5 - iOS | Pending | SwiftUI views, ViewModel, API |
 | 6 - Polish | Pending | Weight tuning |
 | 6.1 - Unit Tests | Complete | PHPUnit 10.x, 135 tests, 5 scorer/disqualifier classes |
+| 6.2 - Hardening | Complete | Try-catch pipeline, $wpdb checking, wp_json_encode, input validation, weights cache, monitor fix, logging |
 
 See `DEVELOPMENT.md` for detailed progress tracking.
 
@@ -598,17 +610,17 @@ See `DEVELOPMENT.md` for detailed progress tracking.
 - **Time injection:** `flip_set_current_time('2026-01-15 12:00:00')` for deterministic season scoring
 - **No mocking framework needed** — WP stubs + `Flip_Database::get_default_scoring_weights()` handle all dependencies
 
-### Hardening Plan (Future Work)
+### Hardening Plan (Completed v0.20.1)
 
-Documented in `.claude/plans/` — 8 items identified during code audit:
-1. **High:** Top-level try-catch in `run()` pipeline loop
-2. **High:** `$wpdb` return value checking in `upsert_result()`
-3. **High:** Replace remaining `json_encode()` with `wp_json_encode()`
-4. **Medium:** Input type validation in AJAX handler (`$_POST['filters']`)
-5. **Medium:** Cache scoring weights per analysis run (avoid N+1 `get_option()`)
-6. **Medium:** Batch monitor N+1 query → single `WHERE id IN (...)` query
-7. **Low:** Consolidate `error_log()` vs `$this->log()` inconsistency
-8. **Low:** Add return type declarations to untyped methods
+All 8 items completed in v0.20.1:
+1. ~~**High:** Top-level try-catch in `run()` pipeline loop~~ Done
+2. ~~**High:** `$wpdb` return value checking in `upsert_result()`~~ Done
+3. ~~**High:** Replace remaining `json_encode()` with `wp_json_encode()`~~ Done
+4. ~~**Medium:** Input type validation in AJAX handler (`$_POST['filters']`)~~ Done
+5. ~~**Medium:** Cache scoring weights per analysis run (avoid N+1 `get_option()`)~~ Done
+6. ~~**Medium:** Batch monitor N+1 query → single `WHERE id IN (...)` query~~ Done (also fixed `$wpdb` use-before-global bug)
+7. ~~**Low:** Consolidate `error_log()` vs `$this->log()` inconsistency~~ Done (standardized `[Flip ClassName]` format)
+8. ~~**Low:** Add return type declarations to untyped methods~~ Already complete (verified)
 
 ## Admin Dashboard (v0.10.0)
 

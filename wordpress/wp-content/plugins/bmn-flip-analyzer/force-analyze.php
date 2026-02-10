@@ -194,13 +194,13 @@ $data = [
     'road_type'             => $road_analysis['road_type'],
     'market_strength'       => $arv_data['market_strength'] ?? 'balanced',
     'avg_sale_to_list'      => $arv_data['avg_sale_to_list'] ?? 0,
-    'comp_details_json'     => json_encode($comp_details, JSON_INVALID_UTF8_SUBSTITUTE),
-    'remarks_signals_json'  => json_encode($market['remarks_signals'] ?? [], JSON_INVALID_UTF8_SUBSTITUTE),
+    'comp_details_json'     => wp_json_encode($comp_details, JSON_INVALID_UTF8_SUBSTITUTE),
+    'remarks_signals_json'  => wp_json_encode($market['remarks_signals'] ?? [], JSON_INVALID_UTF8_SUBSTITUTE),
     'photo_analysis_json'   => null,
     'disqualified'          => 0,  // FORCE NOT DISQUALIFIED
     'disqualify_reason'     => '',
     'near_viable'           => 0,
-    'applied_thresholds_json' => json_encode($thresholds, JSON_INVALID_UTF8_SUBSTITUTE),
+    'applied_thresholds_json' => wp_json_encode($thresholds, JSON_INVALID_UTF8_SUBSTITUTE),
     'deal_risk_grade'       => $deal_risk_grade,
 ];
 

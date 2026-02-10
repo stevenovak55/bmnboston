@@ -16,6 +16,9 @@ class Flip_Database {
     const MONITOR_SEEN_TABLE = 'bmn_flip_monitor_seen';
     const MAX_REPORTS        = 25;
 
+    /** @var array|null Cached scoring weights for the current request. */
+    private static ?array $scoring_weights_cache = null;
+
     /**
      * Get the full table name with prefix.
      */
@@ -259,7 +262,7 @@ class Flip_Database {
     public static function create_report(array $data): int {
         global $wpdb;
 
-        $wpdb->insert(self::reports_table(), [
+        $result = $wpdb->insert(self::reports_table(), [
             'name'                  => $data['name'],
             'type'                  => $data['type'] ?? 'manual',
             'status'                => 'active',
@@ -277,6 +280,11 @@ class Flip_Database {
             'updated_at'            => $data['updated_at'] ?? current_time('mysql'),
             'created_by'            => $data['created_by'] ?? get_current_user_id(),
         ]);
+
+        if ($result === false) {
+            error_log("[Flip Database] create_report INSERT failed: {$wpdb->last_error}");
+            return 0;
+        }
 
         return (int) $wpdb->insert_id;
     }
@@ -537,7 +545,7 @@ class Flip_Database {
      */
     public static function set_default_cities(): void {
         if (!get_option('bmn_flip_target_cities')) {
-            update_option('bmn_flip_target_cities', json_encode([
+            update_option('bmn_flip_target_cities', wp_json_encode([
                 'Reading', 'Melrose', 'Stoneham', 'Burlington',
                 'Andover', 'North Andover', 'Wakefield',
             ]));
@@ -556,7 +564,7 @@ class Flip_Database {
      * Update target cities.
      */
     public static function set_target_cities(array $cities): void {
-        update_option('bmn_flip_target_cities', json_encode(array_values($cities)));
+        update_option('bmn_flip_target_cities', wp_json_encode(array_values($cities)));
     }
 
     /**
@@ -616,7 +624,7 @@ class Flip_Database {
             $filters[$date_key] = !empty($filters[$date_key]) ? sanitize_text_field($filters[$date_key]) : null;
         }
 
-        update_option('bmn_flip_analysis_filters', json_encode($filters));
+        update_option('bmn_flip_analysis_filters', wp_json_encode($filters));
     }
 
     /**
@@ -642,18 +650,28 @@ class Flip_Database {
 
         // Delete any existing result for this listing from the same run date + report
         if (!empty($data['report_id'])) {
-            $wpdb->query($wpdb->prepare(
+            $del = $wpdb->query($wpdb->prepare(
                 "DELETE FROM {$table} WHERE listing_id = %d AND run_date = %s AND report_id = %d",
                 $data['listing_id'], $data['run_date'], $data['report_id']
             ));
         } else {
-            $wpdb->query($wpdb->prepare(
+            $del = $wpdb->query($wpdb->prepare(
                 "DELETE FROM {$table} WHERE listing_id = %d AND run_date = %s AND report_id IS NULL",
                 $data['listing_id'], $data['run_date']
             ));
         }
 
-        $wpdb->insert($table, $data);
+        if ($del === false) {
+            error_log("[Flip Database] upsert_result DELETE failed for listing_id {$data['listing_id']}: {$wpdb->last_error}");
+        }
+
+        $result = $wpdb->insert($table, $data);
+
+        if ($result === false) {
+            error_log("[Flip Database] upsert_result INSERT failed for listing_id {$data['listing_id']}: {$wpdb->last_error}");
+            return 0;
+        }
+
         return $wpdb->insert_id;
     }
 
@@ -886,11 +904,23 @@ class Flip_Database {
      * Get scoring weights (custom overrides merged with defaults).
      */
     public static function get_scoring_weights(): array {
+        if (self::$scoring_weights_cache !== null) {
+            return self::$scoring_weights_cache;
+        }
+
         $defaults = self::get_default_scoring_weights();
         $saved = get_option('bmn_flip_scoring_weights', '{}');
         $saved = json_decode($saved, true) ?: [];
 
-        return array_replace_recursive($defaults, $saved);
+        self::$scoring_weights_cache = array_replace_recursive($defaults, $saved);
+        return self::$scoring_weights_cache;
+    }
+
+    /**
+     * Clear the scoring weights cache (called after saving new weights).
+     */
+    public static function clear_scoring_weights_cache(): void {
+        self::$scoring_weights_cache = null;
     }
 
     /**
@@ -915,6 +945,7 @@ class Flip_Database {
         }
 
         update_option('bmn_flip_scoring_weights', wp_json_encode($weights));
+        self::clear_scoring_weights_cache();
     }
 
     // ---------------------------------------------------------------

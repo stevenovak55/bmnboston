@@ -155,7 +155,7 @@ class Flip_Road_Analyzer {
             ]);
 
             if (is_wp_error($response)) {
-                error_log("Flip Road Analyzer OSM Error (attempt {$attempt}): " . $response->get_error_message());
+                error_log("[Flip Road Analyzer] OSM Error (attempt {$attempt}): " . $response->get_error_message());
                 continue;
             }
 
@@ -170,16 +170,16 @@ class Flip_Road_Analyzer {
 
             // Retry on rate limit or server errors
             if (in_array($status, self::RETRYABLE_STATUSES, true)) {
-                error_log("Flip Road Analyzer OSM HTTP {$status} (attempt {$attempt}), retrying...");
+                error_log("[Flip Road Analyzer] OSM HTTP {$status} (attempt {$attempt}), retrying...");
                 continue;
             }
 
             // Non-retryable error (400, 404, etc.)
-            error_log("Flip Road Analyzer OSM HTTP Error: {$status} (non-retryable)");
+            error_log("[Flip Road Analyzer] OSM HTTP Error: {$status} (non-retryable)");
             return null;
         }
 
-        error_log("Flip Road Analyzer OSM failed after " . (self::MAX_RETRIES + 1) . " attempts (last status: {$last_status})");
+        error_log("[Flip Road Analyzer] OSM failed after " . (self::MAX_RETRIES + 1) . " attempts (last status: {$last_status})");
         return null;
     }
 
@@ -471,7 +471,7 @@ PROMPT;
                 'anthropic-version' => '2023-06-01',
                 'content-type'      => 'application/json',
             ],
-            'body' => json_encode([
+            'body' => wp_json_encode([
                 'model'      => 'claude-sonnet-4-5-20250929',
                 'max_tokens' => 512,
                 'messages'   => [[

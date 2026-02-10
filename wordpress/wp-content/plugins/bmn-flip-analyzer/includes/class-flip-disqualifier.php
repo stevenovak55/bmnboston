@@ -262,7 +262,7 @@ class Flip_Disqualifier {
             'disqualified'        => 1,
             'disqualify_reason'   => $reason,
             'near_viable'         => 0,
-            'applied_thresholds_json' => json_encode($thresholds, JSON_INVALID_UTF8_SUBSTITUTE),
+            'applied_thresholds_json' => wp_json_encode($thresholds, JSON_INVALID_UTF8_SUBSTITUTE),
             'annualized_roi'      => 0,
             'breakeven_arv'       => 0,
             'deal_risk_grade'     => null,

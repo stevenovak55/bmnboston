@@ -760,6 +760,9 @@ class Flip_Admin_Dashboard {
         }
 
         $raw = isset($_POST['filters']) ? wp_unslash($_POST['filters']) : '{}';
+        if (!is_string($raw)) {
+            wp_send_json_error('Invalid filter data.');
+        }
         $filters = json_decode($raw, true);
 
         if (!is_array($filters)) {
@@ -785,6 +788,9 @@ class Flip_Admin_Dashboard {
         }
 
         $raw = isset($_POST['weights']) ? wp_unslash($_POST['weights']) : '{}';
+        if (!is_string($raw)) {
+            wp_send_json_error('Invalid weight data.');
+        }
         $weights = json_decode($raw, true);
 
         if (!is_array($weights)) {
@@ -810,6 +816,7 @@ class Flip_Admin_Dashboard {
         }
 
         delete_option('bmn_flip_scoring_weights');
+        Flip_Database::clear_scoring_weights_cache();
 
         wp_send_json_success([
             'weights' => Flip_Database::get_scoring_weights(),
@@ -828,6 +835,9 @@ class Flip_Admin_Dashboard {
         }
 
         $raw = isset($_POST['settings']) ? wp_unslash($_POST['settings']) : '{}';
+        if (!is_string($raw)) {
+            wp_send_json_error('Invalid settings data.');
+        }
         $settings = json_decode($raw, true);
 
         if (!is_array($settings)) {
@@ -919,6 +929,9 @@ class Flip_Admin_Dashboard {
         }
 
         $raw = isset($_POST['defaults']) ? wp_unslash($_POST['defaults']) : '{}';
+        if (!is_string($raw)) {
+            wp_send_json_error('Invalid rental defaults data.');
+        }
         $defaults = json_decode($raw, true);
 
         if (!is_array($defaults)) {

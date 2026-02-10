@@ -2,9 +2,24 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies residential investment property candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis. Supports SFR, multifamily, and Residential Income properties.
- * Version: 0.20.0
+ * Version: 0.20.1
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.20.1 - Hardening (Resilience, Safety, Performance)
+ * - Add: Try-catch in run() pipeline loop — one bad property no longer halts batch
+ * - Add: $wpdb return value checking in upsert_result() and create_report()
+ * - Fix: Replaced all remaining json_encode() with wp_json_encode() (UTF-8 safety)
+ * - Add: is_string() validation on AJAX POST inputs before json_decode()
+ * - Add: Static cache for get_scoring_weights() — eliminates 1000+ redundant calls per run
+ * - Fix: $wpdb used before global declaration in monitor runner (Step 4b was broken)
+ * - Fix: Consolidated duplicate $table/$id_list lookups in monitor runner
+ * - Fix: Standardized error_log() format to [Flip ClassName] across all files
+ * - Verified: Return type declarations already complete on Fetcher + Disqualifier
+ * - Modified: class-flip-analyzer.php, class-flip-database.php,
+ *   class-flip-admin-dashboard.php, class-flip-monitor-runner.php,
+ *   class-flip-disqualifier.php, class-flip-photo-analyzer.php,
+ *   class-flip-road-analyzer.php, class-flip-pdf-generator.php, force-analyze.php
  *
  * Version 0.20.0 - Bug Fixes (DQ, Pagination, Monitor)
  * - Fix: Road-discounted ARV now used in flip DQ checks — previously used raw ARV,
@@ -277,7 +292,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.20.0');
+define('FLIP_VERSION', '0.20.1');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 

@@ -116,7 +116,7 @@ class Flip_PDF_Generator {
     public function generate(int $listing_id, ?int $report_id = null) {
         if (!class_exists('Flip_TCPDF')) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('Flip PDF: TCPDF library not found.');
+                error_log('[Flip PDF] TCPDF library not found.');
             }
             return false;
         }
@@ -2117,7 +2117,7 @@ class Flip_PDF_Generator {
             return $filepath;
         } catch (Exception $e) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('Flip PDF generation failed: ' . $e->getMessage());
+                error_log('[Flip PDF] Generation failed: ' . $e->getMessage());
             }
             return false;
         }
@@ -2154,7 +2154,7 @@ class Flip_PDF_Generator {
         }
 
         if ($deleted > 0) {
-            error_log("Flip PDF cleanup: deleted {$deleted} PDFs older than {$days} days.");
+            error_log("[Flip PDF] Cleanup: deleted {$deleted} PDFs older than {$days} days.");
         }
 
         return $deleted;
