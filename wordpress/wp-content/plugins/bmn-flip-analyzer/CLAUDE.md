@@ -325,6 +325,8 @@ Standalone WordPress plugin that identifies residential investment property cand
 | `assets/js/flip-init.js` | Initialization + event binding (loaded last) |
 | `assets/css/flip-dashboard.css` | Dashboard styles |
 | `assets/css/flip-strategy.css` | Strategy tab/comparison/BRRRR styles (v0.16.0) |
+| `tests/bootstrap.php` | PHPUnit bootstrap — WP stubs, MockWPDB, year/time injection |
+| `tests/Unit/` | 6 test files, 135 tests covering scorers, financials, disqualifiers |
 
 ## Database
 
@@ -566,9 +568,47 @@ Uses Claude Vision API (`claude-sonnet-4-5-20250929`) to analyze up to 5 photos 
 | 4.8 - Multi-Strategy Scoring | Complete | Per-strategy scores, two-tier DQ, strategy filter/sort, photo enhancement |
 | 4.9 - Comp-Based Rental Rates | Complete | Rental comp calculator, MLS lease data, UNION queries, cross-reference, UI/CLI |
 | 5 - iOS | Pending | SwiftUI views, ViewModel, API |
-| 6 - Polish | Pending | Testing, weight tuning |
+| 6 - Polish | Pending | Weight tuning |
+| 6.1 - Unit Tests | Complete | PHPUnit 10.x, 135 tests, 5 scorer/disqualifier classes |
 
 See `DEVELOPMENT.md` for detailed progress tracking.
+
+## Unit Tests (v0.20.0)
+
+**Framework:** PHPUnit 10.x via Composer
+**Run:** `cd bmn-flip-analyzer && vendor/bin/phpunit --no-coverage`
+**Result:** 135 tests, 232 assertions, ~12ms
+
+### Test Files
+
+| File | Tests | Covers |
+|------|-------|--------|
+| `tests/Unit/FlipAnalyzerHelpersTest.php` | 31 | `get_rehab_per_sqft()`, `get_age_condition_multiplier()`, `get_remarks_rehab_multiplier()`, `get_adaptive_thresholds()`, `calculate_deal_risk_grade()` |
+| `tests/Unit/FlipFinancialsTest.php` | 21 | `calculate_financials()` — rehab, closing, sale costs, lead paint, financing, breakeven ARV, annualized ROI |
+| `tests/Unit/FlipFinancialScorerTest.php` | 15 | `Flip_Financial_Scorer::score()` — price/ARV, PPSF, price reduction, DOM motivation |
+| `tests/Unit/FlipDisqualifierTest.php` | 33 | Universal DQ, flip DQ, distress signals (negation, word boundary), rental/BRRRR viability, post-calc DQ with confidence factors |
+| `tests/Unit/FlipPropertyScorerTest.php` | 17 | Lot size, expansion potential (condo cap), existing sqft, renovation need, expansion category |
+| `tests/Unit/FlipMarketScorerTest.php` | 18 | `analyze_remarks()` (positive/negative/cap/mixed), composite score, season scoring (winter/summer/fall/spring) |
+
+### Test Infrastructure
+
+- **`tests/bootstrap.php`** — WP function stubs (`current_time`, `wp_date`, `get_option`, etc.), `MockWPDB`, year/time injection helpers
+- **`tests/phpunit.xml`** — PHPUnit 10 config with `Unit` test suite
+- **Year injection:** `flip_set_current_year(2026)` avoids year rollover issues in age calculations
+- **Time injection:** `flip_set_current_time('2026-01-15 12:00:00')` for deterministic season scoring
+- **No mocking framework needed** — WP stubs + `Flip_Database::get_default_scoring_weights()` handle all dependencies
+
+### Hardening Plan (Future Work)
+
+Documented in `.claude/plans/` — 8 items identified during code audit:
+1. **High:** Top-level try-catch in `run()` pipeline loop
+2. **High:** `$wpdb` return value checking in `upsert_result()`
+3. **High:** Replace remaining `json_encode()` with `wp_json_encode()`
+4. **Medium:** Input type validation in AJAX handler (`$_POST['filters']`)
+5. **Medium:** Cache scoring weights per analysis run (avoid N+1 `get_option()`)
+6. **Medium:** Batch monitor N+1 query → single `WHERE id IN (...)` query
+7. **Low:** Consolidate `error_log()` vs `$this->log()` inconsistency
+8. **Low:** Add return type declarations to untyped methods
 
 ## Admin Dashboard (v0.10.0)
 

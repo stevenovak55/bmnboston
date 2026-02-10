@@ -1,0 +1,17 @@
+{
+    "name": "bmnboston/bmn-flip-analyzer",
+    "description": "Investment property flip analysis engine for WordPress",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}
