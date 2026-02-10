@@ -680,6 +680,7 @@ class Flip_Database {
 
         $defaults = [
             'top'        => 50,
+            'offset'     => 0,
             'min_score'  => 0,
             'city'       => null,
             'sort'       => 'total_score',
@@ -722,10 +723,11 @@ class Flip_Database {
 
         $where_sql = implode(' AND ', $where);
         $limit = max(1, min(500, (int) $args['top']));
+        $offset = max(0, (int) $args['offset']);
 
         $sql = $wpdb->prepare(
-            "SELECT * FROM {$table} WHERE {$where_sql} ORDER BY {$sort} {$order} LIMIT %d",
-            array_merge($params, [$limit])
+            "SELECT * FROM {$table} WHERE {$where_sql} ORDER BY {$sort} {$order} LIMIT %d OFFSET %d",
+            array_merge($params, [$limit, $offset])
         );
 
         return $wpdb->get_results($sql);

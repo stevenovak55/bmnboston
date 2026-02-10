@@ -118,9 +118,17 @@ class Flip_Monitor_Runner {
             'city'        => implode(',', $cities),
         ]);
 
-        // Step 4b: Mark new listings as seen AFTER analysis completes
-        // (if analysis failed, these listings will be retried on the next run)
-        Flip_Database::mark_listings_seen($report_id, $new_listing_ids);
+        // Step 4b: Mark only successfully analyzed listings as seen
+        // (failed listings will be retried on the next run)
+        $table = Flip_Database::table_name();
+        $id_list = implode(',', array_map('intval', $new_listing_ids));
+        $analyzed_ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT listing_id FROM {$table} WHERE report_id = %d AND listing_id IN ({$id_list})",
+            $report_id
+        ));
+        if (!empty($analyzed_ids)) {
+            Flip_Database::mark_listings_seen($report_id, $analyzed_ids);
+        }
 
         $new_total = (int) ($result['analyzed'] ?? 0);
 

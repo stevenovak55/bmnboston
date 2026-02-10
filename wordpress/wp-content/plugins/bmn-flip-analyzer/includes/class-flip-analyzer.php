@@ -375,6 +375,9 @@ class Flip_Analyzer {
             $road_discount = self::ROAD_ARV_DISCOUNT[$road_analysis['road_type']] ?? 0;
             $arv = $road_discount > 0 ? round($raw_arv * (1 - $road_discount), 2) : $raw_arv;
 
+            // Update arv_data so downstream DQ checks use road-discounted ARV
+            $arv_data['estimated_arv'] = $arv;
+
             // Look up actual property tax rate from MLS financial data
             $actual_tax_rate = self::get_actual_tax_rate($listing_id, $list_price);
 
@@ -718,6 +721,9 @@ class Flip_Analyzer {
 
         $road_discount = self::ROAD_ARV_DISCOUNT[$road_analysis['road_type']] ?? 0;
         $arv = $road_discount > 0 ? round($raw_arv * (1 - $road_discount), 2) : $raw_arv;
+
+        // Update arv_data so downstream logic uses road-discounted ARV
+        $arv_data['estimated_arv'] = $arv;
 
         $actual_tax_rate = self::get_actual_tax_rate($listing_id, $list_price);
 

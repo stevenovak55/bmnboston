@@ -1,11 +1,17 @@
 # BMN Flip Analyzer - Claude Code Reference
 
-**Current Version:** 0.19.9
-**Last Updated:** 2026-02-08
+**Current Version:** 0.20.0
+**Last Updated:** 2026-02-09
 
 ## Overview
 
 Standalone WordPress plugin that identifies residential investment property candidates (SFR, multifamily, income properties) by scoring properties across financial viability (40%), property attributes (25%), location quality (25%), and market timing (10%). Uses a two-pass approach: data scoring first, then Claude Vision photo analysis on top candidates. As of v0.18.0, evaluates **three investment strategies (Flip, Rental Hold, BRRRR)** with per-strategy 0-100 scores and per-strategy disqualification — properties are only DQ'd if ALL strategies fail.
+
+**v0.20.0 (Bug Fixes — DQ, Pagination, Monitor):**
+- **Road-discounted ARV in DQ:** `check_flip_disqualifiers()` was using raw (non-road-discounted) ARV for price/ARV ratio and rehab/ARV checks. Properties on busy roads (-15%) or near highways (-25%) could pass DQ when they shouldn't. Fixed by updating `$arv_data['estimated_arv']` after road discount in both `run()` and `force_analyze_single()`
+- **REST API pagination:** `/results` endpoint accepted `page` param but never passed offset to `Flip_Database::get_results()` — always returned page 1. Added `offset` parameter to `get_results()` and calculated `($page - 1) * $per_page` in REST handler
+- **Monitor seen-marking:** `mark_listings_seen()` was called unconditionally after `Flip_Analyzer::run()`. If analysis failed for some listings (timeout, exception), they were marked as seen and never retried. Now queries DB to confirm which listings actually have results before marking
+- Modified: `class-flip-analyzer.php`, `class-flip-rest-api.php`, `class-flip-monitor-runner.php`, `class-flip-database.php`
 
 **v0.19.9 (Deep Audit & Remediation):**
 - **Dead code:** Removed unused `$assoc_yn` variable in PDF generator (leftover from v0.19.8 HOA guard simplification)

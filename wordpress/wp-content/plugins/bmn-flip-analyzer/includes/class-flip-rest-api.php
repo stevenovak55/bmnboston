@@ -222,8 +222,10 @@ class Flip_REST_API {
         $total = self::get_total_count($min_score, $city, $has_photos);
 
         // Get paginated results
+        $offset = ($page - 1) * $per_page;
         $results = Flip_Database::get_results([
             'top'        => $per_page,
+            'offset'     => $offset,
             'min_score'  => $min_score,
             'city'       => $city,
             'sort'       => $sort,

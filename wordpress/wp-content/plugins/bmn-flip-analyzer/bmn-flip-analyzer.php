@@ -2,9 +2,20 @@
 /**
  * Plugin Name: BMN Flip Analyzer
  * Description: Identifies residential investment property candidates by scoring properties on financial viability, attributes, location, market timing, and photo analysis. Supports SFR, multifamily, and Residential Income properties.
- * Version: 0.19.9
+ * Version: 0.20.0
  * Author: BMN Boston
  * Requires PHP: 8.0
+ *
+ * Version 0.20.0 - Bug Fixes (DQ, Pagination, Monitor)
+ * - Fix: Road-discounted ARV now used in flip DQ checks — previously used raw ARV,
+ *   causing properties on busy roads to pass DQ when they should fail (price/ARV too high)
+ * - Fix: REST API /results pagination — page param was accepted but never passed to
+ *   database query (always returned page 1). Added offset support to get_results()
+ * - Fix: Monitor seen-marking — listings are now only marked as seen after confirming
+ *   they have results in the DB. Previously, failed analyses were marked as seen and
+ *   never retried on the next monitor run
+ * - Modified: class-flip-analyzer.php, class-flip-rest-api.php,
+ *   class-flip-monitor-runner.php, class-flip-database.php
  *
  * Version 0.19.9 - Deep Audit & Remediation
  * - Fix: Removed unused $assoc_yn variable in PDF generator (dead code from v0.19.8)
@@ -266,7 +277,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FLIP_VERSION', '0.19.9');
+define('FLIP_VERSION', '0.20.0');
 define('FLIP_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('FLIP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
