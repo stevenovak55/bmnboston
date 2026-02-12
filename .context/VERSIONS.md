@@ -11,7 +11,7 @@ Single source of truth for all component versions. Update this file when bumping
 | BMN Schools | v0.6.39 | Jan 21, 2026 | `bmn-schools/version.json` |
 | SN Appointments | v1.10.4 | Feb 5, 2026 | `sn-appointment-booking/version.json` |
 | Exclusive Listings | v1.5.3 | Jan 27, 2026 | `exclusive-listings/version.json` |
-| Bridge MLS Extractor | v4.0.32 | Jan 21, 2026 | `bridge-mls-extractor-pro-review/bridge-mls-extractor-pro.php` |
+| Bridge MLS Extractor | v4.0.33 | Feb 12, 2026 | `bridge-mls-extractor-pro-review/bridge-mls-extractor-pro.php` |
 | Theme (flavor-flavor-flavor) | v1.5.9 | Jan 28, 2026 | `flavor-flavor-flavor/version.json` |
 | BMN Flip Analyzer | v0.20.0 | Feb 9, 2026 | `bmn-flip-analyzer/bmn-flip-analyzer.php` |
 

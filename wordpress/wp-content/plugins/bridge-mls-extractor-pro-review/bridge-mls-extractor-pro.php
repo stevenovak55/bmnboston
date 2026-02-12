@@ -2,9 +2,13 @@
 /**
  * Plugin Name: Bridge MLS Extractor Pro - Optimized
  * Description: High-performance MLS data extraction with normalized database architecture and concurrent API processing
- * Version: 4.0.32
+ * Version: 4.0.33
  * Author: AZ Home Solutions LLC
  * Text Domain: bridge-mls-extractor-pro
+ *
+ * Changelog v4.0.33:
+ * - FIX: fetch_resource_in_chunks() now follows pagination (@odata.nextLink) to prevent open house data loss
+ * - FIX: Incremental open house sync now fetches COMPLETE open house set before processing, preventing deletion of unmodified open houses
  *
  * Changelog v4.0.32:
  * - Pet detail columns now synced to summary table (pets_dogs_allowed, pets_cats_allowed, etc.)
@@ -85,8 +89,8 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('BME_PRO_VERSION', '4.0.32'); // v4.0.31: Archival fixes, v4.0.32: Pet columns synced to summary
-define('BME_VERSION', '4.0.32'); // v4.0.31: Archival fixes, v4.0.32: Pet columns synced to summary
+define('BME_PRO_VERSION', '4.0.33'); // v4.0.33: Open house sync pagination + incremental sync safety
+define('BME_VERSION', '4.0.33'); // v4.0.33: Open house sync pagination + incremental sync safety
 define('BME_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('BME_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('BME_PLUGIN_FILE', __FILE__);

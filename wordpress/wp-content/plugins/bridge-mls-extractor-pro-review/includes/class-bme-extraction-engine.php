@@ -370,22 +370,46 @@ class BME_Extraction_Engine {
                         $oh_skipped = 0;  // Listings not in extraction filter (expected)
                         $oh_errors = 0;   // Actual processing errors (unexpected)
 
+                        // Collect all affected listing keys to fetch their COMPLETE open house sets
+                        $affected_listing_keys = [];
                         foreach ($updated_open_houses as $listing_id => $open_houses) {
-                            try {
-                                // Get listing_key for this listing_id
-                                $listing_key = $this->data_processor->get_listing_key_by_id($listing_id);
+                            $listing_key = $this->data_processor->get_listing_key_by_id($listing_id);
+                            if ($listing_key) {
+                                $affected_listing_keys[$listing_id] = $listing_key;
+                            } else {
+                                $oh_skipped++;
+                            }
+                        }
 
-                                if ($listing_key) {
-                                    // Process open houses for this listing
+                        // Fetch ALL open houses for affected listings (not just modified ones)
+                        // This prevents process_open_houses() from deleting unmodified open houses
+                        $complete_open_houses = [];
+                        if (!empty($affected_listing_keys)) {
+                            $complete_open_houses = $this->api_client->fetch_resource_in_chunks(
+                                'OpenHouse', 'ListingKey',
+                                array_values($affected_listing_keys),
+                                true, $extraction_id
+                            );
+                        }
+
+                        foreach ($affected_listing_keys as $listing_id => $listing_key) {
+                            try {
+                                // Use the complete set of open houses from Bridge API
+                                // Grouped by ListingKey, so look up by listing_key
+                                $all_ohs_for_listing = $complete_open_houses[$listing_key] ?? [];
+
+                                // Fallback: if complete fetch failed, use the incremental data
+                                if (empty($all_ohs_for_listing)) {
+                                    $all_ohs_for_listing = $updated_open_houses[$listing_id] ?? [];
+                                }
+
+                                if (!empty($all_ohs_for_listing)) {
                                     $this->data_processor->process_open_houses(
                                         $listing_id,
                                         $listing_key,
-                                        $open_houses
+                                        $all_ohs_for_listing
                                     );
                                     $oh_processed++;
-                                } else {
-                                    // Listing not in our database (outside extraction filter - this is expected)
-                                    $oh_skipped++;
                                 }
                             } catch (Exception $e) {
                                 error_log("BME: Error processing open houses for listing {$listing_id}: " . $e->getMessage());

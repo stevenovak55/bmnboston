@@ -491,7 +491,7 @@ class BME_API_Client {
     /**
      * Fetches data for a specific resource type in chunks to avoid overly long URLs.
      */
-    private function fetch_resource_in_chunks($resource, $key_field, $ids, $group_results = false, $extraction_id = null) {
+    public function fetch_resource_in_chunks($resource, $key_field, $ids, $group_results = false, $extraction_id = null) {
         if (empty($ids)) {
             return [];
         }
@@ -505,41 +505,63 @@ class BME_API_Client {
             if ($chunk_index > 0) {
                 sleep($this->rate_limit_delay);
             }
-            
+
             $filter_values = "'" . implode("','", array_map('esc_sql', $chunk)) . "'";
             $filter_string = "{$key_field} in ({$filter_values})";
 
             $query_args = [
                 'access_token' => $this->api_token,
                 '$filter'      => $filter_string,
-                '$top'         => 200 // Get up to 200 results per chunk request
+                '$top'         => 200
             ];
 
-            $request_url = add_query_arg($query_args, $resource_url);
+            $next_url = add_query_arg($query_args, $resource_url);
+            $page = 0;
+            $max_pages = 10; // Safety limit for pagination
 
-            try {
-                $response = $this->make_request_with_retry($request_url, 3, $extraction_id, ['type' => 'related_data', 'resource' => $resource]);
-                $data = $this->parse_response($response);
+            // Follow pagination to get ALL results for this chunk
+            do {
+                $page++;
+                if ($page > $max_pages) {
+                    error_log("BME: Reached max pages for {$resource} chunk fetch (chunk {$chunk_index})");
+                    break;
+                }
 
-                if (!empty($data['value'])) {
-                    foreach ($data['value'] as $item) {
-                        if (isset($item[$key_field])) {
-                            $key = $item[$key_field];
-                            if ($group_results) {
-                                if (!isset($results_map[$key])) {
-                                    $results_map[$key] = [];
+                try {
+                    $response = $this->make_request_with_retry($next_url, 3, $extraction_id, [
+                        'type' => 'related_data',
+                        'resource' => $resource,
+                        'page' => $page
+                    ]);
+                    $data = $this->parse_response($response);
+
+                    if (!empty($data['value'])) {
+                        foreach ($data['value'] as $item) {
+                            if (isset($item[$key_field])) {
+                                $key = $item[$key_field];
+                                if ($group_results) {
+                                    if (!isset($results_map[$key])) {
+                                        $results_map[$key] = [];
+                                    }
+                                    $results_map[$key][] = $item;
+                                } else {
+                                    $results_map[$key] = $item;
                                 }
-                                $results_map[$key][] = $item;
-                            } else {
-                                $results_map[$key] = $item;
                             }
                         }
                     }
+
+                    $next_url = $data['@odata.nextLink'] ?? null;
+
+                    // Rate limiting between pages
+                    if ($next_url && $page < $max_pages) {
+                        sleep($this->rate_limit_delay);
+                    }
+                } catch (Exception $e) {
+                    error_log("BME API Error fetching {$resource}: " . $e->getMessage());
+                    $next_url = null; // Stop pagination on error
                 }
-            } catch (Exception $e) {
-                error_log("BME API Error fetching {$resource}: " . $e->getMessage() . " URL: " . $request_url);
-                continue;
-            }
+            } while ($next_url);
         }
         return $results_map;
     }
