@@ -1584,10 +1584,10 @@ extension APIEndpoint {
 
         // Optional fields
         if let agentName = attendee.otherAgentName {
-            params["other_agent_name"] = agentName
+            params["agent_name"] = agentName
         }
         if let brokerage = attendee.otherAgentBrokerage {
-            params["other_agent_brokerage"] = brokerage
+            params["agent_brokerage"] = brokerage
         }
         // v6.71.0: Enhanced agent contact fields
         if let agentPhone = attendee.otherAgentPhone {
@@ -1611,7 +1611,7 @@ extension APIEndpoint {
         // v6.70.0: Agent visitor fields
         params["is_agent"] = attendee.isAgent
         if let visitorBrokerage = attendee.visitorAgentBrokerage {
-            params["agent_brokerage"] = visitorBrokerage
+            params["visitor_agent_brokerage"] = visitorBrokerage
         }
         if let purpose = attendee.agentVisitPurpose {
             params["agent_visit_purpose"] = purpose.rawValue
@@ -1665,10 +1665,10 @@ extension APIEndpoint {
 
             // Optional fields
             if let agentName = attendee.otherAgentName {
-                params["other_agent_name"] = agentName
+                params["agent_name"] = agentName
             }
             if let brokerage = attendee.otherAgentBrokerage {
-                params["other_agent_brokerage"] = brokerage
+                params["agent_brokerage"] = brokerage
             }
             // v6.71.0: Enhanced agent contact fields
             if let agentPhone = attendee.otherAgentPhone {
@@ -1692,7 +1692,7 @@ extension APIEndpoint {
             // v6.70.0: Agent visitor fields
             params["is_agent"] = attendee.isAgent
             if let visitorBrokerage = attendee.visitorAgentBrokerage {
-                params["agent_brokerage"] = visitorBrokerage
+                params["visitor_agent_brokerage"] = visitorBrokerage
             }
             if let purpose = attendee.agentVisitPurpose {
                 params["agent_visit_purpose"] = purpose.rawValue

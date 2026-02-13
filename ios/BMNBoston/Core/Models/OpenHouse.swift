@@ -821,8 +821,15 @@ struct CreateOpenHouseResponse: Decodable {
 }
 
 struct AddAttendeeResponse: Decodable {
-    let attendee: OpenHouseAttendee
+    let attendee: OpenHouseAttendee?
     let message: String?
+    let id: Int?
+    let localUUID: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case attendee, message, id
+        case localUUID = "local_uuid"
+    }
 }
 
 /// Individual synced attendee result from bulk sync API

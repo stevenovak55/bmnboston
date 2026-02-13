@@ -103,7 +103,16 @@ actor OpenHouseService {
         let response: AddAttendeeResponse = try await APIClient.shared.request(
             .addAttendee(openHouseId: openHouseId, attendee: attendee)
         )
-        return response.attendee
+
+        // Server returns full attendee on success (201), but only id/local_uuid on dedup (200)
+        if let savedAttendee = response.attendee {
+            return savedAttendee
+        }
+
+        // Dedup case: server already has this attendee, return the original with synced status
+        var dedupAttendee = attendee
+        dedupAttendee.syncStatus = .synced
+        return dedupAttendee
     }
 
     /// Bulk sync offline attendees
@@ -119,7 +128,10 @@ actor OpenHouseService {
         let response: AddAttendeeResponse = try await APIClient.shared.request(
             .updateAttendee(openHouseId: openHouseId, attendeeId: attendeeId, interestLevel: interestLevel, notes: notes)
         )
-        return response.attendee
+        guard let attendee = response.attendee else {
+            throw URLError(.badServerResponse)
+        }
+        return attendee
     }
 
     // MARK: - Property Lookup

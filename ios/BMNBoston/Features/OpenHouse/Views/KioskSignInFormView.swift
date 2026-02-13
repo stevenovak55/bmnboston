@@ -418,29 +418,6 @@ struct KioskSignInFormView: View {
 
     private var consentStep: some View {
         VStack(alignment: .leading, spacing: 24) {
-            // Consent toggles
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Communication Preferences")
-                    .font(.headline)
-
-                ConsentToggle(
-                    title: "I consent to be contacted about this property",
-                    isOn: $attendee.consentToFollowUp
-                )
-
-                ConsentToggle(
-                    title: "I consent to receive email communications",
-                    isOn: $attendee.consentToEmail
-                )
-
-                ConsentToggle(
-                    title: "I consent to receive text messages",
-                    isOn: $attendee.consentToText
-                )
-            }
-
-            Divider()
-
             // Massachusetts Agency Disclosure
             VStack(alignment: .leading, spacing: 12) {
                 Text("Massachusetts Agency Disclosure")
@@ -452,12 +429,21 @@ struct KioskSignInFormView: View {
                     .padding()
                     .background(Color.gray.opacity(0.1))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
-
-                ConsentToggle(
-                    title: "I acknowledge that I have read and understand this disclosure",
-                    isOn: $attendee.maDisclosureAcknowledged
-                )
             }
+
+            // Single combined acknowledgment
+            ConsentToggle(
+                title: "I acknowledge the above disclosure and consent to be contacted about this property via phone, email, or text",
+                isOn: Binding(
+                    get: { attendee.maDisclosureAcknowledged },
+                    set: { newValue in
+                        attendee.maDisclosureAcknowledged = newValue
+                        attendee.consentToFollowUp = newValue
+                        attendee.consentToEmail = newValue
+                        attendee.consentToText = newValue
+                    }
+                )
+            )
         }
     }
 
@@ -648,7 +634,8 @@ struct KioskSignInFormView: View {
             return !attendee.firstName.isEmpty &&
                    !attendee.lastName.isEmpty &&
                    !attendee.email.isEmpty &&
-                   attendee.email.contains("@")
+                   attendee.email.contains("@") &&
+                   !attendee.phone.isEmpty
 
         case .agentStatus:
             return true // Any selection is valid
