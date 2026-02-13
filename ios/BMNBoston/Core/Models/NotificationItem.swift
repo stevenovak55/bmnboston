@@ -27,6 +27,7 @@ struct NotificationItem: Identifiable, Codable, Equatable {
     var savedSearchId: Int?
     var appointmentId: Int?
     var clientId: Int?
+    var openHouseId: Int?
     var listingId: String?
     var listingKey: String?
 
@@ -42,6 +43,7 @@ struct NotificationItem: Identifiable, Codable, Equatable {
         case priceChange = "price_change"
         case statusChange = "status_change"
         case openHouse = "open_house"
+        case openHouseSignIn = "open_house_signin"
         case general = "general"
 
         var icon: String {
@@ -53,6 +55,7 @@ struct NotificationItem: Identifiable, Codable, Equatable {
             case .priceChange: return "tag"
             case .statusChange: return "arrow.triangle.swap"
             case .openHouse: return "door.left.hand.open"
+            case .openHouseSignIn: return "person.crop.rectangle.badge.plus"
             case .general: return "bell"
             }
         }
@@ -66,6 +69,7 @@ struct NotificationItem: Identifiable, Codable, Equatable {
             case .priceChange: return "red"
             case .statusChange: return "yellow"
             case .openHouse: return "teal"
+            case .openHouseSignIn: return "teal"
             case .general: return "gray"
             }
         }
@@ -85,6 +89,7 @@ struct NotificationItem: Identifiable, Codable, Equatable {
         savedSearchId: Int? = nil,
         appointmentId: Int? = nil,
         clientId: Int? = nil,
+        openHouseId: Int? = nil,
         listingId: String? = nil,
         listingKey: String? = nil,
         listingCount: Int? = nil,
@@ -103,6 +108,7 @@ struct NotificationItem: Identifiable, Codable, Equatable {
         self.savedSearchId = savedSearchId
         self.appointmentId = appointmentId
         self.clientId = clientId
+        self.openHouseId = openHouseId
         self.listingId = listingId
         self.listingKey = listingKey
         self.listingCount = listingCount
@@ -122,6 +128,7 @@ struct NotificationItem: Identifiable, Codable, Equatable {
         var savedSearchId: Int?
         var appointmentId: Int?
         var clientId: Int?
+        var openHouseId: Int?
         var listingId: String?
         var listingKey: String?
         var listingCount: Int?
@@ -158,14 +165,16 @@ struct NotificationItem: Identifiable, Codable, Equatable {
                 listingId = Self.extractListingId(from: userInfo)
                 listingKey = userInfo["listing_key"] as? String
             case "open_house_signin", "open_house_agent_buyer", "open_house_represented_buyer":
-                // Agent notified about open house visitor activity
-                type = .agentActivity
+                // v409: Agent notified about open house visitor activity - deep link to open house
+                type = .openHouseSignIn
                 listingId = Self.extractListingId(from: userInfo)
                 listingKey = userInfo["listing_key"] as? String
                 if let ohId = userInfo["open_house_id"] as? Int {
-                    appointmentId = ohId
+                    openHouseId = ohId
+                } else if let ohId = userInfo["open_house_id"] as? NSNumber {
+                    openHouseId = ohId.intValue
                 } else if let ohIdStr = userInfo["open_house_id"] as? String, let ohId = Int(ohIdStr) {
-                    appointmentId = ohId
+                    openHouseId = ohId
                 }
             case "appointment_reminder":
                 // Enhanced in v203 to support property deep linking
@@ -204,6 +213,7 @@ struct NotificationItem: Identifiable, Codable, Equatable {
             savedSearchId: savedSearchId,
             appointmentId: appointmentId,
             clientId: clientId,
+            openHouseId: openHouseId,
             listingId: listingId,
             listingKey: listingKey,
             listingCount: listingCount,

@@ -39,6 +39,7 @@ struct ServerNotification: Decodable {
     let savedSearchName: String?
     let appointmentId: Int?
     let clientId: Int?
+    let openHouseId: Int?
     let sentAt: Date
     let isRead: Bool
     let readAt: Date?
@@ -56,6 +57,7 @@ struct ServerNotification: Decodable {
         case savedSearchName = "saved_search_name"
         case appointmentId = "appointment_id"
         case clientId = "client_id"
+        case openHouseId = "open_house_id"
         case sentAt = "sent_at"
         case isRead = "is_read"
         case readAt = "read_at"
@@ -83,10 +85,8 @@ struct ServerNotification: Decodable {
         case "agent_activity", "client_login":
             type = .agentActivity
         case "open_house_signin", "open_house_agent_buyer", "open_house_represented_buyer":
-            // v6.69.0: Agent notified when visitor signs in at open house
-            // open_house_agent_buyer: Visitor indicated they have their own agent
-            // open_house_represented_buyer: Visitor indicated they are represented by a buyer's agent
-            type = .agentActivity
+            // v409: Agent notified when visitor signs in at open house - deep link to open house detail
+            type = .openHouseSignIn
         default:
             // LOG UNKNOWN TYPE for monitoring - helps identify new server types that need iOS support
             #if DEBUG
@@ -126,6 +126,13 @@ struct ServerNotification: Decodable {
             #endif
         }
 
+        // Validate navigation data for open house sign-in notifications
+        if type == .openHouseSignIn && openHouseId == nil {
+            #if DEBUG
+            debugLog("⚠️ NotificationStore: Open house sign-in notification (id: \(id)) missing open_house_id - will fall back to listing navigation")
+            #endif
+        }
+
         // Use server ID as the notification ID to avoid duplicates
         return NotificationItem(
             id: "server_\(id)",
@@ -141,6 +148,7 @@ struct ServerNotification: Decodable {
             savedSearchId: savedSearchId,
             appointmentId: appointmentId,
             clientId: clientId,
+            openHouseId: openHouseId,
             listingId: listingId,
             listingKey: listingKey,
             listingCount: nil,
@@ -200,10 +208,12 @@ class NotificationStore: ObservableObject {
     @Published var pendingPropertyListingKey: String?
     @Published var pendingAppointmentId: Int?
     @Published var pendingClientId: Int?
+    @Published var pendingOpenHouseId: Int?
 
     private let storageKey = "com.bmnboston.notifications"
     private let pendingAppointmentKey = "com.bmnboston.pendingAppointmentId"
     private let pendingClientKey = "com.bmnboston.pendingClientId"
+    private let pendingOpenHouseKey = "com.bmnboston.pendingOpenHouseId"
     private let lastSyncKey = "com.bmnboston.notifications.lastSync"
 
     /// Maximum notifications to keep in local storage.
@@ -236,6 +246,12 @@ class NotificationStore: ObservableObject {
             self.pendingClientId = pendingClient
             #if DEBUG
             debugLog("🔔 NotificationStore: Loaded pending client navigation - clientId: \(pendingClient)")
+            #endif
+        }
+        if let pendingOpenHouse = UserDefaults.standard.object(forKey: pendingOpenHouseKey) as? Int {
+            self.pendingOpenHouseId = pendingOpenHouse
+            #if DEBUG
+            debugLog("🔔 NotificationStore: Loaded pending open house navigation - openHouseId: \(pendingOpenHouse)")
             #endif
         }
     }
@@ -302,6 +318,29 @@ class NotificationStore: ObservableObject {
         #endif
         self.pendingClientId = nil
         UserDefaults.standard.removeObject(forKey: pendingClientKey)
+    }
+
+    /// Set pending open house navigation (called when open house sign-in notification is tapped)
+    /// Also persists to UserDefaults for cold launch support
+    func setPendingOpenHouseNavigation(openHouseId: Int?) {
+        #if DEBUG
+        debugLog("🔔 NotificationStore: setPendingOpenHouseNavigation - openHouseId: \(openHouseId ?? -1)")
+        #endif
+        self.pendingOpenHouseId = openHouseId
+        if let id = openHouseId {
+            UserDefaults.standard.set(id, forKey: pendingOpenHouseKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: pendingOpenHouseKey)
+        }
+    }
+
+    /// Clear pending open house navigation after it's been handled
+    func clearPendingOpenHouseNavigation() {
+        #if DEBUG
+        debugLog("🔔 NotificationStore: clearPendingOpenHouseNavigation")
+        #endif
+        self.pendingOpenHouseId = nil
+        UserDefaults.standard.removeObject(forKey: pendingOpenHouseKey)
     }
 
     // MARK: - Public Methods

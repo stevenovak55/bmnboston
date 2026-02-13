@@ -302,6 +302,22 @@ struct NotificationCenterView: View {
                 NotificationCenter.default.post(name: .switchToSearchTab, object: nil)
             }
 
+        case .openHouseSignIn:
+            if let openHouseId = notification.openHouseId {
+                dismiss()
+                // v409: Navigate to open house detail
+                NotificationStore.shared.setPendingOpenHouseNavigation(openHouseId: openHouseId)
+                NotificationCenter.default.post(name: .switchToOpenHouseSheet, object: nil)
+            } else if notification.listingKey != nil || notification.listingId != nil {
+                // Fallback: navigate to property if no open_house_id
+                dismiss()
+                NotificationStore.shared.setPendingPropertyNavigation(
+                    listingId: notification.listingId,
+                    listingKey: notification.listingKey
+                )
+                NotificationCenter.default.post(name: .switchToSearchTab, object: nil)
+            }
+
         case .newListing, .priceChange, .statusChange, .openHouse:
             if notification.listingKey != nil || notification.listingId != nil {
                 dismiss()
@@ -382,6 +398,7 @@ struct NotificationRow: View {
         case .priceChange: return .red.opacity(0.15)
         case .statusChange: return .yellow.opacity(0.15)
         case .openHouse: return .teal.opacity(0.15)
+        case .openHouseSignIn: return .teal.opacity(0.15)
         case .general: return .gray.opacity(0.15)
         }
     }
@@ -395,6 +412,7 @@ struct NotificationRow: View {
         case .priceChange: return .red
         case .statusChange: return .yellow
         case .openHouse: return .teal
+        case .openHouseSignIn: return .teal
         case .general: return .gray
         }
     }

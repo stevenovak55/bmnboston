@@ -48,6 +48,8 @@ struct OpenHouseListView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = OpenHouseListViewModel()
     @StateObject private var offlineStore = OfflineOpenHouseStore.shared
+    @ObservedObject private var notificationStore = NotificationStore.shared
+    @State private var pendingNavigationOpenHouseId: Int?
 
     var body: some View {
         Group {
@@ -115,6 +117,44 @@ struct OpenHouseListView: View {
         } message: {
             if let openHouse = viewModel.openHouseToDelete {
                 Text("Are you sure you want to delete the open house at \(openHouse.propertyAddress)? This will also delete all attendee sign-ins.")
+            }
+        }
+        // v409: Pending navigation from push notification deep link
+        .onAppear {
+            checkPendingOpenHouseNavigation()
+        }
+        .onChange(of: notificationStore.pendingOpenHouseId) { _ in
+            checkPendingOpenHouseNavigation()
+        }
+        .onChange(of: viewModel.openHouses.count) { _ in
+            if pendingNavigationOpenHouseId != nil {
+                checkPendingOpenHouseNavigation()
+            }
+        }
+    }
+
+    // MARK: - Pending Navigation (v409)
+
+    private func checkPendingOpenHouseNavigation() {
+        guard let openHouseId = notificationStore.pendingOpenHouseId else { return }
+        notificationStore.clearPendingOpenHouseNavigation()
+        pendingNavigationOpenHouseId = openHouseId
+
+        if let openHouse = viewModel.openHouses.first(where: { $0.id == openHouseId }) {
+            pendingNavigationOpenHouseId = nil
+            viewModel.selectedOpenHouse = openHouse
+        } else {
+            // Data may not be loaded yet — refresh and retry
+            Task {
+                await viewModel.loadOpenHouses(forceRefresh: true)
+                if let openHouse = viewModel.openHouses.first(where: { $0.id == openHouseId }) {
+                    await MainActor.run {
+                        pendingNavigationOpenHouseId = nil
+                        viewModel.selectedOpenHouse = openHouse
+                    }
+                } else {
+                    await MainActor.run { pendingNavigationOpenHouseId = nil }
+                }
             }
         }
     }

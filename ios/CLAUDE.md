@@ -2,7 +2,7 @@
 
 Comprehensive reference for AI-assisted development.
 
-**Current Project Version:** 408 (Marketing Version 1.8)
+**Current Project Version:** 409 (Marketing Version 1.8)
 **Last Updated:** February 13, 2026
 
 ---
@@ -378,6 +378,52 @@ func login(email: String, password: String) async {
 ```
 
 **Rule:** Any method that receives user data from the server should save it, not just the primary login flow.
+
+---
+
+## Recent Changes (v409)
+
+### Open House Sign-In Push Notification Deep Linking (Feb 13, 2026)
+
+When a visitor signs in at an open house kiosk, the listing agent receives a push notification. Previously, tapping this notification did nothing. Now it deep links directly to the specific open house's detail/attendee view.
+
+**Full deep link flow:**
+1. Server sends push with `open_house_id` (+ `listing_id`, `listing_key`)
+2. BMNBostonApp extracts `open_house_id` from payload → sets `pendingOpenHouseId` → posts `.switchToOpenHouseSheet`
+3. MainTabView switches to Profile tab → posts `.openOpenHouseSheet`
+4. ProfileView opens OpenHouseListView sheet
+5. OpenHouseListView checks pending navigation → finds open house by ID → opens detail sheet
+
+**Server-side changes (MLD v6.75.11):**
+- `class-mld-open-house-rest-api.php`: Added `listing_id` and `listing_key` to all 3 sign-in notification payloads (`open_house_signin`, `open_house_agent_buyer`, `open_house_represented_buyer`)
+- `class-mld-mobile-rest-api.php`: Added `open_house_id` to `/notifications/history` API response
+
+**iOS changes:**
+
+1. **NotificationItem.swift** - Added `.openHouseSignIn` notification type with icon (`person.crop.rectangle.badge.plus`) and color (`teal`). Added `openHouseId: Int?` field. Updated push parser to use `.openHouseSignIn` instead of `.agentActivity` for open house sign-in types. Added robust `open_house_id` extraction (Int, NSNumber, String).
+
+2. **NotificationStore.swift** - Added `openHouseId: Int?` to `ServerNotification` struct. Updated `toNotificationItem()` to map `open_house_signin` to `.openHouseSignIn`. Added `pendingOpenHouseId`, `setPendingOpenHouseNavigation()`, `clearPendingOpenHouseNavigation()` with UserDefaults persistence.
+
+3. **BMNBostonApp.swift** - Added `open_house_id` extraction in push tap handler (before `appointment_id` check). Added `.switchToOpenHouseSheet` notification name.
+
+4. **MainTabView.swift** - Added `.switchToOpenHouseSheet` handler (switches to Profile tab, then posts `.openOpenHouseSheet`). Added `.openOpenHouseSheet` notification name. Added ProfileView `.onReceive` handler to set `showOpenHouse = true`.
+
+5. **OpenHouseListView.swift** - Added `@ObservedObject notificationStore` and `pendingNavigationOpenHouseId` state. Added `checkPendingOpenHouseNavigation()` method with `.onAppear` and `.onChange` hooks. Refreshes and retries if open house not yet loaded.
+
+6. **NotificationCenterView.swift** - Added `.openHouseSignIn` case in `handleNotificationTap()` with open house navigation and property detail fallback. Added `.openHouseSignIn` to icon color switches.
+
+**Files Changed:**
+
+| File | Changes |
+|------|---------|
+| `class-mld-open-house-rest-api.php` | Added `listing_id`, `listing_key` to notification contexts |
+| `class-mld-mobile-rest-api.php` | Added `open_house_id` to notification history response |
+| `Core/Models/NotificationItem.swift` | Added `.openHouseSignIn` type, `openHouseId` field, updated push parser |
+| `Core/Storage/NotificationStore.swift` | Added `pendingOpenHouseId`, updated `ServerNotification` |
+| `App/BMNBostonApp.swift` | Added `open_house_id` extraction in push tap handler |
+| `App/MainTabView.swift` | Added `.switchToOpenHouseSheet` + `.openOpenHouseSheet` handlers |
+| `Features/OpenHouse/Views/OpenHouseListView.swift` | Added pending navigation pattern |
+| `Features/Notifications/Views/NotificationCenterView.swift` | Added `.openHouseSignIn` tap handler + icon colors |
 
 ---
 

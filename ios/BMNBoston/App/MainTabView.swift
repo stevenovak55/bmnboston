@@ -115,6 +115,15 @@ struct MainTabView: View {
                 }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .switchToOpenHouseSheet)) { _ in
+            // v409: Switch to Profile tab and open Open House sheet for deep linking
+            if authViewModel.isAuthenticated {
+                selectedTab = 4  // Profile tab
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    NotificationCenter.default.post(name: .openOpenHouseSheet, object: nil)
+                }
+            }
+        }
     }
 }
 
@@ -648,6 +657,7 @@ extension Notification.Name {
     static let switchToMyClientsTab = Notification.Name("switchToMyClientsTab")
     static let switchToNotificationsTab = Notification.Name("switchToNotificationsTab")
     static let openSavedSearchesSheet = Notification.Name("openSavedSearchesSheet")
+    static let openOpenHouseSheet = Notification.Name("openOpenHouseSheet")
 }
 
 // MARK: - Saved Searches Tab
@@ -1356,6 +1366,9 @@ struct ProfileView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .openSavedSearchesSheet)) { _ in
                 showSavedSearches = true
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .openOpenHouseSheet)) { _ in
+                showOpenHouse = true
             }
             .task {
                 await pushManager.checkAuthorizationStatus()

@@ -495,6 +495,27 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                 NotificationCenter.default.post(name: .switchToSearchTab, object: nil)
             }
 
+            // v409: Open house sign-in navigation
+            // Extract open_house_id as Int from various possible types
+            var openHouseIdInt: Int?
+            if let id = userInfo["open_house_id"] as? Int {
+                openHouseIdInt = id
+            } else if let id = userInfo["open_house_id"] as? NSNumber {
+                openHouseIdInt = id.intValue
+            } else if let idString = userInfo["open_house_id"] as? String, let id = Int(idString) {
+                openHouseIdInt = id
+            }
+
+            if let openHouseId = openHouseIdInt {
+                #if DEBUG
+                debugLog("📍 Setting pending open house navigation - openHouseId: \(openHouseId)")
+                #endif
+                NotificationStore.shared.setPendingOpenHouseNavigation(openHouseId: openHouseId)
+                NotificationCenter.default.post(name: .switchToOpenHouseSheet, object: nil)
+                completionHandler()
+                return
+            }
+
             // Appointment navigation (appointment_reminder, tour_requested)
             // Extract appointment_id as Int from various possible types
             var appointmentIdInt: Int?
@@ -593,4 +614,5 @@ extension Notification.Name {
     static let showRegistrationWithReferral = Notification.Name("showRegistrationWithReferral")
     static let showSavedSearchesList = Notification.Name("showSavedSearchesList")
     static let clearPropertyNavigation = Notification.Name("clearPropertyNavigation")
+    static let switchToOpenHouseSheet = Notification.Name("switchToOpenHouseSheet")
 }

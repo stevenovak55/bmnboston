@@ -825,10 +825,21 @@ class MLD_Open_House_REST_API {
         // v6.69.0: Send push notification to agent when attendee signs in
         // Get agent user_id and property address from open house record
         $oh_data = $wpdb->get_row($wpdb->prepare(
-            "SELECT agent_user_id, property_address FROM {$table} WHERE id = %d",
+            "SELECT agent_user_id, property_address, listing_id FROM {$table} WHERE id = %d",
             $open_house_id
         ));
         $agent_user_id = $oh_data ? $oh_data->agent_user_id : null;
+
+        // v6.75.11: Look up listing_key for deep linking from push notifications
+        $oh_listing_id = $oh_data ? $oh_data->listing_id : null;
+        $oh_listing_key = null;
+        if ($oh_listing_id) {
+            $summary_table = $wpdb->prefix . 'bme_listing_summary';
+            $oh_listing_key = $wpdb->get_var($wpdb->prepare(
+                "SELECT listing_key FROM {$summary_table} WHERE listing_id = %s",
+                $oh_listing_id
+            ));
+        }
 
         // v6.72.0: Get device token to exclude from notification (prevents kiosk from notifying itself)
         $exclude_device_token = sanitize_text_field($request->get_param('exclude_device_token'));
@@ -847,6 +858,8 @@ class MLD_Open_House_REST_API {
                         'open_house_id' => $open_house_id,
                         'attendee_id' => $attendee_id,
                         'is_high_priority' => true,
+                        'listing_id' => $oh_listing_id,
+                        'listing_key' => $oh_listing_key,
                         'exclude_device_token' => $exclude_device_token  // v6.72.0
                     )
                 );
@@ -862,6 +875,8 @@ class MLD_Open_House_REST_API {
                         'open_house_signin',
                         array(
                             'open_house_id' => $open_house_id,
+                            'listing_id' => $oh_listing_id,
+                            'listing_key' => $oh_listing_key,
                             'exclude_device_token' => $exclude_device_token  // v6.72.0
                         )
                     );
@@ -900,6 +915,8 @@ class MLD_Open_House_REST_API {
                     array(
                         'open_house_id' => $open_house_id,
                         'attendee_id' => $attendee_id,
+                        'listing_id' => $oh_listing_id,
+                        'listing_key' => $oh_listing_key,
                         'buyer_agent_name' => $buyer_agent_name,
                         'buyer_agent_brokerage' => $buyer_agent_brokerage,
                         'buyer_agent_phone' => $buyer_agent_phone,
@@ -1358,6 +1375,21 @@ class MLD_Open_House_REST_API {
                 ? "1 attendee synced from offline mode"
                 : "{$count} attendees synced from offline mode";
 
+            // v6.75.11: Fetch listing data for deep linking
+            $sync_oh_data = $wpdb->get_row($wpdb->prepare(
+                "SELECT listing_id FROM {$table} WHERE id = %d",
+                $open_house_id
+            ));
+            $sync_listing_id = $sync_oh_data ? $sync_oh_data->listing_id : null;
+            $sync_listing_key = null;
+            if ($sync_listing_id) {
+                $summary_table = $wpdb->prefix . 'bme_listing_summary';
+                $sync_listing_key = $wpdb->get_var($wpdb->prepare(
+                    "SELECT listing_key FROM {$summary_table} WHERE listing_id = %s",
+                    $sync_listing_id
+                ));
+            }
+
             MLD_Push_Notifications::send_activity_notification(
                 $user_id,
                 'Open House Sync Complete',
@@ -1365,6 +1397,8 @@ class MLD_Open_House_REST_API {
                 'open_house_signin',
                 array(
                     'open_house_id' => $open_house_id,
+                    'listing_id' => $sync_listing_id,
+                    'listing_key' => $sync_listing_key,
                     'synced_count' => $count
                 )
             );

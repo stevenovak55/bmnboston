@@ -14601,6 +14601,7 @@ class MLD_Mobile_REST_API {
             $saved_search_name = null;
             $appointment_id = null;
             $client_id = null;
+            $open_house_id = null;
 
             if (is_array($payload)) {
                 $listing_id = isset($payload['listing_id']) ? $payload['listing_id'] : null;
@@ -14610,6 +14611,7 @@ class MLD_Mobile_REST_API {
                 $saved_search_name = isset($payload['saved_search_name']) ? $payload['saved_search_name'] : null;
                 $appointment_id = isset($payload['appointment_id']) ? $payload['appointment_id'] : null;
                 $client_id = isset($payload['client_id']) ? $payload['client_id'] : null;
+                $open_house_id = isset($payload['open_house_id']) ? $payload['open_house_id'] : null;
 
                 // Also check for photo_url as fallback for image
                 if (empty($image_url) && isset($payload['photo_url'])) {
@@ -14629,6 +14631,7 @@ class MLD_Mobile_REST_API {
                 'saved_search_name' => $saved_search_name,
                 'appointment_id' => $appointment_id !== null ? (int) $appointment_id : null,
                 'client_id' => $client_id !== null ? (int) $client_id : null,
+                'open_house_id' => $open_house_id !== null ? (int) $open_house_id : null,
                 'sent_at' => self::format_datetime_iso8601($row->created_at),
                 'is_read' => (bool) $row->is_read,
                 'read_at' => self::format_datetime_iso8601($row->read_at),
