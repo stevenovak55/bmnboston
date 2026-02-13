@@ -704,6 +704,23 @@ class MLD_Open_House_REST_API {
             ), 400));
         }
 
+        // Validate email format
+        if (!is_email($email)) {
+            return self::add_no_cache_headers(new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Invalid email address format'
+            ), 400));
+        }
+
+        // Validate phone has at least 10 digits
+        $phone_digits = preg_replace('/[^0-9]/', '', $phone);
+        if (strlen($phone_digits) < 10) {
+            return self::add_no_cache_headers(new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Phone number must have at least 10 digits'
+            ), 400));
+        }
+
         // Generate local_uuid if not provided
         $local_uuid = sanitize_text_field($request->get_param('local_uuid'));
         if (empty($local_uuid)) {
@@ -761,8 +778,8 @@ class MLD_Open_House_REST_API {
             'pre_approved' => !$is_agent ? (sanitize_text_field($request->get_param('pre_approved')) ?: 'not_sure') : 'not_sure',
             'lender_name' => !$is_agent ? sanitize_text_field($request->get_param('lender_name')) : null,
             'how_heard_about' => sanitize_text_field($request->get_param('how_heard_about')) ?: null,
-            'consent_to_follow_up' => $request->get_param('consent_to_follow_up') !== false ? 1 : 0,
-            'consent_to_email' => $request->get_param('consent_to_email') !== false ? 1 : 0,
+            'consent_to_follow_up' => $request->get_param('consent_to_follow_up') ? 1 : 0,
+            'consent_to_email' => $request->get_param('consent_to_email') ? 1 : 0,
             'consent_to_text' => $request->get_param('consent_to_text') ? 1 : 0,
             // v6.71.0: Massachusetts disclosure acknowledgment
             'ma_disclosure_acknowledged' => $request->get_param('ma_disclosure_acknowledged') ? 1 : 0,
@@ -774,13 +791,14 @@ class MLD_Open_House_REST_API {
             'updated_at' => current_time('mysql')
         );
 
-        // Calculate priority score (v6.70.0)
-        $data['priority_score'] = self::calculate_priority_score($data);
-
         // If agent has a buyer interested, auto-set interest to very_interested
+        // NOTE: Must be set BEFORE priority score calculation so +25 interest bonus is included
         if ($is_agent && $data['agent_has_buyer']) {
             $data['interest_level'] = 'very_interested';
         }
+
+        // Calculate priority score (v6.70.0)
+        $data['priority_score'] = self::calculate_priority_score($data);
 
         // v6.72.0: Defensive check for updated_at column - auto-add if missing
         $column_exists = $wpdb->get_var($wpdb->prepare(
@@ -988,7 +1006,7 @@ class MLD_Open_House_REST_API {
         // Get open house property details for saved search
         $oh_table = $wpdb->prefix . 'mld_open_houses';
         $open_house = $wpdb->get_row($wpdb->prepare(
-            "SELECT property_city, property_type, list_price, beds FROM {$oh_table} WHERE id = %d",
+            "SELECT property_address, property_city, property_type, list_price, beds FROM {$oh_table} WHERE id = %d",
             $open_house_id
         ));
 
@@ -1038,7 +1056,7 @@ class MLD_Open_House_REST_API {
             update_user_meta($client_user_id, 'mld_lead_source', 'open_house_signin');
             update_user_meta($client_user_id, 'mld_lead_source_details', json_encode(array(
                 'open_house_id' => $open_house_id,
-                'property_address' => $open_house->property_city,
+                'property_address' => $open_house->property_address ?: $open_house->property_city,
                 'signed_in_at' => $data['signed_in_at']
             )));
 
@@ -1053,31 +1071,45 @@ class MLD_Open_House_REST_API {
         $relationships_table = $wpdb->prefix . 'mld_agent_client_relationships';
         $existing_relationship = $wpdb->get_var($wpdb->prepare(
             "SELECT id FROM {$relationships_table}
-             WHERE agent_user_id = %d AND client_user_id = %d",
+             WHERE agent_id = %d AND client_id = %d",
             $agent_user_id, $client_user_id
         ));
 
         if (!$existing_relationship) {
-            $wpdb->insert($relationships_table, array(
-                'agent_user_id' => $agent_user_id,
-                'client_user_id' => $client_user_id,
+            $rel_result = $wpdb->insert($relationships_table, array(
+                'agent_id' => $agent_user_id,
+                'client_id' => $client_user_id,
                 'status' => 'active',
-                'source' => 'open_house_auto',
                 'notes' => "Auto-created from open house sign-in #{$attendee_id}",
                 'created_at' => current_time('mysql'),
                 'updated_at' => current_time('mysql')
             ));
+
+            if ($rel_result === false) {
+                $result['errors'][] = 'Failed to create agent-client relationship: ' . $wpdb->last_error;
+            }
         }
 
-        // Set user type to client
+        // Set user type to client (preserve existing created_at if record exists)
         $user_types_table = $wpdb->prefix . 'mld_user_types';
-        $wpdb->replace($user_types_table, array(
-            'user_id' => $client_user_id,
-            'user_type' => 'client',
-            'assigned_agent_id' => $agent_user_id,
-            'created_at' => current_time('mysql'),
-            'updated_at' => current_time('mysql')
+        $existing_type = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$user_types_table} WHERE user_id = %d",
+            $client_user_id
         ));
+
+        if ($existing_type) {
+            $wpdb->update($user_types_table, array(
+                'user_type' => 'client',
+                'updated_at' => current_time('mysql')
+            ), array('user_id' => $client_user_id));
+        } else {
+            $wpdb->insert($user_types_table, array(
+                'user_id' => $client_user_id,
+                'user_type' => 'client',
+                'created_at' => current_time('mysql'),
+                'updated_at' => current_time('mysql')
+            ));
+        }
 
         // Create property-based saved search
         if (class_exists('MLD_Saved_Searches')) {
@@ -1219,6 +1251,25 @@ class MLD_Open_House_REST_API {
                 continue;
             }
 
+            // Validate email format
+            if (!is_email($email)) {
+                $errors[] = array(
+                    'local_uuid' => $local_uuid,
+                    'error' => 'Invalid email address format'
+                );
+                continue;
+            }
+
+            // Validate phone has at least 10 digits
+            $phone_digits = preg_replace('/[^0-9]/', '', $phone);
+            if (strlen($phone_digits) < 10) {
+                $errors[] = array(
+                    'local_uuid' => $local_uuid,
+                    'error' => 'Phone number must have at least 10 digits'
+                );
+                continue;
+            }
+
             // Check if visitor is an agent (v6.70.0)
             $is_agent = !empty($attendee['is_agent']) ? 1 : 0;
 
@@ -1248,8 +1299,8 @@ class MLD_Open_House_REST_API {
                 'pre_approved' => !$is_agent ? sanitize_text_field($attendee['pre_approved'] ?? 'not_sure') : 'not_sure',
                 'lender_name' => !$is_agent ? (sanitize_text_field($attendee['lender_name'] ?? '') ?: null) : null,
                 'how_heard_about' => sanitize_text_field($attendee['how_heard_about'] ?? '') ?: null,
-                'consent_to_follow_up' => ($attendee['consent_to_follow_up'] ?? true) ? 1 : 0,
-                'consent_to_email' => ($attendee['consent_to_email'] ?? true) ? 1 : 0,
+                'consent_to_follow_up' => !empty($attendee['consent_to_follow_up']) ? 1 : 0,
+                'consent_to_email' => !empty($attendee['consent_to_email']) ? 1 : 0,
                 'consent_to_text' => ($attendee['consent_to_text'] ?? false) ? 1 : 0,
                 // v6.71.0: Massachusetts disclosure
                 'ma_disclosure_acknowledged' => !empty($attendee['ma_disclosure_acknowledged']) ? 1 : 0,
@@ -1261,13 +1312,13 @@ class MLD_Open_House_REST_API {
                 'updated_at' => current_time('mysql')
             );
 
-            // Calculate priority score (v6.70.0)
-            $data['priority_score'] = self::calculate_priority_score($data);
-
-            // If agent has buyer, auto-set interest level
+            // If agent has buyer, auto-set interest level (BEFORE priority score)
             if ($is_agent && $data['agent_has_buyer']) {
                 $data['interest_level'] = 'very_interested';
             }
+
+            // Calculate priority score (v6.70.0)
+            $data['priority_score'] = self::calculate_priority_score($data);
 
             $result = $wpdb->insert($attendees_table, $data);
 
@@ -1277,12 +1328,46 @@ class MLD_Open_House_REST_API {
                     'error' => $wpdb->last_error
                 );
             } else {
+                $new_attendee_id = $wpdb->insert_id;
                 $synced[] = array(
-                    'id' => $wpdb->insert_id,
+                    'id' => $new_attendee_id,
                     'local_uuid' => $local_uuid,
                     'status' => 'created'
                 );
+
+                // v6.75.9: Auto-CRM processing for unrepresented buyers (parity with single-attendee endpoint)
+                $working_with_agent = $data['working_with_agent'] ?? 'no';
+                $consent_to_follow_up = $data['consent_to_follow_up'] ?? 0;
+
+                if (!$is_agent && $working_with_agent === 'no' && $consent_to_follow_up) {
+                    self::process_unrepresented_buyer(
+                        $new_attendee_id,
+                        $open_house_id,
+                        $user_id,
+                        $data,
+                        $attendees_table
+                    );
+                }
             }
+        }
+
+        // v6.75.9: Send summary push notification to agent after bulk sync
+        if (!empty($synced) && class_exists('MLD_Push_Notifications')) {
+            $count = count($synced);
+            $notification_body = $count === 1
+                ? "1 attendee synced from offline mode"
+                : "{$count} attendees synced from offline mode";
+
+            MLD_Push_Notifications::send_activity_notification(
+                $user_id,
+                'Open House Sync Complete',
+                $notification_body,
+                'open_house_signin',
+                array(
+                    'open_house_id' => $open_house_id,
+                    'synced_count' => $count
+                )
+            );
         }
 
         return self::add_no_cache_headers(new WP_REST_Response(array(
@@ -1738,13 +1823,13 @@ class MLD_Open_House_REST_API {
             // Check if user is already assigned to another agent
             $relationships_table = $wpdb->prefix . 'mld_agent_client_relationships';
             $existing_assignment = $wpdb->get_row($wpdb->prepare(
-                "SELECT agent_user_id FROM {$relationships_table}
-                 WHERE client_user_id = %d AND status = 'active'",
+                "SELECT agent_id FROM {$relationships_table}
+                 WHERE client_id = %d AND status = 'active'",
                 $existing_user->ID
             ));
 
             if ($existing_assignment) {
-                if ($existing_assignment->agent_user_id == $user_id) {
+                if ($existing_assignment->agent_id == $user_id) {
                     // Already this agent's client - just link
                     $wpdb->update(
                         $attendees_table,
@@ -1809,8 +1894,17 @@ class MLD_Open_House_REST_API {
                 ), 500));
             }
 
-            // Store phone in user meta
+            // Store phone and lead source in user meta
             update_user_meta($client_user_id, 'phone', $attendee->phone);
+            update_user_meta($client_user_id, 'mld_lead_source', 'open_house_manual_convert');
+            update_user_meta($client_user_id, 'mld_lead_source_details', json_encode(array(
+                'attendee_id' => $attendee_id,
+                'open_house_id' => $attendee->open_house_id,
+                'signed_in_at' => $attendee->signed_in_at
+            )));
+
+            // Send welcome email with password setup link
+            wp_new_user_notification($client_user_id, null, 'user');
 
             $status = 'created_new';
         }
@@ -1819,16 +1913,15 @@ class MLD_Open_House_REST_API {
         $relationships_table = $wpdb->prefix . 'mld_agent_client_relationships';
         $existing_relationship = $wpdb->get_var($wpdb->prepare(
             "SELECT id FROM {$relationships_table}
-             WHERE agent_user_id = %d AND client_user_id = %d",
+             WHERE agent_id = %d AND client_id = %d",
             $user_id, $client_user_id
         ));
 
         if (!$existing_relationship) {
             $wpdb->insert($relationships_table, array(
-                'agent_user_id' => $user_id,
-                'client_user_id' => $client_user_id,
+                'agent_id' => $user_id,
+                'client_id' => $client_user_id,
                 'status' => 'active',
-                'source' => 'open_house',
                 'notes' => "Converted from open house attendee #{$attendee_id}",
                 'created_at' => current_time('mysql'),
                 'updated_at' => current_time('mysql')
@@ -1844,15 +1937,26 @@ class MLD_Open_House_REST_API {
             array('%d')
         );
 
-        // Set user type to client
+        // Set user type to client (preserve existing created_at if record exists)
         $user_types_table = $wpdb->prefix . 'mld_user_types';
-        $wpdb->replace($user_types_table, array(
-            'user_id' => $client_user_id,
-            'user_type' => 'client',
-            'assigned_agent_id' => $user_id,
-            'created_at' => current_time('mysql'),
-            'updated_at' => current_time('mysql')
+        $existing_type = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$user_types_table} WHERE user_id = %d",
+            $client_user_id
         ));
+
+        if ($existing_type) {
+            $wpdb->update($user_types_table, array(
+                'user_type' => 'client',
+                'updated_at' => current_time('mysql')
+            ), array('user_id' => $client_user_id));
+        } else {
+            $wpdb->insert($user_types_table, array(
+                'user_id' => $client_user_id,
+                'user_type' => 'client',
+                'created_at' => current_time('mysql'),
+                'updated_at' => current_time('mysql')
+            ));
+        }
 
         return self::add_no_cache_headers(new WP_REST_Response(array(
             'success' => true,

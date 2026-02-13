@@ -82,8 +82,10 @@ struct ServerNotification: Decodable {
             type = .appointmentReminder
         case "agent_activity", "client_login":
             type = .agentActivity
-        case "open_house_signin":
+        case "open_house_signin", "open_house_agent_buyer", "open_house_represented_buyer":
             // v6.69.0: Agent notified when visitor signs in at open house
+            // open_house_agent_buyer: Visitor indicated they have their own agent
+            // open_house_represented_buyer: Visitor indicated they are represented by a buyer's agent
             type = .agentActivity
         default:
             // LOG UNKNOWN TYPE for monitoring - helps identify new server types that need iOS support

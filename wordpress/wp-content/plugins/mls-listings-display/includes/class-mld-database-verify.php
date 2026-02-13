@@ -17,6 +17,7 @@
  * @updated 6.57.0 - Added mld_recently_viewed_properties table for user property view history
  * @updated 6.58.0 - Added mld_health_history and mld_health_alerts tables for health monitoring
  * @updated 6.68.15 - Verified all 65+ tables for v6.68.15 release
+ * @updated 6.75.8 - Added 3 open house system tables (mld_open_houses, mld_open_house_attendees, mld_open_house_notifications)
  */
 
 if (!defined('ABSPATH')) {
@@ -2213,6 +2214,111 @@ class MLD_Database_Verify {
                     KEY idx_alert_time (alert_time),
                     KEY idx_severity (severity),
                     KEY idx_component (component)
+                ) $charset_collate;"
+            ),
+
+            // ===============================================
+            // OPEN HOUSE SYSTEM TABLES (3 tables) - Added v6.75.8
+            // ===============================================
+
+            'mld_open_houses' => array(
+                'purpose' => 'Stores open house events created by agents',
+                'category' => 'open_house',
+                'sql' => "CREATE TABLE {$wpdb->prefix}mld_open_houses (
+                    id bigint unsigned NOT NULL AUTO_INCREMENT,
+                    agent_user_id bigint unsigned NOT NULL,
+                    listing_id varchar(50) DEFAULT NULL,
+                    property_address varchar(255) DEFAULT NULL,
+                    property_city varchar(100) DEFAULT NULL,
+                    property_state varchar(2) DEFAULT 'MA',
+                    property_zip varchar(10) DEFAULT NULL,
+                    property_type varchar(50) DEFAULT NULL,
+                    beds int DEFAULT NULL,
+                    baths decimal(3,1) DEFAULT NULL,
+                    list_price decimal(20,2) DEFAULT NULL,
+                    photo_url varchar(500) DEFAULT NULL,
+                    latitude decimal(10,8) DEFAULT NULL,
+                    longitude decimal(11,8) DEFAULT NULL,
+                    event_date date NOT NULL,
+                    start_time time NOT NULL,
+                    end_time time NOT NULL,
+                    status enum('scheduled','active','completed','cancelled') DEFAULT 'scheduled',
+                    notes text DEFAULT NULL,
+                    created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                    updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    PRIMARY KEY (id),
+                    KEY idx_agent (agent_user_id),
+                    KEY idx_date (event_date),
+                    KEY idx_status (status),
+                    KEY idx_listing (listing_id)
+                ) $charset_collate;"
+            ),
+
+            'mld_open_house_attendees' => array(
+                'purpose' => 'Tracks attendees who sign in at open house events',
+                'category' => 'open_house',
+                'sql' => "CREATE TABLE {$wpdb->prefix}mld_open_house_attendees (
+                    id bigint unsigned NOT NULL AUTO_INCREMENT,
+                    open_house_id bigint unsigned NOT NULL,
+                    local_uuid varchar(36) DEFAULT NULL,
+                    first_name varchar(100) NOT NULL,
+                    last_name varchar(100) NOT NULL,
+                    email varchar(255) NOT NULL,
+                    phone varchar(20) NOT NULL,
+                    is_agent tinyint(1) DEFAULT 0,
+                    agent_brokerage varchar(255) DEFAULT NULL,
+                    agent_visit_purpose varchar(50) DEFAULT NULL,
+                    agent_has_buyer tinyint(1) DEFAULT NULL,
+                    agent_buyer_timeline varchar(50) DEFAULT NULL,
+                    agent_network_interest tinyint(1) DEFAULT NULL,
+                    working_with_agent varchar(20) DEFAULT 'no',
+                    other_agent_name varchar(255) DEFAULT NULL,
+                    other_agent_brokerage varchar(255) DEFAULT NULL,
+                    other_agent_phone varchar(20) DEFAULT NULL,
+                    other_agent_email varchar(255) DEFAULT NULL,
+                    buying_timeline varchar(50) DEFAULT 'just_browsing',
+                    pre_approved varchar(20) DEFAULT 'not_sure',
+                    lender_name varchar(255) DEFAULT NULL,
+                    how_heard_about varchar(100) DEFAULT NULL,
+                    consent_to_follow_up tinyint(1) DEFAULT 0,
+                    consent_to_email tinyint(1) DEFAULT 0,
+                    consent_to_text tinyint(1) DEFAULT 0,
+                    ma_disclosure_acknowledged tinyint(1) DEFAULT 0,
+                    ma_disclosure_timestamp datetime DEFAULT NULL,
+                    interest_level varchar(50) DEFAULT 'unknown',
+                    agent_notes text DEFAULT NULL,
+                    user_id bigint unsigned DEFAULT NULL,
+                    priority_score int DEFAULT 0,
+                    auto_crm_processed tinyint(1) DEFAULT 0,
+                    auto_search_created tinyint(1) DEFAULT 0,
+                    auto_search_id int DEFAULT NULL,
+                    signed_in_at datetime DEFAULT NULL,
+                    created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                    updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    PRIMARY KEY (id),
+                    UNIQUE KEY unique_local_uuid (local_uuid),
+                    KEY idx_open_house (open_house_id),
+                    KEY idx_email (email),
+                    KEY idx_signed_in (signed_in_at),
+                    KEY idx_user_id (user_id),
+                    KEY idx_is_agent (is_agent),
+                    KEY idx_priority (priority_score)
+                ) $charset_collate;"
+            ),
+
+            'mld_open_house_notifications' => array(
+                'purpose' => 'Tracks notifications sent for open house events (new/reminder)',
+                'category' => 'open_house',
+                'sql' => "CREATE TABLE {$wpdb->prefix}mld_open_house_notifications (
+                    id bigint unsigned NOT NULL AUTO_INCREMENT,
+                    open_house_id bigint unsigned NOT NULL,
+                    user_id bigint unsigned NOT NULL,
+                    notification_type enum('new','reminder') NOT NULL,
+                    sent_at datetime DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (id),
+                    UNIQUE KEY uk_oh_user_type (open_house_id, user_id, notification_type),
+                    KEY idx_user (user_id),
+                    KEY idx_sent (sent_at)
                 ) $charset_collate;"
             )
         );

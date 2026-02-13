@@ -217,8 +217,11 @@ class OfflineOpenHouseStore: ObservableObject {
                 let wasOffline = !(self?.isOnline ?? true)
                 self?.isOnline = path.status == .satisfied
 
-                // If we just came back online and have pending attendees, sync them
+                // If we just came back online and have pending attendees, sync after debounce
                 if wasOffline && (self?.isOnline ?? false) && (self?.hasPendingSync ?? false) {
+                    // Wait 3 seconds to avoid rapid sync attempts on flaky networks
+                    try? await Task.sleep(nanoseconds: 3_000_000_000)
+                    guard self?.isOnline ?? false else { return }
                     await self?.syncPendingAttendees()
                 }
             }

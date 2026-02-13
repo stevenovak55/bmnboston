@@ -5,7 +5,7 @@
 //  Kiosk mode for iPad open house sign-in with property slideshow
 //  Created for BMN Boston Real Estate
 //
-//  VERSION: v6.71.0
+//  VERSION: v408
 //
 
 import SwiftUI
@@ -17,6 +17,7 @@ struct KioskSignInView: View {
     let onAttendeeAdded: (OpenHouseAttendee) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var offlineStore = OfflineOpenHouseStore.shared
     @State private var propertyImages: [String] = []
     @State private var currentImageIndex = 0
     @State private var showSignInForm = false
@@ -49,19 +50,38 @@ struct KioskSignInView: View {
 
                 // Property info overlay at bottom
                 VStack {
-                    // Top bar with exit button
+                    // Top bar with exit button and sync status
                     HStack {
                         Button {
                             stopSlideshow()
                             dismiss()
                         } label: {
                             Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 28))
-                                .foregroundStyle(.white.opacity(0.7))
+                                .font(.system(size: 36))
+                                .symbolRenderingMode(.palette)
+                                .foregroundStyle(.white, .black.opacity(0.5))
+                                .accessibilityLabel("Exit sign-in kiosk")
                         }
                         .padding()
 
                         Spacer()
+
+                        // Sync status indicator
+                        if offlineStore.hasPendingSync || !offlineStore.isOnline || offlineStore.syncError != nil {
+                            HStack(spacing: 6) {
+                                Image(systemName: offlineStore.isOnline ? "exclamationmark.triangle.fill" : "wifi.slash")
+                                    .font(.caption)
+                                Text(offlineStore.syncError ?? offlineStore.networkStatusMessage)
+                                    .font(.caption)
+                                    .lineLimit(1)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(offlineStore.isOnline ? Color.orange.opacity(0.9) : Color.red.opacity(0.9))
+                            .foregroundStyle(.white)
+                            .clipShape(Capsule())
+                            .padding(.trailing, 16)
+                        }
                     }
 
                     Spacer()
@@ -77,6 +97,13 @@ struct KioskSignInView: View {
                 showSignInForm = false
             }
             .interactiveDismissDisabled()
+        }
+        .onChange(of: showSignInForm) { isShowing in
+            if isShowing {
+                stopSlideshow()
+            } else {
+                startSlideshow()
+            }
         }
         .task {
             await loadPropertyImages()

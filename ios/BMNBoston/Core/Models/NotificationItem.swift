@@ -157,6 +157,16 @@ struct NotificationItem: Identifiable, Codable, Equatable {
                 clientId = userInfo["client_id"] as? Int
                 listingId = Self.extractListingId(from: userInfo)
                 listingKey = userInfo["listing_key"] as? String
+            case "open_house_signin", "open_house_agent_buyer", "open_house_represented_buyer":
+                // Agent notified about open house visitor activity
+                type = .agentActivity
+                listingId = Self.extractListingId(from: userInfo)
+                listingKey = userInfo["listing_key"] as? String
+                if let ohId = userInfo["open_house_id"] as? Int {
+                    appointmentId = ohId
+                } else if let ohIdStr = userInfo["open_house_id"] as? String, let ohId = Int(ohIdStr) {
+                    appointmentId = ohId
+                }
             case "appointment_reminder":
                 // Enhanced in v203 to support property deep linking
                 type = .appointmentReminder

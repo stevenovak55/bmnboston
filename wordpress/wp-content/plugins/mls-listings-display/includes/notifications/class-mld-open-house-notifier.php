@@ -59,13 +59,13 @@ class MLD_Open_House_Notifier {
             }
         }
 
-        // Reminders run daily at 8 AM
+        // Reminders run daily at 8 AM in WordPress timezone
         if (!wp_next_scheduled(self::CRON_HOOK_REMIND)) {
-            // Schedule for 8 AM tomorrow
-            $tomorrow_8am = strtotime('tomorrow 08:00:00');
-            wp_schedule_event($tomorrow_8am, 'daily', self::CRON_HOOK_REMIND);
+            // Schedule for 8 AM tomorrow using WordPress timezone
+            $dt = new DateTime('tomorrow 08:00:00', wp_timezone());
+            wp_schedule_event($dt->getTimestamp(), 'daily', self::CRON_HOOK_REMIND);
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('MLD Open House Notifier: Scheduled reminder cron for ' . date('Y-m-d H:i:s', $tomorrow_8am));
+                error_log('MLD Open House Notifier: Scheduled reminder cron for ' . wp_date('Y-m-d H:i:s', $dt->getTimestamp()));
             }
         }
     }
@@ -111,7 +111,7 @@ class MLD_Open_House_Notifier {
             self::maybe_create_notifications_table();
 
             // Get last detection timestamp
-            $last_detect = get_option(self::LAST_DETECT_OPTION, date('Y-m-d H:i:s', strtotime('-1 day')));
+            $last_detect = get_option(self::LAST_DETECT_OPTION, wp_date('Y-m-d H:i:s', strtotime('-1 day', current_time('timestamp'))));
 
             // Find open houses that:
             // 1. Are on favorited properties
@@ -180,9 +180,12 @@ class MLD_Open_House_Notifier {
                     $results['users_notified']++;
                 }
 
-                // Record notifications sent
-                foreach ($user_open_houses as $oh) {
-                    self::record_notification($oh->open_house_id, $user_id, 'new');
+                // Only record notifications if at least one channel succeeded
+                // If both failed, skip recording so it can be retried on next cron run
+                if ($user_result['push_sent'] || $user_result['email_sent']) {
+                    foreach ($user_open_houses as $oh) {
+                        self::record_notification($oh->open_house_id, $user_id, 'new');
+                    }
                 }
             }
 
@@ -297,9 +300,12 @@ class MLD_Open_House_Notifier {
                     $results['users_reminded']++;
                 }
 
-                // Record reminders sent
-                foreach ($user_open_houses as $oh) {
-                    self::record_notification($oh->open_house_id, $user_id, 'reminder');
+                // Only record reminders if push succeeded
+                // If push failed, skip recording so it can be retried on next cron run
+                if ($push_result['success']) {
+                    foreach ($user_open_houses as $oh) {
+                        self::record_notification($oh->open_house_id, $user_id, 'reminder');
+                    }
                 }
             }
 
@@ -693,15 +699,15 @@ class MLD_Open_House_Notifier {
         $start_dt = $start ? strtotime($start) : strtotime($open_house->expires_at);
         $end_dt = $end ? strtotime($end) : null;
 
-        $date = date('l, F j', $start_dt); // "Sunday, January 12"
-        $time_start = date('g:i A', $start_dt); // "1:00 PM"
-        $time_end = $end_dt ? date('g:i A', $end_dt) : null;
+        $date = wp_date('l, F j', $start_dt); // "Sunday, January 12"
+        $time_start = wp_date('g:i A', $start_dt); // "1:00 PM"
+        $time_end = $end_dt ? wp_date('g:i A', $end_dt) : null;
 
         $time_range = $time_end ? "{$time_start} - {$time_end}" : $time_start;
         $display = "{$date} at {$time_range}";
 
         return [
-            'date' => date('Y-m-d', $start_dt),
+            'date' => wp_date('Y-m-d', $start_dt),
             'time_range' => $time_range,
             'display' => $display
         ];

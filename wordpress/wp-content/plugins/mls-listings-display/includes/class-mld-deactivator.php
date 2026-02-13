@@ -59,6 +59,10 @@ class MLD_Deactivator {
             // Simple notification system cron
             'mld_simple_notifications_check',
 
+            // Open house notification crons
+            'mld_open_house_detection',
+            'mld_open_house_reminders',
+
             // Any other scheduled events
             'mld_cleanup_old_submissions',
             'mld_cleanup_expired_boundaries',

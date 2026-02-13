@@ -5,7 +5,7 @@
 //  Multi-step sign-in form for open house kiosk mode
 //  Created for BMN Boston Real Estate
 //
-//  VERSION: v6.71.0
+//  VERSION: v408
 //
 
 import SwiftUI
@@ -48,6 +48,8 @@ struct KioskSignInFormView: View {
     @State private var isSubmitting = false
     @State private var errorMessage: String?
     @State private var showError = false
+    @State private var touchedFields: Set<String> = []
+    @State private var showCancelConfirmation = false
 
     init(openHouse: OpenHouse, onComplete: @escaping (OpenHouseAttendee) -> Void) {
         self.openHouse = openHouse
@@ -87,11 +89,27 @@ struct KioskSignInFormView: View {
                         Button("Cancel") {
                             dismiss()
                         }
+                    } else if currentStep != .success {
+                        Button {
+                            showCancelConfirmation = true
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
+            .confirmationDialog("Leave Sign-In?", isPresented: $showCancelConfirmation, titleVisibility: .visible) {
+                Button("Leave", role: .destructive) {
+                    dismiss()
+                }
+                Button("Continue Signing In", role: .cancel) { }
+            } message: {
+                Text("Your progress will not be saved.")
+            }
             .alert("Error", isPresented: $showError) {
-                Button("Try Again") { }
+                Button("Try Again") { submitAttendee() }
                 Button("Cancel", role: .cancel) {
                     dismiss()
                 }
@@ -173,31 +191,61 @@ struct KioskSignInFormView: View {
                     label: "First Name",
                     placeholder: "Enter your first name",
                     text: $attendee.firstName,
-                    icon: "person.fill"
+                    icon: "person.fill",
+                    onEditingChanged: { touchedFields.insert("firstName") },
+                    submitLabel: .next
                 )
 
                 KioskTextField(
                     label: "Last Name",
                     placeholder: "Enter your last name",
                     text: $attendee.lastName,
-                    icon: "person.fill"
+                    icon: "person.fill",
+                    onEditingChanged: { touchedFields.insert("lastName") },
+                    submitLabel: .next
                 )
 
-                KioskTextField(
-                    label: "Email",
-                    placeholder: "you@example.com",
-                    text: $attendee.email,
-                    icon: "envelope.fill",
-                    keyboardType: .emailAddress
-                )
+                VStack(alignment: .leading, spacing: 4) {
+                    KioskTextField(
+                        label: "Email",
+                        placeholder: "you@example.com",
+                        text: $attendee.email,
+                        icon: "envelope.fill",
+                        keyboardType: .emailAddress,
+                        onEditingChanged: { touchedFields.insert("email") },
+                        submitLabel: .next
+                    )
+                    if touchedFields.contains("email") && !attendee.email.isEmpty && !isValidEmail(attendee.email) {
+                        Text("Please enter a valid email address")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                            .padding(.leading, 4)
+                    }
+                }
 
-                KioskTextField(
-                    label: "Phone",
-                    placeholder: "(617) 555-1234",
-                    text: $attendee.phone,
-                    icon: "phone.fill",
-                    keyboardType: .phonePad
-                )
+                VStack(alignment: .leading, spacing: 4) {
+                    KioskTextField(
+                        label: "Phone",
+                        placeholder: "(617) 555-1234",
+                        text: $attendee.phone,
+                        icon: "phone.fill",
+                        keyboardType: .phonePad,
+                        onEditingChanged: { touchedFields.insert("phone") },
+                        submitLabel: .done
+                    )
+                    if touchedFields.contains("phone") && !attendee.phone.isEmpty && !isValidPhone(attendee.phone) {
+                        Text("Please enter a 10-digit phone number")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                            .padding(.leading, 4)
+                    }
+                }
+            }
+        }
+        .onAppear {
+            // Auto-focus first field after a short delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                UIApplication.shared.sendAction(#selector(UIResponder.becomeFirstResponder), to: nil, from: nil, for: nil)
             }
         }
     }
@@ -628,14 +676,23 @@ struct KioskSignInFormView: View {
 
     // MARK: - Validation
 
+    private func isValidEmail(_ email: String) -> Bool {
+        let pattern = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
+        return email.range(of: pattern, options: .regularExpression) != nil
+    }
+
+    private func isValidPhone(_ phone: String) -> Bool {
+        let digits = phone.filter { $0.isNumber }
+        return digits.count >= 10
+    }
+
     private var canProceed: Bool {
         switch currentStep {
         case .contact:
             return !attendee.firstName.isEmpty &&
                    !attendee.lastName.isEmpty &&
-                   !attendee.email.isEmpty &&
-                   attendee.email.contains("@") &&
-                   !attendee.phone.isEmpty
+                   isValidEmail(attendee.email) &&
+                   isValidPhone(attendee.phone)
 
         case .agentStatus:
             return true // Any selection is valid
@@ -720,6 +777,7 @@ struct KioskSignInFormView: View {
     // MARK: - Submit
 
     private func submitAttendee() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         isSubmitting = true
 
         Task {
@@ -747,9 +805,11 @@ struct KioskSignInFormView: View {
                 currentStep = .success
 
             } catch {
+                // Save locally so data isn't lost
+                OfflineOpenHouseStore.shared.saveAttendeeLocally(attendeeToSubmit)
                 isSubmitting = false
-                errorMessage = "Failed to submit: \(error.localizedDescription)"
-                showError = true
+                attendee = attendeeToSubmit
+                currentStep = .success
             }
         }
     }
@@ -763,6 +823,9 @@ struct KioskTextField: View {
     @Binding var text: String
     var icon: String = "textformat"
     var keyboardType: UIKeyboardType = .default
+    var onEditingChanged: (() -> Void)? = nil
+    var submitLabel: SubmitLabel = .next
+    var onSubmit: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -781,6 +844,9 @@ struct KioskTextField: View {
                     .keyboardType(keyboardType)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(keyboardType == .emailAddress ? .never : .words)
+                    .submitLabel(submitLabel)
+                    .onChange(of: text) { _ in onEditingChanged?() }
+                    .onSubmit { onSubmit?() }
             }
             .padding()
             .background(Color.gray.opacity(0.1))
