@@ -781,19 +781,18 @@ struct KioskSignInFormView: View {
         isSubmitting = true
 
         Task {
+            // Set MA disclosure timestamp
+            if attendee.maDisclosureAcknowledged {
+                var updatedAttendee = attendee
+                updatedAttendee.maDisclosureTimestamp = Date()
+                attendee = updatedAttendee
+            }
+
+            // v6.72.0: Set device token to exclude from push notifications
+            var attendeeToSubmit = attendee
+            attendeeToSubmit.deviceTokenForExclusion = await PushNotificationManager.shared.deviceToken
+
             do {
-                // Set MA disclosure timestamp
-                if attendee.maDisclosureAcknowledged {
-                    var updatedAttendee = attendee
-                    updatedAttendee.maDisclosureTimestamp = Date()
-                    attendee = updatedAttendee
-                }
-
-                // v6.72.0: Set device token to exclude from push notifications
-                // This prevents the kiosk device from receiving its own sign-in notification
-                var attendeeToSubmit = attendee
-                attendeeToSubmit.deviceTokenForExclusion = await PushNotificationManager.shared.deviceToken
-
                 // Submit to server
                 let savedAttendee = try await OpenHouseService.shared.addAttendee(
                     openHouseId: openHouse.id,
