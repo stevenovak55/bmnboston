@@ -425,6 +425,13 @@ When a visitor signs in at an open house kiosk, the listing agent receives a pus
 | `Features/OpenHouse/Views/OpenHouseListView.swift` | Added pending navigation pattern |
 | `Features/Notifications/Views/NotificationCenterView.swift` | Added `.openHouseSignIn` tap handler + icon colors |
 
+### Test Data Cleanup (Feb 13, 2026)
+
+Cleaned up test open house attendee records that were causing bounced email notifications:
+- Deleted 3 test attendees with @example.com emails (IDs 1, 7, 8)
+- Deleted auto-created saved search (ID 90) for test attendee
+- Deleted test WordPress user 102 (jane.testbuyer / janetest@example.com)
+
 ---
 
 ## Recent Changes (v407)
