@@ -1780,7 +1780,7 @@ Quick reference for current versions:
 | Component | Current Version |
 |-----------|-----------------|
 | iOS App | v409 (1.8) |
-| MLS Listings Display | v6.75.10 |
+| MLS Listings Display | v6.76.0 |
 | BMN Schools | v0.6.39 |
 | SN Appointments | v1.10.4 |
 | Exclusive Listings | v1.5.3 |

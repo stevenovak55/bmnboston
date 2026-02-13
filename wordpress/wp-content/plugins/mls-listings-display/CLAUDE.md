@@ -2,7 +2,7 @@
 
 Quick reference for AI-assisted development.
 
-**Current Version:** 6.75.10
+**Current Version:** 6.76.0
 **Last Updated:** February 13, 2026
 
 ---

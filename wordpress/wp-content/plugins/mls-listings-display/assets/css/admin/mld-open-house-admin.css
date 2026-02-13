@@ -1,0 +1,289 @@
+/**
+ * MLD Open House Admin Styles
+ *
+ * @package MLS_Listings_Display
+ * @subpackage Admin
+ * @since 6.76.0
+ */
+
+/* Page Container */
+.mld-oh-admin {
+    margin-top: 20px;
+}
+
+.mld-oh-admin .description {
+    color: #646970;
+    margin-bottom: 15px;
+}
+
+/* ============================================
+   Summary Stat Cards
+   ============================================ */
+.mld-oh-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.mld-oh-stat-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.mld-oh-stat-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: #2271b1;
+}
+
+.mld-oh-stat-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.mld-oh-stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: #1d2327;
+}
+
+.mld-oh-stat-label {
+    font-size: 13px;
+    color: #646970;
+}
+
+/* ============================================
+   Filter Form
+   ============================================ */
+.mld-oh-filter-form {
+    margin: 20px 0;
+    clear: both;
+}
+
+.mld-oh-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.mld-oh-filters select {
+    min-width: 160px;
+}
+
+.mld-oh-filters input[type="date"] {
+    min-width: 130px;
+    padding: 4px 8px;
+}
+
+/* ============================================
+   Main Table
+   ============================================ */
+.mld-oh-table {
+    margin-top: 10px;
+}
+
+.mld-oh-table th a.sortable {
+    color: inherit;
+    text-decoration: none;
+}
+
+.mld-oh-table th a.sortable:hover {
+    color: #2271b1;
+}
+
+.mld-oh-table td small {
+    color: #646970;
+    display: block;
+}
+
+.mld-oh-no-items {
+    text-align: center;
+    color: #646970;
+    padding: 20px !important;
+}
+
+/* ============================================
+   Badges
+   ============================================ */
+.mld-oh-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 3px;
+    line-height: 1.4;
+}
+
+/* Status Badges */
+.mld-oh-badge-scheduled {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.mld-oh-badge-active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.mld-oh-badge-completed {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.mld-oh-badge-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Type Badges */
+.mld-oh-badge-agent {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.mld-oh-badge-buyer {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+/* ============================================
+   Priority Score Colors
+   ============================================ */
+.mld-oh-priority-hot {
+    display: inline-block;
+    font-weight: 700;
+    color: #dc2626;
+}
+
+.mld-oh-priority-warm {
+    display: inline-block;
+    font-weight: 600;
+    color: #ea580c;
+}
+
+.mld-oh-priority-cool {
+    display: inline-block;
+    color: #9ca3af;
+}
+
+/* ============================================
+   Detail Page Header
+   ============================================ */
+.mld-oh-detail-header {
+    display: flex;
+    gap: 20px;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 5px;
+}
+
+.mld-oh-detail-photo {
+    flex-shrink: 0;
+    width: 200px;
+    height: 140px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.mld-oh-detail-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mld-oh-detail-info {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Detail Stats Row */
+.mld-oh-detail-stats {
+    display: flex;
+    gap: 12px;
+    margin-top: 5px;
+}
+
+.mld-oh-detail-stat {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    background: #f0f0f1;
+    border-radius: 12px;
+    color: #1d2327;
+}
+
+/* Attendee Table */
+.mld-oh-attendee-table td {
+    vertical-align: top;
+}
+
+/* ============================================
+   Export Button
+   ============================================ */
+.mld-oh-export-csv .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.mld-oh-export-csv.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Pagination */
+.mld-oh-admin .tablenav-pages {
+    margin-top: 10px;
+}
+
+.mld-oh-admin .tablenav-pages .displaying-num {
+    margin-right: 10px;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media screen and (max-width: 1200px) {
+    .mld-oh-stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media screen and (max-width: 782px) {
+    .mld-oh-stats-row {
+        grid-template-columns: 1fr;
+    }
+
+    .mld-oh-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mld-oh-filters select,
+    .mld-oh-filters input[type="date"] {
+        min-width: 100%;
+    }
+
+    .mld-oh-detail-header {
+        flex-direction: column;
+    }
+
+    .mld-oh-detail-photo {
+        width: 100%;
+        height: 180px;
+    }
+}

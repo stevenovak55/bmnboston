@@ -3,7 +3,7 @@
  * Plugin Name:       MLS Listings Display
  * Plugin URI:        https://example.com/
  * Description:       Displays real estate listings from the Bridge MLS Extractor Pro plugin using shortcodes with mobile-optimized property search and display.
- * Version: 6.75.10
+ * Version: 6.76.0
  * Author:            AZ Home Solutions LLC
  * Author URI:        https://example.com/
  * License:           GPL-2.0+
@@ -11,6 +11,15 @@
  * Text Domain:       mls-listings-display
  *
  * @package           MLS_Listings_Display
+ *
+ * Version 6.76.0 - OPEN HOUSE ADMIN DASHBOARD (Feb 13, 2026)
+ * Added WP Admin dashboard for viewing all open house sign-ins across all agents.
+ * - New admin page under MLS Display > Open Houses
+ * - Summary stat cards (total open houses, total attendees, CRM conversion rate, avg per event)
+ * - Filter by agent, city, date range, and status tabs (Scheduled/Active/Completed/Cancelled)
+ * - Sortable columns (date, city, agent, attendee count)
+ * - Detail view with full attendee list, priority scores, and CRM status
+ * - CSV export (filtered list or per-event attendees)
  *
  * Version 6.75.7 - AUDIT FIXES: YEAR ROLLOVER & EMAIL TIMEZONE (Feb 4, 2026)
  * Fixed two issues discovered during documentation vs code audit:
@@ -2548,7 +2557,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 // Define plugin constants.
 // Add timestamp for cache busting during development
-define('MLD_VERSION', '6.75.10');
+define('MLD_VERSION', '6.76.0');
 
 define( 'MLD_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MLD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) ); // Alias for MLD_PLUGIN_PATH for backward compatibility
@@ -2998,6 +3007,7 @@ if (is_admin()) {
     require_once MLD_PLUGIN_PATH . 'admin/mld-analytics-admin.php';
     require_once MLD_PLUGIN_PATH . 'includes/admin/class-mld-cma-admin.php';
     require_once MLD_PLUGIN_PATH . 'includes/admin/class-mld-cma-sessions-admin.php';
+    require_once MLD_PLUGIN_PATH . 'includes/admin/class-mld-open-house-admin.php';
 
     // Load AI Chatbot settings page
     require_once MLD_PLUGIN_PATH . 'admin/chatbot/class-mld-chatbot-settings.php';
