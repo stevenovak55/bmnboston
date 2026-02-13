@@ -2,8 +2,8 @@
 
 Comprehensive reference for AI-assisted development.
 
-**Current Project Version:** 406 (Marketing Version 1.8)
-**Last Updated:** February 8, 2026
+**Current Project Version:** 407 (Marketing Version 1.8)
+**Last Updated:** February 13, 2026
 
 ---
 
@@ -378,6 +378,39 @@ func login(email: String, password: String) async {
 ```
 
 **Rule:** Any method that receives user data from the server should save it, not just the primary login flow.
+
+---
+
+## Recent Changes (v407)
+
+### Open House Kiosk Sign-In Fixes (Feb 13, 2026)
+
+Three fixes to resolve "Failed to submit" error in kiosk sign-in mode:
+
+**1. Phone Field Validation**
+- Made phone number mandatory on the contact step - form won't proceed without it
+- Matches server-side validation which requires phone (returns 400 if empty)
+
+**2. API Field Name Mismatches (APIEndpoint.swift)**
+- `other_agent_name` → `agent_name` (matches PHP `get_param()`)
+- `other_agent_brokerage` → `agent_brokerage`
+- `agent_brokerage` (visitor) → `visitor_agent_brokerage`
+- Fixed in both `addAttendee` and `bulkSyncAttendees` endpoints
+
+**3. Dedup Response Handling (OpenHouse.swift + OpenHouseService.swift)**
+- `AddAttendeeResponse.attendee` made optional to handle dedup response (HTTP 200 returns `{id, local_uuid, message}` without full attendee object)
+- Added `id` and `localUUID` fields to `AddAttendeeResponse`
+- `addAttendee()` returns original attendee with `.synced` status on dedup
+- `updateAttendee()` uses `guard let` for the now-optional attendee field
+
+**4. Consent Consolidation (KioskSignInFormView.swift)**
+- Replaced 4 separate consent checkboxes with a single combined acknowledgment
+- One checkbox sets all four flags: `maDisclosureAcknowledged`, `consentToFollowUp`, `consentToEmail`, `consentToText`
+- Cleaner UX with MA Agency Disclosure text + single toggle
+
+**5. Stale Duplicate File Cleanup**
+- Deleted `class-mld-open-house-rest-api.php` from plugin root (stale copy)
+- Active file is in `includes/` subdirectory
 
 ---
 
