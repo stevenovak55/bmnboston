@@ -3,7 +3,7 @@
  * Plugin Name:       MLS Listings Display
  * Plugin URI:        https://example.com/
  * Description:       Displays real estate listings from the Bridge MLS Extractor Pro plugin using shortcodes with mobile-optimized property search and display.
- * Version: 6.76.0
+ * Version: 6.76.1
  * Author:            AZ Home Solutions LLC
  * Author URI:        https://example.com/
  * License:           GPL-2.0+
@@ -2557,7 +2557,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 // Define plugin constants.
 // Add timestamp for cache busting during development
-define('MLD_VERSION', '6.76.0');
+define('MLD_VERSION', '6.76.1');
 
 define( 'MLD_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MLD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) ); // Alias for MLD_PLUGIN_PATH for backward compatibility

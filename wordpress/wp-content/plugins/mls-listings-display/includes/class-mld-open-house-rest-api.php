@@ -786,7 +786,7 @@ class MLD_Open_House_REST_API {
             'ma_disclosure_timestamp' => $request->get_param('ma_disclosure_acknowledged') ? current_time('mysql') : null,
             'interest_level' => sanitize_text_field($request->get_param('interest_level')) ?: 'unknown',
             'agent_notes' => sanitize_textarea_field($request->get_param('notes')) ?: null,
-            'signed_in_at' => sanitize_text_field($request->get_param('signed_in_at')) ?: current_time('mysql'),
+            'signed_in_at' => self::parse_signed_in_at($request->get_param('signed_in_at')),
             'created_at' => current_time('mysql'),
             'updated_at' => current_time('mysql')
         );
@@ -1763,6 +1763,26 @@ class MLD_Open_House_REST_API {
      *
      * Tiers: Hot (80-100), Warm (50-79), Cool (0-49)
      */
+
+    /**
+     * v6.76.1: Parse signed_in_at timestamp, converting ISO 8601 UTC to WordPress timezone.
+     * iOS sends ISO 8601 UTC (e.g., "2026-02-14T22:36:00Z"), which must be converted
+     * to WordPress timezone (America/New_York) before storage.
+     */
+    private static function parse_signed_in_at($raw_value) {
+        $signed_in_raw = sanitize_text_field($raw_value);
+        if ($signed_in_raw) {
+            try {
+                $dt = new DateTime($signed_in_raw);  // Parses ISO 8601 with Z (UTC)
+                $dt->setTimezone(wp_timezone());      // Convert to WordPress timezone
+                return $dt->format('Y-m-d H:i:s');
+            } catch (Exception $e) {
+                return current_time('mysql');
+            }
+        }
+        return current_time('mysql');
+    }
+
     private static function calculate_priority_score($data) {
         $score = 0;
 

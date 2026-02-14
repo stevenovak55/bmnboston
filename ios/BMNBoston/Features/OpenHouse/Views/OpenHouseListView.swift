@@ -2066,145 +2066,9 @@ struct AttendeeDetailView: View {
 
     var body: some View {
         Form {
-            // Contact Info Section (Read-Only)
-            Section("Contact Information") {
-                LabeledContent("Name", value: "\(attendee.firstName) \(attendee.lastName)")
-
-                HStack {
-                    Text("Email")
-                    Spacer()
-                    Text(attendee.email)
-                        .foregroundStyle(.secondary)
-                }
-
-                HStack {
-                    Text("Phone")
-                    Spacer()
-                    Text(attendee.phone)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            // Contact Actions
-            Section {
-                HStack(spacing: 12) {
-                    Button {
-                        if let url = URL(string: "tel:\(attendee.phone.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: ""))") {
-                            UIApplication.shared.open(url)
-                        }
-                    } label: {
-                        VStack(spacing: 4) {
-                            Image(systemName: "phone.fill")
-                                .font(.title2)
-                            Text("Call")
-                                .font(.caption)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(AppColors.brandTeal.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(AppColors.brandTeal)
-
-                    Button {
-                        if let url = URL(string: "sms:\(attendee.phone.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: ""))") {
-                            UIApplication.shared.open(url)
-                        }
-                    } label: {
-                        VStack(spacing: 4) {
-                            Image(systemName: "message.fill")
-                                .font(.title2)
-                            Text("Text")
-                                .font(.caption)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(AppColors.brandTeal.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(AppColors.brandTeal)
-
-                    Button {
-                        if let url = URL(string: "mailto:\(attendee.email)") {
-                            UIApplication.shared.open(url)
-                        }
-                    } label: {
-                        VStack(spacing: 4) {
-                            Image(systemName: "envelope.fill")
-                                .font(.title2)
-                            Text("Email")
-                                .font(.caption)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(AppColors.brandTeal.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(AppColors.brandTeal)
-                }
-                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-            }
-
-            // v6.70.0: Show different sections for agent vs buyer
-            if attendee.isAgent {
-                // Agent Details Section
-                Section {
-                    HStack {
-                        Image(systemName: "briefcase.fill")
-                            .foregroundStyle(.orange)
-                        Text("Real Estate Agent")
-                            .fontWeight(.semibold)
-                    }
-                } header: {
-                    Text("Visitor Type")
-                }
-
-                Section("Agent Details") {
-                    if let brokerage = attendee.visitorAgentBrokerage {
-                        LabeledContent("Brokerage", value: brokerage)
-                    }
-                    if let purpose = attendee.agentVisitPurpose {
-                        LabeledContent("Visit Purpose", value: purpose.displayName)
-                    }
-                    if let hasBuyer = attendee.agentHasBuyer {
-                        HStack {
-                            Text("Has Interested Buyer")
-                            Spacer()
-                            if hasBuyer {
-                                HStack {
-                                    Image(systemName: "star.fill")
-                                        .foregroundStyle(.yellow)
-                                    Text("Yes")
-                                        .foregroundStyle(.green)
-                                }
-                            } else {
-                                Text("No")
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    if attendee.agentHasBuyer == true, let timeline = attendee.agentBuyerTimeline {
-                        LabeledContent("Buyer Timeline", value: agentBuyerTimelineDisplay(timeline))
-                    }
-                    if let networkInterest = attendee.agentNetworkInterest {
-                        LabeledContent("Open to Networking", value: networkInterest ? "Yes" : "No")
-                    }
-                }
-            } else {
-                // Buying Details Section (existing buyer flow)
-                Section("Buying Details") {
-                    LabeledContent("Timeline", value: attendee.buyingTimeline.displayName)
-                    LabeledContent("Working with Agent", value: attendee.workingWithAgent.displayName)
-                    LabeledContent("Pre-Approved", value: attendee.preApproved.displayName)
-
-                    if let howHeard = attendee.howHeardAbout {
-                        LabeledContent("How Heard About", value: howHeard.displayName)
-                    }
-                }
-            }
+            AttendeeContactSection(attendee: attendee)
+            AttendeeContactActionsSection(attendee: attendee)
+            AttendeeVisitorDetailsSection(attendee: attendee)
 
             // Priority Score Section (v6.70.0)
             if attendee.priorityScore > 0 {
@@ -2248,6 +2112,8 @@ struct AttendeeDetailView: View {
                         .onChange(of: notes) { _ in hasChanges = true }
                 }
             }
+
+            AttendeeConsentSection(attendee: attendee)
 
             // Signed In At
             Section {
@@ -2303,17 +2169,6 @@ struct AttendeeDetailView: View {
         }
     }
 
-    // v6.70.0: Helper for agent buyer timeline display
-    private func agentBuyerTimelineDisplay(_ timeline: String) -> String {
-        switch timeline {
-        case "asap": return "ASAP"
-        case "this_week": return "This Week"
-        case "this_month": return "This Month"
-        case "few_months": return "A Few Months"
-        default: return "Not Sure"
-        }
-    }
-
     private func saveChanges() async {
         guard let attendeeId = attendee.id else {
             errorMessage = "Cannot save: Attendee not synced to server yet"
@@ -2343,6 +2198,235 @@ struct AttendeeDetailView: View {
         } catch {
             errorMessage = error.localizedDescription
             showError = true
+        }
+    }
+}
+
+// MARK: - Attendee Detail Extracted Sections (v6.76.1 - ViewBuilder complexity fix)
+
+private struct AttendeeContactSection: View {
+    let attendee: OpenHouseAttendee
+
+    var body: some View {
+        Section("Contact Information") {
+            LabeledContent("Name", value: "\(attendee.firstName) \(attendee.lastName)")
+
+            HStack {
+                Text("Email")
+                Spacer()
+                Text(attendee.email)
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack {
+                Text("Phone")
+                Spacer()
+                Text(attendee.phone)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+private struct AttendeeContactActionsSection: View {
+    let attendee: OpenHouseAttendee
+
+    var body: some View {
+        Section {
+            HStack(spacing: 12) {
+                Button {
+                    if let url = URL(string: "tel:\(attendee.phone.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: ""))") {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: "phone.fill")
+                            .font(.title2)
+                        Text("Call")
+                            .font(.caption)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(AppColors.brandTeal.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(AppColors.brandTeal)
+
+                Button {
+                    if let url = URL(string: "sms:\(attendee.phone.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: ""))") {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: "message.fill")
+                            .font(.title2)
+                        Text("Text")
+                            .font(.caption)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(AppColors.brandTeal.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(AppColors.brandTeal)
+
+                Button {
+                    if let url = URL(string: "mailto:\(attendee.email)") {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: "envelope.fill")
+                            .font(.title2)
+                        Text("Email")
+                            .font(.caption)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(AppColors.brandTeal.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(AppColors.brandTeal)
+            }
+            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+        }
+    }
+}
+
+private struct AttendeeVisitorDetailsSection: View {
+    let attendee: OpenHouseAttendee
+
+    var body: some View {
+        if attendee.isAgent {
+            Section {
+                HStack {
+                    Image(systemName: "briefcase.fill")
+                        .foregroundStyle(.orange)
+                    Text("Real Estate Agent")
+                        .fontWeight(.semibold)
+                }
+            } header: {
+                Text("Visitor Type")
+            }
+
+            Section("Agent Details") {
+                if let brokerage = attendee.visitorAgentBrokerage {
+                    LabeledContent("Brokerage", value: brokerage)
+                }
+                if let purpose = attendee.agentVisitPurpose {
+                    LabeledContent("Visit Purpose", value: purpose.displayName)
+                }
+                if let hasBuyer = attendee.agentHasBuyer {
+                    HStack {
+                        Text("Has Interested Buyer")
+                        Spacer()
+                        if hasBuyer {
+                            HStack {
+                                Image(systemName: "star.fill")
+                                    .foregroundStyle(.yellow)
+                                Text("Yes")
+                                    .foregroundStyle(.green)
+                            }
+                        } else {
+                            Text("No")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                if attendee.agentHasBuyer == true, let timeline = attendee.agentBuyerTimeline {
+                    LabeledContent("Buyer Timeline", value: Self.agentBuyerTimelineDisplay(timeline))
+                }
+                if let networkInterest = attendee.agentNetworkInterest {
+                    LabeledContent("Open to Networking", value: networkInterest ? "Yes" : "No")
+                }
+            }
+        } else {
+            Section("Buying Details") {
+                LabeledContent("Timeline", value: attendee.buyingTimeline.displayName)
+                LabeledContent("Working with Agent", value: attendee.workingWithAgent.displayName)
+                LabeledContent("Pre-Approved", value: attendee.preApproved.displayName)
+
+                if let lender = attendee.lenderName, !lender.isEmpty {
+                    LabeledContent("Lender", value: lender)
+                }
+
+                if let howHeard = attendee.howHeardAbout {
+                    LabeledContent("How Heard About", value: howHeard.displayName)
+                }
+            }
+
+            // v6.76.1: Other Agent Details (for buyers working with an agent)
+            if attendee.workingWithAgent == .yesOther {
+                if let agentName = attendee.otherAgentName, !agentName.isEmpty {
+                    Section("Their Agent") {
+                        LabeledContent("Name", value: agentName)
+
+                        if let brokerage = attendee.otherAgentBrokerage, !brokerage.isEmpty {
+                            LabeledContent("Brokerage", value: brokerage)
+                        }
+                        if let phone = attendee.otherAgentPhone, !phone.isEmpty {
+                            LabeledContent("Phone", value: phone)
+                        }
+                        if let email = attendee.otherAgentEmail, !email.isEmpty {
+                            LabeledContent("Email", value: email)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static func agentBuyerTimelineDisplay(_ timeline: String) -> String {
+        switch timeline {
+        case "asap": return "ASAP"
+        case "this_week": return "This Week"
+        case "this_month": return "This Month"
+        case "few_months": return "A Few Months"
+        default: return "Not Sure"
+        }
+    }
+}
+
+private struct AttendeeConsentSection: View {
+    let attendee: OpenHouseAttendee
+
+    var body: some View {
+        Section("Consent & Compliance") {
+            HStack {
+                Text("Follow-Up")
+                Spacer()
+                Image(systemName: attendee.consentToFollowUp ? "checkmark.circle.fill" : "xmark.circle")
+                    .foregroundStyle(attendee.consentToFollowUp ? .green : .secondary)
+                Text(attendee.consentToFollowUp ? "Yes" : "No")
+                    .foregroundStyle(.secondary)
+            }
+            HStack {
+                Text("Email")
+                Spacer()
+                Image(systemName: attendee.consentToEmail ? "checkmark.circle.fill" : "xmark.circle")
+                    .foregroundStyle(attendee.consentToEmail ? .green : .secondary)
+                Text(attendee.consentToEmail ? "Yes" : "No")
+                    .foregroundStyle(.secondary)
+            }
+            HStack {
+                Text("Text")
+                Spacer()
+                Image(systemName: attendee.consentToText ? "checkmark.circle.fill" : "xmark.circle")
+                    .foregroundStyle(attendee.consentToText ? .green : .secondary)
+                Text(attendee.consentToText ? "Yes" : "No")
+                    .foregroundStyle(.secondary)
+            }
+            HStack {
+                Text("MA Disclosure")
+                Spacer()
+                Image(systemName: attendee.maDisclosureAcknowledged ? "checkmark.shield.fill" : "xmark.shield")
+                    .foregroundStyle(attendee.maDisclosureAcknowledged ? .green : .secondary)
+                Text(attendee.maDisclosureAcknowledged ? "Acknowledged" : "Not Acknowledged")
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 }

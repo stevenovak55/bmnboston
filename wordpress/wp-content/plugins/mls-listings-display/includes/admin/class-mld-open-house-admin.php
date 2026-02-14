@@ -429,7 +429,7 @@ class MLD_Open_House_Admin {
                 </button>
             </div>
 
-            <!-- Attendees Table -->
+            <!-- Attendees Table (v6.76.1: expanded fields) -->
             <table class="wp-list-table widefat fixed striped mld-oh-attendee-table">
                 <thead>
                     <tr>
@@ -438,18 +438,20 @@ class MLD_Open_House_Admin {
                         <th scope="col">Contact</th>
                         <th scope="col" style="width: 80px;">Type</th>
                         <th scope="col" style="width: 70px;">Priority</th>
+                        <th scope="col" style="width: 80px;">Interest</th>
                         <th scope="col" style="width: 100px;">Timeline</th>
-                        <th scope="col" style="width: 90px;">Pre-Approved</th>
-                        <th scope="col" style="width: 120px;">Agent Status</th>
+                        <th scope="col" style="width: 100px;">Financing</th>
+                        <th scope="col" style="width: 160px;">Agent Info</th>
+                        <th scope="col" style="width: 80px;">Consent</th>
                         <th scope="col" style="width: 50px;">CRM</th>
-                        <th scope="col" style="width: 110px;">Signed In</th>
+                        <th scope="col" style="width: 100px;">Signed In</th>
                         <th scope="col">Notes</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($attendees)) : ?>
                         <tr>
-                            <td colspan="11" class="mld-oh-no-items">No attendees have signed in yet.</td>
+                            <td colspan="13" class="mld-oh-no-items">No attendees have signed in yet.</td>
                         </tr>
                     <?php else : ?>
                         <?php $i = 1; foreach ($attendees as $a) :
@@ -459,6 +461,9 @@ class MLD_Open_House_Admin {
                                 <td><?php echo esc_html($i++); ?></td>
                                 <td>
                                     <strong><?php echo esc_html($a->first_name . ' ' . $a->last_name); ?></strong>
+                                    <?php if (!empty($a->how_heard_about)) : ?>
+                                        <br><small style="color: #888;">via <?php echo esc_html(ucwords(str_replace('_', ' ', $a->how_heard_about))); ?></small>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php if ($a->email) : ?>
@@ -478,12 +483,52 @@ class MLD_Open_House_Admin {
                                 <td>
                                     <?php echo $this->format_priority_badge($a->priority_score); ?>
                                 </td>
-                                <td><?php echo esc_html($this->format_timeline($a->buying_timeline)); ?></td>
-                                <td><?php echo esc_html($this->format_pre_approved($a->pre_approved)); ?></td>
                                 <td>
-                                    <?php echo esc_html($this->format_working_with_agent($a->working_with_agent)); ?>
-                                    <?php if ($a->other_agent_name) : ?>
-                                        <br><small><?php echo esc_html($a->other_agent_name); ?></small>
+                                    <?php echo esc_html($this->format_interest_level($a->interest_level)); ?>
+                                </td>
+                                <td><?php echo esc_html($this->format_timeline($a->buying_timeline)); ?></td>
+                                <td>
+                                    <?php // Financing: Pre-approved status + lender ?>
+                                    <?php echo esc_html($this->format_pre_approved($a->pre_approved)); ?>
+                                    <?php if (!empty($a->lender_name)) : ?>
+                                        <br><small><?php echo esc_html($a->lender_name); ?></small>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($a->is_agent) : ?>
+                                        <?php // Agent visitor: show brokerage + visit purpose ?>
+                                        <?php if (!empty($a->agent_brokerage)) : ?>
+                                            <small><?php echo esc_html($a->agent_brokerage); ?></small><br>
+                                        <?php endif; ?>
+                                        <?php if (!empty($a->agent_visit_purpose)) : ?>
+                                            <small style="color: #666;"><?php echo esc_html(ucwords(str_replace('_', ' ', $a->agent_visit_purpose))); ?></small>
+                                        <?php endif; ?>
+                                        <?php if (!empty($a->agent_has_buyer)) : ?>
+                                            <br><small style="color: #16a34a;">Has buyer</small>
+                                        <?php endif; ?>
+                                    <?php else : ?>
+                                        <?php // Buyer visitor: show working with agent + agent details ?>
+                                        <?php echo esc_html($this->format_working_with_agent($a->working_with_agent)); ?>
+                                        <?php if ($a->other_agent_name) : ?>
+                                            <br><small><?php echo esc_html($a->other_agent_name); ?></small>
+                                        <?php endif; ?>
+                                        <?php if (!empty($a->other_agent_brokerage)) : ?>
+                                            <br><small style="color: #666;"><?php echo esc_html($a->other_agent_brokerage); ?></small>
+                                        <?php endif; ?>
+                                        <?php if (!empty($a->other_agent_phone) || !empty($a->other_agent_email)) : ?>
+                                            <br><small style="color: #888;">
+                                                <?php echo esc_html(implode(' | ', array_filter(array($a->other_agent_phone, $a->other_agent_email)))); ?>
+                                            </small>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="text-align: center;">
+                                    <?php // Consent badges ?>
+                                    <?php if ($a->consent_to_follow_up) : ?><span title="Follow-up OK" style="color: #16a34a;">&#x2713;</span><?php endif; ?>
+                                    <?php if ($a->consent_to_email) : ?><span title="Email OK" style="color: #16a34a;">&#x2709;</span><?php endif; ?>
+                                    <?php if ($a->consent_to_text) : ?><span title="Text OK" style="color: #16a34a;">&#x1F4F1;</span><?php endif; ?>
+                                    <?php if ($a->ma_disclosure_acknowledged) : ?>
+                                        <br><small title="MA Disclosure Acknowledged" style="color: #2563eb;">MA</small>
                                     <?php endif; ?>
                                 </td>
                                 <td style="text-align: center;">
@@ -780,9 +825,14 @@ class MLD_Open_House_Admin {
             $event_date = new DateTime($oh->event_date, wp_timezone());
             $filename = 'open-house-' . $event_date->format('Y-m-d') . '-' . sanitize_title($oh->property_address ?: $oh->id) . '.csv';
 
+            // v6.76.1: Expanded CSV headers with all attendee fields
             $headers = array('First Name', 'Last Name', 'Email', 'Phone', 'Type', 'Priority Score',
-                'Timeline', 'Pre-Approved', 'Working with Agent', 'Other Agent', 'CRM Processed',
-                'Signed In', 'Interest Level', 'Notes');
+                'Interest Level', 'Timeline', 'Pre-Approved', 'Lender Name',
+                'Working with Agent', 'Other Agent', 'Other Agent Brokerage', 'Other Agent Phone', 'Other Agent Email',
+                'Is Agent', 'Agent Brokerage', 'Agent Visit Purpose', 'Agent Has Buyer', 'Agent Buyer Timeline', 'Agent Network Interest',
+                'How Heard About',
+                'Consent to Follow-Up', 'Consent to Email', 'Consent to Text', 'MA Disclosure',
+                'CRM Processed', 'Signed In', 'Notes');
 
             $rows = array();
             foreach ($attendees as $a) {
@@ -794,13 +844,28 @@ class MLD_Open_House_Admin {
                     $this->csv_escape($a->phone),
                     $a->is_agent ? 'Agent' : 'Buyer',
                     $a->priority_score,
+                    $a->interest_level ?: 'unknown',
                     $this->format_timeline($a->buying_timeline),
                     $this->format_pre_approved($a->pre_approved),
+                    $this->csv_escape($a->lender_name ?: ''),
                     $this->format_working_with_agent($a->working_with_agent),
                     $this->csv_escape($a->other_agent_name ?: ''),
+                    $this->csv_escape($a->other_agent_brokerage ?: ''),
+                    $this->csv_escape($a->other_agent_phone ?: ''),
+                    $this->csv_escape($a->other_agent_email ?: ''),
+                    $a->is_agent ? 'Yes' : 'No',
+                    $this->csv_escape($a->agent_brokerage ?? ''),
+                    $this->csv_escape($a->agent_visit_purpose ?? ''),
+                    !empty($a->agent_has_buyer) ? 'Yes' : 'No',
+                    $this->csv_escape($a->agent_buyer_timeline ?? ''),
+                    !empty($a->agent_network_interest) ? 'Yes' : 'No',
+                    $this->csv_escape($a->how_heard_about ?? ''),
+                    $a->consent_to_follow_up ? 'Yes' : 'No',
+                    $a->consent_to_email ? 'Yes' : 'No',
+                    $a->consent_to_text ? 'Yes' : 'No',
+                    $a->ma_disclosure_acknowledged ? 'Yes' : 'No',
                     $a->auto_crm_processed ? 'Yes' : 'No',
                     $signed_in,
-                    $a->interest_level ?: '',
                     $this->csv_escape($a->agent_notes ?: ''),
                 );
             }
@@ -831,9 +896,15 @@ class MLD_Open_House_Admin {
 
             $filename = 'open-house-attendees-' . wp_date('Y-m-d') . '.csv';
 
+            // v6.76.1: Expanded list CSV headers with all attendee fields
             $headers = array('Event Date', 'Property Address', 'City', 'Agent', 'First Name', 'Last Name',
-                'Email', 'Phone', 'Type', 'Priority Score', 'Timeline', 'Pre-Approved',
-                'Working with Agent', 'CRM Processed', 'Signed In');
+                'Email', 'Phone', 'Type', 'Priority Score',
+                'Interest Level', 'Timeline', 'Pre-Approved', 'Lender Name',
+                'Working with Agent', 'Other Agent', 'Other Agent Brokerage', 'Other Agent Phone', 'Other Agent Email',
+                'Is Agent', 'Agent Brokerage', 'Agent Visit Purpose', 'Agent Has Buyer', 'Agent Buyer Timeline', 'Agent Network Interest',
+                'How Heard About',
+                'Consent to Follow-Up', 'Consent to Email', 'Consent to Text', 'MA Disclosure',
+                'CRM Processed', 'Signed In', 'Notes');
 
             $rows = array();
             foreach ($results as $r) {
@@ -850,11 +921,29 @@ class MLD_Open_House_Admin {
                     $this->csv_escape($r->phone),
                     $r->is_agent ? 'Agent' : 'Buyer',
                     $r->priority_score,
+                    $r->interest_level ?: 'unknown',
                     $this->format_timeline($r->buying_timeline),
                     $this->format_pre_approved($r->pre_approved),
+                    $this->csv_escape($r->lender_name ?: ''),
                     $this->format_working_with_agent($r->working_with_agent),
+                    $this->csv_escape($r->other_agent_name ?: ''),
+                    $this->csv_escape($r->other_agent_brokerage ?: ''),
+                    $this->csv_escape($r->other_agent_phone ?: ''),
+                    $this->csv_escape($r->other_agent_email ?: ''),
+                    $r->is_agent ? 'Yes' : 'No',
+                    $this->csv_escape($r->agent_brokerage ?? ''),
+                    $this->csv_escape($r->agent_visit_purpose ?? ''),
+                    !empty($r->agent_has_buyer) ? 'Yes' : 'No',
+                    $this->csv_escape($r->agent_buyer_timeline ?? ''),
+                    !empty($r->agent_network_interest) ? 'Yes' : 'No',
+                    $this->csv_escape($r->how_heard_about ?? ''),
+                    $r->consent_to_follow_up ? 'Yes' : 'No',
+                    $r->consent_to_email ? 'Yes' : 'No',
+                    $r->consent_to_text ? 'Yes' : 'No',
+                    $r->ma_disclosure_acknowledged ? 'Yes' : 'No',
                     $r->auto_crm_processed ? 'Yes' : 'No',
                     $signed_in,
+                    $this->csv_escape($r->agent_notes ?: ''),
                 );
             }
         }
@@ -959,6 +1048,19 @@ class MLD_Open_House_Admin {
             'yes_other' => 'Other Agent',
         );
         return $map[$value] ?? ucwords(str_replace('_', ' ', $value ?: ''));
+    }
+
+    /**
+     * v6.76.1: Format interest level for display
+     */
+    private function format_interest_level($value) {
+        $map = array(
+            'very_interested' => 'Very Interested',
+            'somewhat' => 'Somewhat',
+            'not_interested' => 'Not Interested',
+            'unknown' => 'Unknown',
+        );
+        return $map[$value] ?? ucwords(str_replace('_', ' ', $value ?: 'Unknown'));
     }
 
     /**
