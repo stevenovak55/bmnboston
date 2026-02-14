@@ -2,7 +2,7 @@
 
 Registry of all completed feature work for BMN Boston platform.
 
-**Last Updated:** 2026-02-03
+**Last Updated:** 2026-02-13
 
 ---
 
@@ -10,6 +10,7 @@ Registry of all completed feature work for BMN Boston platform.
 
 | Feature | Completed | Version | Documentation |
 |---------|-----------|---------|---------------|
+| Open House Admin Dashboard | 2026-02-13 | v6.76.0 | [Details below](#open-house-admin-dashboard-v6760) |
 | Multi-Attendee Appointments | 2026-02-03 | v1.10.0 | [Details below](#multi-attendee-appointments-v1100) |
 | BMN Schools Plugin | 2026-01-21 | v0.6.39 | [Details below](#bmn-schools-plugin-v0639) |
 | Agent-Client System | 2026-01-12 | v6.57.0 | [Details below](#agent-client-system-v6570) |
@@ -17,6 +18,70 @@ Registry of all completed feature work for BMN Boston platform.
 | iOS/Web Filter Alignment | 2026-01-11 | v6.56.0 | [Details below](#iosweb-filter-alignment-v6560) |
 | App Store Promotion | 2026-01-14 | v6.62.2 | [Details below](#app-store-promotion-v6622) |
 | Unified Signup Experience | 2026-01-14 | v6.62.0 | [Details below](#unified-signup-experience-v6620) |
+
+---
+
+## Open House Admin Dashboard (v6.76.0)
+
+**Completed:** 2026-02-13
+**Plugin:** MLS Listings Display
+
+### Summary
+
+WordPress admin dashboard for viewing all open house sign-in data across all agents. Accessible via WP Admin > MLS Display > Open Houses. Reads from 3 existing database tables (`mld_open_houses`, `mld_open_house_attendees`, `mld_open_house_notifications`) populated by the iOS app.
+
+### Key Deliverables
+
+- **Summary Stat Cards** (4 cards)
+  - Total Open Houses, Total Attendees, CRM Conversion Rate, Avg Attendees/Event
+  - CSS Grid layout, responsive (4-col > 2-col > 1-col)
+
+- **Filter Bar**
+  - Agent dropdown, City dropdown, Date From/To inputs
+  - Status tabs with counts (All/Scheduled/Active/Completed/Cancelled)
+
+- **List Table** (sortable, paginated)
+  - Columns: Date/Time, Property Address (+price), City, Agent, Status badge, Attendee count, Hot Lead count, View button
+  - Sortable columns: date, city, agent, attendee_count
+  - 20 items per page with `paginate_links()`
+
+- **Detail View** (per open house)
+  - Property photo + info header with inline stat pills
+  - Full attendee table: Name, Contact, Type (Agent/Buyer badge), Priority score, Timeline, Pre-Approved, Agent Status, CRM, Signed In time, Notes
+
+- **CSV Export**
+  - AJAX + Blob download (no temp files)
+  - Supports filtered list export and per-event export
+  - Formula injection prevention in CSV fields
+
+### Files Created
+
+| File | Purpose |
+|------|---------|
+| `includes/admin/class-mld-open-house-admin.php` | Main admin class (~600 lines, singleton pattern) |
+| `assets/css/admin/mld-open-house-admin.css` | Dashboard styles (stat cards, badges, responsive) |
+| `assets/js/admin/mld-open-house-admin.js` | CSV export via AJAX + Blob download |
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `mls-listings-display.php` | Version bump 6.75.10 > 6.76.0, changelog, require_once |
+| `version.json` | Version bump to 6.76.0 |
+
+### Design Decisions
+
+- Server-rendered PHP (not React/JS SPA) - matches all other admin pages
+- Subqueries for attendee/hot-lead counts (not JOINs with GROUP BY)
+- Direct `$wpdb` queries (no admin-only REST endpoints)
+- Detail view on separate page (not modal) - 40+ columns of attendee data needs full width
+- Timezone: `new DateTime($value, wp_timezone())` for all date display
+
+### Next Steps
+
+- Test with production data on bmnboston.com
+- Verify all filters, sorting, pagination, and CSV export
+- Consider adding: bulk actions, email follow-up, analytics charts
 
 ---
 
