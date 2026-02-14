@@ -2,8 +2,8 @@
 
 Quick reference for AI-assisted development.
 
-**Current Version:** 6.76.0
-**Last Updated:** February 13, 2026
+**Current Version:** 6.76.1
+**Last Updated:** February 14, 2026
 
 ---
 
@@ -687,6 +687,69 @@ System Health dashboard (WP Admin → MLS Listings → System Health) shows:
 ---
 
 ## Version History
+
+### Version 6.76.1 - OPEN HOUSE DASHBOARD: TIMEZONE FIX + MISSING FIELDS (Feb 14, 2026)
+
+Three fixes for the Open House Admin Dashboard deployed in v6.76.0.
+
+**1. Timezone Conversion Fix (`class-mld-open-house-rest-api.php`)**
+
+Sign-in timestamps displayed as ~10:36 PM instead of ~5:36 PM (5-hour UTC→Eastern shift).
+
+**Root Cause:** iOS sends `signed_in_at` as ISO 8601 UTC (`2026-02-14T22:36:00Z`). Server stored the raw string without converting to WordPress timezone. Dashboard then created `DateTime` assuming the stored value was already Eastern.
+
+**Fix:** Convert incoming ISO 8601 UTC timestamp to WordPress timezone before storing:
+```php
+$dt = new DateTime($signed_in_raw);  // Parses ISO 8601 with Z (UTC)
+$dt->setTimezone(wp_timezone());      // Convert to America/New_York
+$signed_in_at = $dt->format('Y-m-d H:i:s');
+```
+
+Also fixed 2 existing attendee records with wrong UTC timestamps via `DATE_SUB(signed_in_at, INTERVAL 5 HOUR)`.
+
+**2. Dashboard Table — Missing Fields (`class-mld-open-house-admin.php`)**
+
+Added fields to the attendee detail table that were captured during sign-in but not displayed:
+
+| Category | Fields Added |
+|----------|-------------|
+| Agent Info (buyer) | Agent brokerage, phone, email |
+| Agent Info (agent visitor) | Visitor brokerage, visit purpose, has buyer, buyer timeline, network interest |
+| Financing | Lender name |
+| Marketing | How heard about |
+| Consent | Follow-up, email, text consent icons |
+| Compliance | MA disclosure acknowledged |
+| Engagement | Interest level |
+
+**3. CSV Exports — 15 Additional Columns (`class-mld-open-house-admin.php`)**
+
+Added to both detail and list CSV exports:
+
+| Field | Column |
+|-------|--------|
+| Is Agent | `is_agent` |
+| Agent Brokerage (visitor) | `agent_brokerage` |
+| Agent Visit Purpose | `agent_visit_purpose` |
+| Agent Has Buyer | `agent_has_buyer` |
+| Agent Buyer Timeline | `agent_buyer_timeline` |
+| Agent Network Interest | `agent_network_interest` |
+| Other Agent Brokerage | `other_agent_brokerage` |
+| Other Agent Phone | `other_agent_phone` |
+| Other Agent Email | `other_agent_email` |
+| Lender Name | `lender_name` |
+| How Heard About | `how_heard_about` |
+| Consent to Follow-Up | `consent_to_follow_up` |
+| Consent to Email | `consent_to_email` |
+| Consent to Text | `consent_to_text` |
+| MA Disclosure | `ma_disclosure_acknowledged` |
+
+**Files Changed:**
+- `includes/class-mld-open-house-rest-api.php` — Timezone conversion
+- `includes/admin/class-mld-open-house-admin.php` — Dashboard table fields + CSV exports
+- `mls-listings-display.php` — Version bump
+- `version.json` — Version bump
+
+---
 
 ### Version 6.75.2 - FIX CMA PDF FIELD NAME MISMATCHES (Feb 3, 2026)
 

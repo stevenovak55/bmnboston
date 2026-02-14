@@ -2,8 +2,8 @@
 
 Comprehensive reference for AI-assisted development.
 
-**Current Project Version:** 409 (Marketing Version 1.8)
-**Last Updated:** February 13, 2026
+**Current Project Version:** 410 (Marketing Version 1.9)
+**Last Updated:** February 14, 2026
 
 ---
 
@@ -378,6 +378,109 @@ func login(email: String, password: String) async {
 ```
 
 **Rule:** Any method that receives user data from the server should save it, not just the primary login flow.
+
+---
+
+## Recent Changes (v410)
+
+### Open House Dashboard: Timezone Fix, Missing Fields, CSV Exports (Feb 14, 2026)
+
+**Marketing Version:** 1.9 (bumped from 1.8 — train was closed)
+
+Three bugs fixed after the Open House Admin Dashboard (v6.76.0) deployment, plus corresponding iOS AttendeeDetailView enhancements.
+
+#### 1. Timezone Conversion Fix (Server-Side, MLD v6.76.1)
+
+**Problem:** Sign-in timestamps displayed as ~10:36 PM instead of ~5:36 PM (5-hour UTC→Eastern shift).
+
+**Root Cause:** iOS sends `signed_in_at` as ISO 8601 UTC (`2026-02-14T22:36:00Z`). Server stored the raw string without converting to WordPress timezone. Dashboard then displayed the UTC value as if it were Eastern time.
+
+**Fix (server only):** `class-mld-open-house-rest-api.php` now converts incoming UTC timestamps to WordPress timezone before storing:
+```php
+$dt = new DateTime($signed_in_raw);  // Parses ISO 8601 with Z (UTC)
+$dt->setTimezone(wp_timezone());      // Convert to America/New_York
+$signed_in_at = $dt->format('Y-m-d H:i:s');
+```
+
+**No iOS changes needed** — iOS correctly sends UTC and correctly parses the stored Eastern time format (`yyyy-MM-dd HH:mm:ss`).
+
+#### 2. AttendeeDetailView: Missing Fields Added (iOS)
+
+Added fields to `AttendeeDetailView` that were captured during kiosk sign-in but not displayed.
+
+**For buyer visitors (non-agent):**
+- Lender name (`lenderName`)
+- How heard about (`howHeardAbout`)
+- "Their Agent" section when `workingWithAgent == .yesOther`:
+  - Other agent name (`otherAgentName`)
+  - Other agent brokerage (`otherAgentBrokerage`)
+  - Other agent phone (`otherAgentPhone`)
+  - Other agent email (`otherAgentEmail`)
+
+**For agent visitors:**
+- Brokerage (`visitorAgentBrokerage`)
+- Visit purpose (`agentVisitPurpose`)
+- Has buyer (`agentHasBuyer`)
+- Buyer timeline (`agentBuyerTimeline`)
+- Network interest (`agentNetworkInterest`)
+
+**For all visitors (new `AttendeeConsentSection` struct):**
+- Consent to follow-up (checkmark/x icon)
+- Consent to email (checkmark/x icon)
+- Consent to text (checkmark/x icon)
+- MA disclosure acknowledged (shield icon)
+
+**Architecture:** Body sections extracted into separate View structs to avoid SwiftUI ViewBuilder complexity:
+- `AttendeeVisitorDetailsSection` — agent vs buyer conditional fields
+- `AttendeeConsentSection` — consent & compliance badges
+
+#### 3. Compile Error Fix: WorkingWithAgentStatus Enum
+
+**Problem:** `AttendeeVisitorDetailsSection` used `.yes` and `.maybeUnsure` which don't exist in the `WorkingWithAgentStatus` enum.
+
+**Root Cause:** The enum has cases `.no`, `.yesOther`, `.iAmAnAgent` — not `.yes` or `.maybeUnsure`.
+
+**Fix:**
+```swift
+// Before (broken):
+if attendee.workingWithAgent == .yes || attendee.workingWithAgent == .maybeUnsure {
+
+// After (fixed):
+if attendee.workingWithAgent == .yesOther {
+```
+
+Also removed a duplicate `agentBuyerTimelineDisplay` helper from `AttendeeDetailView` that was left behind when the function was extracted to `AttendeeVisitorDetailsSection`.
+
+#### 4. Dashboard Table & CSV Exports (Server-Side, MLD v6.76.1)
+
+- Dashboard detail view: Added agent info, financing, consent, and interest columns
+- CSV exports (both detail and list): Added 15 additional columns covering all attendee data fields
+
+#### API Field Mapping (iOS CodingKeys → Server Response)
+
+| iOS Property | Server Field | Notes |
+|-------------|-------------|-------|
+| `otherAgentName` | `agent_name` | Buyer's agent name |
+| `otherAgentBrokerage` | `agent_brokerage` | Buyer's agent brokerage |
+| `otherAgentPhone` | `agent_phone` | Buyer's agent phone |
+| `otherAgentEmail` | `agent_email` | Buyer's agent email |
+| `visitorAgentBrokerage` | `visitor_agent_brokerage` | When visitor is an agent |
+
+#### Files Changed
+
+| File | Changes |
+|------|---------|
+| `Features/OpenHouse/Views/OpenHouseListView.swift` | Added `AttendeeVisitorDetailsSection` and `AttendeeConsentSection` structs; fixed `.yesOther` enum; removed duplicate helper |
+| `BMNBoston.xcodeproj/project.pbxproj` | Version 410, marketing version 1.9 |
+
+#### Server Files Changed (MLD v6.76.1)
+
+| File | Changes |
+|------|---------|
+| `class-mld-open-house-rest-api.php` | UTC→Eastern timezone conversion |
+| `class-mld-open-house-admin.php` | Dashboard fields + CSV exports |
+| `mls-listings-display.php` | Version 6.76.1 |
+| `version.json` | Version 6.76.1 |
 
 ---
 
