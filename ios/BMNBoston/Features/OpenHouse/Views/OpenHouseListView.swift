@@ -717,6 +717,8 @@ struct OpenHouseDetailView: View {
     @State private var showKioskMode = false
     @State private var showAttendees = false
     @State private var showEndConfirmation = false
+    @State private var showSummary = false
+    @State private var pendingSummary: OpenHouseSummary?
 
     var body: some View {
         ScrollView {
@@ -829,8 +831,13 @@ struct OpenHouseDetailView: View {
             Button("Cancel", role: .cancel) { }
             Button("End", role: .destructive) {
                 Task {
-                    if let updated = await viewModel.endOpenHouse(id: openHouse.id) {
-                        onUpdate(updated)
+                    if let result = await viewModel.endOpenHouse(id: openHouse.id) {
+                        onUpdate(result.openHouse)
+                        // Show summary if available
+                        if let summary = result.summary {
+                            pendingSummary = summary
+                            showSummary = true
+                        }
                     }
                 }
             }
@@ -851,6 +858,13 @@ struct OpenHouseDetailView: View {
         .sheet(isPresented: $showAttendees) {
             NavigationStack {
                 AttendeeListView(openHouseId: openHouse.id)
+            }
+        }
+        .sheet(isPresented: $showSummary) {
+            if let summary = pendingSummary {
+                NavigationStack {
+                    OpenHouseSummaryView(summary: summary, openHouse: openHouse)
+                }
             }
         }
         .overlay {
@@ -972,17 +986,36 @@ struct OpenHouseDetailView: View {
                 }
             }
 
-            if openHouse.status == .completed && openHouse.attendeeCount > 0 {
-                Button {
-                    showAttendees = true
-                } label: {
-                    Label("View Attendees (\(openHouse.attendeeCount))", systemImage: "person.3.fill")
-                        .fontWeight(.semibold)
-                        .foregroundStyle(AppColors.brandTeal)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(AppColors.brandTeal.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+            if openHouse.status == .completed {
+                if openHouse.attendeeCount > 0 {
+                    Button {
+                        Task {
+                            pendingSummary = await viewModel.fetchSummary(openHouseId: openHouse.id)
+                            if pendingSummary != nil {
+                                showSummary = true
+                            }
+                        }
+                    } label: {
+                        Label("View Summary", systemImage: "chart.bar.doc.horizontal.fill")
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(AppColors.brandTeal)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+
+                    Button {
+                        showAttendees = true
+                    } label: {
+                        Label("View Attendees (\(openHouse.attendeeCount))", systemImage: "person.3.fill")
+                            .fontWeight(.semibold)
+                            .foregroundStyle(AppColors.brandTeal)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(AppColors.brandTeal.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
                 }
             }
         }
@@ -1012,13 +1045,23 @@ class OpenHouseDetailViewModel: ObservableObject {
         }
     }
 
-    func endOpenHouse(id: Int) async -> OpenHouse? {
+    func endOpenHouse(id: Int) async -> (openHouse: OpenHouse, summary: OpenHouseSummary?)? {
         isLoading = true
         defer { isLoading = false }
 
         do {
-            let updated = try await OpenHouseService.shared.endOpenHouse(id: id)
-            return updated
+            let result = try await OpenHouseService.shared.endOpenHouse(id: id)
+            return result
+        } catch {
+            errorMessage = error.localizedDescription
+            showError = true
+            return nil
+        }
+    }
+
+    func fetchSummary(openHouseId: Int) async -> OpenHouseSummary? {
+        do {
+            return try await OpenHouseService.shared.fetchSummary(openHouseId: openHouseId)
         } catch {
             errorMessage = error.localizedDescription
             showError = true

@@ -813,10 +813,134 @@ struct OpenHouseDetailResponse: Decodable {
 struct CreateOpenHouseResponse: Decodable {
     let openHouse: OpenHouse
     let message: String?
+    let summary: OpenHouseSummary?
 
     private enum CodingKeys: String, CodingKey {
         case openHouse = "open_house"
         case message
+        case summary
+    }
+}
+
+// MARK: - Open House Summary (v6.77.0)
+
+struct OpenHouseSummary: Decodable {
+    let totalAttendees: Int
+    let buyerCount: Int
+    let agentCount: Int
+    let unrepresentedBuyerCount: Int
+    let preApprovedCount: Int
+    let consentToFollowUpCount: Int
+    let interestBreakdown: [String: Int]
+    let timelineBreakdown: [String: Int]
+    let sourceBreakdown: [String: Int]
+    let hotLeads: [SummaryAttendee]
+    let allAttendees: [SummaryAttendee]
+    let propertyAddress: String?
+    let openHouseDate: String?
+    let openHouseId: Int?
+
+    private enum CodingKeys: String, CodingKey {
+        case totalAttendees = "total_attendees"
+        case buyerCount = "buyer_count"
+        case agentCount = "agent_count"
+        case unrepresentedBuyerCount = "unrepresented_buyer_count"
+        case preApprovedCount = "pre_approved_count"
+        case consentToFollowUpCount = "consent_to_follow_up_count"
+        case interestBreakdown = "interest_breakdown"
+        case timelineBreakdown = "timeline_breakdown"
+        case sourceBreakdown = "source_breakdown"
+        case hotLeads = "hot_leads"
+        case allAttendees = "all_attendees"
+        case propertyAddress = "property_address"
+        case openHouseDate = "open_house_date"
+        case openHouseId = "open_house_id"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        totalAttendees = (try? container.decode(Int.self, forKey: .totalAttendees)) ?? 0
+        buyerCount = (try? container.decode(Int.self, forKey: .buyerCount)) ?? 0
+        agentCount = (try? container.decode(Int.self, forKey: .agentCount)) ?? 0
+        unrepresentedBuyerCount = (try? container.decode(Int.self, forKey: .unrepresentedBuyerCount)) ?? 0
+        preApprovedCount = (try? container.decode(Int.self, forKey: .preApprovedCount)) ?? 0
+        consentToFollowUpCount = (try? container.decode(Int.self, forKey: .consentToFollowUpCount)) ?? 0
+        interestBreakdown = (try? container.decode([String: Int].self, forKey: .interestBreakdown)) ?? [:]
+        timelineBreakdown = (try? container.decode([String: Int].self, forKey: .timelineBreakdown)) ?? [:]
+        sourceBreakdown = (try? container.decode([String: Int].self, forKey: .sourceBreakdown)) ?? [:]
+        hotLeads = (try? container.decode([SummaryAttendee].self, forKey: .hotLeads)) ?? []
+        allAttendees = (try? container.decode([SummaryAttendee].self, forKey: .allAttendees)) ?? []
+        propertyAddress = try? container.decode(String.self, forKey: .propertyAddress)
+        openHouseDate = try? container.decode(String.self, forKey: .openHouseDate)
+        openHouseId = try? container.decode(Int.self, forKey: .openHouseId)
+    }
+}
+
+/// Lightweight attendee representation for summary reports
+struct SummaryAttendee: Decodable, Identifiable {
+    let id: Int
+    let firstName: String
+    let lastName: String
+    let email: String
+    let phone: String
+    let isAgent: Bool
+    let workingWithAgent: String
+    let buyingTimeline: String
+    let preApproved: String
+    let interestLevel: String
+    let howHeardAbout: String
+    let consentToFollowUp: Bool
+    let signedInAt: String
+    let autoCrmProcessed: Bool
+    let autoSearchCreated: Bool
+
+    var fullName: String {
+        [firstName, lastName].filter { !$0.isEmpty }.joined(separator: " ")
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case firstName = "first_name"
+        case lastName = "last_name"
+        case email, phone
+        case isAgent = "is_agent"
+        case workingWithAgent = "working_with_agent"
+        case buyingTimeline = "buying_timeline"
+        case preApproved = "pre_approved"
+        case interestLevel = "interest_level"
+        case howHeardAbout = "how_heard_about"
+        case consentToFollowUp = "consent_to_follow_up"
+        case signedInAt = "signed_in_at"
+        case autoCrmProcessed = "auto_crm_processed"
+        case autoSearchCreated = "auto_search_created"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = (try? container.decode(Int.self, forKey: .id)) ?? 0
+        firstName = (try? container.decode(String.self, forKey: .firstName)) ?? ""
+        lastName = (try? container.decode(String.self, forKey: .lastName)) ?? ""
+        email = (try? container.decode(String.self, forKey: .email)) ?? ""
+        phone = (try? container.decode(String.self, forKey: .phone)) ?? ""
+        isAgent = (try? container.decode(Bool.self, forKey: .isAgent)) ?? false
+        workingWithAgent = (try? container.decode(String.self, forKey: .workingWithAgent)) ?? ""
+        buyingTimeline = (try? container.decode(String.self, forKey: .buyingTimeline)) ?? ""
+        preApproved = (try? container.decode(String.self, forKey: .preApproved)) ?? ""
+        interestLevel = (try? container.decode(String.self, forKey: .interestLevel)) ?? ""
+        howHeardAbout = (try? container.decode(String.self, forKey: .howHeardAbout)) ?? ""
+        consentToFollowUp = (try? container.decode(Bool.self, forKey: .consentToFollowUp)) ?? false
+        signedInAt = (try? container.decode(String.self, forKey: .signedInAt)) ?? ""
+        autoCrmProcessed = (try? container.decode(Bool.self, forKey: .autoCrmProcessed)) ?? false
+        autoSearchCreated = (try? container.decode(Bool.self, forKey: .autoSearchCreated)) ?? false
+    }
+}
+
+/// Response for GET /open-houses/{id}/summary
+struct OpenHouseSummaryResponse: Decodable {
+    let summary: OpenHouseSummary
+
+    private enum CodingKeys: String, CodingKey {
+        case summary
     }
 }
 

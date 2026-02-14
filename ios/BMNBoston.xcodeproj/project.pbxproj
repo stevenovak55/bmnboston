@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		78850C883C86D55FCDAA28AE /* OpenHouseListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863FFCAEE1B9B4BDB847EE82 /* OpenHouseListView.swift */; };
+		A3F7B2C891D4E5061FAB3C72 /* OpenHouseSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6E8A1F340B7C92583FD1E49 /* OpenHouseSummaryView.swift */; };
 		97A55F1B61AC0B12967C78FC /* OpenHouseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AFF6E590DB4C88604129D01 /* OpenHouseService.swift */; };
 		9F2202834CCED3DC6738DCD1 /* OfflineOpenHouseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEE979E778BC40CCA21CC093 /* OfflineOpenHouseStore.swift */; };
 		K10000010000000000000001 /* KioskSignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = K20000020000000000000001 /* KioskSignInView.swift */; };
@@ -176,6 +177,7 @@
 		CMA0000020000000000000003 /* CMAPDFView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CMAPDFView.swift; sourceTree = "<group>"; };
 		79B19A4888573CDAF249BC42 /* OpenHouse.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OpenHouse.swift; sourceTree = "<group>"; };
 		863FFCAEE1B9B4BDB847EE82 /* OpenHouseListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OpenHouseListView.swift; sourceTree = "<group>"; };
+		D6E8A1F340B7C92583FD1E49 /* OpenHouseSummaryView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OpenHouseSummaryView.swift; sourceTree = "<group>"; };
 		AEE979E778BC40CCA21CC093 /* OfflineOpenHouseStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineOpenHouseStore.swift; sourceTree = "<group>"; };
 		K20000020000000000000001 /* KioskSignInView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KioskSignInView.swift; sourceTree = "<group>"; };
 		K20000020000000000000002 /* KioskSignInFormView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KioskSignInFormView.swift; sourceTree = "<group>"; };
@@ -335,6 +337,7 @@
 			isa = PBXGroup;
 			children = (
 				863FFCAEE1B9B4BDB847EE82 /* OpenHouseListView.swift */,
+				D6E8A1F340B7C92583FD1E49 /* OpenHouseSummaryView.swift */,
 				K20000020000000000000001 /* KioskSignInView.swift */,
 				K20000020000000000000002 /* KioskSignInFormView.swift */,
 			);
@@ -1184,6 +1187,7 @@
 				97A55F1B61AC0B12967C78FC /* OpenHouseService.swift in Sources */,
 				9F2202834CCED3DC6738DCD1 /* OfflineOpenHouseStore.swift in Sources */,
 				78850C883C86D55FCDAA28AE /* OpenHouseListView.swift in Sources */,
+				A3F7B2C891D4E5061FAB3C72 /* OpenHouseSummaryView.swift in Sources */,
 				K10000010000000000000001 /* KioskSignInView.swift in Sources */,
 				K10000010000000000000002 /* KioskSignInFormView.swift in Sources */,
 				CMA0000010000000000000001 /* CMA.swift in Sources */,

@@ -3,7 +3,7 @@
  * Plugin Name:       MLS Listings Display
  * Plugin URI:        https://example.com/
  * Description:       Displays real estate listings from the Bridge MLS Extractor Pro plugin using shortcodes with mobile-optimized property search and display.
- * Version: 6.76.1
+ * Version: 6.77.0
  * Author:            AZ Home Solutions LLC
  * Author URI:        https://example.com/
  * License:           GPL-2.0+
@@ -11,6 +11,18 @@
  * Text Domain:       mls-listings-display
  *
  * @package           MLS_Listings_Display
+ *
+ * Version 6.77.0 - OPEN HOUSE EMAIL DRIP SEQUENCES (Feb 14, 2026)
+ * Automated follow-up email sequences for open house attendees.
+ * - 5-step drip sequence: Thank You (1d), Similar Properties (3d), Buyer Resources (7d), Check-in (14d), Final Touch (30d)
+ * - Auto-enrolls eligible attendees (non-agents with consent + email) when open house ends
+ * - Hourly WP-Cron processing with retry logic for failed sends
+ * - Agent REST API: view drip status, pause/resume/cancel individual enrollments
+ * - Branded HTML email templates with agent contact info and property links
+ * - New tables: wp_mld_open_house_drip_enrollments, wp_mld_open_house_drip_log
+ * - New endpoints: GET /open-houses/{id}/drip, GET /open-houses/drip/enrollments,
+ *   POST /open-houses/drip/{id}/pause, POST /open-houses/drip/{id}/resume,
+ *   POST /open-houses/drip/{id}/cancel
  *
  * Version 6.76.0 - OPEN HOUSE ADMIN DASHBOARD (Feb 13, 2026)
  * Added WP Admin dashboard for viewing all open house sign-ins across all agents.
@@ -2557,7 +2569,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 // Define plugin constants.
 // Add timestamp for cache busting during development
-define('MLD_VERSION', '6.76.1');
+define('MLD_VERSION', '6.77.0');
 
 define( 'MLD_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MLD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) ); // Alias for MLD_PLUGIN_PATH for backward compatibility
@@ -2962,7 +2974,10 @@ require_once MLD_PLUGIN_PATH . 'includes/class-mld-mobile-rest-api.php';
 
 // Load Open House REST API (v6.69.0+ - Agent open house sign-in system)
 require_once MLD_PLUGIN_PATH . 'includes/class-mld-open-house-rest-api.php';
+require_once MLD_PLUGIN_PATH . 'includes/class-mld-open-house-summary.php';
+require_once MLD_PLUGIN_PATH . 'includes/class-mld-open-house-drip.php';
 MLD_Open_House_REST_API::init();
+MLD_Open_House_Drip::init();
 
 // Load Client Dashboard (v6.32.1+ - Phase 4 client web dashboard)
 require_once MLD_PLUGIN_PATH . 'includes/class-mld-client-dashboard.php';

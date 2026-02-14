@@ -86,14 +86,22 @@ actor OpenHouseService {
         return response.openHouse
     }
 
-    /// End an open house (mark as completed)
-    func endOpenHouse(id: Int) async throws -> OpenHouse {
+    /// End an open house (mark as completed) — returns open house and optional summary
+    func endOpenHouse(id: Int) async throws -> (openHouse: OpenHouse, summary: OpenHouseSummary?) {
         let response: CreateOpenHouseResponse = try await APIClient.shared.request(.endOpenHouse(id: id))
 
         // Invalidate cache
         openHousesCache = nil
 
-        return response.openHouse
+        return (response.openHouse, response.summary)
+    }
+
+    // MARK: - Summary Report (v6.76.0)
+
+    /// Fetch summary report for a completed open house
+    func fetchSummary(openHouseId: Int) async throws -> OpenHouseSummary {
+        let response: OpenHouseSummaryResponse = try await APIClient.shared.request(.openHouseSummary(id: openHouseId))
+        return response.summary
     }
 
     // MARK: - Attendee Management

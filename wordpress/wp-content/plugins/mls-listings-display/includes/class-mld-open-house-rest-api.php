@@ -132,6 +132,13 @@ class MLD_Open_House_REST_API {
             'permission_callback' => array(__CLASS__, 'check_agent_permission'),
         ));
 
+        // Get open house summary report
+        register_rest_route(self::NAMESPACE, '/open-houses/(?P<id>\d+)/summary', array(
+            'methods' => 'GET',
+            'callback' => array(__CLASS__, 'handle_get_summary'),
+            'permission_callback' => array(__CLASS__, 'check_agent_permission'),
+        ));
+
         // Add single attendee
         register_rest_route(self::NAMESPACE, '/open-houses/(?P<id>\d+)/attendees', array(
             'methods' => 'POST',
@@ -192,6 +199,42 @@ class MLD_Open_House_REST_API {
         register_rest_route(self::NAMESPACE, '/open-houses/(?P<id>\d+)/property-images', array(
             'methods' => 'GET',
             'callback' => array(__CLASS__, 'handle_get_property_images'),
+            'permission_callback' => array(__CLASS__, 'check_agent_permission'),
+        ));
+
+        // Drip sequence endpoints (v6.77.0 - Email Drip Sequences)
+        // Get drip status for a specific open house
+        register_rest_route(self::NAMESPACE, '/open-houses/(?P<id>\d+)/drip', array(
+            'methods' => 'GET',
+            'callback' => array(__CLASS__, 'handle_get_drip_status'),
+            'permission_callback' => array(__CLASS__, 'check_agent_permission'),
+        ));
+
+        // Get all drip enrollments for the agent
+        register_rest_route(self::NAMESPACE, '/open-houses/drip/enrollments', array(
+            'methods' => 'GET',
+            'callback' => array(__CLASS__, 'handle_get_drip_enrollments'),
+            'permission_callback' => array(__CLASS__, 'check_agent_permission'),
+        ));
+
+        // Pause a drip enrollment
+        register_rest_route(self::NAMESPACE, '/open-houses/drip/(?P<enrollment_id>\d+)/pause', array(
+            'methods' => 'POST',
+            'callback' => array(__CLASS__, 'handle_pause_drip'),
+            'permission_callback' => array(__CLASS__, 'check_agent_permission'),
+        ));
+
+        // Resume a drip enrollment
+        register_rest_route(self::NAMESPACE, '/open-houses/drip/(?P<enrollment_id>\d+)/resume', array(
+            'methods' => 'POST',
+            'callback' => array(__CLASS__, 'handle_resume_drip'),
+            'permission_callback' => array(__CLASS__, 'check_agent_permission'),
+        ));
+
+        // Cancel a drip enrollment
+        register_rest_route(self::NAMESPACE, '/open-houses/drip/(?P<enrollment_id>\d+)/cancel', array(
+            'methods' => 'POST',
+            'callback' => array(__CLASS__, 'handle_cancel_drip'),
             'permission_callback' => array(__CLASS__, 'check_agent_permission'),
         ));
     }
@@ -658,11 +701,70 @@ class MLD_Open_House_REST_API {
             $open_house_id
         ));
 
+        // Generate summary report and send email to agent
+        $summary = null;
+        if (class_exists('MLD_Open_House_Summary')) {
+            $summary = MLD_Open_House_Summary::generate($open_house_id);
+        }
+
+        // Enroll eligible attendees in email drip sequence (v6.77.0)
+        $drip_enrolled = 0;
+        if (class_exists('MLD_Open_House_Drip')) {
+            $drip_enrolled = MLD_Open_House_Drip::enroll_open_house_attendees($open_house_id);
+        }
+
+        $response_data = array(
+            'open_house' => self::format_open_house($open_house),
+            'message' => 'Open house ended',
+            'drip_enrolled' => $drip_enrolled,
+        );
+
+        if ($summary) {
+            $response_data['summary'] = $summary;
+        }
+
+        return self::add_no_cache_headers(new WP_REST_Response(array(
+            'success' => true,
+            'data' => $response_data
+        ), 200));
+    }
+
+    /**
+     * Handle GET /open-houses/{id}/summary - Get summary report for completed open house
+     */
+    public static function handle_get_summary($request) {
+        global $wpdb;
+        $user_id = get_current_user_id();
+        $open_house_id = intval($request->get_param('id'));
+
+        $table = $wpdb->prefix . 'mld_open_houses';
+
+        // Verify ownership
+        $open_house = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$table} WHERE id = %d AND agent_user_id = %d",
+            $open_house_id, $user_id
+        ));
+
+        if (!$open_house) {
+            return self::add_no_cache_headers(new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Open house not found'
+            ), 404));
+        }
+
+        if (!class_exists('MLD_Open_House_Summary')) {
+            return self::add_no_cache_headers(new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Summary feature not available'
+            ), 500));
+        }
+
+        $summary = MLD_Open_House_Summary::get_summary($open_house_id);
+
         return self::add_no_cache_headers(new WP_REST_Response(array(
             'success' => true,
             'data' => array(
-                'open_house' => self::format_open_house($open_house),
-                'message' => 'Open house ended'
+                'summary' => $summary
             )
         ), 200));
     }
@@ -2245,5 +2347,175 @@ class MLD_Open_House_REST_API {
             return '"' . str_replace('"', '""', $value) . '"';
         }
         return $value;
+    }
+
+    // ------------------------------------------------------------------
+    //  DRIP SEQUENCE HANDLERS (v6.77.0)
+    // ------------------------------------------------------------------
+
+    /**
+     * Handle GET /open-houses/{id}/drip - Get drip status for an open house
+     * @since 6.77.0
+     */
+    public static function handle_get_drip_status($request) {
+        $user_id = get_current_user_id();
+        $open_house_id = intval($request->get_param('id'));
+
+        if (!class_exists('MLD_Open_House_Drip')) {
+            return self::add_no_cache_headers(new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Drip feature not available'
+            ), 500));
+        }
+
+        $enrollments = MLD_Open_House_Drip::get_open_house_drip_status($open_house_id, $user_id);
+
+        // Summary stats
+        $active = 0;
+        $paused = 0;
+        $completed = 0;
+        $cancelled = 0;
+        foreach ($enrollments as $e) {
+            switch ($e['status']) {
+                case 'active':    $active++; break;
+                case 'paused':    $paused++; break;
+                case 'completed': $completed++; break;
+                case 'cancelled': $cancelled++; break;
+            }
+        }
+
+        return self::add_no_cache_headers(new WP_REST_Response(array(
+            'success' => true,
+            'data' => array(
+                'open_house_id' => $open_house_id,
+                'enrollments'   => $enrollments,
+                'summary'       => array(
+                    'total'     => count($enrollments),
+                    'active'    => $active,
+                    'paused'    => $paused,
+                    'completed' => $completed,
+                    'cancelled' => $cancelled,
+                ),
+            )
+        ), 200));
+    }
+
+    /**
+     * Handle GET /open-houses/drip/enrollments - Get all agent drip enrollments
+     * @since 6.77.0
+     */
+    public static function handle_get_drip_enrollments($request) {
+        $user_id = get_current_user_id();
+        $status = sanitize_text_field($request->get_param('status') ?? '');
+
+        if (!class_exists('MLD_Open_House_Drip')) {
+            return self::add_no_cache_headers(new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Drip feature not available'
+            ), 500));
+        }
+
+        $enrollments = MLD_Open_House_Drip::get_agent_enrollments(
+            $user_id,
+            !empty($status) ? $status : null
+        );
+
+        return self::add_no_cache_headers(new WP_REST_Response(array(
+            'success' => true,
+            'data' => array(
+                'enrollments' => $enrollments,
+                'count'       => count($enrollments),
+            )
+        ), 200));
+    }
+
+    /**
+     * Handle POST /open-houses/drip/{enrollment_id}/pause
+     * @since 6.77.0
+     */
+    public static function handle_pause_drip($request) {
+        $user_id = get_current_user_id();
+        $enrollment_id = intval($request->get_param('enrollment_id'));
+
+        if (!class_exists('MLD_Open_House_Drip')) {
+            return self::add_no_cache_headers(new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Drip feature not available'
+            ), 500));
+        }
+
+        $result = MLD_Open_House_Drip::pause_enrollment($enrollment_id, $user_id);
+
+        if (!$result) {
+            return self::add_no_cache_headers(new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Enrollment not found or already paused'
+            ), 404));
+        }
+
+        return self::add_no_cache_headers(new WP_REST_Response(array(
+            'success' => true,
+            'data' => array('message' => 'Drip sequence paused')
+        ), 200));
+    }
+
+    /**
+     * Handle POST /open-houses/drip/{enrollment_id}/resume
+     * @since 6.77.0
+     */
+    public static function handle_resume_drip($request) {
+        $user_id = get_current_user_id();
+        $enrollment_id = intval($request->get_param('enrollment_id'));
+
+        if (!class_exists('MLD_Open_House_Drip')) {
+            return self::add_no_cache_headers(new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Drip feature not available'
+            ), 500));
+        }
+
+        $result = MLD_Open_House_Drip::resume_enrollment($enrollment_id, $user_id);
+
+        if (!$result) {
+            return self::add_no_cache_headers(new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Enrollment not found or not paused'
+            ), 404));
+        }
+
+        return self::add_no_cache_headers(new WP_REST_Response(array(
+            'success' => true,
+            'data' => array('message' => 'Drip sequence resumed')
+        ), 200));
+    }
+
+    /**
+     * Handle POST /open-houses/drip/{enrollment_id}/cancel
+     * @since 6.77.0
+     */
+    public static function handle_cancel_drip($request) {
+        $user_id = get_current_user_id();
+        $enrollment_id = intval($request->get_param('enrollment_id'));
+
+        if (!class_exists('MLD_Open_House_Drip')) {
+            return self::add_no_cache_headers(new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Drip feature not available'
+            ), 500));
+        }
+
+        $result = MLD_Open_House_Drip::cancel_enrollment($enrollment_id, $user_id);
+
+        if (!$result) {
+            return self::add_no_cache_headers(new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Enrollment not found'
+            ), 404));
+        }
+
+        return self::add_no_cache_headers(new WP_REST_Response(array(
+            'success' => true,
+            'data' => array('message' => 'Drip sequence cancelled')
+        ), 200));
     }
 }

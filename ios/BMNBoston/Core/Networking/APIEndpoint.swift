@@ -1565,6 +1565,15 @@ extension APIEndpoint {
         )
     }
 
+    /// Get open house summary report (v6.76.0)
+    static func openHouseSummary(id: Int) -> APIEndpoint {
+        return APIEndpoint(
+            path: "/open-houses/\(id)/summary",
+            method: .get,
+            requiresAuth: true
+        )
+    }
+
     /// Add a single attendee to an open house
     static func addAttendee(openHouseId: Int, attendee: OpenHouseAttendee) -> APIEndpoint {
         var params: [String: Any] = [
